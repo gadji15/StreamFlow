@@ -28,7 +28,7 @@ const firebaseConfig = {
 // Informations de l'admin
 const adminEmail = "gadjicheikh15@gmail.com";
 const adminPassword = "Messigadji2982";
-const adminName = "Cheikh Gadji";
+const adminName = "Gadji"; // Nom mis à jour selon votre demande
 
 async function setupAdmin() {
   try {
@@ -80,6 +80,7 @@ async function setupAdmin() {
     
     console.log("Compte administrateur configuré avec succès!");
     console.log(`Email: ${adminEmail}`);
+    console.log(`Nom: ${adminName}`);
     console.log(`Role: super_admin`);
     console.log("\nVous pouvez maintenant vous connecter à l'interface admin.");
     
