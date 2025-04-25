@@ -1,87 +1,82 @@
 export default function MentionsLegalesPage() {
   return (
-    <div className="pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8 font-poppins">Mentions Légales</h1>
-
-        <div className="bg-gray-900 rounded-lg p-8 border border-gray-800">
-          <div className="prose prose-invert max-w-none">
-            <h2>1. Informations légales</h2>
-            <p>
-              Le site StreamFlow est édité par la société StreamFlow SAS, société par actions simplifiée au capital de
-              50 000 euros, immatriculée au Registre du Commerce et des Sociétés de Paris sous le numéro 123 456 789,
-              dont le siège social est situé au 123 Avenue du Streaming, 75001 Paris, France.
-            </p>
-            <p>
-              Numéro de TVA intracommunautaire : FR 12 345 678 901
-              <br />
-              Directeur de la publication : Jean Dupont
-              <br />
-              Email : contact@streamflow.com
-              <br />
-              Téléphone : +33 1 23 45 67 89
-            </p>
-
-            <h2>2. Hébergement</h2>
-            <p>
-              Le site StreamFlow est hébergé par la société Vercel Inc., dont le siège social est situé au 340 S Lemon
-              Ave #4133, Walnut, CA 91789, États-Unis.
-            </p>
-
-            <h2>3. Propriété intellectuelle</h2>
-            <p>
-              L'ensemble des éléments constituant le site StreamFlow (textes, graphismes, logiciels, photographies,
-              images, vidéos, sons, plans, logos, marques, etc.) ainsi que le site lui-même, sont la propriété exclusive
-              de StreamFlow SAS ou de ses partenaires. Ces éléments sont protégés par les lois relatives à la propriété
-              intellectuelle et notamment le droit d'auteur, le droit des marques et le droit des brevets.
-            </p>
-            <p>
-              Toute reproduction, représentation, modification, publication, adaptation de tout ou partie des éléments
-              du site, quel que soit le moyen ou le procédé utilisé, est interdite, sauf autorisation écrite préalable
-              de StreamFlow SAS.
-            </p>
-            <p>
-              Toute exploitation non autorisée du site ou de l'un quelconque des éléments qu'il contient sera considérée
-              comme constitutive d'une contrefaçon et poursuivie conformément aux dispositions des articles L.335-2 et
-              suivants du Code de Propriété Intellectuelle.
-            </p>
-
-            <h2>4. Liens hypertextes</h2>
-            <p>
-              Le site StreamFlow peut contenir des liens hypertextes vers d'autres sites internet ou d'autres ressources
-              disponibles sur Internet. StreamFlow SAS ne dispose d'aucun moyen pour contrôler les sites en connexion
-              avec son site internet. StreamFlow SAS ne répond pas de la disponibilité de tels sites et sources
-              externes, ni ne la garantit. Elle ne peut être tenue pour responsable de tout dommage, de quelque nature
-              que ce soit, résultant du contenu de ces sites ou sources externes.
-            </p>
-
-            <h2>5. Limitation de responsabilité</h2>
-            <p>
-              StreamFlow SAS ne pourra être tenue responsable des dommages directs et indirects causés au matériel de
-              l'utilisateur, lors de l'accès au site StreamFlow, et résultant soit de l'utilisation d'un matériel ne
-              répondant pas aux spécifications indiquées, soit de l'apparition d'un bug ou d'une incompatibilité.
-            </p>
-            <p>
-              StreamFlow SAS ne pourra également être tenue responsable des dommages indirects (tels par exemple qu'une
-              perte de marché ou perte d'une chance) consécutifs à l'utilisation du site StreamFlow.
-            </p>
-
-            <h2>6. Droit applicable et juridiction compétente</h2>
-            <p>
-              Les présentes mentions légales sont régies par la loi française. En cas de litige, les tribunaux français
-              seront seuls compétents.
-            </p>
-
-            <h2>7. Modifications</h2>
-            <p>
-              StreamFlow SAS se réserve le droit de modifier les présentes mentions légales à tout moment. L'utilisateur
-              est donc invité à les consulter régulièrement.
-            </p>
-
-            <p className="text-sm text-gray-400 mt-8">Dernière mise à jour : 24 avril 2023</p>
-          </div>
+    <div className="min-h-screen py-20">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Mentions légales</h1>
+        
+        <div className="prose prose-invert max-w-none">
+          <h2 className="text-xl font-semibold mt-8 mb-4">1. Informations légales</h2>
+          <p>
+            Le site StreamFlow est édité par :
+          </p>
+          <p className="mt-4">
+            <strong>StreamFlow SAS</strong><br />
+            Société par Actions Simplifiée au capital de 100 000 €<br />
+            Siège social : 123 Avenue du Streaming, 75000 Paris, France<br />
+            SIRET : 123 456 789 00012<br />
+            RCS Paris B 123 456 789<br />
+            N° TVA intracommunautaire : FR 12 123456789<br />
+            Directeur de la publication : Jean Dupont, Président
+          </p>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">2. Hébergement</h2>
+          <p>
+            Le site StreamFlow est hébergé par :
+          </p>
+          <p className="mt-4">
+            <strong>CloudHost SAS</strong><br />
+            Société par Actions Simplifiée au capital de 500 000 €<br />
+            Siège social : 456 Rue des Serveurs, 69000 Lyon, France<br />
+            Téléphone : +33 4 56 78 90 12
+          </p>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">3. Propriété intellectuelle</h2>
+          <p>
+            L&apos;ensemble des éléments constituant le site StreamFlow (textes, graphismes, logiciels, photographies, images, vidéos, sons, plans, logos, marques, créations et œuvres protégeables diverses, bases de données, etc.) ainsi que le site lui-même, relèvent des législations françaises et internationales sur le droit d&apos;auteur et la propriété intellectuelle.
+          </p>
+          <p className="mt-4">
+            Ces éléments sont la propriété exclusive de StreamFlow SAS. La reproduction ou représentation, intégrale ou partielle, des pages, des données et de toute autre élément constitutif du site, par quelque procédé ou support que ce soit, est interdite et constitue sans autorisation de l&apos;éditeur une contrefaçon.
+          </p>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">4. Données personnelles</h2>
+          <p>
+            Les informations recueillies sur le site StreamFlow font l&apos;objet d&apos;un traitement informatique destiné à la gestion des abonnements, à la personnalisation des services et à des fins statistiques. Conformément à la loi « Informatique et Libertés » du 6 janvier 1978 modifiée et au Règlement Général sur la Protection des Données (RGPD), vous disposez d&apos;un droit d&apos;accès, de rectification, d&apos;effacement, de limitation, d&apos;opposition et de portabilité des données vous concernant.
+          </p>
+          <p className="mt-4">
+            Pour exercer ces droits ou pour toute question sur le traitement de vos données, vous pouvez contacter notre Délégué à la Protection des Données (DPO) par email à dpo@streamflow.com ou par courrier à l&apos;adresse postale mentionnée ci-dessus.
+          </p>
+          <p className="mt-4">
+            Pour plus d&apos;informations sur la façon dont nous traitons vos données, veuillez consulter notre <a href="/confidentialite" className="text-primary hover:underline">Politique de confidentialité</a>.
+          </p>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">5. Cookies</h2>
+          <p>
+            Le site StreamFlow utilise des cookies pour améliorer l&apos;expérience utilisateur, analyser le trafic et personnaliser le contenu. En naviguant sur notre site, vous acceptez notre utilisation des cookies conformément à notre politique en matière de cookies.
+          </p>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">6. Limitations de responsabilité</h2>
+          <p>
+            StreamFlow s&apos;efforce d&apos;assurer au mieux de ses possibilités l&apos;exactitude et la mise à jour des informations diffusées sur son site, dont elle se réserve le droit de corriger, à tout moment et sans préavis, le contenu. Toutefois, StreamFlow ne peut garantir l&apos;exactitude, la précision ou l&apos;exhaustivité des informations mises à disposition sur son site.
+          </p>
+          <p className="mt-4">
+            En conséquence, StreamFlow décline toute responsabilité :
+          </p>
+          <ul className="list-disc pl-6 mt-4 space-y-2">
+            <li>Pour toute imprécision, inexactitude ou omission portant sur des informations disponibles sur le site</li>
+            <li>Pour tous dommages résultant d&apos;une intrusion frauduleuse d&apos;un tiers ayant entraîné une modification des informations mises à disposition sur le site</li>
+            <li>Et plus généralement pour tous dommages, directs ou indirects, qu&apos;elles qu&apos;en soient les causes, origines, natures ou conséquences, provoqués à raison de l&apos;accès de quiconque au site ou de l&apos;impossibilité d&apos;y accéder, de même que l&apos;utilisation du site et/ou du crédit accordé à une quelconque information provenant directement ou indirectement de ce dernier</li>
+          </ul>
+          
+          <h2 className="text-xl font-semibold mt-8 mb-4">7. Loi applicable et juridiction compétente</h2>
+          <p>
+            Les présentes mentions légales sont régies par la loi française. En cas de litige, les tribunaux français seront seuls compétents.
+          </p>
+          
+          <p className="mt-10 text-gray-400">
+            Dernière mise à jour : 22 juin 2023
+          </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
