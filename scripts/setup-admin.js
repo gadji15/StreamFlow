@@ -1,94 +1,80 @@
-// Script pour configurer le premier utilisateur administrateur
-// Exécutez ce script avec Node.js après avoir créé votre compte Firebase
-
+// Ce script crée le premier administrateur dans Firebase
 const { initializeApp } = require('firebase/app');
 const { 
   getAuth, 
-  createUserWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword 
 } = require('firebase/auth');
 const { 
   getFirestore, 
   doc, 
-  setDoc, 
-  serverTimestamp 
+  setDoc 
 } = require('firebase/firestore');
+
+// Chargez les variables d'environnement depuis .env.local
+require('dotenv').config({ path: '.env.local' });
 
 // Configuration Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyC8oDb6P233ChqVTi5jWyoQAytN8_jDZec",
-  authDomain: "stramflow.firebaseapp.com",
-  projectId: "stramflow",
-  storageBucket: "stramflow.firebasestorage.app",
-  messagingSenderId: "813946686204",
-  appId: "1:813946686204:web:bb0ce03ce479afb5b32579",
-  measurementId: "G-VNR14F6EMX"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Informations de l'admin
-const adminEmail = "gadjicheikh15@gmail.com";
-const adminPassword = "Messigadji2982";
-const adminName = "Gadji"; // Nom mis à jour selon votre demande
+// Informations de l'administrateur à créer
+const adminEmail = "admin@streamflow.com";
+const adminPassword = "Admin123!";
+const adminName = "Administrateur";
 
 async function setupAdmin() {
   try {
-    // Initialiser Firebase
+    console.log('Initialisation de Firebase...');
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     
     let userCredential;
+    let userId;
     
     try {
-      // Essayer de créer un nouvel utilisateur
-      console.log(`Création du compte utilisateur pour ${adminEmail}...`);
+      // Tenter de créer le compte administrateur
+      console.log(`Création du compte admin (${adminEmail})...`);
       userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-      console.log("Compte utilisateur créé avec succès");
+      userId = userCredential.user.uid;
+      console.log(`✅ Compte administrateur créé avec succès! UID: ${userId}`);
     } catch (createError) {
-      // Si l'utilisateur existe déjà, essayer de se connecter
       if (createError.code === 'auth/email-already-in-use') {
-        console.log("Utilisateur existant, tentative de connexion...");
+        console.log('L\'email existe déjà, tentative de connexion...');
+        // Si l'utilisateur existe déjà, on se connecte
         userCredential = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-        console.log("Connexion réussie");
+        userId = userCredential.user.uid;
+        console.log(`✅ Connexion réussie au compte existant! UID: ${userId}`);
       } else {
         throw createError;
       }
     }
     
-    // Récupérer l'UID de l'utilisateur
-    const uid = userCredential.user.uid;
-    console.log(`UID de l'utilisateur: ${uid}`);
-    
-    // Créer un document administrateur dans Firestore
-    console.log("Création du document admin dans Firestore...");
-    await setDoc(doc(db, "admins", uid), {
+    // Ajouter/mettre à jour les données de l'admin dans Firestore
+    console.log('Enregistrement des données administrateur dans Firestore...');
+    await setDoc(doc(db, "admins", userId), {
       email: adminEmail,
       name: adminName,
       role: "super_admin",
       isActive: true,
-      createdAt: serverTimestamp(),
-      permissions: {
-        canManageMovies: true,
-        canManageSeries: true,
-        canManageUsers: true,
-        canManageAdmins: true,
-        canManageSettings: true,
-        canViewStats: true,
-        canManageComments: true
-      }
+      createdAt: new Date().toISOString()
     });
     
-    console.log("Compte administrateur configuré avec succès!");
+    console.log('\n✅ Configuration de l\'administrateur terminée!');
+    console.log(`\nVous pouvez maintenant vous connecter à l'interface d'administration avec:`);
     console.log(`Email: ${adminEmail}`);
-    console.log(`Nom: ${adminName}`);
-    console.log(`Role: super_admin`);
-    console.log("\nVous pouvez maintenant vous connecter à l'interface admin.");
-    
-    // Déconnecter
-    await auth.signOut();
-    
+    console.log(`Mot de passe: ${adminPassword}`);
   } catch (error) {
-    console.error("Erreur lors de la configuration de l'administrateur:", error);
+    console.error('\n❌ Erreur lors de la configuration de l\'administrateur:');
+    console.error(error);
   }
 }
 
