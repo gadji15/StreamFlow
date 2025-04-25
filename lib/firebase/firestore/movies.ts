@@ -10,23 +10,14 @@ import {
   where, 
   orderBy, 
   limit,
-  startAfter,
-  QueryDocumentSnapshot,
-  Query,
   DocumentData,
   Timestamp,
   increment
 } from "firebase/firestore";
-import { 
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject
-} from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { firestore, storage } from "../config";
-import { addActivityLog } from "./activity-logs";
 
-// Types
+// Type pour les films
 export interface Movie {
   id?: string;
   title: string;
@@ -44,17 +35,18 @@ export interface Movie {
   status: "draft" | "published";
   rating?: number;
   views?: number;
-  tags?: string[];
   createdAt: string;
   updatedAt: string;
   createdBy: string;
   updatedBy?: string;
 }
 
-// Collection de référence
+// Nom de la collection
 const COLLECTION = "movies";
 
-// Ajouter un film
+// ===== OPÉRATIONS CRUD DE BASE =====
+
+// Créer un film
 export const addMovie = async (movie: Omit<Movie, "id" | "createdAt" | "updatedAt">, adminId: string): Promise<Movie> => {
   try {
     const now = new Date().toISOString();
@@ -70,15 +62,8 @@ export const addMovie = async (movie: Omit<Movie, "id" | "createdAt" | "updatedA
     
     const docRef = await addDoc(collection(firestore, COLLECTION), movieData);
     
-    // Journaliser l'activité
-    await addActivityLog({
-      action: "create",
-      entityType: "movie",
-      entityId: docRef.id,
-      details: `Création du film: ${movie.title}`,
-      performedBy: adminId,
-      timestamp: now
-    });
+    // Mettre à jour les statistiques
+    updateStatistics(true);
     
     return {
       id: docRef.id,
@@ -90,7 +75,7 @@ export const addMovie = async (movie: Omit<Movie, "id" | "createdAt" | "updatedA
   }
 };
 
-// Récupérer un film par ID
+// Lire un film
 export const getMovie = async (id: string): Promise<Movie | null> => {
   try {
     const docRef = doc(firestore, COLLECTION, id);
@@ -116,13 +101,23 @@ export const updateMovie = async (id: string, movieData: Partial<Movie>, adminId
     const now = new Date().toISOString();
     const movieRef = doc(firestore, COLLECTION, id);
     
-    // Récupérer le film actuel pour le log d'activité
-    const movieSnapshot = await getDoc(movieRef);
-    if (!movieSnapshot.exists()) {
+    // Récupérer le film actuel pour combiner les données
+    const movieSnap = await getDoc(movieRef);
+    if (!movieSnap.exists()) {
       throw new Error(`Film avec l'ID ${id} non trouvé`);
     }
     
-    const currentMovie = movieSnapshot.data() as Movie;
+    const currentMovie = movieSnap.data() as Movie;
+    
+    // Si le statut change de draft à published, mettre à jour les statistiques
+    if (currentMovie.status === "draft" && movieData.status === "published") {
+      updatePublishedStatistics(true);
+    }
+    
+    // Si le statut change de published à draft, mettre à jour les statistiques
+    if (currentMovie.status === "published" && movieData.status === "draft") {
+      updatePublishedStatistics(false);
+    }
     
     const updatedData = {
       ...movieData,
@@ -131,16 +126,6 @@ export const updateMovie = async (id: string, movieData: Partial<Movie>, adminId
     };
     
     await updateDoc(movieRef, updatedData);
-    
-    // Journaliser l'activité
-    await addActivityLog({
-      action: "update",
-      entityType: "movie",
-      entityId: id,
-      details: `Mise à jour du film: ${currentMovie.title}`,
-      performedBy: adminId,
-      timestamp: now
-    });
     
     return {
       id,
@@ -154,17 +139,17 @@ export const updateMovie = async (id: string, movieData: Partial<Movie>, adminId
 };
 
 // Supprimer un film
-export const deleteMovie = async (id: string, adminId: string): Promise<void> => {
+export const deleteMovie = async (id: string): Promise<void> => {
   try {
     const movieRef = doc(firestore, COLLECTION, id);
     
-    // Récupérer les informations du film pour la journalisation et suppression des images
-    const movieSnapshot = await getDoc(movieRef);
-    if (!movieSnapshot.exists()) {
+    // Récupérer les informations du film pour la mise à jour des statistiques
+    const movieSnap = await getDoc(movieRef);
+    if (!movieSnap.exists()) {
       throw new Error(`Film avec l'ID ${id} non trouvé`);
     }
     
-    const movieData = movieSnapshot.data() as Movie;
+    const movieData = movieSnap.data() as Movie;
     
     // Supprimer les images associées s'il y en a
     if (movieData.posterUrl) {
@@ -180,110 +165,116 @@ export const deleteMovie = async (id: string, adminId: string): Promise<void> =>
     // Supprimer le document
     await deleteDoc(movieRef);
     
-    // Journaliser l'activité
-    await addActivityLog({
-      action: "delete",
-      entityType: "movie",
-      entityId: id,
-      details: `Suppression du film: ${movieData.title}`,
-      performedBy: adminId,
-      timestamp: new Date().toISOString()
-    });
+    // Mettre à jour les statistiques
+    updateStatistics(false);
+    
+    // Mettre à jour les statistiques publiées si nécessaire
+    if (movieData.status === "published") {
+      updatePublishedStatistics(false);
+    }
   } catch (error) {
     console.error(`Erreur lors de la suppression du film ${id}:`, error);
     throw error;
   }
 };
 
-// Récupérer une liste de films avec filtres et pagination
-export const getMovies = async (
-  options: {
-    status?: "draft" | "published",
-    vipOnly?: boolean,
-    genre?: string,
-    searchQuery?: string,
-    sortBy?: "title" | "releaseYear" | "createdAt" | "views" | "rating",
-    sortDirection?: "asc" | "desc",
-    limit?: number,
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
-    startAfterTitle?: string
-  } = {}
-): Promise<{movies: Movie[], lastDoc: QueryDocumentSnapshot<DocumentData> | null}> => {
+// ===== REQUÊTES SPÉCIFIQUES =====
+
+// Récupérer tous les films
+export const getAllMovies = async (): Promise<Movie[]> => {
   try {
-    let q: Query<DocumentData> = collection(firestore, COLLECTION);
-    
-    const {
-      status,
-      vipOnly,
-      genre,
-      searchQuery,
-      sortBy = "createdAt",
-      sortDirection = "desc",
-      limit: limitCount = 20,
-      startAfterDoc,
-      startAfterTitle
-    } = options;
-    
-    // Ajouter les filtres si présents
-    if (status) {
-      q = query(q, where("status", "==", status));
-    }
-    
-    if (vipOnly !== undefined) {
-      q = query(q, where("vipOnly", "==", vipOnly));
-    }
-    
-    if (genre) {
-      q = query(q, where("genres", "array-contains", genre));
-    }
-    
-    // Recherche textuelle simple via titre
-    if (searchQuery) {
-      // Firestore n'a pas de recherche texte native efficace
-      // Solution simple: utiliser la recherche par préfixe pour les titres
-      // Méthode plus avancée: utiliser une solution de recherche dédiée comme Algolia
-      q = query(q, where("title", ">=", searchQuery), where("title", "<=", searchQuery + "\uf8ff"));
-    }
-    
-    // Ajouter le tri
-    q = query(q, orderBy(sortBy, sortDirection));
-    
-    // Ajouter la pagination
-    if (startAfterDoc) {
-      q = query(q, startAfter(startAfterDoc));
-    } else if (startAfterTitle && sortBy === "title") {
-      q = query(q, startAfter(startAfterTitle));
-    }
-    
-    // Limiter le nombre de résultats
-    q = query(q, limit(limitCount));
-    
-    // Exécuter la requête
+    const q = query(collection(firestore, COLLECTION), orderBy("updatedAt", "desc"));
     const querySnapshot = await getDocs(q);
     
-    // Formatage des résultats
-    const movies = querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as Movie));
-    
-    return {
-      movies,
-      lastDoc: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null
-    };
   } catch (error) {
     console.error("Erreur lors de la récupération des films:", error);
     throw error;
   }
 };
 
-// Incrémenter le compteur de vues
+// Récupérer les films publiés
+export const getPublishedMovies = async (): Promise<Movie[]> => {
+  try {
+    const q = query(
+      collection(firestore, COLLECTION),
+      where("status", "==", "published"),
+      orderBy("updatedAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Movie));
+  } catch (error) {
+    console.error("Erreur lors de la récupération des films publiés:", error);
+    throw error;
+  }
+};
+
+// Récupérer les films d'un genre spécifique
+export const getMoviesByGenre = async (genre: string): Promise<Movie[]> => {
+  try {
+    const q = query(
+      collection(firestore, COLLECTION),
+      where("status", "==", "published"),
+      where("genres", "array-contains", genre),
+      orderBy("updatedAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Movie));
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des films du genre ${genre}:`, error);
+    throw error;
+  }
+};
+
+// Récupérer les films VIP
+export const getVIPMovies = async (): Promise<Movie[]> => {
+  try {
+    const q = query(
+      collection(firestore, COLLECTION),
+      where("status", "==", "published"),
+      where("vipOnly", "==", true),
+      orderBy("updatedAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Movie));
+  } catch (error) {
+    console.error("Erreur lors de la récupération des films VIP:", error);
+    throw error;
+  }
+};
+
+// ===== FONCTIONNALITÉS SPÉCIALES =====
+
+// Incrémenter le nombre de vues d'un film
 export const incrementMovieViews = async (id: string): Promise<void> => {
   try {
     const movieRef = doc(firestore, COLLECTION, id);
+    
     await updateDoc(movieRef, {
       views: increment(1),
       updatedAt: new Date().toISOString()
+    });
+    
+    // Mettre à jour les statistiques globales de vues
+    const statsRef = doc(firestore, "statistics", "global");
+    await updateDoc(statsRef, {
+      totalViews: increment(1),
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     console.error(`Erreur lors de l'incrémentation des vues du film ${id}:`, error);
@@ -291,111 +282,70 @@ export const incrementMovieViews = async (id: string): Promise<void> => {
   }
 };
 
-// Télécharger une image pour un film (poster ou backdrop)
-export const uploadMovieImage = async (
-  file: File,
-  movieId: string,
-  type: "poster" | "backdrop"
-): Promise<string> => {
+// Télécharger une image de poster
+export const uploadPoster = async (file: File, movieId: string): Promise<string> => {
   try {
-    // Créer un chemin unique pour l'image
-    const extension = file.name.split(".").pop();
-    const path = `movies/${movieId}/${type}_${Date.now()}.${extension}`;
-    const storageRef = ref(storage, path);
+    // Créer une référence unique pour le fichier
+    const fileRef = ref(storage, `movies/${movieId}/poster_${Date.now()}`);
     
     // Télécharger le fichier
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    await uploadBytes(fileRef, file);
     
-    // Attendre que le téléchargement soit terminé
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Progression du téléchargement
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Téléchargement ${type}: ${progress}%`);
-        },
-        (error) => {
-          // Erreur
-          console.error(`Erreur lors du téléchargement de l'image ${type}:`, error);
-          reject(error);
-        },
-        async () => {
-          // Téléchargement terminé
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        }
-      );
+    // Obtenir l'URL de téléchargement
+    const downloadURL = await getDownloadURL(fileRef);
+    
+    return downloadURL;
+  } catch (error) {
+    console.error("Erreur lors du téléchargement du poster:", error);
+    throw error;
+  }
+};
+
+// Télécharger une image de fond
+export const uploadBackdrop = async (file: File, movieId: string): Promise<string> => {
+  try {
+    // Créer une référence unique pour le fichier
+    const fileRef = ref(storage, `movies/${movieId}/backdrop_${Date.now()}`);
+    
+    // Télécharger le fichier
+    await uploadBytes(fileRef, file);
+    
+    // Obtenir l'URL de téléchargement
+    const downloadURL = await getDownloadURL(fileRef);
+    
+    return downloadURL;
+  } catch (error) {
+    console.error("Erreur lors du téléchargement de l'image de fond:", error);
+    throw error;
+  }
+};
+
+// ===== FONCTIONS UTILITAIRES =====
+
+// Mettre à jour les statistiques globales des films
+const updateStatistics = async (isAddition: boolean): Promise<void> => {
+  try {
+    const statsRef = doc(firestore, "statistics", "global");
+    
+    await updateDoc(statsRef, {
+      totalMovies: increment(isAddition ? 1 : -1),
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
-    console.error(`Erreur lors du téléchargement de l'image ${type}:`, error);
-    throw error;
+    console.error("Erreur lors de la mise à jour des statistiques:", error);
   }
 };
 
-// Obtenir les films populaires
-export const getPopularMovies = async (limit: number = 10): Promise<Movie[]> => {
+// Mettre à jour les statistiques des films publiés
+const updatePublishedStatistics = async (isAddition: boolean): Promise<void> => {
   try {
-    const q = query(
-      collection(firestore, COLLECTION),
-      where("status", "==", "published"),
-      orderBy("views", "desc"),
-      limit(limit)
-    );
+    const statsRef = doc(firestore, "statistics", "global");
     
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Movie));
+    await updateDoc(statsRef, {
+      publishedMovies: increment(isAddition ? 1 : -1),
+      lastUpdated: new Date().toISOString()
+    });
   } catch (error) {
-    console.error("Erreur lors de la récupération des films populaires:", error);
-    throw error;
-  }
-};
-
-// Obtenir les films récents
-export const getRecentMovies = async (limit: number = 10): Promise<Movie[]> => {
-  try {
-    const q = query(
-      collection(firestore, COLLECTION),
-      where("status", "==", "published"),
-      orderBy("createdAt", "desc"),
-      limit(limit)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Movie));
-  } catch (error) {
-    console.error("Erreur lors de la récupération des films récents:", error);
-    throw error;
-  }
-};
-
-// Obtenir les films par genre
-export const getMoviesByGenre = async (genre: string, limit: number = 10): Promise<Movie[]> => {
-  try {
-    const q = query(
-      collection(firestore, COLLECTION),
-      where("status", "==", "published"),
-      where("genres", "array-contains", genre),
-      orderBy("createdAt", "desc"),
-      limit(limit)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Movie));
-  } catch (error) {
-    console.error(`Erreur lors de la récupération des films par genre ${genre}:`, error);
-    throw error;
+    console.error("Erreur lors de la mise à jour des statistiques de films publiés:", error);
   }
 };
