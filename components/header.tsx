@@ -19,6 +19,14 @@ import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
 import { VipBadge } from "./vip-badge"
 
+function VipBadgeComponent() {
+  return (
+    <span className="ml-1 text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full font-bold">
+      VIP
+    </span>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname()
   const isMobile = useMobile()
@@ -55,18 +63,18 @@ export default function Header() {
         isScrolled ? "bg-black/90 backdrop-blur-sm" : "bg-gradient-to-b from-black/80 to-transparent",
       )}
     >
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center">
-          <Link href="/" className="text-2xl font-bold text-white flex items-center">
+          <Link href="/" className="text-xl sm:text-2xl font-bold text-white flex items-center">
             <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">StreamFlow</span>
-            {isUserVIP && <VipBadge />}
+            {isUserVIP && <VipBadgeComponent />}
           </Link>
         </div>
 
         {/* Navigation - Desktop */}
         {!isMobile && (
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
             {navLinks.map((link) => {
               // Si le lien est réservé aux VIP et que l'utilisateur n'est pas VIP, ne pas l'afficher
               if (link.vipOnly && !isUserVIP) return null
@@ -82,7 +90,7 @@ export default function Header() {
                   )}
                 >
                   {link.name}
-                  {link.vipOnly && <VipBadge />}
+                  {link.vipOnly && <VipBadgeComponent />}
                 </Link>
               )
             })}
@@ -91,7 +99,7 @@ export default function Header() {
 
         {/* Actions - Desktop */}
         {!isMobile && (
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
             <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
               <Bell className="h-5 w-5" />
             </Button>
@@ -100,7 +108,7 @@ export default function Header() {
 
             {!isUserVIP && (
               <Link href="/abonnement">
-                <Button className="bg-gradient-to-r from-amber-400 to-yellow-600 text-black hover:from-amber-500 hover:to-yellow-700">
+                <Button className="bg-gradient-to-r from-amber-400 to-yellow-600 text-black hover:from-amber-500 hover:to-yellow-700 text-xs md:text-sm px-2 md:px-3">
                   Devenir VIP
                 </Button>
               </Link>
@@ -151,7 +159,7 @@ export default function Header() {
 
         {/* Menu mobile */}
         {isMobile && (
-          <div className="flex items-center">
+          <div className="flex items-center space-x-1">
             <Button
               variant="ghost"
               size="icon"
@@ -184,7 +192,7 @@ export default function Header() {
                     )}
                   >
                     {link.name}
-                    {link.vipOnly && <VipBadge />}
+                    {link.vipOnly && <VipBadgeComponent />}
                   </Link>
                 )
               })}

@@ -62,15 +62,15 @@ export function HeroSection() {
   }
   
   return (
-    <section className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden bg-gray-900">
+    <section className="relative w-full h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden bg-gray-900">
       {/* Background */}
       <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-800">
-        <div className="text-8xl font-bold">BACKGROUND</div>
+        <div className="text-6xl sm:text-7xl lg:text-8xl font-bold">BACKGROUND</div>
       </div>
       
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent">
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent">
         <div className="container h-full flex flex-col justify-center px-4 md:px-6">
-          <div className="max-w-2xl">
+          <div className="max-w-full sm:max-w-2xl">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentMovie.id}
@@ -78,54 +78,54 @@ export function HeroSection() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-4"
+                className="space-y-3 md:space-y-4"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="border-primary text-primary">
+                <div className="space-y-1 md:space-y-2">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <Badge variant="outline" className="border-primary text-primary text-xs">
                       En vedette
                     </Badge>
-                    <div className="flex items-center text-yellow-400 text-sm">
+                    <div className="flex items-center text-yellow-400 text-xs">
                       {currentMovie.rating} ★
                     </div>
                   </div>
                   
-                  <h1 className="text-4xl md:text-6xl font-bold text-white">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
                     {currentMovie.title}
                   </h1>
                   
-                  <div className="flex items-center space-x-2 text-gray-400 text-sm">
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-gray-400 text-xs">
                     <span>{currentMovie.year}</span>
-                    <span>•</span>
+                    <span className="hidden xs:inline">•</span>
                     <span>{currentMovie.duration}</span>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 py-2">
+                  <div className="flex flex-wrap gap-1 py-1 md:py-2">
                     {currentMovie.genres.map(genre => (
-                      <Badge key={genre} variant="secondary" className="text-xs">
+                      <Badge key={genre} variant="secondary" className="text-[10px] md:text-xs">
                         {genre}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 
-                <p className="text-base md:text-lg text-gray-300 line-clamp-3 md:line-clamp-none">
+                <p className="text-sm md:text-base text-gray-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-none max-w-md lg:max-w-xl">
                   {currentMovie.description}
                 </p>
                 
-                <div className="flex flex-wrap gap-4 pt-4">
-                  <Button className="bg-primary hover:bg-primary/90 text-white">
-                    <Play className="mr-2 h-4 w-4" /> Regarder
+                <div className="flex flex-wrap gap-3 pt-2 md:pt-4">
+                  <Button className="bg-primary hover:bg-primary/90 h-9 px-3 md:h-10 md:px-4">
+                    <Play className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Regarder
                   </Button>
-                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
-                    <Info className="mr-2 h-4 w-4" /> Plus d'infos
+                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800 h-9 px-3 md:h-10 md:px-4">
+                    <Info className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Plus d'infos
                   </Button>
                 </div>
               </motion.div>
             </AnimatePresence>
             
             {/* Indicateurs de slide et navigation */}
-            <div className="flex items-center space-x-4 mt-8">
+            <div className="flex items-center space-x-4 mt-6 md:mt-8">
               <div className="flex space-x-2">
                 {featuredMovies.map((_, index) => (
                   <button
@@ -134,6 +134,7 @@ export function HeroSection() {
                       index === currentIndex ? "bg-primary" : "bg-gray-700"
                     }`}
                     onClick={() => setCurrentIndex(index)}
+                    aria-label={`Voir le film ${index + 1}`}
                   />
                 ))}
               </div>
@@ -143,7 +144,8 @@ export function HeroSection() {
                   onClick={prevMovie} 
                   variant="outline" 
                   size="icon" 
-                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800"
+                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
+                  aria-label="Film précédent"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -151,7 +153,8 @@ export function HeroSection() {
                   onClick={nextMovie} 
                   variant="outline" 
                   size="icon" 
-                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800"
+                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
+                  aria-label="Film suivant"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

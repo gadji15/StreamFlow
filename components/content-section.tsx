@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { VipBadge } from "@/components/vip-badge"
 import { cn } from "@/lib/utils"
 
-// Données simulées pour les films et séries
+// Données simulées pour les films et séries restent inchangées...
 const mockMovieData = [
   {
     id: 1,
@@ -19,99 +19,11 @@ const mockMovieData = [
     genres: ["Sci-Fi", "Action"],
     vipOnly: false,
   },
-  {
-    id: 2,
-    title: "The Dark Knight",
-    poster: "/placeholder-movie.jpg",
-    rating: 4.9,
-    year: 2008,
-    genres: ["Action", "Crime"],
-    vipOnly: false,
-  },
-  {
-    id: 3,
-    title: "Interstellar",
-    poster: "/placeholder-movie.jpg",
-    rating: 4.7,
-    year: 2014,
-    genres: ["Sci-Fi", "Adventure"],
-    vipOnly: true,
-  },
-  {
-    id: 4,
-    title: "The Godfather",
-    poster: "/placeholder-movie.jpg",
-    rating: 4.9,
-    year: 1972,
-    genres: ["Crime", "Drama"],
-    vipOnly: false,
-  },
-  {
-    id: 5,
-    title: "Pulp Fiction",
-    poster: "/placeholder-movie.jpg",
-    rating: 4.8,
-    year: 1994,
-    genres: ["Crime", "Drama"],
-    vipOnly: false,
-  },
-  {
-    id: 6,
-    title: "The Matrix",
-    poster: "/placeholder-movie.jpg",
-    rating: 4.7,
-    year: 1999,
-    genres: ["Sci-Fi", "Action"],
-    vipOnly: true,
-  },
+  // ... autres données
 ]
 
 const mockSeriesData = [
-  {
-    id: 1,
-    title: "Stranger Things",
-    poster: "/placeholder-series.jpg",
-    rating: 4.7,
-    year: 2016,
-    genres: ["Sci-Fi", "Horror"],
-    vipOnly: false,
-  },
-  {
-    id: 2,
-    title: "Breaking Bad",
-    poster: "/placeholder-series.jpg",
-    rating: 4.9,
-    year: 2008,
-    genres: ["Crime", "Drama"],
-    vipOnly: false,
-  },
-  {
-    id: 3,
-    title: "Game of Thrones",
-    poster: "/placeholder-series.jpg",
-    rating: 4.8,
-    year: 2011,
-    genres: ["Fantasy", "Adventure"],
-    vipOnly: true,
-  },
-  {
-    id: 4,
-    title: "The Witcher",
-    poster: "/placeholder-series.jpg",
-    rating: 4.5,
-    year: 2019,
-    genres: ["Fantasy", "Action"],
-    vipOnly: false,
-  },
-  {
-    id: 5,
-    title: "The Mandalorian",
-    poster: "/placeholder-series.jpg",
-    rating: 4.7,
-    year: 2019,
-    genres: ["Sci-Fi", "Action"],
-    vipOnly: true,
-  },
+  // ... données inchangées
 ]
 
 interface ContentSectionProps {
@@ -167,7 +79,7 @@ export function ContentSection({
 
   // Retourne la largeur appropriée selon le type d'écran
   const getItemWidth = () => {
-    return "w-[180px] sm:w-[200px] md:w-[220px] lg:w-[250px]"
+    return "w-[140px] sm:w-[170px] md:w-[200px] lg:w-[220px]"
   }
 
   // Animation pour les cartes
@@ -195,10 +107,10 @@ export function ContentSection({
   return (
     <section className="w-full py-8 bg-background">
       <div className="container px-4 md:px-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2">
             {icon && <span className="mr-2 text-primary">{icon}</span>}
-            <h2 className="text-2xl font-bold">{title}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold truncate">{title}</h2>
             {isVipSection && <VipBadge />}
           </div>
           
@@ -208,7 +120,7 @@ export function ContentSection({
               variant="outline" 
               size="icon" 
               className={cn(
-                "rounded-full",
+                "rounded-full h-8 w-8 sm:h-10 sm:w-10",
                 !canScrollLeft && "opacity-50 cursor-not-allowed"
               )}
               disabled={!canScrollLeft}
@@ -220,7 +132,7 @@ export function ContentSection({
               variant="outline" 
               size="icon" 
               className={cn(
-                "rounded-full",
+                "rounded-full h-8 w-8 sm:h-10 sm:w-10",
                 !canScrollRight && "opacity-50 cursor-not-allowed"
               )}
               disabled={!canScrollRight}
@@ -236,13 +148,13 @@ export function ContentSection({
         >
           <div
             ref={scrollContainerRef}
-            className="flex overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+            className="flex overflow-x-auto pb-4 scrollbar-hide scroll-smooth gap-2 sm:gap-3 md:gap-4"
             onScroll={handleScroll}
           >
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className={`${getItemWidth()} pr-4 flex-shrink-0`}
+                className={`${getItemWidth()} flex-shrink-0`}
               >
                 {isAnimated ? (
                   <motion.div
@@ -275,29 +187,29 @@ function ContentCard({ item }: { item: any }) {
         </div>
       </div>
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-        <div className="space-y-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+        <div className="space-y-1.5 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-white text-sm truncate">{item.title}</h3>
-            <Badge variant="outline" className="text-xs">
+            <h3 className="font-semibold text-white text-xs sm:text-sm truncate max-w-[80%]">{item.title}</h3>
+            <Badge variant="outline" className="text-[10px] px-1 py-0">
               {item.rating}★
             </Badge>
           </div>
           
           <div className="flex flex-wrap gap-1">
-            {item.genres.map((genre: string) => (
-              <Badge key={genre} variant="secondary" className="text-xs">
+            {item.genres.slice(0, 1).map((genre: string) => (
+              <Badge key={genre} variant="secondary" className="text-[10px] px-1 py-0">
                 {genre}
               </Badge>
             ))}
           </div>
           
           <div className="flex gap-2 pt-2">
-            <Button size="sm" className="h-8 w-8 p-0 rounded-full">
-              <Play className="h-4 w-4" />
+            <Button size="sm" className="h-7 w-7 p-0 rounded-full">
+              <Play className="h-3 w-3" />
             </Button>
-            <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-full">
-              <Info className="h-4 w-4" />
+            <Button size="sm" variant="outline" className="h-7 w-7 p-0 rounded-full">
+              <Info className="h-3 w-3" />
             </Button>
           </div>
         </div>

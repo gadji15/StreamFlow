@@ -72,10 +72,31 @@
   
   main {
     flex: 1 0 auto;
+    padding-top: 4rem; /* Ajoute un padding-top pour éviter que le header chevauche le contenu */
   }
   
   footer {
     flex-shrink: 0;
+  }
+  
+  /* Styles pour les textes tronqués */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Media queries pour les ajustements responsive supplémentaires */
+  @media (max-width: 640px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    h1, h2, h3 {
+      word-break: break-word;
+    }
   }
 }
 
