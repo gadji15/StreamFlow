@@ -3,8 +3,9 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Header from "@/components/header";
-import { Footer } from "@/components/footer"; // Vérifier cette importation
+import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <ScrollToTop />
         </ThemeProvider>
       </body>
     </html>
