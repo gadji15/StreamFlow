@@ -10,7 +10,7 @@ interface AnimatedBackgroundProps {
   parallaxStrength?: number
 }
 
-export default function AnimatedBackground({
+export function AnimatedBackground({
   children,
   imageUrl,
   overlayOpacity = 0.5,
