@@ -3,7 +3,7 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Header from "@/components/header";
-import { Footer } from "@/components/footer";
+import { Footer } from "@/components/footer"; // Vérifier cette importation
 import { ThemeProvider } from "@/components/theme-provider";
 
 const fontSans = FontSans({
@@ -35,9 +35,9 @@ export default function RootLayout({
           enableSystem
         >
           <Header />
-          <div className="flex-1">
+          <main className="flex-1">
             {children}
-          </div>
+          </main>
           <Footer />
         </ThemeProvider>
       </body>

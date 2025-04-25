@@ -57,6 +57,26 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Assurer que le footer reste en bas */
+  html, body {
+    height: 100%;
+    min-height: 100vh;
+  }
+  
+  body > div {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  main {
+    flex: 1 0 auto;
+  }
+  
+  footer {
+    flex-shrink: 0;
+  }
 }
 
 /* Masquer la barre de défilement tout en permettant le défilement */
