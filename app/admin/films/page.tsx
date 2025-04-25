@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,8 @@ import {
   Trash2, 
   Film,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react"
 import {
   Table,
@@ -30,102 +31,102 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-// Données de films simulées
-const mockFilms = [
-  {
-    id: "1",
-    title: "Inception",
-    releaseYear: 2010,
-    genre: "Science-Fiction",
-    duration: "2h 28min",
-    vipOnly: false,
-    status: "publié"
-  },
-  {
-    id: "2",
-    title: "The Dark Knight",
-    releaseYear: 2008,
-    genre: "Action",
-    duration: "2h 32min",
-    vipOnly: false,
-    status: "publié"
-  },
-  {
-    id: "3",
-    title: "Interstellar",
-    releaseYear: 2014,
-    genre: "Science-Fiction",
-    duration: "2h 49min",
-    vipOnly: true,
-    status: "publié"
-  },
-  {
-    id: "4",
-    title: "Pulp Fiction",
-    releaseYear: 1994,
-    genre: "Crime",
-    duration: "2h 34min",
-    vipOnly: false,
-    status: "publié"
-  },
-  {
-    id: "5",
-    title: "The Godfather",
-    releaseYear: 1972,
-    genre: "Crime",
-    duration: "2h 55min",
-    vipOnly: false,
-    status: "publié"
-  },
-  {
-    id: "6",
-    title: "Fight Club",
-    releaseYear: 1999,
-    genre: "Drame",
-    duration: "2h 19min",
-    vipOnly: true,
-    status: "brouillon"
-  },
-  {
-    id: "7",
-    title: "The Matrix",
-    releaseYear: 1999,
-    genre: "Science-Fiction",
-    duration: "2h 16min",
-    vipOnly: false,
-    status: "publié"
-  }
-]
+import { useToast } from "@/components/ui/use-toast"
+import { getMovies, deleteMovie, Movie } from "@/lib/firebase"
+import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore"
 
 export default function FilmsPage() {
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("tous")
+  const [statusFilter, setStatusFilter] = useState<"published" | "draft" | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedFilm, setSelectedFilm] = useState<typeof mockFilms[0] | null>(null)
+  const [selectedFilm, setSelectedFilm] = useState<Movie | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [films, setFilms] = useState<Movie[]>([])
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
+  const [adminId, setAdminId] = useState<string | null>(null)
   
-  // Filtrer les films en fonction de la recherche et du filtre de statut
-  const filteredFilms = mockFilms.filter(film => {
-    const matchesSearch = film.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         film.genre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         film.releaseYear.toString().includes(searchQuery)
+  useEffect(() => {
+    // Récupérer l'ID de l'admin connecté
+    const storedAdminId = localStorage.getItem("adminId")
+    if (storedAdminId) {
+      setAdminId(storedAdminId)
+    }
     
-    const matchesStatus = statusFilter === "tous" || film.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
+    loadFilms()
+  }, [statusFilter])
   
-  const handleDeleteClick = (film: typeof mockFilms[0]) => {
+  const loadFilms = async () => {
+    setIsLoading(true)
+    try {
+      const result = await getMovies({
+        status: statusFilter || undefined,
+        searchQuery: searchQuery || undefined,
+        sortBy: "updatedAt",
+        sortDirection: "desc",
+        limit: 20
+      })
+      
+      setFilms(result.movies)
+      setLastDoc(result.lastDoc)
+    } catch (error) {
+      console.error("Erreur lors du chargement des films:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger la liste des films",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  const handleSearch = () => {
+    loadFilms()
+  }
+  
+  const handleDeleteClick = (film: Movie) => {
+    if (!film.id) return
+    
     setSelectedFilm(film)
     setDeleteDialogOpen(true)
   }
   
-  const handleDeleteConfirm = () => {
-    // Ici, vous implémenteriez la logique de suppression réelle
-    console.log(`Suppression du film: ${selectedFilm?.title}`)
-    setDeleteDialogOpen(false)
-    setSelectedFilm(null)
-    // Dans une application réelle, vous appelleriez une API ou un service Firebase ici
+  const handleDeleteConfirm = async () => {
+    if (!selectedFilm?.id || !adminId) return
+    
+    setIsDeleting(true)
+    
+    try {
+      await deleteMovie(selectedFilm.id, adminId)
+      
+      // Mettre à jour la liste des films
+      setFilms(films.filter(film => film.id !== selectedFilm.id))
+      
+      toast({
+        title: "Film supprimé",
+        description: `${selectedFilm.title} a été supprimé avec succès`,
+        variant: "default"
+      })
+    } catch (error) {
+      console.error("Erreur lors de la suppression du film:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le film",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+      setSelectedFilm(null)
+    }
+  }
+  
+  const getFormattedDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return `${hours}h ${mins.toString().padStart(2, '0')}min`
   }
   
   return (
@@ -150,30 +151,31 @@ export default function FilmsPage() {
             className="pl-10 w-full bg-gray-800 border-gray-700 text-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
         </div>
         
         <div className="flex gap-2">
           <Button 
-            variant={statusFilter === "tous" ? "default" : "outline"} 
+            variant={statusFilter === null ? "default" : "outline"} 
             size="sm"
-            onClick={() => setStatusFilter("tous")}
+            onClick={() => setStatusFilter(null)}
             className="whitespace-nowrap"
           >
             Tous
           </Button>
           <Button 
-            variant={statusFilter === "publié" ? "default" : "outline"} 
+            variant={statusFilter === "published" ? "default" : "outline"} 
             size="sm"
-            onClick={() => setStatusFilter("publié")}
+            onClick={() => setStatusFilter("published")}
             className="whitespace-nowrap"
           >
             Publiés
           </Button>
           <Button 
-            variant={statusFilter === "brouillon" ? "default" : "outline"} 
+            variant={statusFilter === "draft" ? "default" : "outline"} 
             size="sm"
-            onClick={() => setStatusFilter("brouillon")}
+            onClick={() => setStatusFilter("draft")}
             className="whitespace-nowrap"
           >
             Brouillons
@@ -203,65 +205,96 @@ export default function FilmsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFilms.map((film) => (
-              <TableRow key={film.id} className="border-gray-800">
-                <TableCell className="font-medium text-white">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded bg-gray-700 flex items-center justify-center mr-3">
-                      <Film className="h-4 w-4 text-gray-400" />
-                    </div>
-                    {film.title}
-                  </div>
-                </TableCell>
-                <TableCell>{film.releaseYear}</TableCell>
-                <TableCell className="hidden md:table-cell">{film.genre}</TableCell>
-                <TableCell className="hidden md:table-cell">{film.duration}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    film.status === "publié" 
-                      ? "bg-green-500/20 text-green-500" 
-                      : "bg-orange-500/20 text-orange-500"
-                  }`}>
-                    {film.status}
-                  </span>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {film.vipOnly ? (
-                    <span className="bg-amber-500/20 text-amber-500 px-2 py-1 rounded-full text-xs font-medium">
-                      VIP
-                    </span>
-                  ) : (
-                    <span className="bg-blue-500/20 text-blue-500 px-2 py-1 rounded-full text-xs font-medium">
-                      Tous
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Link href={`/admin/films/edit/${film.id}`}>
-                      <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="text-gray-400 hover:text-red-500"
-                      onClick={() => handleDeleteClick(film)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-40 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                    <p className="text-gray-400">Chargement des films...</p>
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
-            
-            {filteredFilms.length === 0 && (
+            ) : films.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-gray-400">
-                  Aucun film trouvé pour cette recherche.
+                  {searchQuery ? (
+                    <p>Aucun film trouvé pour cette recherche.</p>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Film className="h-10 w-10 text-gray-600 mb-2" />
+                      <p className="mb-1">Aucun film n'a été ajouté.</p>
+                      <Link href="/admin/films/add">
+                        <Button size="sm" className="mt-2">
+                          <Plus className="mr-1 h-4 w-4" /> Ajouter un film
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
+            ) : (
+              films.map((film) => (
+                <TableRow key={film.id} className="border-gray-800">
+                  <TableCell className="font-medium text-white">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded overflow-hidden bg-gray-700 flex items-center justify-center mr-3">
+                        {film.posterUrl ? (
+                          <img 
+                            src={film.posterUrl}
+                            alt={film.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Film className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
+                      {film.title}
+                    </div>
+                  </TableCell>
+                  <TableCell>{film.releaseYear}</TableCell>
+                  <TableCell className="hidden md:table-cell">{film.genre}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {film.duration ? getFormattedDuration(film.duration) : "--"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      film.status === "published" 
+                        ? "bg-green-500/20 text-green-500" 
+                        : "bg-orange-500/20 text-orange-500"
+                    }`}>
+                      {film.status === "published" ? "publié" : "brouillon"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {film.vipOnly ? (
+                      <span className="bg-amber-500/20 text-amber-500 px-2 py-1 rounded-full text-xs font-medium">
+                        VIP
+                      </span>
+                    ) : (
+                      <span className="bg-blue-500/20 text-blue-500 px-2 py-1 rounded-full text-xs font-medium">
+                        Tous
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Link href={`/admin/films/edit/${film.id}`}>
+                        <Button size="icon" variant="ghost" className="text-gray-400 hover:text-white">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="text-gray-400 hover:text-red-500"
+                        onClick={() => handleDeleteClick(film)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
@@ -270,14 +303,14 @@ export default function FilmsPage() {
       {/* Pagination */}
       <div className="flex items-center justify-between mt-4">
         <p className="text-sm text-gray-400">
-          Affichage de {filteredFilms.length} films sur {mockFilms.length}
+          {films.length} films affichés
         </p>
         
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="icon" disabled>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" disabled>
+          <Button variant="outline" size="icon" disabled={!lastDoc}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -296,14 +329,23 @@ export default function FilmsPage() {
             <Button 
               variant="outline" 
               onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
             >
               Annuler
             </Button>
             <Button 
               variant="destructive"
               onClick={handleDeleteConfirm}
+              disabled={isDeleting}
             >
-              Supprimer
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

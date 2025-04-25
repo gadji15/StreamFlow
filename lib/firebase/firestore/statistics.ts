@@ -1,358 +1,226 @@
-import { db } from "../config";
-import { getRecentActivity } from "./activity-logs";
-import { getCommentsStatistics } from "./comments";
-import { getPopularMovies } from "./movies";
-import { getPopularSeries } from "./series";
-import { getUserStatistics } from "./users";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit
+import { firestore } from "../config";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  getDoc,
+  doc,
+  setDoc,
+  updateDoc,
+  runTransaction,
+  serverTimestamp,
+  Timestamp,
+  increment
 } from "firebase/firestore";
 
-// Get dashboard statistics
-export const getDashboardStatistics = async (): Promise<{
-  users: {
-    total: number;
-    active: number;
-    vip: number;
-    newLast30Days: number;
-  };
-  content: {
-    totalMovies: number;
-    publishedMovies: number;
-    totalSeries: number;
-    publishedSeries: number;
-    totalEpisodes: number;
-  };
-  comments: {
-    total: number;
-    approved: number;
-    pending: number;
-    rejected: number;
-    reported: number;
-  };
-  popular: {
-    movies: any[];
-    series: any[];
-  };
-  recentActivity: any[];
-}> => {
+// Type pour les statistiques
+export interface Statistics {
+  totalUsers: number;
+  activeUsers: number;
+  vipUsers: number;
+  totalMovies: number;
+  publishedMovies: number;
+  totalSeries: number;
+  publishedSeries: number;
+  totalViews: number;
+  topGenres: { [genre: string]: number };
+  lastUpdated: string;
+}
+
+// Nom de la collection et du document
+const COLLECTION = "statistics";
+const STATS_DOC_ID = "global";
+
+// Initialiser ou récupérer les statistiques globales
+export const getOrCreateStats = async (): Promise<Statistics> => {
   try {
-    // Get user statistics
-    const userStats = await getUserStatistics();
+    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    const statsDoc = await getDoc(statsRef);
     
-    // Get comments statistics
-    const commentStats = await getCommentsStatistics();
+    if (statsDoc.exists()) {
+      return statsDoc.data() as Statistics;
+    } else {
+      // Statistiques par défaut
+      const defaultStats: Statistics = {
+        totalUsers: 0,
+        activeUsers: 0,
+        vipUsers: 0,
+        totalMovies: 0,
+        publishedMovies: 0,
+        totalSeries: 0,
+        publishedSeries: 0,
+        totalViews: 0,
+        topGenres: {},
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await setDoc(statsRef, defaultStats);
+      return defaultStats;
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des statistiques:", error);
+    throw error;
+  }
+};
+
+// Mettre à jour les statistiques après une action spécifique
+export const updateStats = async (updates: Partial<Statistics>): Promise<void> => {
+  try {
+    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
     
-    // Count movies
-    const moviesQuery = query(collection(db, "movies"));
+    await updateDoc(statsRef, {
+      ...updates,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des statistiques:", error);
+    throw error;
+  }
+};
+
+// Incrémenter une statistique spécifique
+export const incrementStat = async (field: keyof Statistics, value: number = 1): Promise<void> => {
+  try {
+    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    
+    const updates: any = {
+      [field]: increment(value),
+      lastUpdated: new Date().toISOString()
+    };
+    
+    await updateDoc(statsRef, updates);
+  } catch (error) {
+    console.error(`Erreur lors de l'incrémentation de la statistique ${field}:`, error);
+    throw error;
+  }
+};
+
+// Ajouter un genre aux statistiques
+export const incrementGenre = async (genre: string): Promise<void> => {
+  try {
+    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    
+    await runTransaction(firestore, async (transaction) => {
+      const statsDoc = await transaction.get(statsRef);
+      
+      if (!statsDoc.exists()) {
+        throw new Error("Document de statistiques non trouvé");
+      }
+      
+      const stats = statsDoc.data() as Statistics;
+      const topGenres = stats.topGenres || {};
+      
+      // Incrémenter le compteur pour ce genre
+      topGenres[genre] = (topGenres[genre] || 0) + 1;
+      
+      transaction.update(statsRef, {
+        topGenres,
+        lastUpdated: new Date().toISOString()
+      });
+    });
+  } catch (error) {
+    console.error(`Erreur lors de l'incrémentation du genre ${genre}:`, error);
+    throw error;
+  }
+};
+
+// Calculer et mettre à jour toutes les statistiques (exécuter périodiquement ou après des changements majeurs)
+export const recalculateAllStats = async (): Promise<Statistics> => {
+  try {
+    // Compter les utilisateurs
+    const usersQuery = query(collection(firestore, "users"));
+    const usersSnapshot = await getDocs(usersQuery);
+    const totalUsers = usersSnapshot.size;
+    
+    // Compter les utilisateurs VIP
+    const vipUsersQuery = query(collection(firestore, "users"), where("isVip", "==", true));
+    const vipUsersSnapshot = await getDocs(vipUsersQuery);
+    const vipUsers = vipUsersSnapshot.size;
+    
+    // Compter les utilisateurs actifs (dernière connexion dans les 30 derniers jours)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeUsersQuery = query(
+      collection(firestore, "users"),
+      where("lastLogin", ">=", thirtyDaysAgo.toISOString())
+    );
+    const activeUsersSnapshot = await getDocs(activeUsersQuery);
+    const activeUsers = activeUsersSnapshot.size;
+    
+    // Compter les films
+    const moviesQuery = query(collection(firestore, "movies"));
     const moviesSnapshot = await getDocs(moviesQuery);
     const totalMovies = moviesSnapshot.size;
     
-    // Count published movies
+    // Compter les films publiés
     const publishedMoviesQuery = query(
-      collection(db, "movies"),
+      collection(firestore, "movies"),
       where("status", "==", "published")
     );
     const publishedMoviesSnapshot = await getDocs(publishedMoviesQuery);
     const publishedMovies = publishedMoviesSnapshot.size;
     
-    // Count series
-    const seriesQuery = query(collection(db, "series"));
+    // Compter les séries
+    const seriesQuery = query(collection(firestore, "series"));
     const seriesSnapshot = await getDocs(seriesQuery);
     const totalSeries = seriesSnapshot.size;
     
-    // Count published series
+    // Compter les séries publiées
     const publishedSeriesQuery = query(
-      collection(db, "series"),
+      collection(firestore, "series"),
       where("status", "==", "published")
     );
     const publishedSeriesSnapshot = await getDocs(publishedSeriesQuery);
     const publishedSeries = publishedSeriesSnapshot.size;
     
-    // Count episodes
-    const episodesQuery = query(collection(db, "episodes"));
-    const episodesSnapshot = await getDocs(episodesQuery);
-    const totalEpisodes = episodesSnapshot.size;
-    
-    // Get popular movies and series
-    const popularMovies = await getPopularMovies(5);
-    const popularSeries = await getPopularSeries(5);
-    
-    // Get recent activity
-    const recentActivity = await getRecentActivity(10);
-    
-    return {
-      users: userStats,
-      content: {
-        totalMovies,
-        publishedMovies,
-        totalSeries,
-        publishedSeries,
-        totalEpisodes,
-      },
-      comments: commentStats,
-      popular: {
-        movies: popularMovies,
-        series: popularSeries,
-      },
-      recentActivity,
-    };
-  } catch (error) {
-    console.error("Error getting dashboard statistics:", error);
-    throw error;
-  }
-};
-
-// Get content distribution statistics
-export const getContentDistributionStatistics = async (): Promise<{
-  genreDistribution: {
-    genre: string;
-    count: number;
-  }[];
-  movieYearDistribution: {
-    year: string;
-    count: number;
-  }[];
-  seriesYearDistribution: {
-    year: string;
-    count: number;
-  }[];
-  vipContentPercentage: number;
-}> => {
-  try {
-    // Get all movies and series to analyze
-    const moviesQuery = query(collection(db, "movies"));
-    const moviesSnapshot = await getDocs(moviesQuery);
-    
-    const seriesQuery = query(collection(db, "series"));
-    const seriesSnapshot = await getDocs(seriesQuery);
-    
-    // Genre distribution
-    const genreCounts: Record<string, number> = {};
-    let totalVipContent = 0;
-    
-    // Process movies
-    const movies: any[] = [];
+    // Calculer le nombre total de vues
+    let totalViews = 0;
     moviesSnapshot.forEach(doc => {
-      const movie = { id: doc.id, ...doc.data() };
-      movies.push(movie);
-      
-      // Count genres
-      if (movie.genres && Array.isArray(movie.genres)) {
-        movie.genres.forEach((genre: string) => {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        });
-      }
-      
-      // Count VIP content
-      if (movie.vipOnly) {
-        totalVipContent++;
-      }
+      const data = doc.data();
+      totalViews += data.views || 0;
     });
-    
-    // Process series
-    const series: any[] = [];
     seriesSnapshot.forEach(doc => {
-      const seriesItem = { id: doc.id, ...doc.data() };
-      series.push(seriesItem);
-      
-      // Count genres
-      if (seriesItem.genres && Array.isArray(seriesItem.genres)) {
-        seriesItem.genres.forEach((genre: string) => {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        });
-      }
-      
-      // Count VIP content
-      if (seriesItem.vipOnly) {
-        totalVipContent++;
-      }
+      const data = doc.data();
+      totalViews += data.views || 0;
     });
     
-    // Year distribution for movies
-    const movieYearCounts: Record<string, number> = {};
-    movies.forEach(movie => {
-      if (movie.releaseDate) {
-        const year = new Date(movie.releaseDate.seconds * 1000).getFullYear().toString();
-        movieYearCounts[year] = (movieYearCounts[year] || 0) + 1;
-      }
+    // Calculer les genres les plus populaires
+    const topGenres: { [genre: string]: number } = {};
+    moviesSnapshot.forEach(doc => {
+      const data = doc.data();
+      const genres = data.genres || [];
+      genres.forEach((genre: string) => {
+        topGenres[genre] = (topGenres[genre] || 0) + 1;
+      });
+    });
+    seriesSnapshot.forEach(doc => {
+      const data = doc.data();
+      const genres = data.genres || [];
+      genres.forEach((genre: string) => {
+        topGenres[genre] = (topGenres[genre] || 0) + 1;
+      });
     });
     
-    // Year distribution for series
-    const seriesYearCounts: Record<string, number> = {};
-    series.forEach(seriesItem => {
-      if (seriesItem.releaseDate) {
-        const year = new Date(seriesItem.releaseDate.seconds * 1000).getFullYear().toString();
-        seriesYearCounts[year] = (seriesYearCounts[year] || 0) + 1;
-      }
-    });
-    
-    // Calculate VIP content percentage
-    const totalContent = movies.length + series.length;
-    const vipContentPercentage = totalContent > 0 ? (totalVipContent / totalContent) * 100 : 0;
-    
-    // Format genre distribution
-    const genreDistribution = Object.entries(genreCounts)
-      .map(([genre, count]) => ({ genre, count }))
-      .sort((a, b) => b.count - a.count);
-    
-    // Format movie year distribution
-    const movieYearDistribution = Object.entries(movieYearCounts)
-      .map(([year, count]) => ({ year, count }))
-      .sort((a, b) => a.year.localeCompare(b.year));
-    
-    // Format series year distribution
-    const seriesYearDistribution = Object.entries(seriesYearCounts)
-      .map(([year, count]) => ({ year, count }))
-      .sort((a, b) => a.year.localeCompare(b.year));
-    
-    return {
-      genreDistribution,
-      movieYearDistribution,
-      seriesYearDistribution,
-      vipContentPercentage,
+    // Mettre à jour les statistiques
+    const stats: Statistics = {
+      totalUsers,
+      activeUsers,
+      vipUsers,
+      totalMovies,
+      publishedMovies,
+      totalSeries,
+      publishedSeries,
+      totalViews,
+      topGenres,
+      lastUpdated: new Date().toISOString()
     };
+    
+    await setDoc(doc(firestore, COLLECTION, STATS_DOC_ID), stats);
+    
+    return stats;
   } catch (error) {
-    console.error("Error getting content distribution statistics:", error);
-    throw error;
-  }
-};
-
-// Get subscription statistics
-export const getSubscriptionStatistics = async (): Promise<{
-  totalSubscriptions: number;
-  activeSubscriptions: number;
-  subscriptionsByPlan: {
-    plan: string;
-    count: number;
-  }[];
-  subscriptionsOverTime: {
-    month: string;
-    count: number;
-  }[];
-}> => {
-  try {
-    const subscriptionsQuery = query(collection(db, "subscriptions"));
-    const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
-    
-    let totalSubscriptions = 0;
-    let activeSubscriptions = 0;
-    const planCounts: Record<string, number> = {
-      'basic': 0,
-      'premium': 0,
-      'vip': 0
-    };
-    const monthCounts: Record<string, number> = {};
-    
-    subscriptionsSnapshot.forEach(doc => {
-      const subscription = doc.data();
-      totalSubscriptions++;
-      
-      // Count active subscriptions
-      if (subscription.status === "active") {
-        activeSubscriptions++;
-      }
-      
-      // Count by plan
-      if (subscription.plan) {
-        planCounts[subscription.plan] = (planCounts[subscription.plan] || 0) + 1;
-      }
-      
-      // Count by month
-      if (subscription.createdAt) {
-        const date = new Date(subscription.createdAt.seconds * 1000);
-        const month = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-        monthCounts[month] = (monthCounts[month] || 0) + 1;
-      }
-    });
-    
-    // Format plan distribution
-    const subscriptionsByPlan = Object.entries(planCounts)
-      .map(([plan, count]) => ({ plan, count }))
-      .sort((a, b) => b.count - a.count);
-    
-    // Format subscriptions over time
-    const subscriptionsOverTime = Object.entries(monthCounts)
-      .map(([month, count]) => ({ month, count }))
-      .sort((a, b) => a.month.localeCompare(b.month));
-    
-    return {
-      totalSubscriptions,
-      activeSubscriptions,
-      subscriptionsByPlan,
-      subscriptionsOverTime,
-    };
-  } catch (error) {
-    console.error("Error getting subscription statistics:", error);
-    throw error;
-  }
-};
-
-// Get user engagement statistics
-export const getUserEngagementStatistics = async (): Promise<{
-  totalViews: number;
-  viewsBreakdown: {
-    movies: number;
-    series: number;
-    episodes: number;
-  };
-  activeUsersOverTime: {
-    day: string;
-    count: number;
-  }[];
-  popularContentByDemographic: {
-    demographic: string;
-    content: any[];
-  }[];
-}> => {
-  try {
-    // This would normally involve complex queries and data processing
-    // For now, we'll return mock data
-    return {
-      totalViews: 123456,
-      viewsBreakdown: {
-        movies: 56789,
-        series: 45678,
-        episodes: 21000,
-      },
-      activeUsersOverTime: [
-        { day: "2023-01-01", count: 1200 },
-        { day: "2023-01-02", count: 1250 },
-        { day: "2023-01-03", count: 1300 },
-        { day: "2023-01-04", count: 1350 },
-        { day: "2023-01-05", count: 1400 },
-      ],
-      popularContentByDemographic: [
-        {
-          demographic: "18-24",
-          content: [
-            { id: "1", title: "Stranger Things", type: "series", views: 5000 },
-            { id: "2", title: "The Matrix", type: "movie", views: 4500 },
-          ],
-        },
-        {
-          demographic: "25-34",
-          content: [
-            { id: "3", title: "Breaking Bad", type: "series", views: 6000 },
-            { id: "4", title: "Inception", type: "movie", views: 5500 },
-          ],
-        },
-        {
-          demographic: "35-44",
-          content: [
-            { id: "5", title: "The Crown", type: "series", views: 4000 },
-            { id: "6", title: "Interstellar", type: "movie", views: 3500 },
-          ],
-        },
-      ],
-    };
-  } catch (error) {
-    console.error("Error getting user engagement statistics:", error);
+    console.error("Erreur lors du recalcul des statistiques:", error);
     throw error;
   }
 };

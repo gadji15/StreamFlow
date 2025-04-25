@@ -6,6 +6,7 @@ import Header from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { Toaster } from "@/components/ui/toaster";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -41,6 +42,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <ScrollToTop />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

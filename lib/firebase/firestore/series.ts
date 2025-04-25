@@ -1,872 +1,431 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
   limit,
   startAfter,
-  DocumentData,
   QueryDocumentSnapshot,
-  serverTimestamp,
+  DocumentData,
   Timestamp,
-  setDoc
+  increment,
+  writeBatch
 } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
-import { db, storage } from "../config";
-import { logActivity } from "./activity-logs";
+import { 
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject
+} from "firebase/storage";
+import { firestore, storage } from "../config";
+import { addActivityLog } from "./activity-logs";
 
-// Collection names
-const SERIES_COLLECTION = "series";
-const EPISODES_COLLECTION = "episodes";
-
-// Series interface
+// Types
 export interface Series {
   id?: string;
   title: string;
   description: string;
-  poster: string;
-  backdrop?: string;
-  releaseDate: Date | Timestamp;
+  startYear: number;
+  endYear?: number;
+  ongoing: boolean;
   seasons: number;
-  genres: string[];
-  rating: number;
-  views: number;
-  status: "published" | "draft";
-  trailer?: string;
+  genre: string;
+  genres?: string[];
   creator?: string;
   cast?: string[];
-  vipOnly?: boolean;
-  createdAt?: Date | Timestamp;
-  updatedAt?: Date | Timestamp;
+  posterUrl?: string;
+  backdropUrl?: string;
+  trailerUrl?: string;
+  vipOnly: boolean;
+  status: "draft" | "published";
+  rating?: number;
+  views?: number;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy?: string;
 }
 
-// Episode interface
 export interface Episode {
   id?: string;
   seriesId: string;
+  seasonNumber: number;
+  episodeNumber: number;
   title: string;
   description: string;
-  thumbnail?: string;
-  season: number;
-  episode: number;
-  duration: string;
-  releaseDate: Date | Timestamp;
+  duration: number;
+  thumbnailUrl?: string;
   videoUrl?: string;
-  status: "published" | "draft";
-  views: number;
-  vipOnly?: boolean;
-  createdAt?: Date | Timestamp;
-  updatedAt?: Date | Timestamp;
+  releaseDate?: string;
+  views?: number;
+  status: "draft" | "published";
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy?: string;
 }
 
-// Get all series
-export const getAllSeries = async (): Promise<Series[]> => {
-  try {
-    const seriesSnapshot = await getDocs(collection(db, SERIES_COLLECTION));
-    const allSeries: Series[] = [];
-    
-    seriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      allSeries.push({
-        id: doc.id,
-        ...data,
-        releaseDate: data.releaseDate?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Series);
-    });
-    
-    return allSeries;
-  } catch (error) {
-    console.error("Error getting series:", error);
-    throw error;
-  }
-};
+// Collections de référence
+const SERIES_COLLECTION = "series";
+const EPISODES_COLLECTION = "episodes";
 
-// Get paginated series
-export const getPaginatedSeries = async (
-  lastVisible: QueryDocumentSnapshot<DocumentData> | null = null,
-  itemsPerPage: number = 10,
-  filters: {
-    status?: "published" | "draft";
-    genre?: string;
-    search?: string;
-    vipOnly?: boolean;
-  } = {}
-): Promise<{
-  series: Series[];
-  lastVisible: QueryDocumentSnapshot<DocumentData> | null;
-  hasMore: boolean;
-}> => {
+// Ajouter une série
+export const addSeries = async (series: Omit<Series, "id" | "createdAt" | "updatedAt">, adminId: string): Promise<Series> => {
   try {
-    let seriesRef = collection(db, SERIES_COLLECTION);
-    let constraints: any[] = [];
+    const now = new Date().toISOString();
     
-    // Add filters
-    if (filters.status) {
-      constraints.push(where("status", "==", filters.status));
-    }
-    
-    if (filters.genre) {
-      constraints.push(where("genres", "array-contains", filters.genre));
-    }
-    
-    if (filters.vipOnly !== undefined) {
-      constraints.push(where("vipOnly", "==", filters.vipOnly));
-    }
-    
-    // Add orderBy and pagination
-    constraints.push(orderBy("releaseDate", "desc"));
-    
-    if (lastVisible) {
-      constraints.push(startAfter(lastVisible));
-    }
-    
-    constraints.push(limit(itemsPerPage + 1)); // Get one extra to check if there are more
-    
-    const q = query(seriesRef, ...constraints);
-    const seriesSnapshot = await getDocs(q);
-    
-    const seriesList: Series[] = [];
-    let newLastVisible: QueryDocumentSnapshot<DocumentData> | null = null;
-    let hasMore = false;
-    
-    // Process results
-    if (!seriesSnapshot.empty) {
-      const docs = seriesSnapshot.docs;
-      
-      // Check if we have more results
-      if (docs.length > itemsPerPage) {
-        hasMore = true;
-        docs.pop(); // Remove the extra item
-      }
-      
-      // Get the last visible item for pagination
-      newLastVisible = docs[docs.length - 1] || null;
-      
-      // Map documents to Series objects
-      docs.forEach((doc) => {
-        const data = doc.data();
-        
-        // If there's a search filter, apply it client-side
-        if (filters.search && !data.title.toLowerCase().includes(filters.search.toLowerCase())) {
-          return;
-        }
-        
-        seriesList.push({
-          id: doc.id,
-          ...data,
-          releaseDate: data.releaseDate?.toDate() || new Date(),
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
-        } as Series);
-      });
-    }
-    
-    return {
-      series: seriesList,
-      lastVisible: newLastVisible,
-      hasMore,
-    };
-  } catch (error) {
-    console.error("Error getting paginated series:", error);
-    throw error;
-  }
-};
-
-// Get a series by ID
-export const getSeriesById = async (id: string): Promise<Series | null> => {
-  try {
-    const seriesDoc = await getDoc(doc(db, SERIES_COLLECTION, id));
-    
-    if (!seriesDoc.exists()) {
-      return null;
-    }
-    
-    const data = seriesDoc.data();
-    return {
-      id: seriesDoc.id,
-      ...data,
-      releaseDate: data.releaseDate?.toDate() || new Date(),
-      createdAt: data.createdAt?.toDate(),
-      updatedAt: data.updatedAt?.toDate(),
-    } as Series;
-  } catch (error) {
-    console.error(`Error getting series with ID ${id}:`, error);
-    throw error;
-  }
-};
-
-// Create a new series
-export const createSeries = async (
-  series: Omit<Series, "id" | "createdAt" | "updatedAt" | "views">,
-  adminId: string,
-  adminName: string,
-  posterFile?: File,
-  backdropFile?: File
-): Promise<Series> => {
-  try {
-    let posterUrl = series.poster;
-    let backdropUrl = series.backdrop || "";
-    
-    // Upload poster if provided
-    if (posterFile) {
-      const posterStorageRef = ref(storage, `series/posters/${Date.now()}_${posterFile.name}`);
-      const posterUploadTask = await uploadBytesResumable(posterStorageRef, posterFile);
-      posterUrl = await getDownloadURL(posterUploadTask.ref);
-    }
-    
-    // Upload backdrop if provided
-    if (backdropFile) {
-      const backdropStorageRef = ref(storage, `series/backdrops/${Date.now()}_${backdropFile.name}`);
-      const backdropUploadTask = await uploadBytesResumable(backdropStorageRef, backdropFile);
-      backdropUrl = await getDownloadURL(backdropUploadTask.ref);
-    }
-    
-    // Prepare series data for Firestore
     const seriesData = {
       ...series,
-      poster: posterUrl,
-      backdrop: backdropUrl,
       views: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      rating: 0,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: adminId
     };
     
-    // Add series to Firestore
-    const seriesRef = await addDoc(collection(db, SERIES_COLLECTION), seriesData);
+    const docRef = await addDoc(collection(firestore, SERIES_COLLECTION), seriesData);
     
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "CREATE",
-      entityType: "SERIES",
-      entityId: seriesRef.id,
-      entityName: series.title,
-      timestamp: new Date(),
-      details: { seriesData }
+    // Journaliser l'activité
+    await addActivityLog({
+      action: "create",
+      entityType: "series",
+      entityId: docRef.id,
+      details: `Création de la série: ${series.title}`,
+      performedBy: adminId,
+      timestamp: now
     });
     
-    // Get the created series
-    const createdSeriesSnap = await getDoc(seriesRef);
-    const createdSeriesData = createdSeriesSnap.data();
-    
     return {
-      id: seriesRef.id,
-      ...createdSeriesData,
-      releaseDate: createdSeriesData?.releaseDate?.toDate() || new Date(),
-      createdAt: createdSeriesData?.createdAt?.toDate(),
-      updatedAt: createdSeriesData?.updatedAt?.toDate(),
-    } as Series;
+      id: docRef.id,
+      ...seriesData
+    };
   } catch (error) {
-    console.error("Error creating series:", error);
+    console.error("Erreur lors de l'ajout de la série:", error);
     throw error;
   }
 };
 
-// Update a series
-export const updateSeries = async (
-  id: string,
-  seriesUpdates: Partial<Series>,
-  adminId: string,
-  adminName: string,
-  posterFile?: File,
-  backdropFile?: File
-): Promise<Series> => {
+// Récupérer une série par ID
+export const getSeries = async (id: string): Promise<Series | null> => {
   try {
-    // Get current series data for comparison and logging
-    const currentSeriesSnap = await getDoc(doc(db, SERIES_COLLECTION, id));
+    const docRef = doc(firestore, SERIES_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
     
-    if (!currentSeriesSnap.exists()) {
-      throw new Error(`Series with ID ${id} not found`);
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      } as Series;
     }
     
-    const currentSeries = currentSeriesSnap.data() as Series;
-    let posterUrl = seriesUpdates.poster || currentSeries.poster;
-    let backdropUrl = seriesUpdates.backdrop || currentSeries.backdrop || "";
+    return null;
+  } catch (error) {
+    console.error(`Erreur lors de la récupération de la série ${id}:`, error);
+    throw error;
+  }
+};
+
+// Mettre à jour une série
+export const updateSeries = async (id: string, seriesData: Partial<Series>, adminId: string): Promise<Series> => {
+  try {
+    const now = new Date().toISOString();
+    const seriesRef = doc(firestore, SERIES_COLLECTION, id);
     
-    // Upload new poster if provided
-    if (posterFile) {
-      // Delete old poster if it exists and is not a placeholder
-      if (currentSeries.poster && currentSeries.poster.includes("firebase")) {
-        try {
-          const oldPosterRef = ref(storage, currentSeries.poster);
-          await deleteObject(oldPosterRef);
-        } catch (error) {
-          console.warn("Could not delete old poster:", error);
-        }
-      }
-      
-      // Upload new poster
-      const posterStorageRef = ref(storage, `series/posters/${Date.now()}_${posterFile.name}`);
-      const posterUploadTask = await uploadBytesResumable(posterStorageRef, posterFile);
-      posterUrl = await getDownloadURL(posterUploadTask.ref);
+    // Récupérer la série actuelle pour le log d'activité
+    const seriesSnapshot = await getDoc(seriesRef);
+    if (!seriesSnapshot.exists()) {
+      throw new Error(`Série avec l'ID ${id} non trouvée`);
     }
     
-    // Upload new backdrop if provided
-    if (backdropFile) {
-      // Delete old backdrop if it exists and is not a placeholder
-      if (currentSeries.backdrop && currentSeries.backdrop.includes("firebase")) {
-        try {
-          const oldBackdropRef = ref(storage, currentSeries.backdrop);
-          await deleteObject(oldBackdropRef);
-        } catch (error) {
-          console.warn("Could not delete old backdrop:", error);
-        }
-      }
-      
-      // Upload new backdrop
-      const backdropStorageRef = ref(storage, `series/backdrops/${Date.now()}_${backdropFile.name}`);
-      const backdropUploadTask = await uploadBytesResumable(backdropStorageRef, backdropFile);
-      backdropUrl = await getDownloadURL(backdropUploadTask.ref);
-    }
+    const currentSeries = seriesSnapshot.data() as Series;
     
-    // Prepare update data
-    const updateData = {
-      ...seriesUpdates,
-      poster: posterUrl,
-      backdrop: backdropUrl,
-      updatedAt: serverTimestamp(),
+    const updatedData = {
+      ...seriesData,
+      updatedAt: now,
+      updatedBy: adminId
     };
     
-    // Update series in Firestore
-    await updateDoc(doc(db, SERIES_COLLECTION, id), updateData);
+    await updateDoc(seriesRef, updatedData);
     
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "UPDATE",
-      entityType: "SERIES",
+    // Journaliser l'activité
+    await addActivityLog({
+      action: "update",
+      entityType: "series",
       entityId: id,
-      entityName: currentSeries.title,
-      timestamp: new Date(),
-      details: {
-        before: currentSeries,
-        after: { ...currentSeries, ...updateData }
-      }
+      details: `Mise à jour de la série: ${currentSeries.title}`,
+      performedBy: adminId,
+      timestamp: now
     });
-    
-    // Get the updated series
-    const updatedSeriesSnap = await getDoc(doc(db, SERIES_COLLECTION, id));
-    const updatedSeriesData = updatedSeriesSnap.data();
     
     return {
       id,
-      ...updatedSeriesData,
-      releaseDate: updatedSeriesData?.releaseDate?.toDate() || new Date(),
-      createdAt: updatedSeriesData?.createdAt?.toDate(),
-      updatedAt: updatedSeriesData?.updatedAt?.toDate(),
-    } as Series;
+      ...currentSeries,
+      ...updatedData
+    };
   } catch (error) {
-    console.error(`Error updating series with ID ${id}:`, error);
+    console.error(`Erreur lors de la mise à jour de la série ${id}:`, error);
     throw error;
   }
 };
 
-// Delete a series
-export const deleteSeries = async (
-  id: string,
-  adminId: string,
-  adminName: string
-): Promise<void> => {
+// Supprimer une série et tous ses épisodes
+export const deleteSeries = async (id: string, adminId: string): Promise<void> => {
   try {
-    // Get series data for logging and cleaning up storage
-    const seriesSnap = await getDoc(doc(db, SERIES_COLLECTION, id));
+    const seriesRef = doc(firestore, SERIES_COLLECTION, id);
     
-    if (!seriesSnap.exists()) {
-      throw new Error(`Series with ID ${id} not found`);
+    // Récupérer les informations de la série pour la journalisation et suppression des images
+    const seriesSnapshot = await getDoc(seriesRef);
+    if (!seriesSnapshot.exists()) {
+      throw new Error(`Série avec l'ID ${id} non trouvée`);
     }
     
-    const seriesData = seriesSnap.data() as Series;
+    const seriesData = seriesSnapshot.data() as Series;
     
-    // Get all episodes for this series to delete them
-    const episodesQuery = query(collection(db, EPISODES_COLLECTION), where("seriesId", "==", id));
+    // Commencer un batch pour supprimer la série et ses épisodes
+    const batch = writeBatch(firestore);
+    
+    // Supprimer les épisodes associés
+    const episodesQuery = query(
+      collection(firestore, EPISODES_COLLECTION),
+      where("seriesId", "==", id)
+    );
+    
     const episodesSnapshot = await getDocs(episodesQuery);
-    
-    // Delete all episodes
-    const episodeDeletePromises = episodesSnapshot.docs.map(async (episodeDoc) => {
-      const episodeData = episodeDoc.data() as Episode;
-      
-      // Delete episode thumbnail if exists
-      if (episodeData.thumbnail && episodeData.thumbnail.includes("firebase")) {
-        try {
-          const thumbnailRef = ref(storage, episodeData.thumbnail);
-          await deleteObject(thumbnailRef);
-        } catch (error) {
-          console.warn(`Could not delete thumbnail for episode ${episodeDoc.id}:`, error);
-        }
-      }
-      
-      // Delete episode document
-      await deleteDoc(doc(db, EPISODES_COLLECTION, episodeDoc.id));
+    episodesSnapshot.forEach(doc => {
+      batch.delete(doc.ref);
     });
     
-    // Wait for all episodes to be deleted
-    await Promise.all(episodeDeletePromises);
+    // Supprimer la série
+    batch.delete(seriesRef);
     
-    // Delete series from Firestore
-    await deleteDoc(doc(db, SERIES_COLLECTION, id));
+    // Exécuter le batch
+    await batch.commit();
     
-    // Delete poster from storage if it exists and is not a placeholder
-    if (seriesData.poster && seriesData.poster.includes("firebase")) {
-      try {
-        const posterRef = ref(storage, seriesData.poster);
-        await deleteObject(posterRef);
-      } catch (error) {
-        console.warn("Could not delete poster:", error);
-      }
+    // Supprimer les images associées s'il y en a
+    if (seriesData.posterUrl) {
+      const posterRef = ref(storage, seriesData.posterUrl);
+      await deleteObject(posterRef).catch(err => console.warn("Erreur lors de la suppression du poster:", err));
     }
     
-    // Delete backdrop from storage if it exists and is not a placeholder
-    if (seriesData.backdrop && seriesData.backdrop.includes("firebase")) {
-      try {
-        const backdropRef = ref(storage, seriesData.backdrop);
-        await deleteObject(backdropRef);
-      } catch (error) {
-        console.warn("Could not delete backdrop:", error);
-      }
+    if (seriesData.backdropUrl) {
+      const backdropRef = ref(storage, seriesData.backdropUrl);
+      await deleteObject(backdropRef).catch(err => console.warn("Erreur lors de la suppression de l'image de fond:", err));
     }
     
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "DELETE",
-      entityType: "SERIES",
+    // Journaliser l'activité
+    await addActivityLog({
+      action: "delete",
+      entityType: "series",
       entityId: id,
-      entityName: seriesData.title,
-      timestamp: new Date(),
-      details: { deletedSeries: seriesData }
+      details: `Suppression de la série: ${seriesData.title} et de ses épisodes`,
+      performedBy: adminId,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error(`Error deleting series with ID ${id}:`, error);
+    console.error(`Erreur lors de la suppression de la série ${id}:`, error);
     throw error;
   }
 };
 
-// Increment series views
-export const incrementSeriesViews = async (id: string): Promise<void> => {
+// Récupérer une liste de séries avec filtres et pagination
+export const getAllSeries = async (
+  options: {
+    status?: "draft" | "published",
+    vipOnly?: boolean,
+    genre?: string,
+    searchQuery?: string,
+    sortBy?: "title" | "startYear" | "createdAt" | "views" | "rating",
+    sortDirection?: "asc" | "desc",
+    limit?: number,
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>,
+  } = {}
+): Promise<{series: Series[], lastDoc: QueryDocumentSnapshot<DocumentData> | null}> => {
   try {
-    const seriesRef = doc(db, SERIES_COLLECTION, id);
+    let q = collection(firestore, SERIES_COLLECTION);
     
-    // Get current views
-    const seriesSnap = await getDoc(seriesRef);
+    const {
+      status,
+      vipOnly,
+      genre,
+      searchQuery,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+      limit: limitCount = 20,
+      startAfterDoc,
+    } = options;
     
-    if (!seriesSnap.exists()) {
-      throw new Error(`Series with ID ${id} not found`);
+    // Ajouter les filtres si présents
+    if (status) {
+      q = query(q, where("status", "==", status));
     }
     
-    const currentViews = seriesSnap.data().views || 0;
+    if (vipOnly !== undefined) {
+      q = query(q, where("vipOnly", "==", vipOnly));
+    }
     
-    // Update views
-    await updateDoc(seriesRef, {
-      views: currentViews + 1,
-      updatedAt: serverTimestamp(),
-    });
+    if (genre) {
+      q = query(q, where("genres", "array-contains", genre));
+    }
+    
+    // Recherche textuelle simple via titre
+    if (searchQuery) {
+      q = query(q, where("title", ">=", searchQuery), where("title", "<=", searchQuery + "\uf8ff"));
+    }
+    
+    // Ajouter le tri
+    q = query(q, orderBy(sortBy, sortDirection));
+    
+    // Ajouter la pagination
+    if (startAfterDoc) {
+      q = query(q, startAfter(startAfterDoc));
+    }
+    
+    // Limiter le nombre de résultats
+    q = query(q, limit(limitCount));
+    
+    // Exécuter la requête
+    const querySnapshot = await getDocs(q);
+    
+    // Formatage des résultats
+    const seriesList = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Series));
+    
+    return {
+      series: seriesList,
+      lastDoc: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null
+    };
   } catch (error) {
-    console.error(`Error incrementing views for series with ID ${id}:`, error);
+    console.error("Erreur lors de la récupération des séries:", error);
     throw error;
   }
 };
 
-// Get popular series
+// Ajouter un épisode à une série
+export const addEpisode = async (episode: Omit<Episode, "id" | "createdAt" | "updatedAt">, adminId: string): Promise<Episode> => {
+  try {
+    const now = new Date().toISOString();
+    
+    const episodeData = {
+      ...episode,
+      views: 0,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: adminId
+    };
+    
+    const docRef = await addDoc(collection(firestore, EPISODES_COLLECTION), episodeData);
+    
+    // Journaliser l'activité
+    await addActivityLog({
+      action: "create",
+      entityType: "episode",
+      entityId: docRef.id,
+      details: `Ajout de l'épisode: S${episode.seasonNumber}E${episode.episodeNumber} - ${episode.title} à la série ${episode.seriesId}`,
+      performedBy: adminId,
+      timestamp: now
+    });
+    
+    return {
+      id: docRef.id,
+      ...episodeData
+    };
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de l'épisode:", error);
+    throw error;
+  }
+};
+
+// Récupérer les épisodes d'une série
+export const getEpisodesBySeries = async (seriesId: string): Promise<Episode[]> => {
+  try {
+    const q = query(
+      collection(firestore, EPISODES_COLLECTION),
+      where("seriesId", "==", seriesId),
+      orderBy("seasonNumber", "asc"),
+      orderBy("episodeNumber", "asc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Episode));
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des épisodes de la série ${seriesId}:`, error);
+    throw error;
+  }
+};
+
+// Obtenir les séries populaires
 export const getPopularSeries = async (limit: number = 10): Promise<Series[]> => {
   try {
-    const seriesQuery = query(
-      collection(db, SERIES_COLLECTION),
+    const q = query(
+      collection(firestore, SERIES_COLLECTION),
       where("status", "==", "published"),
       orderBy("views", "desc"),
       limit(limit)
     );
     
-    const seriesSnapshot = await getDocs(seriesQuery);
-    const seriesList: Series[] = [];
+    const querySnapshot = await getDocs(q);
     
-    seriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      seriesList.push({
-        id: doc.id,
-        ...data,
-        releaseDate: data.releaseDate?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Series);
-    });
-    
-    return seriesList;
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Series));
   } catch (error) {
-    console.error("Error getting popular series:", error);
+    console.error("Erreur lors de la récupération des séries populaires:", error);
     throw error;
   }
 };
 
-// Get recent series
-export const getRecentSeries = async (limit: number = 10): Promise<Series[]> => {
+// Télécharger une image pour une série (poster ou backdrop)
+export const uploadSeriesImage = async (
+  file: File,
+  seriesId: string,
+  type: "poster" | "backdrop"
+): Promise<string> => {
   try {
-    const seriesQuery = query(
-      collection(db, SERIES_COLLECTION),
-      where("status", "==", "published"),
-      orderBy("releaseDate", "desc"),
-      limit(limit)
-    );
+    // Créer un chemin unique pour l'image
+    const extension = file.name.split(".").pop();
+    const path = `series/${seriesId}/${type}_${Date.now()}.${extension}`;
+    const storageRef = ref(storage, path);
     
-    const seriesSnapshot = await getDocs(seriesQuery);
-    const seriesList: Series[] = [];
+    // Télécharger le fichier
+    const uploadTask = uploadBytesResumable(storageRef, file);
     
-    seriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      seriesList.push({
-        id: doc.id,
-        ...data,
-        releaseDate: data.releaseDate?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Series);
-    });
-    
-    return seriesList;
-  } catch (error) {
-    console.error("Error getting recent series:", error);
-    throw error;
-  }
-};
-
-// Get series by genre
-export const getSeriesByGenre = async (genre: string, limit: number = 10): Promise<Series[]> => {
-  try {
-    const seriesQuery = query(
-      collection(db, SERIES_COLLECTION),
-      where("status", "==", "published"),
-      where("genres", "array-contains", genre),
-      orderBy("releaseDate", "desc"),
-      limit(limit)
-    );
-    
-    const seriesSnapshot = await getDocs(seriesQuery);
-    const seriesList: Series[] = [];
-    
-    seriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      seriesList.push({
-        id: doc.id,
-        ...data,
-        releaseDate: data.releaseDate?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Series);
-    });
-    
-    return seriesList;
-  } catch (error) {
-    console.error(`Error getting series by genre ${genre}:`, error);
-    throw error;
-  }
-};
-
-// EPISODES MANAGEMENT
-
-// Get episodes by series ID
-export const getEpisodesBySeriesId = async (seriesId: string): Promise<Episode[]> => {
-  try {
-    const episodesQuery = query(
-      collection(db, EPISODES_COLLECTION),
-      where("seriesId", "==", seriesId),
-      orderBy("season", "asc"),
-      orderBy("episode", "asc")
-    );
-    
-    const episodesSnapshot = await getDocs(episodesQuery);
-    const episodes: Episode[] = [];
-    
-    episodesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      episodes.push({
-        id: doc.id,
-        ...data,
-        releaseDate: data.releaseDate?.toDate() || new Date(),
-        createdAt: data.createdAt?.toDate(),
-        updatedAt: data.updatedAt?.toDate(),
-      } as Episode);
-    });
-    
-    return episodes;
-  } catch (error) {
-    console.error(`Error getting episodes for series ${seriesId}:`, error);
-    throw error;
-  }
-};
-
-// Get episode by ID
-export const getEpisodeById = async (id: string): Promise<Episode | null> => {
-  try {
-    const episodeDoc = await getDoc(doc(db, EPISODES_COLLECTION, id));
-    
-    if (!episodeDoc.exists()) {
-      return null;
-    }
-    
-    const data = episodeDoc.data();
-    return {
-      id: episodeDoc.id,
-      ...data,
-      releaseDate: data.releaseDate?.toDate() || new Date(),
-      createdAt: data.createdAt?.toDate(),
-      updatedAt: data.updatedAt?.toDate(),
-    } as Episode;
-  } catch (error) {
-    console.error(`Error getting episode with ID ${id}:`, error);
-    throw error;
-  }
-};
-
-// Create a new episode
-export const createEpisode = async (
-  episode: Omit<Episode, "id" | "createdAt" | "updatedAt" | "views">,
-  adminId: string,
-  adminName: string,
-  thumbnailFile?: File
-): Promise<Episode> => {
-  try {
-    // Check if the series exists
-    const seriesDoc = await getDoc(doc(db, SERIES_COLLECTION, episode.seriesId));
-    
-    if (!seriesDoc.exists()) {
-      throw new Error(`Series with ID ${episode.seriesId} not found`);
-    }
-    
-    // Get series data for the activity log
-    const seriesData = seriesDoc.data();
-    
-    let thumbnailUrl = episode.thumbnail || "";
-    
-    // Upload thumbnail if provided
-    if (thumbnailFile) {
-      const thumbnailStorageRef = ref(
-        storage, 
-        `series/episodes/${episode.seriesId}/S${episode.season}E${episode.episode}_${Date.now()}_${thumbnailFile.name}`
-      );
-      const thumbnailUploadTask = await uploadBytesResumable(thumbnailStorageRef, thumbnailFile);
-      thumbnailUrl = await getDownloadURL(thumbnailUploadTask.ref);
-    }
-    
-    // Prepare episode data for Firestore
-    const episodeData = {
-      ...episode,
-      thumbnail: thumbnailUrl,
-      views: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-    
-    // Add episode to Firestore
-    const episodeRef = await addDoc(collection(db, EPISODES_COLLECTION), episodeData);
-    
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "CREATE",
-      entityType: "EPISODE",
-      entityId: episodeRef.id,
-      entityName: `${seriesData.title} - S${episode.season}E${episode.episode}: ${episode.title}`,
-      timestamp: new Date(),
-      details: { episodeData, seriesTitle: seriesData.title }
-    });
-    
-    // Get the created episode
-    const createdEpisodeSnap = await getDoc(episodeRef);
-    const createdEpisodeData = createdEpisodeSnap.data();
-    
-    return {
-      id: episodeRef.id,
-      ...createdEpisodeData,
-      releaseDate: createdEpisodeData?.releaseDate?.toDate() || new Date(),
-      createdAt: createdEpisodeData?.createdAt?.toDate(),
-      updatedAt: createdEpisodeData?.updatedAt?.toDate(),
-    } as Episode;
-  } catch (error) {
-    console.error("Error creating episode:", error);
-    throw error;
-  }
-};
-
-// Update an episode
-export const updateEpisode = async (
-  id: string,
-  episodeUpdates: Partial<Episode>,
-  adminId: string,
-  adminName: string,
-  thumbnailFile?: File
-): Promise<Episode> => {
-  try {
-    // Get current episode data for comparison and logging
-    const currentEpisodeSnap = await getDoc(doc(db, EPISODES_COLLECTION, id));
-    
-    if (!currentEpisodeSnap.exists()) {
-      throw new Error(`Episode with ID ${id} not found`);
-    }
-    
-    const currentEpisode = currentEpisodeSnap.data() as Episode;
-    
-    // Get series data for the activity log
-    const seriesDoc = await getDoc(doc(db, SERIES_COLLECTION, currentEpisode.seriesId));
-    if (!seriesDoc.exists()) {
-      throw new Error(`Series with ID ${currentEpisode.seriesId} not found`);
-    }
-    const seriesData = seriesDoc.data();
-    
-    let thumbnailUrl = episodeUpdates.thumbnail || currentEpisode.thumbnail || "";
-    
-    // Upload new thumbnail if provided
-    if (thumbnailFile) {
-      // Delete old thumbnail if it exists and is not a placeholder
-      if (currentEpisode.thumbnail && currentEpisode.thumbnail.includes("firebase")) {
-        try {
-          const oldThumbnailRef = ref(storage, currentEpisode.thumbnail);
-          await deleteObject(oldThumbnailRef);
-        } catch (error) {
-          console.warn("Could not delete old thumbnail:", error);
+    // Attendre que le téléchargement soit terminé
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Progression du téléchargement
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Téléchargement ${type}: ${progress}%`);
+        },
+        (error) => {
+          // Erreur
+          console.error(`Erreur lors du téléchargement de l'image ${type}:`, error);
+          reject(error);
+        },
+        async () => {
+          // Téléchargement terminé
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
         }
-      }
-      
-      // Upload new thumbnail
-      const thumbnailStorageRef = ref(
-        storage, 
-        `series/episodes/${currentEpisode.seriesId}/S${currentEpisode.season}E${currentEpisode.episode}_${Date.now()}_${thumbnailFile.name}`
       );
-      const thumbnailUploadTask = await uploadBytesResumable(thumbnailStorageRef, thumbnailFile);
-      thumbnailUrl = await getDownloadURL(thumbnailUploadTask.ref);
-    }
-    
-    // Prepare update data
-    const updateData = {
-      ...episodeUpdates,
-      thumbnail: thumbnailUrl,
-      updatedAt: serverTimestamp(),
-    };
-    
-    // Update episode in Firestore
-    await updateDoc(doc(db, EPISODES_COLLECTION, id), updateData);
-    
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "UPDATE",
-      entityType: "EPISODE",
-      entityId: id,
-      entityName: `${seriesData.title} - S${currentEpisode.season}E${currentEpisode.episode}: ${currentEpisode.title}`,
-      timestamp: new Date(),
-      details: {
-        before: currentEpisode,
-        after: { ...currentEpisode, ...updateData },
-        seriesTitle: seriesData.title
-      }
-    });
-    
-    // Get the updated episode
-    const updatedEpisodeSnap = await getDoc(doc(db, EPISODES_COLLECTION, id));
-    const updatedEpisodeData = updatedEpisodeSnap.data();
-    
-    return {
-      id,
-      ...updatedEpisodeData,
-      releaseDate: updatedEpisodeData?.releaseDate?.toDate() || new Date(),
-      createdAt: updatedEpisodeData?.createdAt?.toDate(),
-      updatedAt: updatedEpisodeData?.updatedAt?.toDate(),
-    } as Episode;
-  } catch (error) {
-    console.error(`Error updating episode with ID ${id}:`, error);
-    throw error;
-  }
-};
-
-// Delete an episode
-export const deleteEpisode = async (
-  id: string,
-  adminId: string,
-  adminName: string
-): Promise<void> => {
-  try {
-    // Get episode data for logging and cleaning up storage
-    const episodeSnap = await getDoc(doc(db, EPISODES_COLLECTION, id));
-    
-    if (!episodeSnap.exists()) {
-      throw new Error(`Episode with ID ${id} not found`);
-    }
-    
-    const episodeData = episodeSnap.data() as Episode;
-    
-    // Get series data for the activity log
-    const seriesDoc = await getDoc(doc(db, SERIES_COLLECTION, episodeData.seriesId));
-    const seriesTitle = seriesDoc.exists() ? seriesDoc.data().title : "Unknown Series";
-    
-    // Delete episode from Firestore
-    await deleteDoc(doc(db, EPISODES_COLLECTION, id));
-    
-    // Delete thumbnail from storage if it exists and is not a placeholder
-    if (episodeData.thumbnail && episodeData.thumbnail.includes("firebase")) {
-      try {
-        const thumbnailRef = ref(storage, episodeData.thumbnail);
-        await deleteObject(thumbnailRef);
-      } catch (error) {
-        console.warn("Could not delete thumbnail:", error);
-      }
-    }
-    
-    // Log activity
-    await logActivity({
-      adminId,
-      adminName,
-      action: "DELETE",
-      entityType: "EPISODE",
-      entityId: id,
-      entityName: `${seriesTitle} - S${episodeData.season}E${episodeData.episode}: ${episodeData.title}`,
-      timestamp: new Date(),
-      details: { 
-        deletedEpisode: episodeData,
-        seriesTitle 
-      }
     });
   } catch (error) {
-    console.error(`Error deleting episode with ID ${id}:`, error);
-    throw error;
-  }
-};
-
-// Increment episode views
-export const incrementEpisodeViews = async (id: string): Promise<void> => {
-  try {
-    const episodeRef = doc(db, EPISODES_COLLECTION, id);
-    
-    // Get current views
-    const episodeSnap = await getDoc(episodeRef);
-    
-    if (!episodeSnap.exists()) {
-      throw new Error(`Episode with ID ${id} not found`);
-    }
-    
-    const currentViews = episodeSnap.data().views || 0;
-    const seriesId = episodeSnap.data().seriesId;
-    
-    // Update episode views
-    await updateDoc(episodeRef, {
-      views: currentViews + 1,
-      updatedAt: serverTimestamp(),
-    });
-    
-    // Also increment series views
-    await incrementSeriesViews(seriesId);
-  } catch (error) {
-    console.error(`Error incrementing views for episode with ID ${id}:`, error);
+    console.error(`Erreur lors du téléchargement de l'image ${type}:`, error);
     throw error;
   }
 };

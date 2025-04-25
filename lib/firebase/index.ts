@@ -1,31 +1,18 @@
-import { auth, db, storage } from "./config";
-import { formatUser, verifyAdminRole } from "./auth";
-import * as adminsService from "./firestore/admins";
-import * as moviesService from "./firestore/movies";
-import * as activityLogsService from "./firestore/activity-logs";
+// Configuration Firebase
+export * from './config';
 
-// Export everything
-export {
-  auth,
-  db,
-  storage,
-  formatUser,
-  verifyAdminRole,
-  adminsService,
-  moviesService,
-  activityLogsService
-};
+// Services d'authentification
+export * from './auth';
 
-// Export a default object for easier imports
-const firebaseServices = {
-  auth,
-  db,
-  storage,
-  formatUser,
-  verifyAdminRole,
-  admins: adminsService,
-  movies: moviesService,
-  activityLogs: activityLogsService
-};
+// Services Firestore
+export * from './firestore/movies';
+export * from './firestore/series';
+export * from './firestore/activity-logs';
+export * from './firestore/statistics';
 
-export default firebaseServices;
+// Types
+export type { AdminUser } from './auth';
+export type { ActivityLog } from './firestore/activity-logs';
+export type { Movie } from './firestore/movies';
+export type { Series, Episode } from './firestore/series';
+export type { Statistics } from './firestore/statistics';

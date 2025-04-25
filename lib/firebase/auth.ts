@@ -1,118 +1,162 @@
-import { 
-  createUserWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  sendPasswordResetEmail,
-  updateProfile,
-  sendEmailVerification,
-  updatePassword,
-  User,
-  UserCredential
+  onAuthStateChanged,
+  UserCredential,
+  User
 } from "firebase/auth";
 import { auth } from "./config";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { firestore } from "./config";
+import { addActivityLog } from "./firestore/activity-logs";
 
-export interface AuthUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  emailVerified: boolean;
+// Types
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "super_admin" | "admin" | "content_manager";
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
 }
 
-// Convertir Firebase User en AuthUser
-export const formatUser = (user: User): AuthUser => {
-  return {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-    emailVerified: user.emailVerified,
-  };
-};
+// Authentification
 
-// S'inscrire avec email et mot de passe
-export const registerWithEmailAndPassword = async (
-  email: string,
-  password: string,
-  displayName: string
-): Promise<AuthUser> => {
+export const signIn = async (email: string, password: string): Promise<AdminUser | null> => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName });
-    await sendEmailVerification(userCredential.user);
-    return formatUser(userCredential.user);
-  } catch (error: any) {
-    throw new Error(`Erreur d'inscription: ${error.message}`);
+    const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Vérifier si l'utilisateur est un administrateur
+    const adminDoc = await getDoc(doc(firestore, "admins", user.uid));
+    
+    if (adminDoc.exists()) {
+      const adminData = adminDoc.data() as Omit<AdminUser, "id">;
+      
+      // Mettre à jour la dernière connexion
+      await setDoc(
+        doc(firestore, "admins", user.uid),
+        { lastLogin: new Date().toISOString() },
+        { merge: true }
+      );
+      
+      // Journaliser la connexion
+      await addActivityLog({
+        action: "login",
+        entityType: "admin",
+        entityId: user.uid,
+        details: `Connexion de l'administrateur ${adminData.email}`,
+        performedBy: user.uid,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Retourner les données de l'administrateur
+      return {
+        id: user.uid,
+        ...adminData,
+      };
+    } else {
+      // Si l'utilisateur n'est pas un administrateur, le déconnecter
+      await firebaseSignOut(auth);
+      return null;
+    }
+  } catch (error) {
+    console.error("Erreur de connexion:", error);
+    throw error;
   }
 };
 
-// Se connecter avec email et mot de passe
-export const signInWithEmail = async (
-  email: string,
-  password: string
-): Promise<AuthUser> => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return formatUser(userCredential.user);
-  } catch (error: any) {
-    throw new Error(`Erreur de connexion: ${error.message}`);
-  }
-};
-
-// Déconnexion
 export const signOut = async (): Promise<void> => {
+  const user = auth.currentUser;
+  if (user) {
+    // Journaliser la déconnexion
+    await addActivityLog({
+      action: "logout",
+      entityType: "admin",
+      entityId: user.uid,
+      details: `Déconnexion de l'administrateur`,
+      performedBy: user.uid,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   return firebaseSignOut(auth);
 };
 
-// Réinitialiser le mot de passe
-export const resetPassword = async (email: string): Promise<void> => {
-  try {
-    await sendPasswordResetEmail(auth, email);
-  } catch (error: any) {
-    throw new Error(`Erreur de réinitialisation de mot de passe: ${error.message}`);
-  }
-};
-
-// Mettre à jour le mot de passe
-export const changePassword = async (user: User, newPassword: string): Promise<void> => {
-  try {
-    await updatePassword(user, newPassword);
-  } catch (error: any) {
-    throw new Error(`Erreur de changement de mot de passe: ${error.message}`);
-  }
-};
-
-// Mettre à jour le profil
-export const updateUserProfile = async (
-  user: User,
-  data: { displayName?: string; photoURL?: string }
-): Promise<void> => {
-  try {
-    await updateProfile(user, data);
-  } catch (error: any) {
-    throw new Error(`Erreur de mise à jour du profil: ${error.message}`);
-  }
-};
-
-// Vérifier si l'utilisateur est administrateur
-export const verifyAdminRole = async (uid: string): Promise<boolean> => {
-  try {
-    // Implémentez votre logique de vérification des rôles d'administrateur ici
-    // Généralement, vous consulteriez une collection spéciale d'administrateurs dans Firestore
-    
-    // Exemple simplifié:
-    const adminCheck = await fetch(`/api/admin/verify?uid=${uid}`);
-    const { isAdmin } = await adminCheck.json();
-    
-    return isAdmin;
-  } catch (error) {
-    console.error("Erreur lors de la vérification du rôle d'administrateur:", error);
-    return false;
-  }
-};
-
-// Récupérer l'utilisateur actuel formaté
-export const getCurrentUser = (): AuthUser | null => {
+export const getCurrentAdmin = async (): Promise<AdminUser | null> => {
   const user = auth.currentUser;
-  return user ? formatUser(user) : null;
+  
+  if (!user) {
+    return null;
+  }
+  
+  try {
+    const adminDoc = await getDoc(doc(firestore, "admins", user.uid));
+    
+    if (adminDoc.exists()) {
+      const adminData = adminDoc.data() as Omit<AdminUser, "id">;
+      return {
+        id: user.uid,
+        ...adminData,
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'administrateur:", error);
+    return null;
+  }
+};
+
+export const createAdmin = async (
+  email: string,
+  password: string,
+  name: string,
+  role: AdminUser["role"] = "content_manager"
+): Promise<AdminUser> => {
+  try {
+    // Créer un compte utilisateur Firebase
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    
+    // Données de l'administrateur
+    const adminData: Omit<AdminUser, "id"> = {
+      email,
+      name,
+      role,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Stocker les données de l'administrateur dans Firestore
+    await setDoc(doc(firestore, "admins", user.uid), adminData);
+    
+    // Journaliser la création d'un nouvel administrateur
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await addActivityLog({
+        action: "create",
+        entityType: "admin",
+        entityId: user.uid,
+        details: `Création d'un nouvel administrateur: ${name} (${email})`,
+        performedBy: currentUser.uid,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    return {
+      id: user.uid,
+      ...adminData
+    };
+  } catch (error) {
+    console.error("Erreur lors de la création de l'administrateur:", error);
+    throw error;
+  }
+};
+
+// Observer l'état d'authentification
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, callback);
 };
