@@ -2,11 +2,7 @@ import { auth, db, storage } from "./config";
 import { formatUser, verifyAdminRole } from "./auth";
 import * as adminsService from "./firestore/admins";
 import * as moviesService from "./firestore/movies";
-import * as seriesService from "./firestore/series";
-import * as usersService from "./firestore/users";
-import * as commentsService from "./firestore/comments";
 import * as activityLogsService from "./firestore/activity-logs";
-import * as statisticsService from "./firestore/statistics";
 
 // Export everything
 export {
@@ -17,11 +13,7 @@ export {
   verifyAdminRole,
   adminsService,
   moviesService,
-  seriesService,
-  usersService,
-  commentsService,
-  activityLogsService,
-  statisticsService
+  activityLogsService
 };
 
 // Export a default object for easier imports
@@ -33,11 +25,7 @@ const firebaseServices = {
   verifyAdminRole,
   admins: adminsService,
   movies: moviesService,
-  series: seriesService,
-  users: usersService,
-  comments: commentsService,
-  activityLogs: activityLogsService,
-  statistics: statisticsService
+  activityLogs: activityLogsService
 };
 
 export default firebaseServices;
