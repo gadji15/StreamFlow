@@ -1,559 +1,335 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Minimize,
-  SkipBack,
-  SkipForward,
-  Settings,
-  ArrowLeftCircle,
-  Subtitles,
-  RotateCcw,
-  Volume1,
-} from "lucide-react";
-import { Slider } from "@/components/ui/slider";
+import { useState, useRef, useEffect } from "react"
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Slider } from "@/components/ui/slider"
 
 interface VideoPlayerProps {
-  src: string;
-  title?: string;
-  poster?: string;
-  onClose?: () => void;
-  autoPlay?: boolean;
+  src: string
+  poster?: string
+  title?: string
+  autoPlay?: boolean
+  onEnded?: () => void
   nextEpisode?: {
-    id: string;
-    title: string;
-    thumbnail: string;
-  };
+    title: string
+    onPlay: () => void
+  }
 }
 
-export function VideoPlayer({
-  src,
+export function VideoPlayer({ 
+  src, 
+  poster, 
   title,
-  poster,
-  onClose,
   autoPlay = false,
-  nextEpisode,
+  onEnded,
+  nextEpisode
 }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(true);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showNextEpisode, setShowNextEpisode] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [quality, setQuality] = useState("auto");
-  const [subtitles, setSubtitles] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(1)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showControls, setShowControls] = useState(true)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [showNextEpisode, setShowNextEpisode] = useState(false)
   
-  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Définir un délai pour masquer les contrôles
+  let hideControlsTimeout: NodeJS.Timeout
   
-  // Video event listeners
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    const onLoadedMetadata = () => {
-      setDuration(video.duration);
-    };
-    
-    const onTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      
-      // Show next episode card when approaching the end
-      if (nextEpisode && video.duration > 0 && (video.duration - video.currentTime) < 20) {
-        setShowNextEpisode(true);
-      } else {
-        setShowNextEpisode(false);
-      }
-    };
-    
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-    const onVolumeChange = () => {
-      setVolume(video.volume);
-      setIsMuted(video.muted);
-    };
-    
-    const onWaiting = () => setIsBuffering(true);
-    const onCanPlay = () => setIsBuffering(false);
-    
-    // Add event listeners
-    video.addEventListener("loadedmetadata", onLoadedMetadata);
-    video.addEventListener("timeupdate", onTimeUpdate);
-    video.addEventListener("play", onPlay);
-    video.addEventListener("pause", onPause);
-    video.addEventListener("volumechange", onVolumeChange);
-    video.addEventListener("waiting", onWaiting);
-    video.addEventListener("canplay", onCanPlay);
-    
-    // Clean up
-    return () => {
-      video.removeEventListener("loadedmetadata", onLoadedMetadata);
-      video.removeEventListener("timeupdate", onTimeUpdate);
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("pause", onPause);
-      video.removeEventListener("volumechange", onVolumeChange);
-      video.removeEventListener("waiting", onWaiting);
-      video.removeEventListener("canplay", onCanPlay);
-    };
-  }, [nextEpisode]);
-  
-  // Auto-hide controls after inactivity
-  useEffect(() => {
-    const startHideControlsTimer = () => {
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current);
-      }
-      
-      hideControlsTimerRef.current = setTimeout(() => {
-        if (isPlaying) {
-          setShowControls(false);
-        }
-      }, 3000);
-    };
-    
-    if (isPlaying) {
-      startHideControlsTimer();
-    }
-    
-    // Clean up
-    return () => {
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current);
-      }
-    };
-  }, [isPlaying, showControls]);
-  
-  // Auto-hide volume slider
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    
-    if (showVolumeSlider) {
-      timer = setTimeout(() => {
-        setShowVolumeSlider(false);
-      }, 2000);
-    }
-    
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [showVolumeSlider]);
-  
-  // Autoplay
-  useEffect(() => {
-    if (autoPlay && videoRef.current) {
-      videoRef.current.play().catch(error => {
-        console.error("Autoplay failed:", error);
-      });
-    }
-  }, [autoPlay]);
-  
-  // Playback speed
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = playbackSpeed;
-    }
-  }, [playbackSpeed]);
-  
-  // Handle play/pause
+  // Gérer l'état de lecture
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
-        videoRef.current.pause();
+        videoRef.current.pause()
       } else {
-        videoRef.current.play();
+        videoRef.current.play()
       }
-      setIsPlaying(!isPlaying);
+      setIsPlaying(!isPlaying)
     }
-  };
+  }
   
-  // Handle mute/unmute
+  // Mettre à jour le temps actuel
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime)
+      
+      // Afficher le bouton pour l'épisode suivant quand on approche de la fin
+      if (nextEpisode && videoRef.current.duration - videoRef.current.currentTime < 10) {
+        setShowNextEpisode(true)
+      }
+    }
+  }
+  
+  // Définir la durée quand les métadonnées sont chargées
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration)
+    }
+  }
+  
+  // Mettre à jour la progression du chargement
+  const handleProgress = () => {
+    if (videoRef.current) {
+      const video = videoRef.current
+      if (video.buffered.length > 0) {
+        const bufferedEnd = video.buffered.end(video.buffered.length - 1)
+        const progress = (bufferedEnd / video.duration) * 100
+        setLoadingProgress(progress)
+      }
+    }
+  }
+  
+  // Gérer le changement de position dans la vidéo
+  const handleSeek = (values: number[]) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = values[0]
+      setCurrentTime(values[0])
+    }
+  }
+  
+  // Gérer le changement de volume
+  const handleVolumeChange = (values: number[]) => {
+    if (videoRef.current) {
+      const newVolume = values[0]
+      videoRef.current.volume = newVolume
+      setVolume(newVolume)
+      setIsMuted(newVolume === 0)
+    }
+  }
+  
+  // Gérer le mute
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-  
-  // Handle volume change
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      if (newVolume === 0) {
-        videoRef.current.muted = true;
-        setIsMuted(true);
-      } else if (isMuted) {
-        videoRef.current.muted = false;
-        setIsMuted(false);
+      if (isMuted) {
+        videoRef.current.volume = volume
+        setIsMuted(false)
+      } else {
+        videoRef.current.volume = 0
+        setIsMuted(true)
       }
-      setVolume(newVolume);
     }
-  };
+  }
   
-  // Handle seek
-  const handleSeek = (value: number[]) => {
-    const newTime = value[0];
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  };
-  
-  // Handle skip forward/backward
-  const handleSkip = (seconds: number) => {
-    if (videoRef.current) {
-      const newTime = Math.max(0, Math.min(videoRef.current.currentTime + seconds, duration));
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  };
-  
-  // Handle fullscreen
+  // Gérer le plein écran
   const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(err => {
-        console.error(`Error attempting to exit fullscreen: ${err.message}`);
-      });
+    if (containerRef.current) {
+      if (!document.fullscreenElement) {
+        containerRef.current.requestFullscreen().then(() => {
+          setIsFullscreen(true)
+        }).catch(err => {
+          console.error('Erreur de passage en plein écran:', err)
+        })
+      } else {
+        document.exitFullscreen().then(() => {
+          setIsFullscreen(false)
+        }).catch(err => {
+          console.error('Erreur de sortie du plein écran:', err)
+        })
+      }
     }
-  };
+  }
   
-  // Format time (seconds to MM:SS)
-  const formatTime = (timeInSeconds: number) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = Math.floor(timeInSeconds % 60);
-    return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
-  };
+  // Formater le temps (secondes -> MM:SS)
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+  }
   
-  // Handle mouse move to show controls
+  // Reculer de 10 secondes
+  const skipBackward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10)
+    }
+  }
+  
+  // Avancer de 10 secondes
+  const skipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10)
+    }
+  }
+  
+  // Afficher/masquer les contrôles
   const handleMouseMove = () => {
-    setShowControls(true);
-    
-    if (hideControlsTimerRef.current) {
-      clearTimeout(hideControlsTimerRef.current);
+    setShowControls(true)
+    clearTimeout(hideControlsTimeout)
+    hideControlsTimeout = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false)
+      }
+    }, 3000)
+  }
+  
+  // Nettoyer le timeout quand le composant est démonté
+  useEffect(() => {
+    return () => {
+      clearTimeout(hideControlsTimeout)
+    }
+  }, [])
+  
+  // Raccourcis clavier
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          togglePlay()
+          break
+        case 'f':
+          toggleFullscreen()
+          break
+        case 'm':
+          toggleMute()
+          break
+        case 'arrowright':
+          skipForward()
+          break
+        case 'arrowleft':
+          skipBackward()
+          break
+      }
     }
     
-    if (isPlaying) {
-      hideControlsTimerRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  };
+  }, [isPlaying, isMuted, duration])
   
   return (
     <div 
-      ref={containerRef}
-      className="relative w-full bg-black aspect-video overflow-hidden"
+      ref={containerRef} 
+      className="relative w-full h-full bg-black"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => {
-        if (isPlaying) {
-          setShowControls(false);
-        }
-      }}
+      onClick={togglePlay}
     >
-      {/* Video Element */}
       <video
         ref={videoRef}
         src={src}
         poster={poster}
         className="w-full h-full"
-        onClick={togglePlay}
-        playsInline
+        autoPlay={autoPlay}
+        onClick={e => e.stopPropagation()}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onProgress={handleProgress}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => {
+          setIsPlaying(false)
+          if (onEnded) onEnded()
+        }}
       />
       
-      {/* Buffering Indicator */}
-      {isBuffering && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      {/* Barre de chargement */}
+      <div className="absolute bottom-[48px] left-0 w-full h-1 bg-gray-800">
+        <div 
+          className="h-full bg-gray-600" 
+          style={{ width: `${loadingProgress}%` }}
+        />
+      </div>
+      
+      {/* Contrôles */}
+      <div 
+        className={cn(
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300",
+          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={e => e.stopPropagation()}
+      >
+        {title && (
+          <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent">
+            <h2 className="text-white font-medium">{title}</h2>
+          </div>
+        )}
+        
+        {/* Barre de progression */}
+        <div className="mb-4">
+          <Slider
+            value={[currentTime]}
+            min={0}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-gray-300 mt-1">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+        
+        {/* Boutons de contrôle */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={togglePlay}
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            </button>
+            
+            <button 
+              onClick={skipBackward}
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              <SkipBack size={20} />
+            </button>
+            
+            <button 
+              onClick={skipForward}
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              <SkipForward size={20} />
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={toggleMute}
+                className="text-white hover:text-gray-300 transition-colors"
+              >
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+              <div className="w-24">
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onValueChange={handleVolumeChange}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={toggleFullscreen}
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bouton épisode suivant */}
+      {showNextEpisode && nextEpisode && (
+        <div className="absolute bottom-[70px] right-4 bg-black/80 p-2 rounded-md transition-opacity duration-300">
+          <p className="text-white text-sm mb-1">Épisode suivant: {nextEpisode.title}</p>
+          <button 
+            onClick={nextEpisode.onPlay}
+            className="bg-primary text-white text-sm py-1 px-3 rounded-md w-full hover:bg-primary/90"
+          >
+            Regarder
+          </button>
         </div>
       )}
-      
-      {/* Next Episode Card */}
-      <AnimatePresence>
-        {showNextEpisode && nextEpisode && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-20 right-8 bg-surface border border-gray-800 rounded-lg shadow-xl overflow-hidden max-w-xs z-20"
-          >
-            <div className="p-3 border-b border-gray-800">
-              <h3 className="font-semibold text-sm">Épisode suivant</h3>
-            </div>
-            <div className="flex items-center p-3">
-              <div className="w-24 h-16 relative flex-shrink-0 mr-3">
-                <img
-                  src={nextEpisode.thumbnail}
-                  alt={nextEpisode.title}
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium line-clamp-2">{nextEpisode.title}</h4>
-              </div>
-            </div>
-            <div className="flex p-2 border-t border-gray-800">
-              <button className="flex-1 text-center py-1 text-sm font-medium hover:bg-surface-light rounded">
-                Annuler
-              </button>
-              <div className="w-px bg-gray-800"></div>
-              <button className="flex-1 text-center py-1 text-sm font-medium text-primary hover:bg-surface-light rounded">
-                Lire
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Video Controls */}
-      <AnimatePresence>
-        {showControls && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 flex flex-col justify-between z-10 bg-gradient-to-b from-black/60 via-transparent to-black/60 p-4"
-          >
-            {/* Top Controls */}
-            <div className="flex justify-between items-center">
-              {/* Back Button & Title */}
-              <div className="flex items-center">
-                {onClose && (
-                  <button
-                    onClick={onClose}
-                    className="text-white/90 hover:text-white mr-4"
-                    aria-label="Back"
-                  >
-                    <ArrowLeftCircle size={24} />
-                  </button>
-                )}
-                {title && <h2 className="text-lg font-medium">{title}</h2>}
-              </div>
-              
-              {/* Settings Button */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="text-white/90 hover:text-white"
-                  aria-label="Settings"
-                >
-                  <Settings size={20} />
-                </button>
-                
-                {/* Settings Menu */}
-                <AnimatePresence>
-                  {showSettings && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-surface border border-gray-800 rounded-lg shadow-xl overflow-hidden"
-                    >
-                      {/* Playback Speed */}
-                      <div className="p-3 border-b border-gray-800">
-                        <h3 className="text-sm font-medium mb-2">Vitesse de lecture</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                            <button
-                              key={speed}
-                              className={`px-2 py-1 text-xs rounded ${
-                                playbackSpeed === speed
-                                  ? "bg-primary text-white"
-                                  : "bg-surface-light hover:bg-gray-700"
-                              }`}
-                              onClick={() => setPlaybackSpeed(speed)}
-                            >
-                              {speed === 1 ? "Normal" : `${speed}x`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Quality */}
-                      <div className="p-3 border-b border-gray-800">
-                        <h3 className="text-sm font-medium mb-2">Qualité</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {["auto", "1080p", "720p", "480p", "360p"].map((q) => (
-                            <button
-                              key={q}
-                              className={`px-2 py-1 text-xs rounded ${
-                                quality === q
-                                  ? "bg-primary text-white"
-                                  : "bg-surface-light hover:bg-gray-700"
-                              }`}
-                              onClick={() => setQuality(q)}
-                            >
-                              {q}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Subtitles */}
-                      <div className="p-3">
-                        <button
-                          className="flex items-center justify-between w-full"
-                          onClick={() => setSubtitles(!subtitles)}
-                        >
-                          <div className="flex items-center">
-                            <Subtitles size={16} className="mr-2" />
-                            <span className="text-sm">Sous-titres</span>
-                          </div>
-                          <div className={`w-8 h-4 rounded-full relative ${
-                            subtitles ? "bg-primary" : "bg-gray-600"
-                          }`}>
-                            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transform transition-all ${
-                              subtitles ? "left-[calc(100%-14px)]" : "left-0.5"
-                            }`}></div>
-                          </div>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-            
-            {/* Middle Play/Pause */}
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <button
-                onClick={togglePlay}
-                className="bg-white/20 hover:bg-white/30 rounded-full p-6 backdrop-blur-sm transition-all"
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? (
-                  <Pause size={30} className="text-white" />
-                ) : (
-                  <Play size={30} className="text-white" />
-                )}
-              </button>
-            </div>
-            
-            {/* Bottom Controls */}
-            <div className="space-y-2">
-              {/* Progress Bar */}
-              <div className="w-full">
-                <Slider
-                  value={[currentTime]}
-                  min={0}
-                  max={duration || 100}
-                  step={0.1}
-                  onValueChange={handleSeek}
-                  className="cursor-pointer"
-                />
-              </div>
-              
-              <div className="flex justify-between items-center">
-                {/* Left Controls (Play/Pause, Time, Skip) */}
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={togglePlay}
-                    className="text-white/90 hover:text-white"
-                    aria-label={isPlaying ? "Pause" : "Play"}
-                  >
-                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                  </button>
-                  
-                  <button
-                    onClick={() => handleSkip(-10)}
-                    className="text-white/90 hover:text-white"
-                    aria-label="Skip back 10 seconds"
-                  >
-                    <RotateCcw size={18} />
-                  </button>
-                  
-                  <button
-                    onClick={() => handleSkip(10)}
-                    className="text-white/90 hover:text-white"
-                    aria-label="Skip forward 10 seconds"
-                  >
-                    <SkipForward size={18} />
-                  </button>
-                  
-                  {/* Time */}
-                  <div className="text-sm text-white/90">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </div>
-                </div>
-                
-                {/* Right Controls (Volume, Fullscreen) */}
-                <div className="flex items-center space-x-4">
-                  {/* Volume */}
-                  <div 
-                    className="relative flex items-center"
-                    onMouseEnter={() => setShowVolumeSlider(true)}
-                  >
-                    <button
-                      onClick={toggleMute}
-                      className="text-white/90 hover:text-white mr-2"
-                      aria-label={isMuted ? "Unmute" : "Mute"}
-                    >
-                      {isMuted ? (
-                        <VolumeX size={20} />
-                      ) : volume < 0.5 ? (
-                        <Volume1 size={20} />
-                      ) : (
-                        <Volume2 size={20} />
-                      )}
-                    </button>
-                    
-                    <AnimatePresence>
-                      {showVolumeSlider && (
-                        <motion.div
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 80 }}
-                          exit={{ opacity: 0, width: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <Slider
-                            value={[isMuted ? 0 : volume]}
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            onValueChange={handleVolumeChange}
-                            className="cursor-pointer"
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  
-                  {/* Fullscreen */}
-                  <button
-                    onClick={toggleFullscreen}
-                    className="text-white/90 hover:text-white"
-                    aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                  >
-                    {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
-  );
+  )
 }
