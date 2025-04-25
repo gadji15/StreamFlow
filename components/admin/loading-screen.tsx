@@ -1,11 +1,22 @@
-"use client"
+import { cn } from "@/lib/utils"
 
-export default function LoadingScreen() {
+interface LoadingScreenProps {
+  message?: string
+  className?: string
+}
+
+export default function LoadingScreen({ 
+  message = "Chargement...", 
+  className 
+}: LoadingScreenProps) {
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-gray-950">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full border-4 border-solid border-purple-500 border-t-transparent h-16 w-16"></div>
-        <p className="text-gray-400 mt-4">Chargement du panneau d'administration...</p>
+    <div className={cn("flex min-h-screen flex-col items-center justify-center bg-gray-950", className)}>
+      <div className="space-y-4 text-center">
+        <div className="inline-flex items-center justify-center h-16 w-16 relative">
+          <div className="absolute h-12 w-12 border-4 border-primary rounded-full border-solid"></div>
+          <div className="absolute h-12 w-12 border-4 border-transparent border-t-white rounded-full animate-spin"></div>
+        </div>
+        <div className="text-lg text-gray-400">{message}</div>
       </div>
     </div>
   )

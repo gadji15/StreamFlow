@@ -1,48 +1,139 @@
-import Link from "next/link";
-import { LayoutDashboard, Film, Users, Settings, Home } from "lucide-react";
+"use client"
+
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { 
+  Home, 
+  Film, 
+  Tv, 
+  Users, 
+  Settings, 
+  LogOut, 
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export default function AdminSidebar() {
-  // Barre latérale fixe non repliable pour le test
+  const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Récupérer le rôle d'administrateur depuis le localStorage
+    const role = localStorage.getItem("adminRole")
+    setAdminRole(role)
+  }, [])
+
+  const navItems = [
+    {
+      title: "Tableau de bord",
+      href: "/admin",
+      icon: <Home size={20} />,
+      roles: ["admin", "super_admin", "content_manager"]
+    },
+    {
+      title: "Films",
+      href: "/admin/films",
+      icon: <Film size={20} />,
+      roles: ["admin", "super_admin", "content_manager"]
+    },
+    {
+      title: "Séries",
+      href: "/admin/series",
+      icon: <Tv size={20} />,
+      roles: ["admin", "super_admin", "content_manager"]
+    },
+    {
+      title: "Utilisateurs",
+      href: "/admin/users",
+      icon: <Users size={20} />,
+      roles: ["admin", "super_admin"]
+    },
+    {
+      title: "Paramètres",
+      href: "/admin/settings",
+      icon: <Settings size={20} />,
+      roles: ["super_admin"]
+    }
+  ]
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuthenticated")
+    localStorage.removeItem("adminEmail")
+    localStorage.removeItem("adminRole")
+    window.location.href = "/admin/auth/login"
+  }
+
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-gray-900 border-r border-gray-800 z-50">
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="h-16 flex items-center border-b border-gray-800 px-4">
-          <div className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-            StreamFlow Admin
-          </div>
-        </div>
-        
-        {/* Navigation */}
-        <div className="flex-1 py-4 overflow-y-auto">
-          <nav className="px-2 space-y-1">
-            <Link href="/admin" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">
-              <LayoutDashboard className="h-5 w-5" />
-              <span>Tableau de bord</span>
-            </Link>
-            <Link href="/admin/movies" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">
-              <Film className="h-5 w-5" />
-              <span>Films</span>
-            </Link>
-            <Link href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">
-              <Users className="h-5 w-5" />
-              <span>Utilisateurs</span>
-            </Link>
-            <Link href="#" className="flex items-center gap-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-800 hover:text-white">
-              <Settings className="h-5 w-5" />
-              <span>Paramètres</span>
-            </Link>
-          </nav>
-        </div>
-        
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-800">
-          <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/50">
-            <Home className="h-5 w-5" />
-            <span>Retour au site</span>
+    <div 
+      className={cn(
+        "bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col z-50",
+        collapsed ? "w-16" : "w-60"
+      )}
+    >
+      {/* En-tête du Sidebar */}
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+        {!collapsed && (
+          <Link href="/admin" className="font-bold text-lg bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
+            StreamFlow
           </Link>
-        </div>
+        )}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-gray-400 hover:text-white"
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </Button>
       </div>
-    </aside>
-  );
+      
+      {/* Navigation */}
+      <nav className="flex-1 py-4 overflow-y-auto">
+        <ul className="space-y-1 px-2">
+          {navItems.map((item) => {
+            // Vérifier si l'utilisateur a le rôle requis pour voir cet élément
+            if (!adminRole || !item.roles.includes(adminRole)) {
+              return null
+            }
+            
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 rounded-md transition-colors",
+                    pathname === item.href
+                      ? "bg-primary/20 text-primary"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800",
+                    collapsed && "justify-center"
+                  )}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  {!collapsed && <span>{item.title}</span>}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+      
+      {/* Pied du Sidebar */}
+      <div className="p-4 border-t border-gray-800">
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center px-3 py-2 w-full rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors",
+            collapsed && "justify-center"
+          )}
+        >
+          <LogOut size={20} className="mr-3" />
+          {!collapsed && <span>Déconnexion</span>}
+        </button>
+      </div>
+    </div>
+  )
 }
