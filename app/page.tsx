@@ -6,7 +6,7 @@ import { HeroSection } from "@/components/hero-section";
 import { ContentSection } from "@/components/content-section";
 import { useInView } from "react-intersection-observer";
 import Link from "next/link";
-import { TrendingUp, Sparkles } from "lucide-react"; // Remplacé Magic par Sparkles
+import { TrendingUp, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [ref, inView] = useInView({
@@ -56,14 +56,14 @@ export default function Home() {
       
       <ContentSection 
         title="Séries à ne pas manquer" 
-        icon={<Sparkles className="h-5 w-5" />} // Utilisez Sparkles au lieu de Magic
+        icon={<Sparkles className="h-5 w-5" />}
         contentType="series"
         isVipSection={false}
       />
       
       <ContentSection 
         title="Exclusivement VIP" 
-        icon={<Sparkles className="h-5 w-5" />} // Utilisez Sparkles au lieu de Magic
+        icon={<Sparkles className="h-5 w-5" />}
         contentType="movie"
         isVipSection={true}
       />

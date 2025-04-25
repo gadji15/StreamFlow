@@ -63,7 +63,7 @@ export function HeroSection() {
   
   return (
     <section className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden bg-gray-900">
-      {/* Background avec overlay dégradé */}
+      {/* Background */}
       <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-800">
         <div className="text-8xl font-bold">BACKGROUND</div>
       </div>

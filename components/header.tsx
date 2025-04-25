@@ -17,16 +17,7 @@ import {
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { ModeToggle } from "@/components/mode-toggle"
-import SearchBar from "@/components/search-bar"
-
-// Définir le composant VipBadge directement dans ce fichier
-function VipBadge() {
-  return (
-    <span className="ml-1 text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full font-bold">
-      VIP
-    </span>
-  );
-}
+import { VipBadge } from "./vip-badge"
 
 export default function Header() {
   const pathname = usePathname()
@@ -101,7 +92,6 @@ export default function Header() {
         {/* Actions - Desktop */}
         {!isMobile && (
           <div className="hidden md:flex items-center space-x-4">
-            <SearchBar />
             <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
               <Bell className="h-5 w-5" />
             </Button>
@@ -162,7 +152,6 @@ export default function Header() {
         {/* Menu mobile */}
         {isMobile && (
           <div className="flex items-center">
-            <SearchBar />
             <Button
               variant="ghost"
               size="icon"
@@ -230,5 +219,5 @@ export default function Header() {
   )
 }
 
-// Ajoutez aussi l'export nommé pour ceux qui voudraient l'utiliser comme ça
+// Exportation nommée pour ceux qui préfèrent l'utiliser ainsi
 export { Header }
