@@ -119,7 +119,7 @@ export default function AdminSidebar() {
     <div
       className={`bg-gray-900 border-r border-gray-800 h-screen transition-all duration-300 ${
         collapsed ? "w-16" : "w-64"
-      } fixed left-0 top-0 z-30`}
+      } fixed left-0 top-0 z-50`}
     >
       <div className="flex flex-col h-full">
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">

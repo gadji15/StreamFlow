@@ -22,7 +22,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
   return (
-    <header className="bg-gray-900 border-b border-gray-800 h-16 fixed top-0 right-0 left-64 z-20 flex items-center px-6">
+    <header className="bg-gray-900 border-b border-gray-800 h-16 fixed top-0 right-0 left-64 z-40 flex items-center px-6">
       <div className="flex-1 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-white">{title}</h1>
 

@@ -26,6 +26,11 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserVIP, setIsUserVIP] = useState(true) // Simuler un utilisateur VIP
 
+  // Ne pas afficher le header dans les pages admin
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   // Détecter le défilement pour changer l'apparence du header
   useEffect(() => {
     const handleScroll = () => {
@@ -51,7 +56,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-300",
+        "fixed top-0 w-full z-30 transition-all duration-300",
         isScrolled ? "bg-black/90 backdrop-blur-sm" : "bg-gradient-to-b from-black/80 to-transparent",
       )}
     >
