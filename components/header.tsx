@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, Menu, X, Bell, User } from "lucide-react"
+import { Menu, X, Bell, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { ModeToggle } from "@/components/mode-toggle"
+import SearchBar from "@/components/search-bar"
 
 export default function Header() {
   const pathname = usePathname()
@@ -57,7 +59,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center">
           <Link href="/" className="text-2xl font-bold text-white flex items-center">
-            StreamFlow
+            <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">StreamFlow</span>
             {isUserVIP && (
               <span className="ml-2 text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-2 py-0.5 rounded-full font-bold">
                 VIP
@@ -98,14 +100,12 @@ export default function Header() {
         {/* Actions - Desktop */}
         {!isMobile && (
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/search">
-              <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
+            <SearchBar />
             <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
               <Bell className="h-5 w-5" />
             </Button>
+
+            <ModeToggle />
 
             {!isUserVIP && (
               <Link href="/abonnement">
@@ -161,11 +161,7 @@ export default function Header() {
         {/* Menu mobile */}
         {isMobile && (
           <div className="flex items-center">
-            <Link href="/search">
-              <Button variant="ghost" size="icon" className="text-white/70 hover:text-white">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
+            <SearchBar />
             <Button
               variant="ghost"
               size="icon"
@@ -223,6 +219,11 @@ export default function Header() {
                   <User className="h-5 w-5 mr-2" />
                   Mon compte
                 </Link>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                <span className="text-white/70">Thème</span>
+                <ModeToggle />
               </div>
             </nav>
           </div>
