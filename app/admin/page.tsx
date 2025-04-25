@@ -21,22 +21,29 @@ import {
 } from "lucide-react"
 import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
-import firebase from "@/lib/admin/firebase"
+import LoadingScreen from "@/components/admin/loading-screen"
+import firebaseServices from "@/lib/firebase"
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<any>(null)
   const [activityLogs, setActivityLogs] = useState<any[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statsData = await firebase.getStatistics()
-        const logsData = await firebase.getActivityLogs()
+        setLoading(true)
+        // Get dashboard statistics
+        const statsData = await firebaseServices.statistics.getDashboardStatistics()
         setStats(statsData)
-        setActivityLogs(logsData.slice(0, 5)) // Get only the 5 most recent logs
-      } catch (error) {
+        
+        // Get recent activity logs
+        const logsData = await firebaseServices.activityLogs.getRecentActivity(5)
+        setActivityLogs(logsData)
+      } catch (error: any) {
         console.error("Error fetching dashboard data:", error)
+        setError(error.message || "Une erreur est survenue lors du chargement des données")
       } finally {
         setLoading(false)
       }
@@ -82,15 +89,26 @@ export default function AdminDashboard() {
     }
   }
 
+  if (loading) {
+    return <LoadingScreen />
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-950">
       <AdminSidebar />
       <div className="flex-1">
         <AdminHeader title="Tableau de bord" />
         <main className="pt-24 p-6">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-400">Chargement des statistiques...</div>
+          {error ? (
+            <div className="bg-red-900/50 border border-red-700 text-red-200 p-4 rounded-lg mb-6">
+              <h3 className="text-lg font-medium">Erreur de chargement</h3>
+              <p>{error}</p>
+              <Button 
+                onClick={() => window.location.reload()}
+                className="mt-2 bg-red-700 hover:bg-red-600"
+              >
+                Réessayer
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">

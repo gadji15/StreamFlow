@@ -1,50 +1,70 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import LoadingScreen from "@/components/admin/loading-screen"
+import { auth } from "@/lib/firebase/config"
+import { onAuthStateChanged } from "firebase/auth"
+import { verifyAdmin } from "@/lib/firebase/firestore/admins"
+import { updateAdminLastLogin } from "@/lib/firebase/firestore/admins"
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+interface AuthGuardProps {
+  children: React.ReactNode
+}
+
+export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()
-  const pathname = usePathname()
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est authentifié
-    const checkAuth = () => {
-      const isAuth = localStorage.getItem("adminAuthenticated") === "true"
-      setIsAuthenticated(isAuth)
-      setIsLoading(false)
-
-      if (!isAuth && !pathname.includes("/admin/auth/")) {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Verify if user is an admin
+          const adminStatus = await verifyAdmin(user.uid)
+          
+          if (adminStatus.isAdmin) {
+            // User is authenticated and has admin privileges
+            setIsAuthenticated(true)
+            
+            // Store admin data in localStorage for the app to use
+            localStorage.setItem("adminAuthenticated", "true")
+            localStorage.setItem("adminUser", JSON.stringify({
+              id: user.uid,
+              email: user.email,
+              name: user.displayName || user.email?.split("@")[0] || "Admin",
+              role: adminStatus.role || "moderator",
+              avatar: user.photoURL || null,
+              permissions: adminStatus.permissions || {}
+            }))
+            
+            // Update last login timestamp
+            await updateAdminLastLogin(user.uid)
+          } else {
+            // User is not an admin, redirect to login
+            router.push("/admin/auth/login")
+          }
+        } catch (error) {
+          console.error("Error verifying admin status:", error)
+          router.push("/admin/auth/login")
+        }
+      } else {
+        // User is not authenticated, redirect to login
+        localStorage.removeItem("adminAuthenticated")
+        localStorage.removeItem("adminUser")
         router.push("/admin/auth/login")
       }
-    }
+      
+      setIsLoading(false)
+    })
 
-    checkAuth()
-  }, [pathname, router])
+    return () => unsubscribe()
+  }, [router])
 
-  // Afficher un écran de chargement pendant la vérification
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950">
-        <Loader2 className="h-10 w-10 text-purple-500 animate-spin mb-4" />
-        <p className="text-gray-400">Vérification de l'authentification...</p>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
-  // Si l'utilisateur est sur une page d'authentification, ne pas appliquer de protection
-  if (pathname.includes("/admin/auth/")) {
-    return <>{children}</>
-  }
-
-  // Si l'utilisateur est authentifié, afficher le contenu
-  if (isAuthenticated) {
-    return <>{children}</>
-  }
-
-  // Par défaut, ne rien afficher (la redirection vers la page de connexion sera déclenchée)
-  return null
+  return isAuthenticated ? <>{children}</> : null
 }
