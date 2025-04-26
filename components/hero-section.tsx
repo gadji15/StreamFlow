@@ -1,168 +1,141 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Play, Info } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { Play, Info, ChevronLeft, ChevronRight } from "lucide-react";
 
-// Données simulées pour les films en vedette
 const featuredMovies = [
   {
     id: 1,
     title: "Inception",
-    description: "Un voleur qui s'infiltre dans les rêves des autres est chargé d'implanter une idée dans l'esprit d'un PDG.",
-    backgroundImage: "/placeholder-movie-bg.jpg",
-    genres: ["Sci-Fi", "Action", "Thriller"],
-    rating: 4.8,
+    imageUrl: "https://example.com/images/inception.jpg",
     year: 2010,
     duration: "2h 28min",
+    rating: 4.8,
+    genres: ["Action", "Science","Fiction"],
+    description: "Un voleur utilisant une technologie expérimentale pour entrer dans les rêves des gens se voit offrir une chance de retrouver sa vie normale en acceptant une mission impossible."
   },
   {
     id: 2,
-    title: "The Dark Knight",
-    description: "Batman affronte un nouveau criminel, le Joker, qui cherche à plonger Gotham City dans le chaos.",
-    backgroundImage: "/placeholder-movie-bg.jpg",
-    genres: ["Action", "Crime", "Drama"],
+    title: "The Pursuit of Happyness",
+    imageUrl: "https://example.com/images/happiness.jpg",
+    year: 2006,
+    duration: "1h 57min",
     rating: 4.9,
-    year: 2008,
-    duration: "2h 32min",
+    genres: ["Drame", "Inspirant"],
+    description: "Un homme sans ressources mais déterminé se bat contre l'adversité pour offrir une vie meilleure à son fils, malgré les nombreux défis auxquels ils font face."
   },
   {
     id: 3,
-    title: "Interstellar",
-    description: "Un groupe d'explorateurs utilise un trou de ver pour voyager au-delà de notre dimension et sauver l'humanité.",
-    backgroundImage: "/placeholder-movie-bg.jpg",
-    genres: ["Sci-Fi", "Adventure", "Drama"],
-    rating: 4.7,
-    year: 2014,
-    duration: "2h 49min",
-  }
-]
+    title: "Le Fabuleux Destin d'Amélie Poulain",
+    imageUrl: "https://example.com/images/amelie.jpg",
+    year: 2001,
+    duration: "2h 2min",
+    rating: 4.5,
+    genres: ["Comédie", "Romance"],
+    description: "À Montmartre, une serveuse timide et imaginative décide d'améliorer la vie des gens qui l'entourent tout en cherchant secrètement le grand amour."
+  },
+  {
+    id: 4,
+    title: "La La Land",
+    imageUrl: "https://example.com/images/lalaland.jpg",
+    year: 2016,
+    duration: "2h 8min",
+    rating: 4.6,
+    genres: ["Musical", "Romance"],
+    description: "Dans un monde de rêves, un pianiste de jazz et une actrice en herbe se lient d'amour tout en poursuivant leurs aspirations artistiques respectives à Los Angeles."
+  },
+  // Add more featured movies as needed
+];
 
-export function HeroSection() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const currentMovie = featuredMovies[currentIndex]
-  
-  // Auto-rotation des films en vedette
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredMovies.length)
-    }, 8000)
-    
-    return () => clearInterval(interval)
-  }, [])
-  
-  const nextMovie = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredMovies.length)
-  }
-  
-  const prevMovie = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + featuredMovies.length) % featuredMovies.length)
-  }
-  
+export default function HeroSection() {
+  const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
+
+  const handlePreviousClick = () => {
+    setCurrentMovieIndex((prevIndex) =>
+      prevIndex === 0 ? featuredMovies.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNextClick = () => {
+    setCurrentMovieIndex((prevIndex) =>
+      prevIndex === featuredMovies.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const currentMovie = featuredMovies[currentMovieIndex];
+
   return (
-    <section className="relative w-full h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden bg-gray-900">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-800">
-        <div className="text-6xl sm:text-7xl lg:text-8xl font-bold">BACKGROUND</div>
-      </div>
-      
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent">
-        <div className="container h-full flex flex-col justify-center px-4 md:px-6">
-          <div className="max-w-full sm:max-w-2xl">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentMovie.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="space-y-3 md:space-y-4"
-              >
-                <div className="space-y-1 md:space-y-2">
-                  <div className="flex items-center flex-wrap gap-2">
-                    <Badge variant="outline" className="border-primary text-primary text-xs">
-                      En vedette
-                    </Badge>
-                    <div className="flex items-center text-yellow-400 text-xs">
-                      {currentMovie.rating} ★
-                    </div>
-                  </div>
-                  
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-                    {currentMovie.title}
-                  </h1>
-                  
-                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-gray-400 text-xs">
-                    <span>{currentMovie.year}</span>
-                    <span className="hidden xs:inline">•</span>
-                    <span>{currentMovie.duration}</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1 py-1 md:py-2">
-                    {currentMovie.genres.map(genre => (
-                      <Badge key={genre} variant="secondary" className="text-[10px] md:text-xs">
-                        {genre}
-                      </Badge>
-                    ))}
-                  </div>
+    <section className="relative">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-gray-900 opacity-60"
+        style={{ backgroundImage: `url(${currentMovie.imageUrl})` }}
+      ></div>
+      <div className="relative max-w-6xl mx-auto px-4 py-16 space-y-8">
+        <AnimatePresence exitBeforeEnter>
+          <motion.div
+            key={currentMovie.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, position: "absolute" }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">{currentMovie.title}</h2>
+
+            <div className="flex space-x-4">
+              <Button variant="default" size="lg" rounded="full" className="animate-pulse transition duration-300">
+                Watch
+                <Play className="ml-2 h-5 w-5" />
+              </Button>
+              <Button variant="outline" size="lg" rounded="full">
+                <Info className="mr-2 h-5 w-5" />
+                More Info
+              </Button>
+            </div>
+
+            <div className="text-gray-400 space-y-2">
+              <p>{currentMovie.description}</p>
+              <div className="flex flex-wrap space-x-2 space-y-1 text-sm md:text-base">
+                <span>⭐ {currentMovie.rating}/5</span>
+                <span>⏰ {currentMovie.duration}</span>
+                <span>📅 {currentMovie.year}</span>
+                <div className="flex flex-wrap space-x-2 space-y-1">
+                  {currentMovie.genres.map((genre, index) => (
+                    <span key={index} className="px-2 py-1 bg-gray-700 text-white/70 rounded-md">{genre}</span>
+                  ))}
                 </div>
-                
-                <p className="text-sm md:text-base text-gray-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-none max-w-md lg:max-w-xl">
-                  {currentMovie.description}
-                </p>
-                
-                <div className="flex flex-wrap gap-3 pt-2 md:pt-4">
-                  <Button className="bg-primary hover:bg-primary/90 h-9 px-3 md:h-10 md:px-4">
-                    <Play className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Regarder
-                  </Button>
-                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800 h-9 px-3 md:h-10 md:px-4">
-                    <Info className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Plus d'infos
-                  </Button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-            
-            {/* Indicateurs de slide et navigation */}
-            <div className="flex items-center space-x-4 mt-6 md:mt-8">
-              <div className="flex space-x-2">
-                {featuredMovies.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-2 h-2 rounded-full ${
-                      index === currentIndex ? "bg-primary" : "bg-gray-700"
-                    }`}
-                    onClick={() => setCurrentIndex(index)}
-                    aria-label={`Voir le film ${index + 1}`}
-                  />
-                ))}
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button 
-                  onClick={prevMovie} 
-                  variant="outline" 
-                  size="icon" 
-                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
-                  aria-label="Film précédent"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button 
-                  onClick={nextMovie} 
-                  variant="outline" 
-                  size="icon" 
-                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
-                  aria-label="Film suivant"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="absolute inset-y-0 left-0 flex items-center">
+          <Button onClick={handlePreviousClick} size="icon" rounded="full">
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        </div>
+        <div className="absolute inset-y-0 right-0 flex items-center">
+          <Button onClick={handleNextClick} size="icon" rounded="full">
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+        <div className="flex space-x-2">
+          {featuredMovies.map((movie, index) => (
+            <div
+              key={movie.id}
+              className={`w-3 h-3 rounded-full cursor-pointer ${
+                index === currentMovieIndex ? 'bg-primary animate-pulse' : 'bg-gray-600'
+              }`}
+              onClick={() => setCurrentMovieIndex(index)}
+            ></div>
+          ))}
         </div>
       </div>
     </section>
-  )
+  );
 }

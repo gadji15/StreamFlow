@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "title": "Inception",
+    "year": 2010,
+    "genre": "Science-fiction",
+    "rating": 4.8,
+    "description": "Un voleur utilisant une technologie expérimentale pour entrer dans les rêves des gens se voit offrir une chance de retrouver sa vie normale en acceptant une mission impossible.",
+    "imageUrl": "https://example.com/images/inception.jpg"
+  },
+  {
+    "id": 2,
+    "title": "The Dark Knight",
+    "year": 2008,
+    "genre": "Action",
+    "rating": 4.9,
+    "description": "Le justicier masqué Batman combat le chaos apporté à Gotham City par le mystérieux et sadique Joker.",
+    "imageUrl": "https://example.com/images/dark_knight.jpg"
+  },
+  {
+    "id": 3,
+    "title": "Interstellar",
+    "year": 2014,
+    "genre": "Science-fiction",
+    "rating": 4.7,
+    "description": "Un groupe d'explorateurs doit franchir les limites de l'univers connu pour trouver un nouvel espoir pour l'humanité.",
+    "imageUrl": "https://example.com/images/interstellar.jpg"
+  },
+  {
+    "id": 4,
+    "title": "The Matrix",
+    "year": 1999,
+    "genre": "Science-fiction",
+    "rating": 4.6,
+    "description": "Un pirate informatique découvre une sinistre vérité sur la réalité et son rôle dans la lutte contre ses oppresseurs.",
+    "imageUrl": "https://example.com/images/matrix.jpg"
+  },
+  {
+    "id": 5,
+    "title": "Pulp Fiction",
+    "year": 1994,
+    "genre": "Crime",
+    "rating": 4.5,
+    "description": "Les vies de deux gangsters, d'un boxeur, d'une épouse de gangster et de deux braqueurs de restaurant s'entrelacent dans des récits de violence et de rédemption.",
+    "imageUrl": "https://example.com/images/pulp_fiction.jpg"
+  },
+  {
+    "id": 6,
+    "title": "The Shawshank Redemption",
+    "year": 1994,
+    "genre": "Drame",
+    "rating": 4.9,
+    "description": "Deux hommes en prison développent un lien profond alors qu'ils trouvent espoir et rédemption à travers les actions de l'un d'eux.",
+    "imageUrl": "https://example.com/images/shawshank.jpg"
+  },
+  {
+    "id": 7,
+    "title": "Forrest Gump",
+    "year": 1994,
+    "genre": "Drame",
+    "rating": 4.8,
+    "description": "Un homme au cœur simple et avec des capacités limitées d'apprentissage raconte sa vie incroyable, qui comprend des moments historiques importants.",
+    "imageUrl": "https://example.com/images/forrest_gump.jpg"
+  },
+  {
+    "id": 8,
+    "title": "The Godfather",
+    "year": 1972,
+    "genre": "Crime",
+    "rating": 4.9,
+    "description": "Le patriarche vieillissant d'une dynastie criminelle organise le transfert de pouvoir à son fils réticent.",
+    "imageUrl": "https://example.com/images/godfather.jpg"
+  },
+  {
+    "id": 9,
+    "title": "Fight Club",
+    "year": 1999,
+    "genre": "Drame",
+    "rating": 4.7,
+    "description": "Un employé de bureau désenchanté et un fabriquant de savon anticonformiste forment un club souterrain aux conséquences radicales.",
+    "imageUrl": "https://example.com/images/fight_club.jpg"
+  },
+  {
+    "id": 10,
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "year": 2001,
+    "genre": "Fantasy",
+    "rating": 4.8,
+    "description": "Un hobbit se lance dans une quête pour détruire un anneau puissant et empêcher un seigneur des ténèbres de dominer le monde.",
+    "imageUrl": "https://example.com/images/lotr_fellowship.jpg"
+  }
+]

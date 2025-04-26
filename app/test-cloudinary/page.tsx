@@ -1,81 +1,133 @@
 "use client"
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ImageUpload } from '@/components/admin/image-upload';
-import { uploadImage } from '@/lib/cloudinary';
-import { Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { RingLoader } from 'react-spinners'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { uploadImage } from '@/lib/cloudinary'
+import { toast } from '@/hooks/use-toast'
+import { ArrowRight } from 'lucide-react'
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms))
 
 export default function TestCloudinaryPage() {
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [file, setFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [percent, setPercent] = useState(0)
+  const [url, setUrl] = useState('')
+  const [publicId, setPublicId] = useState('')
+  const [name, setName] = useState('')
+  const [testingFine, setTestingFine] = useState(false)
 
-  const handleUpload = async (file: File) => {
-    setIsUploading(true);
-    setTestResult(null);
-    
-    try {
-      // Test d'upload Cloudinary
-      const uploadedUrl = await uploadImage(file, {
-        folder: 'streamflow-test',
-        publicId: `test-${Date.now()}`
-      });
-      
-      setImageUrl(uploadedUrl);
-      setTestResult('success');
-    } catch (error) {
-      console.error('Erreur lors du test:', error);
-      setTestResult('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Erreur inconnue');
-    } finally {
-      setIsUploading(false);
+  useEffect(() => {
+    async function upload() {
+      if (!file) return
+      setLoading(true)
+      setPercent(0)
+      setUrl('')
+      setPublicId('')
+      setName('')
+      setTestingFine(false)
+
+      try {
+        const data = await uploadImage(file)
+        setUrl(data.secure_url)
+        setPublicId(data.public_id)
+        setName(data.name)
+
+        for (let i = 0; i <= 100; i++) {
+          await sleep(20)
+          setPercent(i)
+        }
+
+        for (let i = 0; i <= 100; i++) {
+          await sleep(20)
+        }
+
+        setTestingFine(true)
+      } catch (err) {
+        toast({
+          title: 'Erreur lors de l\'upload',
+          description: (err as Error).message,
+        })
+      } finally {
+        await sleep(500)
+        setLoading(false)
+        setPercent(0)
+      }
     }
-  };
+    upload()
+  }, [file])
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Test de Cloudinary</h1>
-      <p className="mb-8 text-gray-400">
-        Cette page vous permet de tester si votre configuration Cloudinary fonctionne correctement.
-        Téléchargez une image pour vérifier.
-      </p>
-      
-      <div className="max-w-md mx-auto bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Upload de test</h2>
-        
-        <ImageUpload
-          imageUrl={imageUrl}
-          onUpload={handleUpload}
-          onRemove={() => setImageUrl('')}
-          label="Télécharger une image de test"
-        />
-        
-        {isUploading && (
-          <div className="mt-4 flex items-center justify-center">
-            <Loader2 className="animate-spin h-5 w-5 mr-2" />
-            <span>Test en cours...</span>
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Test de Cloudinary</h1>
+        <p className="text-gray-400 text-sm">
+          Ce composant simule l'upload d'une image vers Cloudinary. 
+        </p>
+      </div>
+
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md space-y-6">
+        <div className="relative flex flex-col md:flex-row items-center md:space-x-6">
+          <div className="md:w-1/2">
+            <label htmlFor="file">
+              <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-center">
+                Cliquez ici pour sélectionner une image
+              </div>
+            </label>
+            <input
+              type="file"
+              id="file"
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+          </div>
+
+          <div className="md:w-1/2 space-y-2 mt-8 md:mt-0">
+            {loading && (
+              <div className="flex justify-center items-center">
+                <RingLoader size={64} color="#FFA500" />
+              </div>
+            )}
+            {testingFine && (
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Upload réussi !</h2>
+                <p className="text-green-500">
+                  L'image a été uploadée sur Cloudinary avec succès.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {url && (
+          <div className="flex justify-center">
+            <img src={url} alt="Uploaded" className="max-h-64 rounded-lg shadow-md" />
           </div>
         )}
-        
-        {testResult === 'success' && (
-          <div className="mt-4 p-3 bg-green-900/30 border border-green-800 rounded-md">
-            <p className="text-green-400">✅ Configuration Cloudinary fonctionnelle!</p>
-            <p className="text-sm text-gray-400 mt-2">L'image a été téléchargée avec succès.</p>
-          </div>
-        )}
-        
-        {testResult === 'error' && (
-          <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-md">
-            <p className="text-red-400">❌ Erreur de configuration Cloudinary</p>
-            <p className="text-sm text-gray-400 mt-2">{errorMessage}</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Vérifiez vos clés dans .env.local et assurez-vous qu'elles sont correctes.
-            </p>
+
+        {publicId && (
+          <div className="space-y-3">
+            <p className="text-center">Public ID: {publicId}</p>
+            <p className="text-center">Nom: {name}</p>
           </div>
         )}
       </div>
+
+      {testingFine && (
+        <div className="text-center mt-8">
+          <Button 
+            className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75"
+            onClick={() => window.location.href = '/admin/films/add'}
+          >
+            Continuer vers l'ajout de films <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+        </div>
+      )}
     </div>
-  );
+  )
 }

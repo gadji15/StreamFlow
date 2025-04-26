@@ -34,6 +34,33 @@ export function Footer() {
             </div>
           </div>
           
+          {/* Liens utiles */}
+          <div>
+            <h3 className="font-semibold text-white mb-4">Liens utiles</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/categories" className="text-gray-400 hover:text-white text-sm">
+                  Catégories
+                </Link>
+              </li>
+              <li>
+                <Link href="/nouveautes" className="text-gray-400 hover:text-white text-sm">
+                  Les nouveautés
+                </Link>
+              </li>
+              <li>
+                <Link href="/mon-compte" className="text-gray-400 hover:text-white text-sm">
+                  Mon compte
+                </Link>
+              </li>
+              <li>
+                <Link href="/mobile" className="text-gray-400 hover:text-white text-sm">
+                  Installer l'application
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
           {/* Navigation */}
           <div>
             <h3 className="font-semibold text-white mb-4">Navigation</h3>
@@ -59,45 +86,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/nouveautes" className="text-gray-400 hover:text-white text-sm">
-                  Nouveautés
-                </Link>
-              </li>
-              <li>
                 <Link href="/exclusif" className="text-gray-400 hover:text-white text-sm">
                   Exclusif VIP
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Aide et Support */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Aide et Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/compte" className="text-gray-400 hover:text-white text-sm">
-                  Mon compte
-                </Link>
-              </li>
-              <li>
-                <Link href="/abonnement" className="text-gray-400 hover:text-white text-sm">
-                  Abonnement
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-gray-400 hover:text-white text-sm">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/aide" className="text-gray-400 hover:text-white text-sm">
-                  Aide et support
-                </Link>
-              </li>
-              <li>
-                <Link href="/appareils-compatibles" className="text-gray-400 hover:text-white text-sm">
-                  Appareils compatibles
                 </Link>
               </li>
             </ul>
