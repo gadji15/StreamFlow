@@ -1,38 +1,49 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Shield, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/use-auth';
 
-export default function AdminUnauthorizedPage() {
+export default function UnauthorizedPage() {
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+  
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md text-center">
-        <div className="mx-auto w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
-          <Shield className="h-8 w-8 text-red-500" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 px-4">
+      <div className="text-center">
+        <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-red-500/20 flex items-center justify-center">
+          <Shield className="h-10 w-10 text-red-500" />
         </div>
-        
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Accès non autorisé
-        </h1>
-        
-        <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-          Vous n'avez pas les permissions nécessaires pour accéder à cette section de l'administration.
+        <h1 className="mb-3 text-3xl font-bold">Accès non autorisé</h1>
+        <p className="mb-8 max-w-md text-gray-400">
+          Vous n'avez pas les droits nécessaires pour accéder à cette section 
+          d'administration. Veuillez contacter un administrateur si vous pensez 
+          que cette restriction est une erreur.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour au site
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => router.push('/')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au site
+          </Button>
           
-          <Link href="/admin/auth/login">
-            <Button>
-              Se connecter avec un autre compte
+          {!isLoggedIn ? (
+            <Button
+              size="lg"
+              onClick={() => router.push('/admin/auth/login')}
+              className="gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              Se connecter
             </Button>
-          </Link>
+          ) : null}
         </div>
       </div>
     </div>

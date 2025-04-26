@@ -1,9 +1,9 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
-// Configuration Firebase avec variables d'environnement
+// Configuration Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -11,24 +11,28 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialiser Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialiser services
+// Initialiser les services
 const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// Émulateurs en mode développement (facultatif)
-if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true') {
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  // Autres émulateurs peuvent être ajoutés ici
+// Pour déboguer - uniquement en développement
+if (process.env.NODE_ENV === 'development') {
+  console.log('Firebase initialized with config:', {
+    apiKey: firebaseConfig.apiKey?.substring(0, 5) + '...',
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    storageBucket: firebaseConfig.storageBucket
+  });
 }
 
-// Exporter l'app et les services
-export { app, firestore, auth, storage };
-// Alias pour compatibilité avec le code existant
-export const db = firestore;
+// Alias db pour la compatibilité
+const db = firestore;
+
+export { app, firestore, db, auth, storage };

@@ -1,14 +1,14 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/hooks/use-auth";
-import { ToastProvider } from "@/components/ui/toaster";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ScrollToTop from "@/components/scroll-to-top";
-import ConnectivityIndicator from "@/components/connectivity-indicator";
+import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PWAUpdatePrompt from "@/components/pwa-update-prompt";
+import ConnectivityIndicator from "@/components/connectivity-indicator";
+import { AuthProvider } from "@/hooks/use-auth"; // Le chemin est le même, mais le fichier a changé
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col bg-gray-900">
+      <body className="min-h-screen flex flex-col">
         <AuthProvider>
           <ThemeProvider 
             attribute="class"
@@ -64,6 +64,7 @@ export default function RootLayout({
               </main>
               <Footer />
               <ScrollToTop />
+              {/* Composants PWA */}
               <PWAInstallPrompt />
               <PWAUpdatePrompt />
               <ConnectivityIndicator />
