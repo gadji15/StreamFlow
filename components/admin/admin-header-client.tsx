@@ -1,22 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, X, LogOut, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, LogOut, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 
 export default function AdminHeaderClient() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { toast } = useToast();
   
   const handleLogout = async () => {
-    await logout();
-    toast({
-      title: "Déconnexion réussie",
-      description: "Vous avez été déconnecté de l'interface d'administration.",
-    });
+    try {
+      await logout();
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté de l'interface d'administration.",
+      });
+    } catch (error) {
+      console.error('Erreur de déconnexion:', error);
+      toast({
+        title: "Erreur",
+        description: "Un problème est survenu lors de la déconnexion.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
