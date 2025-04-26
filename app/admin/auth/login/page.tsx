@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // Ajout de useEffect
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore"
-import { auth, firestore } from "@/lib/firebase/config" // Importation depuis config
+import { auth, firestore } from "@/lib/firebase/config"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
@@ -19,6 +19,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+
+  // Vérifier si l'utilisateur est déjà connecté
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isAdminLoggedIn") === "true";
+    if (isLoggedIn) {
+      router.push("/admin/dashboard");
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,12 +60,21 @@ export default function LoginPage() {
           variant: "default",
         })
 
-        // Rediriger vers le tableau de bord admin
-        router.push("/admin")
+        // Attendre un court délai avant de rediriger
+        setTimeout(() => {
+          // Rediriger vers le tableau de bord admin
+          window.location.href = "/admin/dashboard"; // Utiliser window.location au lieu de router
+        }, 1000);
       } else {
         // L'utilisateur n'est pas un administrateur
         await auth.signOut()
         setError("Vous n'avez pas les droits d'administration nécessaires")
+        // Nettoyer le localStorage
+        localStorage.removeItem("adminId");
+        localStorage.removeItem("adminEmail");
+        localStorage.removeItem("adminName");
+        localStorage.removeItem("adminRole");
+        localStorage.removeItem("isAdminLoggedIn");
       }
     } catch (error: any) {
       console.error("Erreur de connexion:", error)
