@@ -35,5 +35,12 @@
     Q 190 155, 215 170
     " 
     stroke="url(#gradientIcon)" stroke-width="6" fill="none" opacity="0.6" stroke-linecap="round">
+    <animate attributeName="d" 
+      values="
+        M 65 170 Q 90 155, 115 170 Q 140 185, 165 170 Q 190 155, 215 170;
+        M 65 170 Q 90 185, 115 170 Q 140 155, 165 170 Q 190 185, 215 170;
+        M 65 170 Q 90 155, 115 170 Q 140 185, 165 170 Q 190 155, 215 170
+      "
+      dur="3s" repeatCount="indefinite"/>
   </path>
 </svg>

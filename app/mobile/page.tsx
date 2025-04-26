@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { 
   Film, 
@@ -10,7 +9,6 @@ import {
   Search, 
   Heart, 
   Download, 
-  User, 
   Chrome, 
   Apple, 
   Menu, 
