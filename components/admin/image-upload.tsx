@@ -1,155 +1,114 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Upload, X } from 'lucide-react';
+"use client";
+
+import { useState, useRef, ChangeEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploadProps {
-  imageUrl?: string;
-  onUpload: (file: File) => Promise<void>;
-  onRemove?: () => void;
-  className?: string;
-  aspect?: 'square' | 'portrait' | 'landscape';
+  onImageSelected: (file: File) => void;
+  onImageRemoved?: () => void;
+  previewUrl?: string;
   label?: string;
-  maxSize?: number; // en MB
   accept?: string;
+  maxSizeMB?: number;
 }
 
-export function ImageUpload({
-  imageUrl,
-  onUpload,
-  onRemove,
-  className = '',
-  aspect = 'square',
-  label = 'Télécharger une image',
-  maxSize = 5, // 5MB par défaut
-  accept = 'image/*'
+export default function ImageUpload({
+  onImageSelected,
+  onImageRemoved,
+  previewUrl,
+  label = "Ajouter une image",
+  accept = "image/jpeg, image/png, image/webp",
+  maxSizeMB = 5
 }: ImageUploadProps) {
-  const [preview, setPreview] = useState<string | undefined>(imageUrl);
-  const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(previewUrl || null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Déterminer la classe d'aspect
-  const aspectClass = {
-    square: 'aspect-square',
-    portrait: 'aspect-[2/3]',
-    landscape: 'aspect-video'
-  }[aspect];
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Validation de la taille du fichier
+    const maxSizeBytes = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+    if (file.size > maxSizeBytes) {
+      setError(`La taille du fichier dépasse ${maxSizeMB}MB.`);
+      return;
+    }
+
+    // Validation du type de fichier
+    if (!file.type.startsWith('image/')) {
+      setError("Le fichier sélectionné n'est pas une image.");
+      return;
+    }
+
     setError(null);
     
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Vérifier la taille du fichier
-      if (file.size > maxSize * 1024 * 1024) {
-        setError(`Le fichier est trop volumineux. Maximum ${maxSize}MB.`);
-        return;
-      }
-      
-      // Créer un aperçu
-      const objectUrl = URL.createObjectURL(file);
-      setPreview(objectUrl);
-      
-      // Uploader le fichier
-      setIsUploading(true);
-      try {
-        await onUpload(file);
-      } catch (error) {
-        console.error('Erreur lors du téléchargement:', error);
-        setError('Erreur lors du téléchargement. Veuillez réessayer.');
-        // Réinitialiser l'aperçu en cas d'erreur
-        setPreview(imageUrl);
-      } finally {
-        setIsUploading(false);
-      }
-    }
+    // Génération du preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    // Callback
+    onImageSelected(file);
   };
 
-  const handleRemove = () => {
-    setPreview(undefined);
-    if (onRemove) {
-      onRemove();
+  const handleRemoveImage = () => {
+    setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (onImageRemoved) {
+      onImageRemoved();
     }
   };
 
   return (
-    <div className={`relative ${className}`}>
-      {preview ? (
-        <div className={`relative w-full ${aspectClass} rounded-lg overflow-hidden group border border-gray-700`}>
-          <img 
-            src={preview} 
-            alt="Aperçu de l'image" 
-            className="w-full h-full object-cover"
-          />
-          
-          {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="flex flex-col items-center space-y-2">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-                <p className="text-sm text-white">Téléchargement...</p>
-              </div>
-            </div>
-          )}
-          
-          {!isUploading && (
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-              <div className="flex space-x-2">
-                <label className="cursor-pointer">
-                  <span className="px-4 py-2 bg-gray-700/80 text-white rounded-md hover:bg-gray-600/80 transition-colors text-sm">
-                    Changer
-                  </span>
-                  <input 
-                    type="file" 
-                    accept={accept}
-                    className="hidden"
-                    onChange={handleFileChange}
-                    disabled={isUploading}
-                  />
-                </label>
-                
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="bg-red-600/80 hover:bg-red-500/80"
-                  onClick={handleRemove}
-                  disabled={isUploading}
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className={`border-2 border-dashed border-gray-700 rounded-lg p-6 ${aspectClass} flex flex-col items-center justify-center text-center bg-gray-800/50`}>
-          <div className="mb-4">
-            <Upload className="h-10 w-10 text-gray-400" />
+    <div className="space-y-2">
+      {!preview ? (
+        <>
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+          >
+            <Upload className="h-10 w-10 text-gray-400 mb-2" />
+            <p className="text-gray-400 text-center">{label}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {`Format: JPG, PNG ou WebP (max. ${maxSizeMB}MB)`}
+            </p>
           </div>
-          <p className="text-sm text-gray-400 mb-2">
-            {label}
-          </p>
-          <label className="cursor-pointer">
-            <span className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors text-sm">
-              Parcourir
-            </span>
-            <input 
-              type="file" 
-              accept={accept}
-              className="hidden"
-              onChange={handleFileChange}
-              disabled={isUploading}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept={accept}
+            className="hidden"
+          />
+        </>
+      ) : (
+        <div className="relative">
+          <div className="aspect-[3/2] rounded-lg overflow-hidden bg-gray-800">
+            <img 
+              src={preview} 
+              alt="Aperçu" 
+              className="w-full h-full object-cover"
             />
-          </label>
-          <p className="text-xs text-gray-500 mt-2">
-            PNG, JPG ou WEBP. Max {maxSize}MB.
-          </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2 rounded-full p-1 h-auto w-auto"
+            onClick={handleRemoveImage}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       )}
       
       {error && (
-        <p className="mt-2 text-sm text-red-500">
-          {error}
-        </p>
+        <p className="text-red-500 text-sm">{error}</p>
       )}
     </div>
   );
