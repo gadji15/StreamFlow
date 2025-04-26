@@ -1,8 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 // Configuration Firebase
 const firebaseConfig = {
@@ -12,28 +11,28 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialiser Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialiser services
+// Initialiser les services
 const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// Initialiser Analytics seulement côté client
-let analytics = null;
-if (typeof window !== "undefined") {
-  // Vérifier si Analytics est supporté avant d'initialiser
-  isSupported().then(supported => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
+// Pour déboguer - uniquement en développement
+if (process.env.NODE_ENV === 'development') {
+  console.log('Firebase initialized with config:', {
+    apiKey: firebaseConfig.apiKey?.substring(0, 5) + '...',
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    storageBucket: firebaseConfig.storageBucket
   });
 }
 
-export { app, firestore, auth, storage, analytics };
-// Alias pour compatibilité
-export const db = firestore;
+// Alias db pour la compatibilité
+const db = firestore;
+
+export { app, firestore, db, auth, storage };
