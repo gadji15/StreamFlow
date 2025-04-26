@@ -112,36 +112,21 @@ const nextConfig = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
   
-  // Internationalisation (si nécessaire)
-  i18n: {
-    locales: ['fr'],
-    defaultLocale: 'fr',
-  },
-  
-  // Support expérimental des fonctionnalités
-  experimental: {
-    // Activer/désactiver les fonctionnalités expérimentales selon vos besoins
-    appDir: true,
-    serverComponentsExternalPackages: [],
-  },
-  
   // Configuration du compilateur
   compiler: {
     // Supprimer les console.log en production
     removeConsole: process.env.NODE_ENV === 'production',
   },
   
-  // Gestion des erreurs 404 et 500
-  onDemandEntries: {
-    // période en ms pendant laquelle la page sera conservée en mémoire
-    maxInactiveAge: 25 * 1000,
-    // nombre de pages à conserver en mémoire
-    pagesBufferLength: 2,
+  // Configuration avancée mise à jour pour Next.js 15.x
+  experimental: {
+    // Configuration mise à jour pour Next.js 15.x
+    serverExternalPackages: [], // Nouveau format remplaçant serverComponentsExternalPackages
   },
   
   // Configuration de l'optimisation
-  optimizeFonts: true,
-  swcMinify: true,
+  // Note: optimizeFonts et swcMinify sont maintenant activés par défaut
+  // dans Next.js 15.x et n'ont plus besoin d'être spécifiés
 };
 
 // Export de la configuration avec PWA
