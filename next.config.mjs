@@ -1,14 +1,21 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
+import withPWA from 'next-pwa';
 
-export default nextConfig
+// Configuration PWA
+const pwaConfig = {
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true
+};
+
+// Configuration Next.js existante
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ['res.cloudinary.com', 'firebasestorage.googleapis.com'],
+  },
+  // Conservez vos autres configurations existantes ici
+};
+
+// Export avec la syntaxe ES modules
+export default withPWA(pwaConfig)(nextConfig);
