@@ -6,7 +6,7 @@ import LoadingScreen from "@/components/admin/loading-screen"
 import { auth } from "@/lib/firebase/config"
 import { onAuthStateChanged } from "firebase/auth"
 import { verifyAdmin } from "@/lib/firebase/firestore/admins"
-import { updateAdminLastLogin } from "@/lib/firebase/firestore/admins"
+import { updateAdminLastLogin } from "@/lib/firebase/auth"
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -21,44 +21,46 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          // Verify if user is an admin
+          // Vérifier si l'utilisateur est un administrateur
           const adminStatus = await verifyAdmin(user.uid)
           
           if (adminStatus.isAdmin) {
-            // User is authenticated and has admin privileges
+            // L'utilisateur est authentifié et a les privilèges admin
             setIsAuthenticated(true)
             
-            // Store admin data in localStorage for the app to use
-            localStorage.setItem("adminAuthenticated", "true")
-            localStorage.setItem("adminUser", JSON.stringify({
-              id: user.uid,
-              email: user.email,
-              name: user.displayName || user.email?.split("@")[0] || "Admin",
-              role: adminStatus.role || "moderator",
-              avatar: user.photoURL || null,
-              permissions: adminStatus.permissions || {}
-            }))
+            // Optionnel: Stocker les données admin dans localStorage
+            if(adminStatus.adminData) {
+              localStorage.setItem("adminId", user.uid)
+              localStorage.setItem("adminEmail", user.email || "")
+              localStorage.setItem("adminName", adminStatus.adminData.name || "")
+              localStorage.setItem("adminRole", adminStatus.adminData.role || "")
+              localStorage.setItem("isAdminLoggedIn", "true") // Indicateur simple
+            }
             
-            // Update last login timestamp
+            // Mettre à jour la dernière connexion
             await updateAdminLastLogin(user.uid)
           } else {
-            // User is not an admin, redirect to login
+            // L'utilisateur n'est pas un admin, déconnecter et rediriger
+            await auth.signOut(); // Déconnecter
+            localStorage.removeItem("isAdminLoggedIn"); // Nettoyer localStorage
             router.push("/admin/auth/login")
           }
         } catch (error) {
-          console.error("Error verifying admin status:", error)
+          console.error("Erreur lors de la vérification du statut admin:", error)
+          await auth.signOut(); // Déconnecter en cas d'erreur
+          localStorage.removeItem("isAdminLoggedIn");
           router.push("/admin/auth/login")
         }
       } else {
-        // User is not authenticated, redirect to login
-        localStorage.removeItem("adminAuthenticated")
-        localStorage.removeItem("adminUser")
+        // L'utilisateur n'est pas authentifié, rediriger vers login
+        localStorage.removeItem("isAdminLoggedIn");
         router.push("/admin/auth/login")
       }
       
       setIsLoading(false)
     })
 
+    // Nettoyer l'écouteur lors du démontage du composant
     return () => unsubscribe()
   }, [router])
 
@@ -66,5 +68,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     return <LoadingScreen />
   }
 
+  // Rendre le contenu enfant seulement si l'utilisateur est authentifié et admin
   return isAuthenticated ? <>{children}</> : null
 }

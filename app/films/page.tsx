@@ -1,253 +1,247 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Play, Info, Filter } from "lucide-react"
-import Link from "next/link"
-
-// Données simulées pour des films
-const mockMovies = [
-  {
-    id: "inception",
-    title: "Inception",
-    year: 2010,
-    rating: 4.8,
-    genres: ["Science-Fiction", "Action"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "the-dark-knight",
-    title: "The Dark Knight",
-    year: 2008,
-    rating: 4.9,
-    genres: ["Action", "Crime"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "interstellar",
-    title: "Interstellar",
-    year: 2014,
-    rating: 4.7,
-    genres: ["Science-Fiction", "Aventure"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: true,
-  },
-  {
-    id: "pulp-fiction",
-    title: "Pulp Fiction",
-    year: 1994,
-    rating: 4.8,
-    genres: ["Crime", "Drame"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "the-matrix",
-    title: "The Matrix",
-    year: 1999,
-    rating: 4.7,
-    genres: ["Science-Fiction", "Action"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "fight-club",
-    title: "Fight Club",
-    year: 1999,
-    rating: 4.8,
-    genres: ["Drame", "Thriller"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "the-godfather",
-    title: "The Godfather",
-    year: 1972,
-    rating: 4.9,
-    genres: ["Crime", "Drame"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  },
-  {
-    id: "goodfellas",
-    title: "Goodfellas",
-    year: 1990,
-    rating: 4.7,
-    genres: ["Crime", "Drame", "Biographie"],
-    poster: "/placeholder-movie.jpg",
-    vipOnly: false,
-  }
-];
-
-// Types de filtres disponibles
-const genres = ["Action", "Aventure", "Animation", "Comédie", "Crime", "Documentaire", "Drame", "Famille", "Fantaisie", "Histoire", "Horreur", "Musique", "Mystère", "Romance", "Science-Fiction", "Thriller", "Guerre", "Western"];
-const years = ["2020s", "2010s", "2000s", "1990s", "1980s", "1970s", "Classiques"];
-const ratings = ["5 étoiles", "4+ étoiles", "3+ étoiles"];
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Film, Search, Filter, SlidersHorizontal, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import LoadingScreen from '@/components/loading-screen';
+import { getMovies, getMovieGenres, Movie, Genre } from '@/lib/firebase/firestore/movies';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function FilmsPage() {
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [showVIP, setShowVIP] = useState<boolean | null>(null);
   
-  const toggleFilter = (filter: string) => {
-    if (activeFilters.includes(filter)) {
-      setActiveFilters(activeFilters.filter(f => f !== filter));
-    } else {
-      setActiveFilters([...activeFilters, filter]);
-    }
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isVIP } = useAuth();
+  
+  // Initialiser les filtres à partir des paramètres d'URL
+  useEffect(() => {
+    const genre = searchParams?.get('genre');
+    const search = searchParams?.get('q');
+    const vip = searchParams?.get('vip');
+    
+    if (genre) setSelectedGenre(genre);
+    if (search) setSearchTerm(search);
+    if (vip) setShowVIP(vip === 'true');
+  }, [searchParams]);
+  
+  // Charger les genres
+  useEffect(() => {
+    const loadGenres = async () => {
+      try {
+        const genresList = await getMovieGenres();
+        setGenres(genresList);
+      } catch (err) {
+        console.error('Error loading genres:', err);
+      }
+    };
+    
+    loadGenres();
+  }, []);
+  
+  // Charger les films
+  useEffect(() => {
+    const loadMovies = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const result = await getMovies({
+          limit: 50,
+          onlyPublished: true,
+          genreFilter: selectedGenre || undefined,
+          isVIP: showVIP === null ? undefined : showVIP,
+          searchTerm: searchTerm || undefined
+        });
+        
+        setMovies(result.movies);
+      } catch (err) {
+        console.error('Error loading movies:', err);
+        setError('Erreur lors du chargement des films. Veuillez réessayer.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadMovies();
+  }, [selectedGenre, showVIP, searchTerm]);
+  
+  // Mettre à jour les paramètres d'URL lorsque les filtres changent
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (selectedGenre) params.set('genre', selectedGenre);
+    if (searchTerm) params.set('q', searchTerm);
+    if (showVIP !== null) params.set('vip', showVIP.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/films?${queryString}` : '/films';
+    
+    // Ne pas recharger la page, juste mettre à jour l'URL
+    window.history.replaceState({}, '', url);
+  }, [selectedGenre, searchTerm, showVIP]);
+  
+  // Gérer la soumission du formulaire de recherche
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // La recherche est déjà gérée par l'effet
   };
   
+  // Réinitialiser les filtres
+  const resetFilters = () => {
+    setSelectedGenre(null);
+    setSearchTerm('');
+    setShowVIP(null);
+  };
+  
+  // Afficher l'écran de chargement
+  if (loading) {
+    return <LoadingScreen />;
+  }
+  
   return (
-    <div className="min-h-screen">
-      {/* En-tête avec bannière */}
-      <div className="bg-gray-900 pt-24 pb-10">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Films</h1>
-          <p className="text-gray-300 max-w-3xl">
-            Découvrez notre vaste collection de films pour tous les goûts. Des classiques intemporels aux dernières sorties, trouvez le film parfait pour votre soirée cinéma.
-          </p>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Catalogue des Films</h1>
       
-      {/* Section de filtres */}
-      <div className="bg-black border-y border-gray-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
-              {activeFilters.map(filter => (
-                <Badge 
-                  key={filter} 
-                  className="bg-primary/20 text-primary border border-primary/20 hover:bg-primary/30 px-3 py-1"
-                  onClick={() => toggleFilter(filter)}
-                >
-                  {filter} ×
-                </Badge>
-              ))}
-              {activeFilters.length === 0 && (
-                <span className="text-gray-400 text-sm">Aucun filtre sélectionné</span>
-              )}
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2 shrink-0"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4" /> Filtres
-            </Button>
+      <div className="bg-gray-800 rounded-lg p-4 mb-6">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Input
+              type="search"
+              placeholder="Rechercher un film..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           </div>
           
-          {showFilters && (
-            <div className="mt-4 border-t border-gray-800 pt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-300 mb-2">Genres</h3>
-                <div className="flex flex-wrap gap-2">
-                  {genres.map(genre => (
-                    <Badge 
-                      key={genre} 
-                      variant={activeFilters.includes(genre) ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => toggleFilter(genre)}
-                    >
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-300 mb-2">Années</h3>
-                <div className="flex flex-wrap gap-2">
-                  {years.map(year => (
-                    <Badge 
-                      key={year} 
-                      variant={activeFilters.includes(year) ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => toggleFilter(year)}
-                    >
-                      {year}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-300 mb-2">Notes</h3>
-                <div className="flex flex-wrap gap-2">
-                  {ratings.map(rating => (
-                    <Badge 
-                      key={rating} 
-                      variant={activeFilters.includes(rating) ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => toggleFilter(rating)}
-                    >
-                      {rating}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={selectedGenre || ''}
+              onChange={(e) => setSelectedGenre(e.target.value || null)}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Tous les genres</option>
+              {genres.map((genre) => (
+                <option key={genre.id} value={genre.id}>
+                  {genre.name}
+                </option>
+              ))}
+            </select>
+            
+            <select
+              value={showVIP === null ? '' : showVIP.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                setShowVIP(value === '' ? null : value === 'true');
+              }}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Tous les contenus</option>
+              <option value="false">Contenus gratuits</option>
+              <option value="true">Contenus VIP</option>
+            </select>
+            
+            {(selectedGenre || searchTerm || showVIP !== null) && (
+              <Button 
+                variant="ghost" 
+                onClick={resetFilters}
+                className="text-sm"
+              >
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+        </form>
+      </div>
+      
+      {error && (
+        <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6 text-center">
+          {error}
+        </div>
+      )}
+      
+      {!loading && movies.length === 0 ? (
+        <div className="text-center py-12">
+          <Film className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+          <h2 className="text-xl font-semibold mb-2">Aucun film trouvé</h2>
+          <p className="text-gray-400 mb-6">
+            Aucun film ne correspond à vos critères de recherche.
+          </p>
+          <Button onClick={resetFilters}>
+            Voir tous les films
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {movies.map((movie) => (
+            <FilmCard 
+              key={movie.id} 
+              movie={movie} 
+              isUserVIP={isVIP}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FilmCardProps {
+  movie: Movie;
+  isUserVIP: boolean;
+}
+
+function FilmCard({ movie, isUserVIP }: FilmCardProps) {
+  const { id, title, posterUrl, year, rating, isVIP } = movie;
+  
+  // Fallback pour le poster
+  const posterSrc = posterUrl || '/placeholder-poster.png';
+  
+  return (
+    <Link 
+      href={`/films/${id}`}
+      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
+        isVIP && !isUserVIP ? 'opacity-70' : ''
+      }`}
+    >
+      <div className="relative aspect-[2/3]">
+        <img
+          src={posterSrc}
+          alt={`Affiche de ${title}`}
+          className="w-full h-full object-cover"
+        />
+        {isVIP && (
+          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+            VIP
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <Film className="h-12 w-12 text-white" />
+        </div>
+      </div>
+      <div className="p-3">
+        <div className="flex justify-between items-start">
+          <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
+          {rating && (
+            <div className="flex items-center ml-2">
+              <Star className="h-3 w-3 text-yellow-400 fill-current" />
+              <span className="text-xs ml-0.5">{rating.toFixed(1)}</span>
             </div>
           )}
         </div>
+        <p className="text-xs text-gray-400">{year}</p>
       </div>
-      
-      {/* Grille de films */}
-      <div className="bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {mockMovies.map((movie) => (
-              <Link href={`/films/${movie.id}`} key={movie.id}>
-                <motion.div
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
-                  className="group"
-                >
-                  <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-2">
-                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-600">
-                      <span className="text-xs">Poster</span>
-                    </div>
-                    
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                      <div className="p-3 w-full">
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" className="h-8 w-8 p-0 rounded-full">
-                            <Play className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0 rounded-full">
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {movie.vipOnly && (
-                      <div className="absolute top-2 right-2">
-                        <span className="text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full font-bold">
-                          VIP
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <h3 className="font-medium text-white text-sm truncate">{movie.title}</h3>
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>{movie.year}</span>
-                    <div className="flex items-center">
-                      <span className="text-yellow-400 mr-1">★</span>
-                      <span>{movie.rating}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+    </Link>
+  );
 }

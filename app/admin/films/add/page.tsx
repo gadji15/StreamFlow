@@ -1,533 +1,450 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/use-toast';
+import { ImageUpload } from '@/components/admin/image-upload';
 import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Film, 
+  Info, 
+  Image as ImageIcon, 
+  Save, 
   ArrowLeft,
-  Loader2,
   Plus,
   X
-} from "lucide-react"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ImageUpload } from "@/components/admin/image-upload"
-import { useToast } from "@/components/ui/use-toast"
-import Link from "next/link"
-import { addMovie, uploadPoster, uploadBackdrop } from "@/lib/firebase/firestore/movies"
+} from 'lucide-react';
+import { addMovie, getMovieGenres } from '@/lib/firebase/firestore/movies';
+import { useEffect } from 'react';
 
-export default function AddFilmPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [adminId, setAdminId] = useState<string | null>(null)
-  const [tags, setTags] = useState<string[]>([])
-  const [newTag, setNewTag] = useState("")
-  const [posterUrl, setPosterUrl] = useState<string>("")
-  const [backdropUrl, setBackdropUrl] = useState<string>("")
-  const [posterFile, setPosterFile] = useState<File | null>(null)
-  const [backdropFile, setBackdropFile] = useState<File | null>(null)
+export default function AdminAddFilmPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   
-  const [film, setFilm] = useState({
-    title: "",
-    description: "",
-    releaseYear: "",
-    duration: "",
-    genre: "",
-    genres: [] as string[],
-    director: "",
-    cast: [] as string[],
-    vipOnly: false,
-    status: "published" as "draft" | "published",
-    trailerUrl: ""
-  })
+  // États pour le formulaire
+  const [title, setTitle] = useState('');
+  const [originalTitle, setOriginalTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [duration, setDuration] = useState<number>(90);
+  const [director, setDirector] = useState('');
+  const [availableGenres, setAvailableGenres] = useState<{id: string, name: string}[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [isVIP, setIsVIP] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [trailerUrl, setTrailerUrl] = useState('');
+  const [cast, setCast] = useState<{name: string, role: string}[]>([
+    { name: '', role: '' }
+  ]);
   
-  // Récupérer l'ID de l'admin connecté
+  // États pour les médias
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [backdropFile, setBackdropFile] = useState<File | null>(null);
+  
+  // État de soumission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Charger les genres disponibles
   useEffect(() => {
-    const storedAdminId = localStorage.getItem("adminId") || "admin_user"
-    setAdminId(storedAdminId)
-  }, [])
-  
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setFilm((prev) => ({ ...prev, [name]: value }))
-  }
-  
-  const handleCastChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const castText = e.target.value
-    // Diviser par ligne et filtrer les lignes vides
-    const castArray = castText.split('\n').filter(line => line.trim() !== '')
-    setFilm(prev => ({ ...prev, cast: castArray }))
-  }
-  
-  const handleAddTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()])
-      setNewTag("")
-    }
-  }
-  
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag))
-  }
-  
-  const handleGenreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const genreText = e.target.value
-    setFilm(prev => ({ 
-      ...prev, 
-      genre: genreText,
-      // Diviser par virgules et filtrer les items vides
-      genres: genreText.split(',').map(g => g.trim()).filter(g => g !== '')
-    }))
-  }
-  
-  const handleStatusChange = (isPublished: boolean) => {
-    setFilm(prev => ({ ...prev, status: isPublished ? "published" : "draft" }))
-  }
-  
-  const handlePosterUpload = async (file: File) => {
-    setPosterFile(file)
-  }
-  
-  const handleBackdropUpload = async (file: File) => {
-    setBackdropFile(file)
-  }
-  
-  const uploadImages = async (movieId: string): Promise<{posterUrl: string, backdropUrl: string}> => {
-    let posterImageUrl = "";
-    let backdropImageUrl = "";
-    
-    if (posterFile) {
+    const loadGenres = async () => {
       try {
-        posterImageUrl = await uploadPoster(posterFile, movieId);
-        setPosterUrl(posterImageUrl);
+        const genres = await getMovieGenres();
+        setAvailableGenres(genres);
       } catch (error) {
-        console.error("Erreur lors du téléchargement du poster:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de télécharger l'image du poster",
-          variant: "destructive"
-        });
+        console.error('Erreur lors du chargement des genres:', error);
       }
-    }
-    
-    if (backdropFile) {
-      try {
-        backdropImageUrl = await uploadBackdrop(backdropFile, movieId);
-        setBackdropUrl(backdropImageUrl);
-      } catch (error) {
-        console.error("Erreur lors du téléchargement de l'image de fond:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de télécharger l'image de fond",
-          variant: "destructive"
-        });
-      }
-    }
-    
-    return { 
-      posterUrl: posterImageUrl, 
-      backdropUrl: backdropImageUrl 
     };
-  }
+    
+    loadGenres();
+  }, []);
   
-  const handleSubmit = async (e: React.FormEvent, saveAsDraft: boolean = false) => {
-    e.preventDefault()
+  // Gérer les genres
+  const handleGenreChange = (genreId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedGenres([...selectedGenres, genreId]);
+    } else {
+      setSelectedGenres(selectedGenres.filter(id => id !== genreId));
+    }
+  };
+  
+  // Gérer le casting
+  const addCastMember = () => {
+    setCast([...cast, { name: '', role: '' }]);
+  };
+  
+  const removeCastMember = (index: number) => {
+    setCast(cast.filter((_, i) => i !== index));
+  };
+  
+  const updateCastMember = (index: number, field: 'name' | 'role', value: string) => {
+    const updatedCast = [...cast];
+    updatedCast[index][field] = value;
+    setCast(updatedCast);
+  };
+  
+  // Soumettre le formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (!film.title || !film.description || !film.releaseYear || !film.duration || !film.genre) {
+    // Validation de base
+    if (!title) {
       toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur',
+        description: 'Le titre du film est requis.',
+        variant: 'destructive',
+      });
+      return;
     }
     
-    if (!adminId) {
+    if (selectedGenres.length === 0) {
       toast({
-        title: "Non authentifié",
-        description: "Vous devez être connecté pour ajouter un film",
-        variant: "destructive"
-      })
-      return
+        title: 'Erreur',
+        description: 'Veuillez sélectionner au moins un genre.',
+        variant: 'destructive',
+      });
+      return;
     }
     
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     
     try {
+      // Préparer les données du casting (ignorer les membres vides)
+      const formattedCast = cast
+        .filter(member => member.name.trim() !== '')
+        .map(member => ({
+          name: member.name,
+          role: member.role
+        }));
+      
       // Préparer les données du film
       const movieData = {
-        ...film,
-        releaseYear: parseInt(film.releaseYear, 10),
-        duration: parseInt(film.duration, 10),
-        status: saveAsDraft ? "draft" : "published",
-        tags,
-        posterUrl: "",
-        backdropUrl: ""
-      }
+        title,
+        originalTitle: originalTitle || undefined,
+        description,
+        year,
+        duration,
+        director: director || undefined,
+        genres: selectedGenres,
+        cast: formattedCast.length > 0 ? formattedCast : undefined,
+        trailerUrl: trailerUrl || undefined,
+        isVIP,
+        isPublished
+      };
       
-      // Créer le film dans Firestore
-      const newMovie = await addMovie(movieData, adminId)
+      // Ajouter le film
+      const result = await addMovie(movieData, posterFile, backdropFile);
       
-      if (newMovie.id) {
-        // Télécharger les images
-        const { posterUrl, backdropUrl } = await uploadImages(newMovie.id)
-        
-        // Mettre à jour le film avec les URLs des images si nécessaire
-        if (posterUrl || backdropUrl) {
-          const updateData: any = {};
-          if (posterUrl) updateData.posterUrl = posterUrl;
-          if (backdropUrl) updateData.backdropUrl = backdropUrl;
-          
-          await updateMovie(newMovie.id, updateData, adminId);
-        }
-        
+      if (result && result.id) {
         toast({
-          title: saveAsDraft ? "Brouillon enregistré" : "Film publié",
-          description: `${film.title} a été ajouté avec succès`,
-          variant: "default"
-        })
+          title: 'Film ajouté',
+          description: `Le film "${title}" a été ajouté avec succès.`,
+        });
         
         // Rediriger vers la liste des films
-        router.push("/admin/films")
+        router.push('/admin/films');
       }
     } catch (error) {
-      console.error("Erreur lors de l'ajout du film:", error)
+      console.error('Erreur lors de l\'ajout du film:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de l'ajout du film. Veuillez réessayer.",
-        variant: "destructive"
-      })
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter le film. Veuillez réessayer.',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
   
   return (
     <div>
       <div className="flex items-center mb-6">
-        <Link href="/admin/films">
-          <Button variant="ghost" size="icon" className="mr-2">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-semibold text-white">Ajouter un nouveau film</h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/admin/films')}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Retour
+        </Button>
+        <h1 className="text-3xl font-bold">Ajouter un film</h1>
       </div>
       
-      <form onSubmit={(e) => handleSubmit(e, false)}>
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-6 bg-gray-800">
-            <TabsTrigger value="general">Informations générales</TabsTrigger>
-            <TabsTrigger value="media">Médias</TabsTrigger>
-            <TabsTrigger value="details">Détails</TabsTrigger>
+      <form onSubmit={handleSubmit}>
+        <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
+          <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
+            <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">
+              <Info className="h-4 w-4 mr-2" />
+              Informations générales
+            </TabsTrigger>
+            <TabsTrigger value="media" className="rounded-none px-5 py-3">
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Médias
+            </TabsTrigger>
+            <TabsTrigger value="details" className="rounded-tr-lg rounded-bl-none rounded-tl-none px-5 py-3">
+              <Film className="h-4 w-4 mr-2" />
+              Détails supplémentaires
+            </TabsTrigger>
           </TabsList>
           
-          {/* Onglet Informations générales */}
-          <TabsContent value="general" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
+          {/* Informations générales */}
+          <TabsContent value="general" className="p-6">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white">
-                    Titre <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="title">Titre <span className="text-red-500">*</span></Label>
                   <Input
                     id="title"
-                    name="title"
-                    value={film.title}
-                    onChange={handleInputChange}
-                    placeholder="Titre du film"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="bg-gray-800 border-gray-700 text-white"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-white">
-                    Description <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={film.description}
-                    onChange={handleInputChange}
-                    placeholder="Description du film"
-                    required
-                    rows={6}
-                    className="bg-gray-800 border-gray-700 text-white resize-none"
+                  <Label htmlFor="originalTitle">Titre original</Label>
+                  <Input
+                    id="originalTitle"
+                    value={originalTitle}
+                    onChange={(e) => setOriginalTitle(e.target.value)}
+                    placeholder="Titre dans la langue d'origine"
                   />
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="releaseYear" className="text-white">
-                      Année de sortie <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="releaseYear"
-                      name="releaseYear"
-                      type="number"
-                      value={film.releaseYear}
-                      onChange={handleInputChange}
-                      placeholder="ex: 2023"
-                      required
-                      min="1900"
-                      max="2099"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="duration" className="text-white">
-                      Durée (minutes) <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="duration"
-                      name="duration"
-                      type="number"
-                      value={film.duration}
-                      onChange={handleInputChange}
-                      placeholder="ex: 120"
-                      required
-                      min="1"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                </div>
-                
+              <div className="space-y-2">
+                <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="genre" className="text-white">
-                    Genres <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="year">Année de sortie</Label>
                   <Input
-                    id="genre"
-                    name="genre"
-                    value={film.genre}
-                    onChange={handleGenreChange}
-                    placeholder="ex: Action, Comédie, etc. (séparés par des virgules)"
-                    required
-                    className="bg-gray-800 border-gray-700 text-white"
+                    id="year"
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear() + 5}
+                    value={year}
+                    onChange={(e) => setYear(parseInt(e.target.value) || new Date().getFullYear())}
                   />
                 </div>
                 
-                <div className="flex flex-col gap-4 mt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Durée (minutes)</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="1"
+                    value={duration}
+                    onChange={(e) => setDuration(parseInt(e.target.value) || 90)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="director">Réalisateur</Label>
+                  <Input
+                    id="director"
+                    value={director}
+                    onChange={(e) => setDirector(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Genres <span className="text-red-500">*</span></Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {availableGenres.map((genre) => (
+                    <div key={genre.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`genre-${genre.id}`}
+                        checked={selectedGenres.includes(genre.id)}
+                        onCheckedChange={(checked) => 
+                          handleGenreChange(genre.id, checked === true)
+                        }
+                      />
+                      <Label 
+                        htmlFor={`genre-${genre.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {genre.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="vipOnly" className="text-white cursor-pointer">
-                      Exclusif VIP
-                    </Label>
+                    <Label htmlFor="isVIP">Contenu VIP</Label>
                     <Switch
-                      id="vipOnly"
-                      checked={film.vipOnly}
-                      onCheckedChange={(checked) => setFilm(prev => ({ ...prev, vipOnly: checked }))}
+                      id="isVIP"
+                      checked={isVIP}
+                      onCheckedChange={setIsVIP}
                     />
                   </div>
-                  
+                  <p className="text-xs text-gray-400">
+                    Activer pour rendre ce film disponible uniquement pour les utilisateurs VIP.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="isPublished" className="text-white cursor-pointer">
-                      Publier immédiatement
-                    </Label>
+                    <Label htmlFor="isPublished">Publier maintenant</Label>
                     <Switch
                       id="isPublished"
-                      checked={film.status === "published"}
-                      onCheckedChange={handleStatusChange}
+                      checked={isPublished}
+                      onCheckedChange={setIsPublished}
                     />
                   </div>
+                  <p className="text-xs text-gray-400">
+                    Activer pour rendre ce film visible sur le site.
+                  </p>
                 </div>
               </div>
             </div>
           </TabsContent>
           
-          {/* Onglet Médias */}
-          <TabsContent value="media" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Label className="text-white">
-                  Affiche du film <span className="text-red-500">*</span>
-                </Label>
-                <ImageUpload
-                  imageUrl={posterUrl}
-                  onUpload={handlePosterUpload}
-                  onRemove={() => {
-                    setPosterUrl("");
-                    setPosterFile(null);
-                  }}
-                  aspect="portrait"
-                  label="Glisser-déposer ou ajouter l'affiche"
-                  maxSize={2}
-                />
-              </div>
-              
-              <div className="space-y-4">
-                <Label className="text-white">
-                  Image de fond <span className="text-red-500">*</span>
-                </Label>
-                <ImageUpload
-                  imageUrl={backdropUrl}
-                  onUpload={handleBackdropUpload}
-                  onRemove={() => {
-                    setBackdropUrl("");
-                    setBackdropFile(null);
-                  }}
-                  aspect="landscape"
-                  label="Glisser-déposer ou ajouter l'image de fond"
-                  maxSize={5}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4 mt-6">
-              <div className="space-y-2">
-                <Label htmlFor="trailerUrl" className="text-white">
-                  URL de la bande-annonce (YouTube, Vimeo, etc.)
-                </Label>
-                <Input
-                  id="trailerUrl"
-                  name="trailerUrl"
-                  value={film.trailerUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-            </div>
-          </TabsContent>
-          
-          {/* Onglet Détails */}
-          <TabsContent value="details" className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="director" className="text-white">
-                  Réalisateur
-                </Label>
-                <Input
-                  id="director"
-                  name="director"
-                  value={film.director}
-                  onChange={handleInputChange}
-                  placeholder="Nom du réalisateur"
-                  className="bg-gray-800 border-gray-700 text-white"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="cast" className="text-white">
-                  Casting
-                </Label>
-                <Textarea
-                  id="cast"
-                  name="cast"
-                  value={film.cast.join('\n')}
-                  onChange={handleCastChange}
-                  placeholder="Acteurs principaux (un par ligne)"
-                  rows={4}
-                  className="bg-gray-800 border-gray-700 text-white resize-none"
-                />
-              </div>
-              
-              <div className="space-y-4 mt-6">
-                <div className="flex items-center justify-between">
-                  <Label className="text-white">Tags</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Ajouter un tag"
-                      className="w-40 bg-gray-800 border-gray-700 text-white"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag();
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={handleAddTag}
-                    >
-                      <Plus className="h-4 w-4" /> Ajouter
-                    </Button>
-                  </div>
+          {/* Médias */}
+          <TabsContent value="media" className="p-6">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="poster">Affiche du film</Label>
+                  <ImageUpload
+                    onImageSelected={(file) => setPosterFile(file)}
+                    aspectRatio="2:3"
+                    label="Ajouter une affiche"
+                  />
+                  <p className="text-xs text-gray-400">
+                    Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
+                  </p>
                 </div>
                 
-                <div className="flex flex-wrap gap-2">
-                  {tags.length > 0 ? (
-                    tags.map((tag) => (
-                      <div 
-                        key={tag} 
-                        className="flex items-center bg-gray-800 text-white px-3 py-1 rounded-full text-sm"
-                      >
-                        {tag}
-                        <button 
-                          type="button" 
-                          className="ml-2 text-gray-400 hover:text-white"
-                          onClick={() => handleRemoveTag(tag)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
+                <div className="space-y-2">
+                  <Label htmlFor="backdrop">Image de fond</Label>
+                  <ImageUpload
+                    onImageSelected={(file) => setBackdropFile(file)}
+                    aspectRatio="16:9"
+                    label="Ajouter une image de fond"
+                  />
+                  <p className="text-xs text-gray-400">
+                    Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="trailerUrl">URL de la bande-annonce</Label>
+                <Input
+                  id="trailerUrl"
+                  value={trailerUrl}
+                  onChange={(e) => setTrailerUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+                <p className="text-xs text-gray-400">
+                  URL YouTube de la bande-annonce.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Détails supplémentaires */}
+          <TabsContent value="details" className="p-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Casting</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCastMember}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ajouter
+                  </Button>
+                </div>
+                
+                <div className="space-y-3">
+                  {cast.map((member, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <div className="flex-1">
+                        <Input
+                          value={member.name}
+                          onChange={(e) => updateCastMember(index, 'name', e.target.value)}
+                          placeholder="Nom de l'acteur"
+                          className="mb-2"
+                        />
+                        <Input
+                          value={member.role}
+                          onChange={(e) => updateCastMember(index, 'role', e.target.value)}
+                          placeholder="Rôle (optionnel)"
+                        />
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-400">
-                      Aucun tag ajouté. Les tags aident à catégoriser et à rechercher les films.
-                    </p>
-                  )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeCastMember(index)}
+                        className="mt-2"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </TabsContent>
         </Tabs>
         
-        <div className="flex justify-between items-center border-t border-gray-800 mt-8 pt-6">
+        <div className="flex justify-between mt-6">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/admin/films")}
+            onClick={() => router.push('/admin/films')}
             disabled={isSubmitting}
           >
             Annuler
           </Button>
           
-          <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={(e) => handleSubmit(e, true)}
-            >
-              {isSubmitting && film.status === "draft" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                "Enregistrer comme brouillon"
-              )}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting && film.status === "published" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Publication...
-                </>
-              ) : (
-                "Publier le film"
-              )}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Enregistrer
+              </>
+            )}
+          </Button>
         </div>
       </form>
     </div>
-  )
+  );
 }

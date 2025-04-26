@@ -2,182 +2,225 @@ import {
   collection, 
   addDoc, 
   query, 
+  where, 
   orderBy, 
   limit, 
-  getDocs,
-  where,
-  QueryConstraint,
+  getDocs, 
+  Timestamp, 
+  DocumentData,
   startAfter,
   QueryDocumentSnapshot,
-  DocumentData
+  QueryConstraint
 } from "firebase/firestore";
 import { firestore } from "../config";
 
-// Types
+// Type pour l'activité
 export interface ActivityLog {
   id?: string;
-  action: "create" | "update" | "delete" | "login" | "logout" | "view";
-  entityType: "movie" | "series" | "episode" | "user" | "admin" | "comment";
-  entityId: string;
-  details: string;
-  performedBy: string;
-  timestamp: string;
+  type: 'auth' | 'movie' | 'series' | 'user' | 'admin' | 'comment' | 'favorite' | 'vip';
+  action: string;
+  userId?: string;
+  userEmail?: string;
+  adminId?: string;
+  adminEmail?: string;
+  entityId?: string;
+  entityType?: string;
+  details?: any;
+  timestamp?: Timestamp;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
-// Collection reference
-const COLLECTION = "activity_logs";
-
-// Add activity log
-export const addActivityLog = async (log: Omit<ActivityLog, "id">): Promise<ActivityLog> => {
+// Ajouter une entrée de journal d'activité
+export async function addActivityLog(activity: ActivityLog): Promise<string | null> {
   try {
-    const docRef = await addDoc(collection(firestore, COLLECTION), {
-      ...log,
-      timestamp: log.timestamp || new Date().toISOString()
-    });
-    
-    return {
-      id: docRef.id,
-      ...log
+    const activityData = {
+      ...activity,
+      timestamp: Timestamp.now()
     };
+    
+    const docRef = await addDoc(collection(firestore, "activity_logs"), activityData);
+    return docRef.id;
   } catch (error) {
     console.error("Error adding activity log:", error);
-    throw error;
+    return null;
   }
-};
+}
 
-// Get recent activity logs
-export const getRecentActivityLogs = async (count: number = 10): Promise<ActivityLog[]> => {
+// Obtenir les activités récentes avec pagination
+export async function getRecentActivities(
+  pageSize = 10,
+  lastVisible?: QueryDocumentSnapshot<DocumentData>
+): Promise<{ logs: ActivityLog[]; lastVisible: QueryDocumentSnapshot<DocumentData> | null }> {
   try {
-    const q = query(
-      collection(firestore, COLLECTION),
+    const constraints: QueryConstraint[] = [
       orderBy("timestamp", "desc"),
-      limit(count)
-    );
+      limit(pageSize)
+    ];
     
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
-  } catch (error) {
-    console.error("Error getting recent activity logs:", error);
-    throw error;
-  }
-};
-
-// Get activity logs with filters and pagination
-export const getActivityLogs = async (
-  options: {
-    action?: ActivityLog["action"],
-    entityType?: ActivityLog["entityType"],
-    entityId?: string,
-    performedBy?: string,
-    startDate?: Date,
-    endDate?: Date,
-    limit?: number,
-    page?: number,
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
-  } = {}
-): Promise<{logs: ActivityLog[], lastDoc: QueryDocumentSnapshot<DocumentData> | null, total: number}> => {
-  try {
-    const constraints: QueryConstraint[] = [];
-    const {
-      action,
-      entityType,
-      entityId,
-      performedBy,
-      startDate,
-      endDate,
-      limit: limitCount = 20,
-      page = 1,
-      startAfterDoc
-    } = options;
-    
-    // Add filters if present
-    if (action) {
-      constraints.push(where("action", "==", action));
+    // Si lastVisible est fourni, appliquer la pagination
+    if (lastVisible) {
+      constraints.push(startAfter(lastVisible));
     }
     
-    if (entityType) {
-      constraints.push(where("entityType", "==", entityType));
-    }
-    
-    if (entityId) {
-      constraints.push(where("entityId", "==", entityId));
-    }
-    
-    if (performedBy) {
-      constraints.push(where("performedBy", "==", performedBy));
-    }
-    
-    if (startDate) {
-      constraints.push(where("timestamp", ">=", startDate.toISOString()));
-    }
-    
-    if (endDate) {
-      constraints.push(where("timestamp", "<=", endDate.toISOString()));
-    }
-    
-    // Add descending sort by timestamp
-    constraints.push(orderBy("timestamp", "desc"));
-    
-    // Calculate offset for pagination
-    const offset = (page - 1) * limitCount;
-    
-    // Get total for pagination
-    const totalQuery = query(collection(firestore, COLLECTION), ...constraints);
-    const totalSnapshot = await getDocs(totalQuery);
-    const total = totalSnapshot.size;
-    
-    // Add pagination
-    if (startAfterDoc) {
-      constraints.push(startAfter(startAfterDoc));
-    }
-    
-    // Add limit
-    constraints.push(limit(limitCount));
-    
-    // Build final query
-    const q = query(collection(firestore, COLLECTION), ...constraints);
-    
-    // Execute query
+    const q = query(collection(firestore, "activity_logs"), ...constraints);
     const querySnapshot = await getDocs(q);
     
-    // Transform data
-    const logs = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
+    const logs: ActivityLog[] = [];
+    let newLastVisible = null;
     
-    return {
-      logs: logs,
-      lastDoc: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
-      total
-    };
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        logs.push({
+          id: doc.id,
+          ...doc.data()
+        } as ActivityLog);
+      });
+      
+      // Conserver le dernier document visible pour la pagination
+      newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    }
+    
+    return { logs, lastVisible: newLastVisible };
   } catch (error) {
-    console.error("Error getting activity logs:", error);
-    throw error;
+    console.error("Error getting recent activities:", error);
+    return { logs: [], lastVisible: null };
   }
-};
+}
 
-// Get activity logs by admin
-export const getActivityLogsByAdmin = async (adminId: string, limitCount: number = 10): Promise<ActivityLog[]> => {
+// Obtenir les activités filtrées
+export async function getFilteredActivities(
+  filters: {
+    type?: ActivityLog['type'] | ActivityLog['type'][];
+    action?: string | string[];
+    userId?: string;
+    adminId?: string;
+    entityId?: string;
+    entityType?: string;
+    startDate?: Date;
+    endDate?: Date;
+  },
+  pageSize = 10,
+  lastVisible?: QueryDocumentSnapshot<DocumentData>
+): Promise<{ logs: ActivityLog[]; lastVisible: QueryDocumentSnapshot<DocumentData> | null }> {
   try {
-    const q = query(
-      collection(firestore, COLLECTION),
-      where("performedBy", "==", adminId),
+    const constraints: QueryConstraint[] = [
+      orderBy("timestamp", "desc")
+    ];
+    
+    // Appliquer les filtres
+    if (filters.type) {
+      if (Array.isArray(filters.type)) {
+        constraints.push(where("type", "in", filters.type));
+      } else {
+        constraints.push(where("type", "==", filters.type));
+      }
+    }
+    
+    if (filters.action) {
+      if (Array.isArray(filters.action)) {
+        constraints.push(where("action", "in", filters.action));
+      } else {
+        constraints.push(where("action", "==", filters.action));
+      }
+    }
+    
+    if (filters.userId) {
+      constraints.push(where("userId", "==", filters.userId));
+    }
+    
+    if (filters.adminId) {
+      constraints.push(where("adminId", "==", filters.adminId));
+    }
+    
+    if (filters.entityId) {
+      constraints.push(where("entityId", "==", filters.entityId));
+    }
+    
+    if (filters.entityType) {
+      constraints.push(where("entityType", "==", filters.entityType));
+    }
+    
+    if (filters.startDate) {
+      constraints.push(where("timestamp", ">=", Timestamp.fromDate(filters.startDate)));
+    }
+    
+    if (filters.endDate) {
+      constraints.push(where("timestamp", "<=", Timestamp.fromDate(filters.endDate)));
+    }
+    
+    // Ajouter la limite pour la pagination
+    constraints.push(limit(pageSize));
+    
+    // Si lastVisible est fourni, appliquer la pagination
+    if (lastVisible) {
+      constraints.push(startAfter(lastVisible));
+    }
+    
+    const q = query(collection(firestore, "activity_logs"), ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    const logs: ActivityLog[] = [];
+    let newLastVisible = null;
+    
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        logs.push({
+          id: doc.id,
+          ...doc.data()
+        } as ActivityLog);
+      });
+      
+      // Conserver le dernier document visible pour la pagination
+      newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    }
+    
+    return { logs, lastVisible: newLastVisible };
+  } catch (error) {
+    console.error("Error getting filtered activities:", error);
+    return { logs: [], lastVisible: null };
+  }
+}
+
+// Obtenir les activités d'un utilisateur
+export async function getUserActivities(
+  userId: string,
+  pageSize = 10,
+  lastVisible?: QueryDocumentSnapshot<DocumentData>
+): Promise<{ logs: ActivityLog[]; lastVisible: QueryDocumentSnapshot<DocumentData> | null }> {
+  try {
+    const constraints: QueryConstraint[] = [
+      where("userId", "==", userId),
       orderBy("timestamp", "desc"),
-      limit(limitCount)
-    );
+      limit(pageSize)
+    ];
     
+    // Si lastVisible est fourni, appliquer la pagination
+    if (lastVisible) {
+      constraints.push(startAfter(lastVisible));
+    }
+    
+    const q = query(collection(firestore, "activity_logs"), ...constraints);
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
+    const logs: ActivityLog[] = [];
+    let newLastVisible = null;
+    
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        logs.push({
+          id: doc.id,
+          ...doc.data()
+        } as ActivityLog);
+      });
+      
+      // Conserver le dernier document visible pour la pagination
+      newLastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+    }
+    
+    return { logs, lastVisible: newLastVisible };
   } catch (error) {
-    console.error(`Error getting activity logs for admin ${adminId}:`, error);
-    throw error;
+    console.error("Error getting user activities:", error);
+    return { logs: [], lastVisible: null };
   }
-};
+}

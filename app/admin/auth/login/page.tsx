@@ -1,185 +1,185 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react" // Ajout de useEffect
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { doc, getDoc, setDoc } from "firebase/firestore"
-import { auth, firestore } from "@/lib/firebase/config"
-import { useToast } from "@/components/ui/use-toast"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import Link from 'next/link';
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const { toast } = useToast()
+export default function AdminLoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const router = useRouter();
+  const { login } = useAuth();
+  const { toast } = useToast();
 
-  // Vérifier si l'utilisateur est déjà connecté
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isAdminLoggedIn") === "true";
-    if (isLoggedIn) {
-      router.push("/admin/dashboard");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir votre email et mot de passe.",
+        variant: "destructive",
+      });
+      return;
     }
-  }, [router]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
-
+    
+    setIsSubmitting(true);
+    
     try {
-      // Tentative de connexion à Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
-
-      // Vérifier si l'utilisateur est un administrateur
-      const adminRef = doc(firestore, "admins", user.uid)
-      const adminSnap = await getDoc(adminRef)
-
-      if (adminSnap.exists()) {
-        // Mise à jour de la dernière connexion
-        await setDoc(adminRef, { lastLogin: new Date().toISOString() }, { merge: true })
-
-        // Sauvegarder l'état de connexion et les infos admin dans localStorage
-        localStorage.setItem("adminId", user.uid)
-        localStorage.setItem("adminEmail", user.email || "")
-        localStorage.setItem("adminName", adminSnap.data().name || "")
-        localStorage.setItem("adminRole", adminSnap.data().role || "")
-        localStorage.setItem("isAdminLoggedIn", "true")
-
-        // Afficher une notification de succès
+      const result = await login(email, password);
+      
+      if (result) {
+        // Authentification réussie, vérifier maintenant le rôle admin
         toast({
           title: "Connexion réussie",
-          description: "Bienvenue dans l'interface d'administration",
-          variant: "default",
-        })
-
-        // Attendre un court délai avant de rediriger
-        setTimeout(() => {
-          // Rediriger vers le tableau de bord admin
-          window.location.href = "/admin/dashboard"; // Utiliser window.location au lieu de router
-        }, 1000);
-      } else {
-        // L'utilisateur n'est pas un administrateur
-        await auth.signOut()
-        setError("Vous n'avez pas les droits d'administration nécessaires")
-        // Nettoyer le localStorage
-        localStorage.removeItem("adminId");
-        localStorage.removeItem("adminEmail");
-        localStorage.removeItem("adminName");
-        localStorage.removeItem("adminRole");
-        localStorage.removeItem("isAdminLoggedIn");
+          description: "Redirection vers le tableau de bord administrateur..."
+        });
+        
+        // Dans une application réelle, nous devrions vérifier sur le serveur que l'utilisateur est un admin
+        // Pour cette démonstration, nous utiliserons le hook useAuth qui a déjà vérifié le rôle
+        
+        router.push('/admin/dashboard');
       }
-    } catch (error: any) {
-      console.error("Erreur de connexion:", error)
-      
-      // Gérer les différents types d'erreurs
-      if (error.code === 'auth/invalid-email') {
-        setError("Adresse email invalide")
-      } else if (error.code === 'auth/user-disabled') {
-        setError("Ce compte a été désactivé")
-      } else if (error.code === 'auth/user-not-found') {
-        setError("Aucun compte trouvé avec cette adresse email")
-      } else if (error.code === 'auth/wrong-password') {
-        setError("Mot de passe incorrect")
-      } else if (error.code === 'auth/too-many-requests') {
-        setError("Trop de tentatives échouées. Veuillez réessayer plus tard")
-      } else {
-        setError("Erreur de connexion. Veuillez réessayer")
-      }
+    } catch (error) {
+      toast({
+        title: "Erreur d'authentification",
+        description: "Email ou mot de passe incorrect.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false);
     }
-  }
+  };
+
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-            StreamFlow
+          <h1 className="text-3xl font-bold text-white">
+            StreamFlow <span className="text-indigo-500">Admin</span>
           </h1>
-          <p className="text-gray-400 mt-2">Interface d'administration</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500 rounded-md p-4 mb-6">
-            <p className="text-red-500 text-sm">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@streamflow.com"
-              className="bg-gray-700 border-gray-600"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="bg-gray-700 border-gray-600 pr-10"
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connexion en cours...
-              </>
-            ) : (
-              "Se connecter"
-            )}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-400">
-            Identifiants par défaut:
-            <br />
-            Email: admin@streamflow.com
-            <br />
-            Mot de passe: Admin123!
+          <p className="mt-2 text-gray-400">
+            Interface d'administration
           </p>
+        </div>
+        
+        <div className="bg-gray-800 shadow-lg rounded-lg p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                Email
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  placeholder="admin@streamflow.com"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                Mot de passe
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-500" />
+                </div>
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={toggleShowPassword}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-400"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Checkbox
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => 
+                    setRememberMe(checked === true)
+                  }
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
+                  Se souvenir de moi
+                </label>
+              </div>
+              
+              <div className="text-sm">
+                <Link href="/admin/auth/forgot-password" className="text-indigo-400 hover:text-indigo-300">
+                  Mot de passe oublié?
+                </Link>
+              </div>
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Connexion en cours...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Se connecter
+                </>
+              )}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <Link 
+              href="/" 
+              className="text-sm text-gray-400 hover:text-gray-300"
+            >
+              Retour au site
+            </Link>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,150 +1,160 @@
-import { v2 as cloudinary } from 'cloudinary';
-
-// Configuration de Cloudinary
-if (typeof window === 'undefined') {
-  // Code côté serveur uniquement
-  cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true
-  });
-}
-
-// Types
-export interface CloudinaryUploadResult {
-  public_id: string;
-  secure_url: string;
-  format: string;
-  width: number;
-  height: number;
-  created_at: string;
-}
-
-export interface UploadOptions {
-  folder?: string;
-  publicId?: string;
-  transformation?: any[];
-  tags?: string[];
-}
+// Version client-side qui utilise des API routes Next.js
 
 /**
- * Convertit un fichier en chaîne base64
+ * Convertit un fichier en base64
  */
-export const fileToBase64 = (file: File): Promise<string> => {
+export function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
+    reader.onerror = error => reject(error);
   });
-};
+}
 
 /**
- * Télécharge une image vers Cloudinary via une API route Next.js
+ * Télécharge une image vers Cloudinary via l'API route
  */
-export const uploadImage = async (
-  file: File,
-  options: UploadOptions = {}
-): Promise<string> => {
+export async function uploadImage(file: File): Promise<{ 
+  secure_url: string; 
+  public_id: string;
+}> {
   try {
-    // Préparer les données du formulaire
-    const formData = new FormData();
-    formData.append('file', file);
+    // Convertir le fichier en base64
+    const base64Data = await fileToBase64(file);
     
-    if (options.folder) {
-      formData.append('folder', options.folder);
-    }
-    
-    if (options.publicId) {
-      formData.append('public_id', options.publicId);
-    }
-    
-    if (options.transformation) {
-      formData.append('transformation', JSON.stringify(options.transformation));
-    }
-    
-    if (options.tags && options.tags.length > 0) {
-      formData.append('tags', options.tags.join(','));
-    }
-    
-    // Envoyer la requête à notre API route Next.js
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erreur lors du téléchargement: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    return data.secure_url;
-  } catch (error) {
-    console.error('Erreur lors du téléchargement vers Cloudinary:', error);
-    throw error;
-  }
-};
-
-/**
- * Télécharge un poster de film
- */
-export const uploadMoviePoster = async (
-  file: File,
-  movieId: string
-): Promise<string> => {
-  return uploadImage(file, {
-    folder: 'movies/posters',
-    publicId: `poster_${movieId}`,
-    transformation: [{ width: 500, height: 750, crop: 'fill' }],
-    tags: ['poster', 'movie', movieId]
-  });
-};
-
-/**
- * Télécharge une image de fond de film
- */
-export const uploadMovieBackdrop = async (
-  file: File,
-  movieId: string
-): Promise<string> => {
-  return uploadImage(file, {
-    folder: 'movies/backdrops',
-    publicId: `backdrop_${movieId}`,
-    transformation: [{ width: 1920, height: 1080, crop: 'fill' }],
-    tags: ['backdrop', 'movie', movieId]
-  });
-};
-
-/**
- * Supprime une image de Cloudinary via une API route Next.js
- */
-export const deleteImage = async (publicId: string): Promise<void> => {
-  try {
-    const response = await fetch('/api/delete-image', {
+    // Appeler l'API route
+    const response = await fetch('/api/cloudinary/upload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ publicId }),
+      body: JSON.stringify({ 
+        image: base64Data,
+        folder: 'streamflow' 
+      }),
     });
     
     if (!response.ok) {
-      throw new Error(`Erreur lors de la suppression: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Échec du téléchargement de l\'image');
     }
+    
+    const data = await response.json();
+    
+    return {
+      secure_url: data.secure_url,
+      public_id: data.public_id
+    };
   } catch (error) {
-    console.error('Erreur lors de la suppression de l\'image:', error);
+    console.error('Erreur lors du téléchargement de l\'image:', error);
     throw error;
   }
-};
+}
 
 /**
- * Extrait l'ID public d'une URL Cloudinary
+ * Supprime une image de Cloudinary via l'API route
  */
-export const getPublicIdFromUrl = (url: string): string | null => {
-  // Format typique: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/public_id.ext
-  const regex = /\/v\d+\/(.+)\.\w+$/;
-  const match = url.match(regex);
+export async function deleteImage(publicId: string): Promise<boolean> {
+  try {
+    const response = await fetch('/api/cloudinary/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        public_id: publicId 
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Échec de la suppression de l\'image');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'image:', error);
+    return false;
+  }
+}
+
+/**
+ * Extrait le public_id depuis une URL Cloudinary
+ */
+export function getPublicIdFromUrl(url: string): string | null {
+  if (!url) return null;
   
-  return match ? match[1] : null;
-};
+  try {
+    // Format typique: https://res.cloudinary.com/CLOUD_NAME/image/upload/v1234567890/FOLDER/FILE.jpg
+    const regex = /\/v\d+\/([^/]+\/[^.]+)/;
+    const match = url.match(regex);
+    
+    if (match && match[1]) {
+      return match[1]; // Retourne "FOLDER/FILE"
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Erreur lors de l\'extraction du public_id:', error);
+    return null;
+  }
+}
+
+/**
+ * Récupère l'URL d'une image avec transformation (redimensionnement, etc.)
+ */
+export function getOptimizedImageUrl(
+  url: string, 
+  options: { 
+    width?: number; 
+    height?: number; 
+    crop?: 'fill' | 'scale' | 'fit' | 'thumb';
+    quality?: number;
+  } = {}
+): string {
+  if (!url) return '';
+  
+  try {
+    // Vérifier si c'est une URL Cloudinary
+    if (!url.includes('cloudinary.com')) {
+      return url; // Retourner l'URL originale si ce n'est pas Cloudinary
+    }
+    
+    // Format de base: https://res.cloudinary.com/CLOUD_NAME/image/upload/v1234567890/FOLDER/FILE.jpg
+    const regex = /(https?:\/\/res.cloudinary.com\/[^\/]+\/)([^\/]+)\/([^\/]+)\/([^\/]+\/.*)/;
+    const match = url.match(regex);
+    
+    if (!match) return url;
+    
+    const [, base, resourceType, deliveryType, path] = match;
+    
+    // Construire les transformations
+    let transformations = '';
+    
+    if (options.width || options.height) {
+      transformations += options.crop ? `c_${options.crop},` : 'c_fill,';
+      if (options.width) transformations += `w_${options.width},`;
+      if (options.height) transformations += `h_${options.height},`;
+    }
+    
+    if (options.quality) {
+      transformations += `q_${options.quality},`;
+    }
+    
+    // Supprimer la virgule finale
+    if (transformations.endsWith(',')) {
+      transformations = transformations.slice(0, -1);
+    }
+    
+    // Construire l'URL transformée
+    if (transformations) {
+      return `${base}${resourceType}/${deliveryType}/${transformations}/${path}`;
+    }
+    
+    return url;
+  } catch (error) {
+    console.error('Erreur lors de la transformation de l\'URL:', error);
+    return url;
+  }
+}

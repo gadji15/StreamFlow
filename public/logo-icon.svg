@@ -1,0 +1,46 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradientIcon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Cercle de fond -->
+  <circle cx="128" cy="128" r="128" fill="#0F172A"/>
+  
+  <!-- S stylisé simplifié pour icône -->
+  <path d="
+    M 165 80
+    C 145 80, 105 80, 95 100
+    C 85 120, 95 135, 115 140
+    L 145 150
+    C 165 155, 175 170, 165 190
+    C 155 210, 115 210, 95 210
+    M 95 210
+    C 115 210, 155 210, 165 190
+    C 175 170, 165 155, 145 150
+    L 115 140
+    C 95 135, 85 120, 95 100
+    C 105 80, 145 80, 165 80
+    " 
+    stroke="url(#gradientIcon)" stroke-width="16" stroke-linecap="round" fill="none">
+  </path>
+  
+  <!-- Vague simplifiée -->
+  <path d="
+    M 65 170
+    Q 90 155, 115 170
+    Q 140 185, 165 170
+    Q 190 155, 215 170
+    " 
+    stroke="url(#gradientIcon)" stroke-width="6" fill="none" opacity="0.6" stroke-linecap="round">
+    <animate attributeName="d" 
+      values="
+        M 65 170 Q 90 155, 115 170 Q 140 185, 165 170 Q 190 155, 215 170;
+        M 65 170 Q 90 185, 115 170 Q 140 155, 165 170 Q 190 185, 215 170;
+        M 65 170 Q 90 155, 115 170 Q 140 185, 165 170 Q 190 155, 215 170
+      "
+      dur="3s" repeatCount="indefinite"/>
+  </path>
+</svg>
