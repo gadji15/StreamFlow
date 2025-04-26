@@ -1,13 +1,9 @@
-// Supprimer la directive 'use client' de ce fichier,
-// car nous voulons que les métadonnées soient traitées côté serveur
-
-import Link from 'next/link';
 import { Metadata } from 'next';
 import AdminHeaderClient from '@/components/admin/admin-header-client';
 import AdminSidebarClient from '@/components/admin/admin-sidebar-client';
 import AdminAuthGuardClient from '@/components/admin/admin-auth-guard-client';
 
-// Métadonnées pour le SEO (ceci fonctionne car c'est maintenant un composant serveur)
+// Métadonnées pour le SEO
 export const metadata: Metadata = {
   title: 'StreamFlow Admin',
   description: 'Interface d\'administration de StreamFlow',
