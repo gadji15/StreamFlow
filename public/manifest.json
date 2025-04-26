@@ -1,7 +1,7 @@
 {
   "name": "StreamFlow - Films et Séries en Streaming",
   "short_name": "StreamFlow",
-  "description": "Regardez vos films et séries préférés en streaming",
+  "description": "Regardez vos films et séries préférés en streaming HD",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0F172A",
@@ -57,21 +57,46 @@
       "purpose": "any maskable"
     }
   ],
-  "splash_pages": null,
   "shortcuts": [
     {
       "name": "Films",
       "short_name": "Films",
       "description": "Voir les films",
       "url": "/films",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-films.png", "sizes": "192x192" }]
     },
     {
       "name": "Séries",
       "short_name": "Séries",
       "description": "Voir les séries",
       "url": "/series",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-series.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ma Liste",
+      "short_name": "Ma Liste",
+      "description": "Voir ma liste",
+      "url": "/ma-liste",
+      "icons": [{ "src": "/icons/shortcut-list.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-screen.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Accueil StreamFlow"
+    },
+    {
+      "src": "/screenshots/mobile-screen.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "StreamFlow sur mobile"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "categories": ["entertainment", "video"]
 }
