@@ -1,300 +1,290 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { User } from 'firebase/auth';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
-  signIn, 
-  signInWithGoogle, 
-  signOut, 
-  register, 
-  resetPassword,
-  onAuthChange,
-  getUserData,
-  UserData
-} from '@/lib/firebase/auth';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/use-toast';
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+  sendPasswordResetEmail
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, firestore } from '@/lib/firebase/config';
+
+// Types
+interface UserData {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  isVIP: boolean;
+  vipExpiry?: Date;
+  role?: 'user' | 'admin' | 'super_admin';
+  createdAt?: Date;
+  lastLoginAt?: Date;
+  favoriteMovies?: string[];
+  favoriteSeries?: string[];
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseUser | null;
   userData: UserData | null;
-  loading: boolean;
-  error: string | null;
-  isAdmin: boolean;
+  isLoggedIn: boolean;
   isVIP: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  loginWithGoogle: () => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  signup: (email: string, password: string, displayName: string) => Promise<boolean>;
-  forgotPassword: (email: string) => Promise<boolean>;
+  isLoading: boolean;
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   refreshUserData: () => Promise<void>;
 }
 
+// Créer le contexte
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isVIP, setIsVIP] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-
-  // Observer l'état d'authentification
-  useEffect(() => {
-    const unsubscribe = onAuthChange(async (user) => {
-      setLoading(true);
-      setUser(user);
-      
-      if (user) {
-        try {
-          // Récupérer les données utilisateur
-          const userData = await getUserData(user.uid);
-          setUserData(userData);
-          
-          // Vérifier les rôles
-          if (userData) {
-            setIsAdmin(userData.role === 'admin' || userData.role === 'super_admin');
-            setIsVIP(userData.role === 'vip' && userData.vipUntil && userData.vipUntil.toDate() > new Date());
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      } else {
-        setUserData(null);
-        setIsAdmin(false);
-        setIsVIP(false);
-      }
-      
-      setLoading(false);
-    });
-    
-    // Nettoyage
-    return () => unsubscribe();
-  }, []);
-
-  // Fonctions d'authentification
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await signIn(email, password);
-      
-      if (result.error) {
-        setError(result.error);
-        toast({
-          title: "Échec de connexion",
-          description: result.error,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Authentification réussie
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue sur StreamFlow!"
-      });
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await signInWithGoogle();
-      
-      if (result.error) {
-        setError(result.error);
-        toast({
-          title: "Échec de connexion",
-          description: result.error,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Authentification réussie
-      toast({
-        title: "Connexion réussie",
-        description: "Bienvenue sur StreamFlow!"
-      });
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setLoading(true);
-    
-    try {
-      await signOut();
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt sur StreamFlow!"
-      });
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (email: string, password: string, displayName: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await register(email, password, displayName);
-      
-      if (result.error) {
-        setError(result.error);
-        toast({
-          title: "Échec d'inscription",
-          description: result.error,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Inscription réussie
-      toast({
-        title: "Inscription réussie",
-        description: "Bienvenue sur StreamFlow! Vous pouvez maintenant vous connecter."
-      });
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const forgotPassword = async (email: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await resetPassword(email);
-      
-      if (result.error) {
-        setError(result.error);
-        toast({
-          title: "Échec",
-          description: result.error,
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Email envoyé avec succès
-      toast({
-        title: "Email envoyé",
-        description: "Veuillez vérifier votre boîte de réception pour réinitialiser votre mot de passe."
-      });
-      return true;
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fonction pour rafraîchir les données utilisateur
-  const refreshUserData = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const userData = await getUserData(user.uid);
-      setUserData(userData);
-      
-      // Mettre à jour les rôles
-      if (userData) {
-        setIsAdmin(userData.role === 'admin' || userData.role === 'super_admin');
-        setIsVIP(userData.role === 'vip' && userData.vipUntil && userData.vipUntil.toDate() > new Date());
-      }
-    } catch (error) {
-      console.error('Error refreshing user data:', error);
-    }
-  }, [user]);
-
-  // Valeurs du context
-  const value = {
-    user,
-    userData,
-    loading,
-    error,
-    isAdmin,
-    isVIP,
-    login,
-    loginWithGoogle,
-    logout,
-    signup,
-    forgotPassword,
-    refreshUserData
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
+// Hook pour utiliser le contexte
 export function useAuth() {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
+}
+
+// Provider Component
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // État d'authentification
+  const isLoggedIn = !!user;
+  
+  // Vérifier si l'utilisateur est VIP et si son abonnement est toujours valide
+  const isVIP = userData?.isVIP && 
+    (userData.vipExpiry ? new Date(userData.vipExpiry) > new Date() : false);
+  
+  // Vérifier si l'utilisateur est admin
+  const isAdmin = userData?.role === 'admin' || userData?.role === 'super_admin';
+  
+  // Écouter les changements d'état d'authentification
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        try {
+          await refreshUserData(currentUser.uid);
+        } catch (error) {
+          console.error('Erreur lors de la récupération des données utilisateur:', error);
+        }
+      } else {
+        setUserData(null);
+      }
+      
+      setIsLoading(false);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Récupérer/rafraîchir les données utilisateur
+  const refreshUserData = async (uid?: string) => {
+    try {
+      const userUid = uid || user?.uid;
+      
+      if (!userUid) return;
+      
+      const userDocRef = doc(firestore, 'users', userUid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        
+        setUserData({
+          uid: userUid,
+          email: user?.email || null,
+          displayName: data.displayName || null,
+          isVIP: data.isVIP || false,
+          vipExpiry: data.vipExpiry ? new Date(data.vipExpiry.toDate()) : undefined,
+          role: data.role || 'user',
+          createdAt: data.createdAt ? new Date(data.createdAt.toDate()) : undefined,
+          lastLoginAt: data.lastLoginAt ? new Date(data.lastLoginAt.toDate()) : undefined,
+          favoriteMovies: data.favoriteMovies || [],
+          favoriteSeries: data.favoriteSeries || []
+        });
+        
+        // Mettre à jour la date de dernière connexion
+        await updateDoc(userDocRef, {
+          lastLoginAt: serverTimestamp()
+        });
+      } else {
+        console.log('User doc does not exist, creating...');
+        
+        // Créer un nouveau document utilisateur
+        const newUserData = {
+          uid: userUid,
+          email: user?.email,
+          displayName: user?.displayName || null,
+          isVIP: false,
+          role: 'user',
+          createdAt: serverTimestamp(),
+          lastLoginAt: serverTimestamp()
+        };
+        
+        await setDoc(userDocRef, newUserData);
+        
+        setUserData({
+          uid: userUid,
+          email: user?.email || null,
+          displayName: user?.displayName || null,
+          isVIP: false,
+          role: 'user'
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des données utilisateur:', error);
+    }
+  };
+  
+  // Fonctions d'authentification
+  const login = async (email: string, password: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Récupérer les données utilisateur
+      await refreshUserData(userCredential.user.uid);
+      
+      // Stocker l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+      
+      return userCredential;
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      
+      let errorMessage = 'Erreur lors de la connexion.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Mot de passe incorrect.';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Email ou mot de passe incorrect.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Créer le document utilisateur dans Firestore
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        uid: userCredential.user.uid,
+        email,
+        displayName: name,
+        isVIP: false,
+        role: 'user',
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp()
+      });
+      
+      // Mettre à jour les données utilisateur locales
+      setUserData({
+        uid: userCredential.user.uid,
+        email: email,
+        displayName: name,
+        isVIP: false,
+        role: 'user'
+      });
+      
+      // Stocker l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+      
+      return userCredential;
+    } catch (error: any) {
+      console.error('Erreur d\'inscription:', error);
+      
+      let errorMessage = 'Erreur lors de l\'inscription.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Cet email est déjà utilisé par un autre compte.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Adresse email invalide.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Le mot de passe est trop faible.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+      
+      // Effacer l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+      }
+    } catch (error) {
+      console.error('Erreur de déconnexion:', error);
+      throw error;
+    }
+  };
+  
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error('Erreur de réinitialisation de mot de passe:', error);
+      
+      let errorMessage = 'Erreur lors de la réinitialisation du mot de passe.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Adresse email invalide.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  // Valeur du contexte
+  const value = {
+    user,
+    userData,
+    isLoggedIn,
+    isVIP,
+    isLoading,
+    isAdmin,
+    login,
+    register,
+    logout,
+    resetPassword,
+    refreshUserData: () => refreshUserData()
+  };
+
+  return { Provider: AuthContext.Provider, value, children };
+}
+
+// Exporter le Provider comme composant séparé
+export function AuthProviderComponent({ children }: { children: ReactNode }) {
+  const auth = AuthProvider({ children });
+  return (
+    <auth.Provider value={auth.value}>
+      {auth.children}
+    </auth.Provider>
+  );
 }
