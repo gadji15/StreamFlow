@@ -1,199 +1,296 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ChevronRight, Star, CheckCircle, Crown } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { motion } from "framer-motion"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Crown, Star, Shield, Sparkles, Film, Tv, Play } from "lucide-react";
 
-const vipFeatures = [
-  {
-    icon: <Crown className="h-5 w-5 text-amber-400" />,
-    title: "Contenu exclusif VIP",
-    description: "Accès à des films et séries en avant-première et des contenus exclusifs"
+// Simuler l'état VIP de l'utilisateur (à remplacer par la logique d'authentification réelle)
+const isUserVIP = false;
+
+// Données simulées pour le contenu exclusif
+const exclusiveContent = [
+  { 
+    id: 1, 
+    title: "Le Dernier Royaume", 
+    type: "film", 
+    rating: 4.8, 
+    releaseDate: "Exclusivité 2023",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "Une aventure épique dans un royaume mystérieux où les forces du bien et du mal s'affrontent."
   },
-  {
-    icon: <CheckCircle className="h-5 w-5 text-green-500" />,
-    title: "Sans publicité",
-    description: "Profitez d'une expérience de visionnage sans interruption publicitaire"
+  { 
+    id: 2, 
+    title: "Mystères de l'Univers", 
+    type: "série", 
+    rating: 4.9, 
+    releaseDate: "Nouvelle saison en exclusivité",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "Découvrez les secrets les plus profonds de notre univers dans cette série documentaire exclusive."
   },
-  {
-    icon: <Star className="h-5 w-5 text-amber-400" />,
-    title: "Qualité premium",
-    description: "Streaming en 4K UHD avec son surround quand disponible"
+  { 
+    id: 3, 
+    title: "Chrome", 
+    type: "film", 
+    rating: 4.7, 
+    releaseDate: "Avant-première",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "Dans un futur où la technologie a remplacé l'humanité, un rebelle lutte pour retrouver ce qui a été perdu."
+  },
+  { 
+    id: 4, 
+    title: "Dynasties", 
+    type: "série", 
+    rating: 4.6, 
+    releaseDate: "Saison 3 - VIP uniquement",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "La saga familiale continue dans cette nouvelle saison pleine de rebondissements et de trahisons."
+  },
+  { 
+    id: 5, 
+    title: "Les Étoiles Éternelles", 
+    type: "film", 
+    rating: 4.8, 
+    releaseDate: "Exclusivité 2023",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "Un voyage interstellaire épique à la recherche d'une nouvelle planète habitable pour l'humanité."
+  },
+  { 
+    id: 6, 
+    title: "Confessions", 
+    type: "série", 
+    rating: 4.7, 
+    releaseDate: "Tous les épisodes en exclusivité",
+    imageUrl: "/placeholder-premium.jpg",
+    description: "Une série dramatique intense où chaque épisode dévoile les secrets les plus sombres des protagonistes."
   }
 ];
 
-const vipContent = [
+// Avantages VIP
+const vipBenefits = [
   {
-    id: "top-secret-movie",
-    title: "The Secret Agent",
-    year: 2023,
-    rating: 4.9,
-    genres: ["Action", "Espionnage", "Thriller"],
-    poster: "/placeholder-movie.jpg",
-    type: "film"
+    icon: <Crown className="h-10 w-10 text-yellow-400" />,
+    title: "Contenu en Exclusivité",
+    description: "Accédez à des films et séries en avant-première et à du contenu exclusif réservé aux membres VIP."
   },
   {
-    id: "exclusive-series",
-    title: "Chroniques du Futur",
-    year: 2023,
-    rating: 4.8,
-    genres: ["Science-Fiction", "Drame"],
-    poster: "/placeholder-movie.jpg",
-    type: "série"
+    icon: <Star className="h-10 w-10 text-yellow-400" />,
+    title: "Qualité Premium",
+    description: "Profitez de la meilleure qualité vidéo (4K, HDR) et audio (Dolby Atmos) disponible."
   },
   {
-    id: "premium-content",
-    title: "Empire des Ombres",
-    year: 2023,
-    rating: 4.7,
-    genres: ["Fantaisie", "Aventure"],
-    poster: "/placeholder-movie.jpg",
-    type: "série"
+    icon: <Shield className="h-10 w-10 text-yellow-400" />,
+    title: "Sans Publicité",
+    description: "Une expérience de visionnage ininterrompue, sans aucune publicité."
   },
   {
-    id: "vip-movie",
-    title: "Révolution Quantique",
-    year: 2023,
-    rating: 4.9,
-    genres: ["Science-Fiction", "Action"],
-    poster: "/placeholder-movie.jpg",
-    type: "film"
+    icon: <Sparkles className="h-10 w-10 text-yellow-400" />,
+    title: "Support Prioritaire",
+    description: "Un accès prioritaire à notre service clientèle pour répondre à toutes vos questions."
   }
 ];
 
 export default function ExclusifPage() {
-  const [isVipUser, setIsVipUser] = useState(true);
-  
   return (
-    <div className="min-h-screen">
-      {/* Section principale avec dégradé */}
-      <div className="bg-gradient-to-b from-amber-900 to-black pt-24 pb-20">
-        <div className="container mx-auto px-4 text-center">
-          <Badge className="mb-4 bg-amber-400/20 text-amber-400 border-amber-400/20 px-3 py-1">
-            Exclusivité
-          </Badge>
-          
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Zone <span className="bg-gradient-to-r from-amber-400 to-yellow-600 text-transparent bg-clip-text">VIP</span>
-          </h1>
-          
-          {isVipUser ? (
-            <p className="text-gray-300 max-w-2xl mx-auto mb-8">
-              Bienvenue dans l'espace exclusif réservé à nos membres VIP. Profitez d'un contenu premium, des dernières sorties et des exclusivités StreamFlow.
-            </p>
-          ) : (
-            <p className="text-gray-300 max-w-2xl mx-auto mb-8">
-              Devenez membre VIP pour accéder à un monde de divertissement premium, comprenant des exclusivités, des avant-premières et bien plus encore.
-            </p>
-          )}
-          
-          {!isVipUser && (
-            <Button className="bg-gradient-to-r from-amber-400 to-yellow-600 text-black hover:from-amber-500 hover:to-yellow-700 font-medium">
-              Obtenir l'accès VIP
-            </Button>
-          )}
-        </div>
-      </div>
-      
-      {/* Section avantages */}
-      <div className="bg-black py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-semibold text-white text-center mb-12">
-            Avantages <span className="bg-gradient-to-r from-amber-400 to-yellow-600 text-transparent bg-clip-text">VIP</span>
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {vipFeatures.map((feature, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-gray-900/50 border border-amber-900/20 rounded-lg p-6"
-              >
-                <div className="flex items-center mb-4">
-                  {feature.icon}
-                  <h3 className="ml-3 text-lg font-medium text-white">{feature.title}</h3>
-                </div>
-                <p className="text-gray-400">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      {isVipUser ? (
-        /* Contenu VIP si l'utilisateur est membre */
-        <div className="bg-background py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-semibold text-white">Exclusivités VIP</h2>
-              <Link href="/exclusif/tous" className="text-amber-400 flex items-center text-sm hover:text-amber-300">
-                Voir tout <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {vipContent.map((content) => (
-                <Link 
-                  href={content.type === "film" ? `/films/${content.id}` : `/series/${content.id}`} 
-                  key={content.id}
-                >
-                  <motion.div
-                    whileHover={{ y: -5 }}
-                    transition={{ duration: 0.2 }}
-                    className="group"
-                  >
-                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-2">
-                      <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-600">
-                        <span className="text-xs">Poster</span>
-                      </div>
-                      
-                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/80 flex items-end p-3">
-                        <div className="w-full">
-                          <span className="text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full font-bold">
-                            VIP
-                          </span>
-                          <h3 className="font-medium text-white text-sm mt-1 truncate">{content.title}</h3>
-                          
-                          <div className="flex items-center justify-between text-xs text-gray-400 mt-1">
-                            <span>{content.year}</span>
-                            <div className="flex items-center">
-                              <span className="text-yellow-400 mr-1">★</span>
-                              <span>{content.rating}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+    <div className="container mx-auto px-4 py-12">
+      {isUserVIP ? (
+        <VIPContent />
       ) : (
-        /* Message d'accès restreint si non VIP */
-        <div className="bg-background py-16">
-          <div className="container mx-auto px-4 text-center">
-            <div className="border border-amber-900/20 rounded-lg p-10 bg-gray-900/30 max-w-2xl mx-auto">
-              <Crown className="h-12 w-12 text-amber-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Contenu exclusif réservé aux membres VIP
-              </h2>
-              <p className="text-gray-400 mb-6">
-                Devenez membre VIP pour accéder à notre bibliothèque exclusive de films et séries en avant-première et de contenus exclusifs.
-              </p>
-              <Button className="bg-gradient-to-r from-amber-400 to-yellow-600 text-black hover:from-amber-500 hover:to-yellow-700">
-                Découvrir les offres VIP
-              </Button>
-            </div>
-          </div>
-        </div>
+        <NonVIPContent />
       )}
     </div>
-  )
+  );
+}
+
+function VIPContent() {
+  const [filter, setFilter] = useState("all");
+  
+  const filteredContent = filter === "all" 
+    ? exclusiveContent 
+    : exclusiveContent.filter(item => item.type === filter);
+  
+  return (
+    <div className="space-y-12">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-amber-600 text-transparent bg-clip-text">
+          Contenu Exclusif VIP
+        </h1>
+        <p className="text-gray-300 max-w-2xl mx-auto">
+          Bienvenue dans votre espace VIP ! Profitez de tout notre contenu premium, en avant-première et en exclusivité.
+        </p>
+      </div>
+      
+      <div className="flex justify-center space-x-4">
+        <Button 
+          onClick={() => setFilter("all")} 
+          variant={filter === "all" ? "default" : "outline"}
+        >
+          Tout
+        </Button>
+        <Button 
+          onClick={() => setFilter("film")} 
+          variant={filter === "film" ? "default" : "outline"}
+        >
+          <Film className="mr-2 h-4 w-4" />
+          Films
+        </Button>
+        <Button 
+          onClick={() => setFilter("série")} 
+          variant={filter === "série" ? "default" : "outline"}
+        >
+          <Tv className="mr-2 h-4 w-4" />
+          Séries
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredContent.map((item) => (
+          <motion.div
+            key={item.id}
+            whileHover={{ scale: 1.03 }}
+            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden shadow-xl border border-gray-700"
+          >
+            <div className="h-48 bg-gray-700 relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                {item.type === "film" ? (
+                  <Film className="h-12 w-12 text-gray-500" />
+                ) : (
+                  <Tv className="h-12 w-12 text-gray-500" />
+                )}
+              </div>
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="bg-amber-600 text-white">
+                  VIP
+                </Badge>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold">{item.title}</h3>
+                <div className="flex items-center">
+                  <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                  <span className="text-sm">{item.rating}</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-400">{item.releaseDate}</p>
+              <p className="text-gray-300">{item.description}</p>
+              <Button className="w-full">
+                <Play className="mr-2 h-4 w-4" />
+                Regarder
+              </Button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NonVIPContent() {
+  return (
+    <div className="space-y-12">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-amber-600 text-transparent bg-clip-text">
+          Contenu Exclusif VIP
+        </h1>
+        <p className="text-gray-300 max-w-2xl mx-auto">
+          Accédez à du contenu premium, des avant-premières et bien plus encore en devenant membre VIP.
+        </p>
+      </div>
+      
+      <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-8 border border-gray-700 shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center">
+              <Crown className="h-6 w-6 text-yellow-400 mr-2" />
+              Devenez VIP aujourd'hui
+            </h2>
+            <p className="text-gray-300 mb-6">
+              Rejoignez notre programme VIP et profitez d'une expérience de streaming premium avec un accès exclusif à notre catalogue VIP.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center text-gray-300">
+                <span className="text-green-500 mr-2">✓</span> Contenu exclusif
+              </div>
+              <div className="flex items-center text-gray-300">
+                <span className="text-green-500 mr-2">✓</span> Avant-premières
+              </div>
+              <div className="flex items-center text-gray-300">
+                <span className="text-green-500 mr-2">✓</span> Qualité 4K et HDR
+              </div>
+              <div className="flex items-center text-gray-300">
+                <span className="text-green-500 mr-2">✓</span> Sans publicité
+              </div>
+              <div className="flex items-center text-gray-300">
+                <span className="text-green-500 mr-2">✓</span> Support prioritaire
+              </div>
+            </div>
+            <div className="mt-8">
+              <Link href="/abonnement">
+                <Button className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700">
+                  S'abonner VIP
+                </Button>
+              </Link>
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                À partir de 9,99€/mois. Annulation possible à tout moment.
+              </p>
+            </div>
+          </div>
+          
+          <div className="bg-gray-900 rounded-lg overflow-hidden">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-semibold text-center text-gray-200">
+                Aperçu du contenu exclusif
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                {exclusiveContent.slice(0, 4).map((item, index) => (
+                  <div key={index} className="bg-gray-800 rounded p-3">
+                    <div className="h-24 bg-gray-700 rounded flex items-center justify-center mb-2">
+                      {item.type === "film" ? (
+                        <Film className="h-8 w-8 text-gray-600" />
+                      ) : (
+                        <Tv className="h-8 w-8 text-gray-600" />
+                      )}
+                    </div>
+                    <p className="text-sm font-medium text-gray-300 truncate">{item.title}</p>
+                    <div className="flex items-center mt-1">
+                      <Star className="h-3 w-3 text-yellow-400 mr-1" />
+                      <span className="text-xs text-gray-400">{item.rating}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 backdrop-blur-sm bg-gray-900/70 flex items-center justify-center">
+                  <Badge variant="secondary" className="bg-amber-600 text-white text-lg px-3 py-1">
+                    VIP UNIQUEMENT
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="pt-8">
+        <h2 className="text-2xl font-bold text-center mb-8">Avantages VIP</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {vipBenefits.map((benefit, index) => (
+            <div 
+              key={index} 
+              className="bg-gray-800 p-6 rounded-lg border border-gray-700 text-center"
+            >
+              <div className="flex justify-center mb-4">
+                {benefit.icon}
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
+              <p className="text-gray-400 text-sm">{benefit.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
