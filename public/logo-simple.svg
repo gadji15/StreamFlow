@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dégradé pour le S stylisé -->
+    <linearGradient id="gradientS" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Cercle de fond pour version icône -->
+  <circle cx="256" cy="256" r="256" fill="#0F172A" opacity="0.8"/>
+  
+  <!-- Lettre S stylisée en forme de vague - version simplifiée pour icône -->
+  <path d="
+    M 300 160
+    C 260 160, 200 160, 180 200
+    C 160 240, 180 270, 220 280
+    L 280 300
+    C 320 310, 340 340, 320 380
+    C 300 420, 240 420, 200 420
+    M 200 420
+    C 240 420, 300 420, 320 380
+    C 340 340, 320 310, 280 300
+    L 220 280
+    C 180 270, 160 240, 180 200
+    C 200 160, 260 160, 300 160
+    " 
+    stroke="url(#gradientS)" stroke-width="30" stroke-linecap="round" fill="none">
+  </path>
+  
+  <!-- Vagues simplifiées -->
+  <path d="
+    M 120 340
+    Q 170 310, 220 340
+    Q 270 370, 320 340
+    Q 370 310, 420 340
+    " 
+    stroke="url(#gradientS)" stroke-width="12" fill="none" opacity="0.6" stroke-linecap="round">
+  </path>
+</svg>
