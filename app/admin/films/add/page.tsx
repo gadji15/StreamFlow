@@ -6,34 +6,30 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
   ArrowLeft,
-  Upload,
+  Loader2,
   Plus,
-  X,
-  Trash2,
-  Film,
-  Loader2
+  X
 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from "next/link"
-import { addMovie, uploadMovieImage } from "@/lib/firebase"
+import { ImageUpload } from "@/components/admin/image-upload"
 import { useToast } from "@/components/ui/use-toast"
+import Link from "next/link"
+import { addMovie, uploadPoster, uploadBackdrop } from "@/lib/firebase/firestore/movies"
 
 export default function AddFilmPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [posterFile, setPosterFile] = useState<File | null>(null)
-  const [backdropFile, setBackdropFile] = useState<File | null>(null)
-  const [posterPreview, setPosterPreview] = useState<string | null>(null)
-  const [backdropPreview, setBackdropPreview] = useState<string | null>(null)
-  const [posterUploading, setPosterUploading] = useState(false)
-  const [backdropUploading, setBackdropUploading] = useState(false)
   const [adminId, setAdminId] = useState<string | null>(null)
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState("")
+  const [posterUrl, setPosterUrl] = useState<string>("")
+  const [backdropUrl, setBackdropUrl] = useState<string>("")
+  const [posterFile, setPosterFile] = useState<File | null>(null)
+  const [backdropFile, setBackdropFile] = useState<File | null>(null)
   
   const [film, setFilm] = useState({
     title: "",
@@ -46,17 +42,13 @@ export default function AddFilmPage() {
     cast: [] as string[],
     vipOnly: false,
     status: "published" as "draft" | "published",
-    posterUrl: "",
-    backdropUrl: "",
     trailerUrl: ""
   })
   
   // Récupérer l'ID de l'admin connecté
   useEffect(() => {
-    const storedAdminId = localStorage.getItem("adminId")
-    if (storedAdminId) {
-      setAdminId(storedAdminId)
-    }
+    const storedAdminId = localStorage.getItem("adminId") || "admin_user"
+    setAdminId(storedAdminId)
   }, [])
   
   const handleInputChange = (
@@ -64,34 +56,6 @@ export default function AddFilmPage() {
   ) => {
     const { name, value } = e.target
     setFilm((prev) => ({ ...prev, [name]: value }))
-  }
-  
-  const handlePosterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setPosterFile(file)
-      
-      // Créer un aperçu
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPosterPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-  
-  const handleBackdropChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setBackdropFile(file)
-      
-      // Créer un aperçu
-      const reader = new FileReader()
-      reader.onload = () => {
-        setBackdropPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
   }
   
   const handleCastChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -126,43 +90,50 @@ export default function AddFilmPage() {
     setFilm(prev => ({ ...prev, status: isPublished ? "published" : "draft" }))
   }
   
-  const uploadImages = async (movieId: string) => {
-    let posterUrl = film.posterUrl
-    let backdropUrl = film.backdropUrl
+  const handlePosterUpload = async (file: File) => {
+    setPosterFile(file)
+  }
+  
+  const handleBackdropUpload = async (file: File) => {
+    setBackdropFile(file)
+  }
+  
+  const uploadImages = async (movieId: string): Promise<{posterUrl: string, backdropUrl: string}> => {
+    let posterImageUrl = "";
+    let backdropImageUrl = "";
     
     if (posterFile) {
-      setPosterUploading(true)
       try {
-        posterUrl = await uploadMovieImage(posterFile, movieId, "poster")
+        posterImageUrl = await uploadPoster(posterFile, movieId);
+        setPosterUrl(posterImageUrl);
       } catch (error) {
-        console.error("Erreur lors du téléchargement du poster:", error)
+        console.error("Erreur lors du téléchargement du poster:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de télécharger l'image du poster. Le film a été créé sans image.",
+          description: "Impossible de télécharger l'image du poster",
           variant: "destructive"
-        })
-      } finally {
-        setPosterUploading(false)
+        });
       }
     }
     
     if (backdropFile) {
-      setBackdropUploading(true)
       try {
-        backdropUrl = await uploadMovieImage(backdropFile, movieId, "backdrop")
+        backdropImageUrl = await uploadBackdrop(backdropFile, movieId);
+        setBackdropUrl(backdropImageUrl);
       } catch (error) {
-        console.error("Erreur lors du téléchargement de l'image de fond:", error)
+        console.error("Erreur lors du téléchargement de l'image de fond:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de télécharger l'image de fond. Le film a été créé sans image de fond.",
+          description: "Impossible de télécharger l'image de fond",
           variant: "destructive"
-        })
-      } finally {
-        setBackdropUploading(false)
+        });
       }
     }
     
-    return { posterUrl, backdropUrl }
+    return { 
+      posterUrl: posterImageUrl, 
+      backdropUrl: backdropImageUrl 
+    };
   }
   
   const handleSubmit = async (e: React.FormEvent, saveAsDraft: boolean = false) => {
@@ -196,6 +167,8 @@ export default function AddFilmPage() {
         duration: parseInt(film.duration, 10),
         status: saveAsDraft ? "draft" : "published",
         tags,
+        posterUrl: "",
+        backdropUrl: ""
       }
       
       // Créer le film dans Firestore
@@ -205,9 +178,13 @@ export default function AddFilmPage() {
         // Télécharger les images
         const { posterUrl, backdropUrl } = await uploadImages(newMovie.id)
         
-        // Mettre à jour le film avec les URLs des images
-        if (posterUrl !== film.posterUrl || backdropUrl !== film.backdropUrl) {
-          await updateMovie(newMovie.id, { posterUrl, backdropUrl }, adminId)
+        // Mettre à jour le film avec les URLs des images si nécessaire
+        if (posterUrl || backdropUrl) {
+          const updateData: any = {};
+          if (posterUrl) updateData.posterUrl = posterUrl;
+          if (backdropUrl) updateData.backdropUrl = backdropUrl;
+          
+          await updateMovie(newMovie.id, updateData, adminId);
         }
         
         toast({
@@ -373,96 +350,34 @@ export default function AddFilmPage() {
                 <Label className="text-white">
                   Affiche du film <span className="text-red-500">*</span>
                 </Label>
-                {posterPreview ? (
-                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden">
-                    <img 
-                      src={posterPreview} 
-                      alt="Aperçu de l'affiche" 
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPosterFile(null);
-                        setPosterPreview(null);
-                      }}
-                      className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-black/80"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-gray-800/50">
-                    <div className="mb-4">
-                      <Upload className="h-10 w-10 text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-400 mb-2">
-                      Glisser-déposer une image ou
-                    </p>
-                    <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 text-sm">
-                        Parcourir
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handlePosterChange}
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-2">
-                      PNG, JPG ou WEBP. Max 2MB. Ratio 2:3 recommandé.
-                    </p>
-                  </div>
-                )}
+                <ImageUpload
+                  imageUrl={posterUrl}
+                  onUpload={handlePosterUpload}
+                  onRemove={() => {
+                    setPosterUrl("");
+                    setPosterFile(null);
+                  }}
+                  aspect="portrait"
+                  label="Glisser-déposer ou ajouter l'affiche"
+                  maxSize={2}
+                />
               </div>
               
               <div className="space-y-4">
                 <Label className="text-white">
                   Image de fond <span className="text-red-500">*</span>
                 </Label>
-                {backdropPreview ? (
-                  <div className="relative w-full aspect-video rounded-lg overflow-hidden">
-                    <img 
-                      src={backdropPreview} 
-                      alt="Aperçu de l'image de fond" 
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBackdropFile(null);
-                        setBackdropPreview(null);
-                      }}
-                      className="absolute top-2 right-2 bg-black/60 text-white p-1 rounded-full hover:bg-black/80"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-gray-800/50">
-                    <div className="mb-4">
-                      <Upload className="h-10 w-10 text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-400 mb-2">
-                      Glisser-déposer une image ou
-                    </p>
-                    <label className="cursor-pointer">
-                      <span className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 text-sm">
-                        Parcourir
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleBackdropChange}
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 mt-2">
-                      PNG, JPG ou WEBP. Max 5MB. Résolution HD recommandée.
-                    </p>
-                  </div>
-                )}
+                <ImageUpload
+                  imageUrl={backdropUrl}
+                  onUpload={handleBackdropUpload}
+                  onRemove={() => {
+                    setBackdropUrl("");
+                    setBackdropFile(null);
+                  }}
+                  aspect="landscape"
+                  label="Glisser-déposer ou ajouter l'image de fond"
+                  maxSize={5}
+                />
               </div>
             </div>
             
@@ -576,7 +491,7 @@ export default function AddFilmPage() {
             type="button"
             variant="outline"
             onClick={() => router.push("/admin/films")}
-            disabled={isSubmitting || posterUploading || backdropUploading}
+            disabled={isSubmitting}
           >
             Annuler
           </Button>
@@ -585,7 +500,7 @@ export default function AddFilmPage() {
             <Button
               type="button"
               variant="outline"
-              disabled={isSubmitting || posterUploading || backdropUploading}
+              disabled={isSubmitting}
               onClick={(e) => handleSubmit(e, true)}
             >
               {isSubmitting && film.status === "draft" ? (
@@ -599,7 +514,7 @@ export default function AddFilmPage() {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || posterUploading || backdropUploading}
+              disabled={isSubmitting}
             >
               {isSubmitting && film.status === "published" ? (
                 <>
