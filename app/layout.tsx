@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider"; 
-import { ToastProvider } from "@/components/ui/toaster"; // Import correct
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ui/toaster";
 import Header from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -32,7 +32,7 @@ export default function RootLayout({
           <main className="flex-1 pt-24">{children}</main>
           <Footer />
           <ScrollToTop />
-          <ToastProvider /> {/* Correction: Utiliser ToastProvider au lieu de Toaster */}
+          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>

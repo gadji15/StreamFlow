@@ -3,7 +3,7 @@
 import { forwardRef } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Toast, ToastVariant } from "./use-toast"
+import { Toast } from "./use-toast"
 
 interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
   toast: Toast

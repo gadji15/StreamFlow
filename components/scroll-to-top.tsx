@@ -44,5 +44,4 @@ export function ScrollToTop() {
   )
 }
 
-// Ajout d'une exportation par défaut pour être compatible avec les deux styles d'importation
 export default ScrollToTop;

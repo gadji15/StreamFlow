@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore"
-import { auth, firestore } from "@/lib/firebase/config" // Importer depuis notre config
+import { auth, firestore } from "@/lib/firebase/config" // Importation depuis config
 import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
@@ -26,7 +26,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Tentative de connexion à Firebase en utilisant l'instance auth importée
+      // Tentative de connexion à Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
