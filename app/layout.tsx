@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PWAUpdatePrompt from "@/components/pwa-update-prompt";
 import ConnectivityIndicator from "@/components/connectivity-indicator";
-import { AuthProviderComponent } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/use-auth"; // Le chemin est le même, mais le fichier a changé
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
@@ -50,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
-        <AuthProviderComponent>
+        <AuthProvider>
           <ThemeProvider 
             attribute="class"
             defaultTheme="dark"
@@ -70,7 +70,7 @@ export default function RootLayout({
               <ConnectivityIndicator />
             </ToastProvider>
           </ThemeProvider>
-        </AuthProviderComponent>
+        </AuthProvider>
       </body>
     </html>
   );

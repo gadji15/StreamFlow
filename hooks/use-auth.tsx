@@ -1,154 +1,284 @@
-"use client";
+'use client';
 
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
-  createContext, 
-  useContext, 
-  useState, 
-  useEffect, 
-  ReactNode 
-} from "react";
-import { User } from "firebase/auth";
-import { 
-  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  getCurrentUser,
-  getUserData
-} from "@/lib/firebase/auth";
+  onAuthStateChanged,
+  User as FirebaseUser,
+  sendPasswordResetEmail
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, firestore } from '@/lib/firebase/config';
+
+// Types
+interface UserData {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  isVIP: boolean;
+  vipExpiry?: Date;
+  role?: 'user' | 'admin' | 'super_admin';
+  createdAt?: Date;
+  lastLoginAt?: Date;
+  favoriteMovies?: string[];
+  favoriteSeries?: string[];
+}
 
 interface AuthContextType {
-  user: User | null;
-  userData: any | null;
+  user: FirebaseUser | null;
+  userData: UserData | null;
+  isLoggedIn: boolean;
+  isVIP: boolean;
   isLoading: boolean;
   isAdmin: boolean;
-  isVIP: boolean;
-  signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   refreshUserData: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  userData: null,
-  isLoading: true,
-  isAdmin: false,
-  isVIP: false,
-  signOut: async () => {},
-  refreshUserData: async () => {},
-});
+// Créer le contexte
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Hook pour utiliser le contexte
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+// Provider Component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isVIP, setIsVIP] = useState(false);
   
-  // Fonction pour rafraîchir les données utilisateur depuis Firestore
-  const refreshUserData = async () => {
-    if (user) {
-      try {
-        const data = await getUserData(user.uid);
-        setUserData(data);
-        
-        // Mise à jour des statuts spéciaux
-        if (data) {
-          // L'utilisateur est VIP si la propriété isVIP est true dans ses données
-          setIsVIP(data.isVIP || false);
-          
-          // Vous pouvez ajouter d'autres logiques pour déterminer les rôles (isAdmin, etc.)
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    }
-  };
+  // État d'authentification
+  const isLoggedIn = !!user;
+  
+  // Vérifier si l'utilisateur est VIP et si son abonnement est toujours valide
+  const isVIP = userData?.isVIP && 
+    (userData.vipExpiry ? new Date(userData.vipExpiry) > new Date() : false);
+  
+  // Vérifier si l'utilisateur est admin
+  const isAdmin = userData?.role === 'admin' || userData?.role === 'super_admin';
   
   // Écouter les changements d'état d'authentification
   useEffect(() => {
-    setIsLoading(true);
-    
-    const unsubscribe = onAuthStateChanged((authUser) => {
-      setUser(authUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
       
-      if (authUser) {
-        // Si l'utilisateur est authentifié, récupérer ses données
-        refreshUserData();
-        
-        // Vérifier si l'utilisateur est administrateur (à adapter selon votre logique)
-        // Par exemple, vérifier une collection "admins" dans Firestore
-        fetch('/api/admin/verify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ uid: authUser.uid }),
-        })
-          .then(res => res.json())
-          .then(data => {
-            setIsAdmin(data.isAdmin || false);
-          })
-          .catch(err => {
-            console.error("Error verifying admin status:", err);
-            setIsAdmin(false);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
+      if (currentUser) {
+        try {
+          await refreshUserData(currentUser.uid);
+        } catch (error) {
+          console.error('Erreur lors de la récupération des données utilisateur:', error);
+        }
       } else {
-        // Réinitialiser les données si l'utilisateur n'est pas authentifié
         setUserData(null);
-        setIsAdmin(false);
-        setIsVIP(false);
-        setIsLoading(false);
       }
+      
+      setIsLoading(false);
     });
     
-    // Nettoyer l'écouteur au démontage
     return () => unsubscribe();
   }, []);
   
-  // Fonction de déconnexion
-  const signOut = async () => {
+  // Récupérer/rafraîchir les données utilisateur
+  const refreshUserData = async (uid?: string) => {
     try {
-      await firebaseSignOut();
+      const userUid = uid || user?.uid;
       
-      // Supprimer les infos de l'utilisateur du localStorage
-      localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("isVIP");
+      if (!userUid) return;
       
-      // Supprimer les cookies
-      document.cookie = "isLoggedIn=; path=/; max-age=0";
-      document.cookie = "isVIP=; path=/; max-age=0";
-      document.cookie = "isAdmin=; path=/; max-age=0";
+      const userDocRef = doc(firestore, 'users', userUid);
+      const userDoc = await getDoc(userDocRef);
       
-      // Réinitialiser l'état
-      setUser(null);
-      setUserData(null);
-      setIsAdmin(false);
-      setIsVIP(false);
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        
+        setUserData({
+          uid: userUid,
+          email: user?.email || null,
+          displayName: data.displayName || null,
+          isVIP: data.isVIP || false,
+          vipExpiry: data.vipExpiry ? new Date(data.vipExpiry.toDate()) : undefined,
+          role: data.role || 'user',
+          createdAt: data.createdAt ? new Date(data.createdAt.toDate()) : undefined,
+          lastLoginAt: data.lastLoginAt ? new Date(data.lastLoginAt.toDate()) : undefined,
+          favoriteMovies: data.favoriteMovies || [],
+          favoriteSeries: data.favoriteSeries || []
+        });
+        
+        // Mettre à jour la date de dernière connexion
+        await updateDoc(userDocRef, {
+          lastLoginAt: serverTimestamp()
+        });
+      } else {
+        console.log('User doc does not exist, creating...');
+        
+        // Créer un nouveau document utilisateur
+        const newUserData = {
+          uid: userUid,
+          email: user?.email,
+          displayName: user?.displayName || null,
+          isVIP: false,
+          role: 'user',
+          createdAt: serverTimestamp(),
+          lastLoginAt: serverTimestamp()
+        };
+        
+        await setDoc(userDocRef, newUserData);
+        
+        setUserData({
+          uid: userUid,
+          email: user?.email || null,
+          displayName: user?.displayName || null,
+          isVIP: false,
+          role: 'user'
+        });
+      }
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error('Erreur lors du rafraîchissement des données utilisateur:', error);
     }
   };
   
+  // Fonctions d'authentification
+  const login = async (email: string, password: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Récupérer les données utilisateur
+      await refreshUserData(userCredential.user.uid);
+      
+      // Stocker l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+      
+      return userCredential;
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      
+      let errorMessage = 'Erreur lors de la connexion.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Mot de passe incorrect.';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Email ou mot de passe incorrect.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Créer le document utilisateur dans Firestore
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+      await setDoc(userDocRef, {
+        uid: userCredential.user.uid,
+        email,
+        displayName: name,
+        isVIP: false,
+        role: 'user',
+        createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp()
+      });
+      
+      // Mettre à jour les données utilisateur locales
+      setUserData({
+        uid: userCredential.user.uid,
+        email: email,
+        displayName: name,
+        isVIP: false,
+        role: 'user'
+      });
+      
+      // Stocker l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+      }
+      
+      return userCredential;
+    } catch (error: any) {
+      console.error('Erreur d\'inscription:', error);
+      
+      let errorMessage = 'Erreur lors de l\'inscription.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Cet email est déjà utilisé par un autre compte.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Adresse email invalide.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Le mot de passe est trop faible.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  const logout = async () => {
+    try {
+      await firebaseSignOut(auth);
+      
+      // Effacer l'état de connexion dans le localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+      }
+    } catch (error) {
+      console.error('Erreur de déconnexion:', error);
+      throw error;
+    }
+  };
+  
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error('Erreur de réinitialisation de mot de passe:', error);
+      
+      let errorMessage = 'Erreur lors de la réinitialisation du mot de passe.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Adresse email invalide.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  };
+  
+  // Valeur du contexte
+  const value = {
+    user,
+    userData,
+    isLoggedIn,
+    isVIP,
+    isLoading,
+    isAdmin,
+    login,
+    register,
+    logout,
+    resetPassword,
+    refreshUserData: () => refreshUserData()
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userData,
-        isLoading,
-        isAdmin,
-        isVIP,
-        signOut,
-        refreshUserData,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }
