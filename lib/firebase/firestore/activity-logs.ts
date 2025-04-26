@@ -7,7 +7,9 @@ import {
   getDocs,
   where,
   QueryConstraint,
-  Timestamp
+  startAfter,
+  QueryDocumentSnapshot,
+  DocumentData
 } from "firebase/firestore";
 import { firestore } from "../config";
 
@@ -22,10 +24,10 @@ export interface ActivityLog {
   timestamp: string;
 }
 
-// Collection de référence
+// Collection reference
 const COLLECTION = "activity_logs";
 
-// Ajouter une entrée de journal d'activité
+// Add activity log
 export const addActivityLog = async (log: Omit<ActivityLog, "id">): Promise<ActivityLog> => {
   try {
     const docRef = await addDoc(collection(firestore, COLLECTION), {
@@ -38,12 +40,12 @@ export const addActivityLog = async (log: Omit<ActivityLog, "id">): Promise<Acti
       ...log
     };
   } catch (error) {
-    console.error("Erreur lors de l'ajout du journal d'activité:", error);
+    console.error("Error adding activity log:", error);
     throw error;
   }
 };
 
-// Récupérer les journaux d'activité récents
+// Get recent activity logs
 export const getRecentActivityLogs = async (count: number = 10): Promise<ActivityLog[]> => {
   try {
     const q = query(
@@ -58,12 +60,12 @@ export const getRecentActivityLogs = async (count: number = 10): Promise<Activit
       ...doc.data()
     } as ActivityLog));
   } catch (error) {
-    console.error("Erreur lors de la récupération des journaux d'activité récents:", error);
+    console.error("Error getting recent activity logs:", error);
     throw error;
   }
 };
 
-// Récupérer les journaux d'activité avec filtres
+// Get activity logs with filters and pagination
 export const getActivityLogs = async (
   options: {
     action?: ActivityLog["action"],
@@ -73,9 +75,10 @@ export const getActivityLogs = async (
     startDate?: Date,
     endDate?: Date,
     limit?: number,
-    page?: number
+    page?: number,
+    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
   } = {}
-): Promise<{logs: ActivityLog[], total: number}> => {
+): Promise<{logs: ActivityLog[], lastDoc: QueryDocumentSnapshot<DocumentData> | null, total: number}> => {
   try {
     const constraints: QueryConstraint[] = [];
     const {
@@ -86,10 +89,11 @@ export const getActivityLogs = async (
       startDate,
       endDate,
       limit: limitCount = 20,
-      page = 1
+      page = 1,
+      startAfterDoc
     } = options;
     
-    // Ajouter les filtres si présents
+    // Add filters if present
     if (action) {
       constraints.push(where("action", "==", action));
     }
@@ -114,38 +118,66 @@ export const getActivityLogs = async (
       constraints.push(where("timestamp", "<=", endDate.toISOString()));
     }
     
-    // Ajouter le tri par date décroissante
+    // Add descending sort by timestamp
     constraints.push(orderBy("timestamp", "desc"));
     
-    // Calculer l'offset pour la pagination
+    // Calculate offset for pagination
     const offset = (page - 1) * limitCount;
     
-    // Récupérer le total pour la pagination
+    // Get total for pagination
     const totalQuery = query(collection(firestore, COLLECTION), ...constraints);
     const totalSnapshot = await getDocs(totalQuery);
     const total = totalSnapshot.size;
     
-    // Ajouter la limite pour la pagination
+    // Add pagination
+    if (startAfterDoc) {
+      constraints.push(startAfter(startAfterDoc));
+    }
+    
+    // Add limit
     constraints.push(limit(limitCount));
     
-    // Construire la requête finale
+    // Build final query
     const q = query(collection(firestore, COLLECTION), ...constraints);
     
-    // Exécuter la requête
+    // Execute query
     const querySnapshot = await getDocs(q);
     
-    // Transformer les données
+    // Transform data
     const logs = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as ActivityLog));
     
     return {
-      logs: logs.slice(offset, offset + limitCount),
+      logs: logs,
+      lastDoc: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
       total
     };
   } catch (error) {
-    console.error("Erreur lors de la récupération des journaux d'activité:", error);
+    console.error("Error getting activity logs:", error);
+    throw error;
+  }
+};
+
+// Get activity logs by admin
+export const getActivityLogsByAdmin = async (adminId: string, limitCount: number = 10): Promise<ActivityLog[]> => {
+  try {
+    const q = query(
+      collection(firestore, COLLECTION),
+      where("performedBy", "==", adminId),
+      orderBy("timestamp", "desc"),
+      limit(limitCount)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ActivityLog));
+  } catch (error) {
+    console.error(`Error getting activity logs for admin ${adminId}:`, error);
     throw error;
   }
 };

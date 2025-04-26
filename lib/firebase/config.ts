@@ -3,7 +3,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// Configuration Firebase
+// Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,7 +14,7 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialiser Firebase seulement s'il n'y a pas d'instance
+// Initialize Firebase only if no instance exists
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const firestore = getFirestore(app);
 const auth = getAuth(app);
