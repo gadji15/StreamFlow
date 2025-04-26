@@ -29,6 +29,28 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  
+  // Traiter Cloudinary comme un module externe côté serveur
+  // Ceci empêche Next.js d'essayer de l'inclure dans le bundle client
+  experimental: {
+    serverComponentsExternalPackages: ['cloudinary']
+  },
+  
+  // Configurer webpack pour gérer les imports de modules Node.js
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Empêcher les modules Node.js d'être inclus dans le bundle client
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        child_process: false,
+        net: false,
+        tls: false
+      };
+    }
+    
+    return config;
   }
 };
 
