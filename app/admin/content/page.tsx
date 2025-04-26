@@ -88,7 +88,7 @@ export default function ContentManagementPage() {
       <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title="Gestion du contenu" />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 pt-24">
           <div className="mb-6 flex justify-between items-center">
             <Tabs
               defaultValue="movies"

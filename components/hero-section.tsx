@@ -1,182 +1,167 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Image from "next/image"
-import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronLeft, ChevronRight, Play, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Play, Plus, Info } from "lucide-react"
-import { motion } from "framer-motion"
-import { Star } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
-// Featured movie data
+// Données simulées pour les films en vedette
 const featuredMovies = [
   {
     id: 1,
-    title: "Interstellar",
-    description:
-      "Un groupe d'explorateurs utilise un trou de ver récemment découvert pour surpasser les limites du voyage spatial humain et conquérir les vastes distances d'un voyage interstellaire.",
-    image: "/placeholder.svg?height=1080&width=1920",
-    year: 2014,
-    duration: "2h 49min",
-    rating: 8.6,
-    genres: ["Science-Fiction", "Aventure", "Drame"],
+    title: "Inception",
+    description: "Un voleur qui s'infiltre dans les rêves des autres est chargé d'implanter une idée dans l'esprit d'un PDG.",
+    backgroundImage: "/placeholder-movie-bg.jpg",
+    genres: ["Sci-Fi", "Action", "Thriller"],
+    rating: 4.8,
+    year: 2010,
+    duration: "2h 28min",
   },
   {
     id: 2,
-    title: "Dune",
-    description:
-      "Paul Atreides, un jeune homme brillant et doué, né pour connaître un destin plus grand que lui-même, doit se rendre sur la planète la plus dangereuse de l'univers pour assurer l'avenir de sa famille et de son peuple.",
-    image: "/placeholder.svg?height=1080&width=1920",
-    year: 2021,
-    duration: "2h 35min",
-    rating: 8.0,
-    genres: ["Science-Fiction", "Aventure", "Drame"],
+    title: "The Dark Knight",
+    description: "Batman affronte un nouveau criminel, le Joker, qui cherche à plonger Gotham City dans le chaos.",
+    backgroundImage: "/placeholder-movie-bg.jpg",
+    genres: ["Action", "Crime", "Drama"],
+    rating: 4.9,
+    year: 2008,
+    duration: "2h 32min",
   },
   {
     id: 3,
-    title: "Inception",
-    description:
-      "Un voleur qui s'infiltre dans les rêves des autres pour y voler leurs secrets se voit offrir une chance de retrouver sa vie normale en réalisant l'implantation d'une idée dans l'esprit d'une personne.",
-    image: "/placeholder.svg?height=1080&width=1920",
-    year: 2010,
-    duration: "2h 28min",
-    rating: 8.8,
-    genres: ["Science-Fiction", "Action", "Aventure"],
-  },
+    title: "Interstellar",
+    description: "Un groupe d'explorateurs utilise un trou de ver pour voyager au-delà de notre dimension et sauver l'humanité.",
+    backgroundImage: "/placeholder-movie-bg.jpg",
+    genres: ["Sci-Fi", "Adventure", "Drama"],
+    rating: 4.7,
+    year: 2014,
+    duration: "2h 49min",
+  }
 ]
 
-export default function HeroSection() {
+export function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(false)
-
   const currentMovie = featuredMovies[currentIndex]
-
+  
+  // Auto-rotation des films en vedette
   useEffect(() => {
-    setIsLoaded(true)
-
-    // Auto-rotate featured movies
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredMovies.length)
     }, 8000)
-
+    
     return () => clearInterval(interval)
   }, [])
-
+  
+  const nextMovie = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredMovies.length)
+  }
+  
+  const prevMovie = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + featuredMovies.length) % featuredMovies.length)
+  }
+  
   return (
-    <section className="relative h-[80vh] min-h-[600px] w-full overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={currentMovie.image || "/placeholder.svg"}
-          alt={currentMovie.title}
-          fill
-          priority
-          className="object-cover object-center"
-          style={{
-            opacity: isLoaded ? 1 : 0,
-            transition: "opacity 1s ease-in-out",
-          }}
-          onLoad={() => setIsLoaded(true)}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
+    <section className="relative w-full h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden bg-gray-900">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-gray-800">
+        <div className="text-6xl sm:text-7xl lg:text-8xl font-bold">BACKGROUND</div>
       </div>
-
-      {/* Content */}
-      <div className="container relative z-10 mx-auto h-full px-4 flex items-center">
-        <motion.div
-          className="max-w-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          key={currentMovie.id}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4"
-              style={{ fontFamily: "var(--font-poppins)" }}
-            >
-              {currentMovie.title}
-            </h1>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap gap-2 mb-4"
-          >
-            <span className="text-gray-300 text-sm">{currentMovie.year}</span>
-            <span className="text-gray-300 text-sm">•</span>
-            <span className="text-gray-300 text-sm">{currentMovie.duration}</span>
-            <span className="text-gray-300 text-sm">•</span>
-            <span className="text-yellow-500 text-sm flex items-center">
-              <Star className="h-4 w-4 mr-1 fill-yellow-500 stroke-yellow-500" />
-              {currentMovie.rating}
-            </span>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="flex flex-wrap gap-2 mb-4"
-          >
-            {currentMovie.genres.map((genre, index) => (
-              <span key={index} className="badge badge-primary">
-                {genre}
-              </span>
-            ))}
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="text-gray-300 mb-6 line-clamp-3 md:line-clamp-none"
-          >
-            {currentMovie.description}
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-            className="flex flex-wrap gap-4"
-          >
-            <Button asChild className="btn-primary">
-              <Link href={`/watch/${currentMovie.id}`} className="flex items-center">
-                <Play className="h-4 w-4 mr-2" />
-                Regarder
-              </Link>
-            </Button>
-            <Button variant="outline" className="btn-secondary">
-              <Plus className="h-4 w-4 mr-2" />
-              Ma liste
-            </Button>
-            <Button variant="ghost" className="text-white hover:text-white/80">
-              <Info className="h-4 w-4 mr-2" />
-              Plus d'infos
-            </Button>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Indicators */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
-        {featuredMovies.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex ? "bg-white w-6" : "bg-white/50 hover:bg-white/80"
-            }`}
-            aria-label={`Voir le film ${index + 1}`}
-          />
-        ))}
+      
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent">
+        <div className="container h-full flex flex-col justify-center px-4 md:px-6">
+          <div className="max-w-full sm:max-w-2xl">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentMovie.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-3 md:space-y-4"
+              >
+                <div className="space-y-1 md:space-y-2">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <Badge variant="outline" className="border-primary text-primary text-xs">
+                      En vedette
+                    </Badge>
+                    <div className="flex items-center text-yellow-400 text-xs">
+                      {currentMovie.rating} ★
+                    </div>
+                  </div>
+                  
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                    {currentMovie.title}
+                  </h1>
+                  
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-gray-400 text-xs">
+                    <span>{currentMovie.year}</span>
+                    <span className="hidden xs:inline">•</span>
+                    <span>{currentMovie.duration}</span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1 py-1 md:py-2">
+                    {currentMovie.genres.map(genre => (
+                      <Badge key={genre} variant="secondary" className="text-[10px] md:text-xs">
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <p className="text-sm md:text-base text-gray-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-none max-w-md lg:max-w-xl">
+                  {currentMovie.description}
+                </p>
+                
+                <div className="flex flex-wrap gap-3 pt-2 md:pt-4">
+                  <Button className="bg-primary hover:bg-primary/90 h-9 px-3 md:h-10 md:px-4">
+                    <Play className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Regarder
+                  </Button>
+                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-800 h-9 px-3 md:h-10 md:px-4">
+                    <Info className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" /> Plus d'infos
+                  </Button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+            
+            {/* Indicateurs de slide et navigation */}
+            <div className="flex items-center space-x-4 mt-6 md:mt-8">
+              <div className="flex space-x-2">
+                {featuredMovies.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === currentIndex ? "bg-primary" : "bg-gray-700"
+                    }`}
+                    onClick={() => setCurrentIndex(index)}
+                    aria-label={`Voir le film ${index + 1}`}
+                  />
+                ))}
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={prevMovie} 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
+                  aria-label="Film précédent"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button 
+                  onClick={nextMovie} 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full border-gray-700 bg-gray-900/50 text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8"
+                  aria-label="Film suivant"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )
