@@ -1,4 +1,17 @@
-// Configuration Next.js simplifiée sans PWA pour déboguer
+import withPWA from 'next-pwa';
+
+// Configuration PWA de base
+const pwaConfig = {
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+  // Désactiver temporairement certains composants qui pourraient causer des problèmes
+  dynamicStartUrl: false,
+  buildExcludes: [/middleware-manifest\.json$/]
+};
+
+// Configuration Next.js simplifiée
 const nextConfig = {
   reactStrictMode: true,
   
@@ -32,5 +45,5 @@ const nextConfig = {
   }
 };
 
-// Export sans PWA
-export default nextConfig;
+// Export avec PWA réactivé
+export default withPWA(pwaConfig)(nextConfig);
