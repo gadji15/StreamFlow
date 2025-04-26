@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploadProps {
   onImageSelected: (file: File) => void;
@@ -11,6 +11,9 @@ interface ImageUploadProps {
   label?: string;
   accept?: string;
   maxSizeMB?: number;
+  isLoading?: boolean;
+  className?: string;
+  aspectRatio?: string; // '1:1', '16:9', '4:3', etc.
 }
 
 export function ImageUpload({
@@ -19,7 +22,10 @@ export function ImageUpload({
   previewUrl,
   label = "Ajouter une image",
   accept = "image/jpeg, image/png, image/webp",
-  maxSizeMB = 5
+  maxSizeMB = 5,
+  isLoading = false,
+  className = "",
+  aspectRatio = "16:9"
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(previewUrl || null);
   const [error, setError] = useState<string | null>(null);
@@ -65,19 +71,33 @@ export function ImageUpload({
     }
   };
 
+  // Calculer les classes d'aspect ratio
+  let aspectRatioClass = "aspect-video"; // default 16:9
+  if (aspectRatio === "1:1") aspectRatioClass = "aspect-square";
+  if (aspectRatio === "4:3") aspectRatioClass = "aspect-[4/3]";
+  if (aspectRatio === "3:2") aspectRatioClass = "aspect-[3/2]";
+  if (aspectRatio === "2:3") aspectRatioClass = "aspect-[2/3]";
+  if (aspectRatio === "9:16") aspectRatioClass = "aspect-[9/16]";
+
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${className}`}>
       {!preview ? (
         <>
           <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+            onClick={() => !isLoading && fileInputRef.current?.click()}
+            className={`${aspectRatioClass} border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors overflow-hidden ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <Upload className="h-10 w-10 text-gray-400 mb-2" />
-            <p className="text-gray-400 text-center">{label}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {`Format: JPG, PNG ou WebP (max. ${maxSizeMB}MB)`}
-            </p>
+            {isLoading ? (
+              <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
+            ) : (
+              <>
+                <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                <p className="text-gray-400 text-center">{label}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {`Format: JPG, PNG ou WebP (max. ${maxSizeMB}MB)`}
+                </p>
+              </>
+            )}
           </div>
           <input
             type="file"
@@ -85,11 +105,12 @@ export function ImageUpload({
             onChange={handleFileChange}
             accept={accept}
             className="hidden"
+            disabled={isLoading}
           />
         </>
       ) : (
         <div className="relative">
-          <div className="aspect-[3/2] rounded-lg overflow-hidden bg-gray-800">
+          <div className={`${aspectRatioClass} rounded-lg overflow-hidden bg-gray-800`}>
             <img 
               src={preview} 
               alt="Aperçu" 
@@ -101,9 +122,16 @@ export function ImageUpload({
             size="sm"
             className="absolute top-2 right-2 rounded-full p-1 h-auto w-auto"
             onClick={handleRemoveImage}
+            disabled={isLoading}
           >
             <X className="h-4 w-4" />
           </Button>
+          
+          {isLoading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-white" />
+            </div>
+          )}
         </div>
       )}
       

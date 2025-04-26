@@ -1,183 +1,223 @@
+import { firestore } from "../config";
 import { 
   collection, 
   addDoc, 
   query, 
+  where, 
   orderBy, 
   limit, 
   getDocs,
-  where,
-  QueryConstraint,
-  startAfter,
-  QueryDocumentSnapshot,
-  DocumentData
+  serverTimestamp,
+  Timestamp,
+  DocumentData,
+  QueryDocumentSnapshot
 } from "firebase/firestore";
-import { firestore } from "../config";
+import { auth } from "../config";
 
-// Types
+export type ActivityAction = 
+  | "login" 
+  | "logout" 
+  | "register" 
+  | "password_reset" 
+  | "profile_update"
+  | "content_view" 
+  | "content_create" 
+  | "content_update" 
+  | "content_delete"
+  | "comment_create" 
+  | "comment_update" 
+  | "comment_delete"
+  | "favorite_add" 
+  | "favorite_remove"
+  | "vip_subscribe" 
+  | "vip_renew" 
+  | "vip_cancel" 
+  | "vip_expired"
+  | "admin_action";
+
+export type EntityType = 
+  | "user" 
+  | "movie" 
+  | "series" 
+  | "episode" 
+  | "comment" 
+  | "favorite"
+  | "system";
+
 export interface ActivityLog {
   id?: string;
-  action: "create" | "update" | "delete" | "login" | "logout" | "view";
-  entityType: "movie" | "series" | "episode" | "user" | "admin" | "comment";
+  action: ActivityAction;
+  entityType: EntityType;
   entityId: string;
-  details: string;
-  performedBy: string;
-  timestamp: string;
+  userId?: string;
+  userEmail?: string;
+  userRole?: string;
+  timestamp?: Timestamp;
+  details?: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
-// Collection reference
-const COLLECTION = "activity_logs";
-
-// Add activity log
-export const addActivityLog = async (log: Omit<ActivityLog, "id">): Promise<ActivityLog> => {
+/**
+ * Ajouter une activité au journal
+ */
+export async function logActivity(activity: Omit<ActivityLog, 'timestamp' | 'id'>) {
   try {
-    const docRef = await addDoc(collection(firestore, COLLECTION), {
-      ...log,
-      timestamp: log.timestamp || new Date().toISOString()
+    // Obtenir l'utilisateur actuel s'il est connecté
+    const currentUser = auth.currentUser;
+    let userInfo = {};
+    
+    if (currentUser) {
+      userInfo = {
+        userId: currentUser.uid,
+        userEmail: currentUser.email,
+      };
+    }
+    
+    // Ajouter l'activité dans Firestore
+    const activityData = {
+      ...activity,
+      ...userInfo,
+      timestamp: serverTimestamp(),
+    };
+    
+    // Ajouter des informations supplémentaires si disponibles dans le navigateur
+    if (typeof window !== 'undefined') {
+      activityData.ipAddress = 'client-side'; // Remplacé côté serveur
+      activityData.userAgent = navigator.userAgent;
+    }
+    
+    const docRef = await addDoc(collection(firestore, "activity_logs"), activityData);
+    return { id: docRef.id, ...activityData };
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement de l'activité:", error);
+    return null;
+  }
+}
+
+/**
+ * Récupérer les activités récentes
+ */
+export async function getRecentActivities(limit: number = 20) {
+  try {
+    const q = query(
+      collection(firestore, "activity_logs"),
+      orderBy("timestamp", "desc"),
+      limit(limit)
+    );
+    
+    const snapshot = await getDocs(q);
+    const activities: ActivityLog[] = [];
+    
+    snapshot.forEach((doc) => {
+      activities.push({
+        id: doc.id,
+        ...doc.data()
+      } as ActivityLog);
     });
     
-    return {
-      id: docRef.id,
-      ...log
-    };
+    return activities;
   } catch (error) {
-    console.error("Error adding activity log:", error);
-    throw error;
+    console.error("Erreur lors de la récupération des activités récentes:", error);
+    return [];
   }
-};
+}
 
-// Get recent activity logs
-export const getRecentActivityLogs = async (count: number = 10): Promise<ActivityLog[]> => {
+/**
+ * Récupérer les activités d'un utilisateur
+ */
+export async function getUserActivities(userId: string, limit: number = 20) {
   try {
     const q = query(
-      collection(firestore, COLLECTION),
+      collection(firestore, "activity_logs"),
+      where("userId", "==", userId),
       orderBy("timestamp", "desc"),
-      limit(count)
+      limit(limit)
     );
     
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
+    const snapshot = await getDocs(q);
+    const activities: ActivityLog[] = [];
+    
+    snapshot.forEach((doc) => {
+      activities.push({
+        id: doc.id,
+        ...doc.data()
+      } as ActivityLog);
+    });
+    
+    return activities;
   } catch (error) {
-    console.error("Error getting recent activity logs:", error);
-    throw error;
+    console.error("Erreur lors de la récupération des activités utilisateur:", error);
+    return [];
   }
-};
+}
 
-// Get activity logs with filters and pagination
-export const getActivityLogs = async (
-  options: {
-    action?: ActivityLog["action"],
-    entityType?: ActivityLog["entityType"],
-    entityId?: string,
-    performedBy?: string,
-    startDate?: Date,
-    endDate?: Date,
-    limit?: number,
-    page?: number,
-    startAfterDoc?: QueryDocumentSnapshot<DocumentData>
-  } = {}
-): Promise<{logs: ActivityLog[], lastDoc: QueryDocumentSnapshot<DocumentData> | null, total: number}> => {
+/**
+ * Récupérer les activités filtrées
+ */
+export async function getFilteredActivities(
+  filters: {
+    action?: ActivityAction;
+    entityType?: EntityType;
+    entityId?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  },
+  limitCount: number = 50
+) {
   try {
-    const constraints: QueryConstraint[] = [];
-    const {
-      action,
-      entityType,
-      entityId,
-      performedBy,
-      startDate,
-      endDate,
-      limit: limitCount = 20,
-      page = 1,
-      startAfterDoc
-    } = options;
-    
-    // Add filters if present
-    if (action) {
-      constraints.push(where("action", "==", action));
-    }
-    
-    if (entityType) {
-      constraints.push(where("entityType", "==", entityType));
-    }
-    
-    if (entityId) {
-      constraints.push(where("entityId", "==", entityId));
-    }
-    
-    if (performedBy) {
-      constraints.push(where("performedBy", "==", performedBy));
-    }
-    
-    if (startDate) {
-      constraints.push(where("timestamp", ">=", startDate.toISOString()));
-    }
-    
-    if (endDate) {
-      constraints.push(where("timestamp", "<=", endDate.toISOString()));
-    }
-    
-    // Add descending sort by timestamp
-    constraints.push(orderBy("timestamp", "desc"));
-    
-    // Calculate offset for pagination
-    const offset = (page - 1) * limitCount;
-    
-    // Get total for pagination
-    const totalQuery = query(collection(firestore, COLLECTION), ...constraints);
-    const totalSnapshot = await getDocs(totalQuery);
-    const total = totalSnapshot.size;
-    
-    // Add pagination
-    if (startAfterDoc) {
-      constraints.push(startAfter(startAfterDoc));
-    }
-    
-    // Add limit
-    constraints.push(limit(limitCount));
-    
-    // Build final query
-    const q = query(collection(firestore, COLLECTION), ...constraints);
-    
-    // Execute query
-    const querySnapshot = await getDocs(q);
-    
-    // Transform data
-    const logs = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
-    
-    return {
-      logs: logs,
-      lastDoc: querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null,
-      total
-    };
-  } catch (error) {
-    console.error("Error getting activity logs:", error);
-    throw error;
-  }
-};
-
-// Get activity logs by admin
-export const getActivityLogsByAdmin = async (adminId: string, limitCount: number = 10): Promise<ActivityLog[]> => {
-  try {
-    const q = query(
-      collection(firestore, COLLECTION),
-      where("performedBy", "==", adminId),
-      orderBy("timestamp", "desc"),
-      limit(limitCount)
+    let q = query(
+      collection(firestore, "activity_logs"),
+      orderBy("timestamp", "desc")
     );
     
-    const querySnapshot = await getDocs(q);
+    // Appliquer les filtres
+    if (filters.action) {
+      q = query(q, where("action", "==", filters.action));
+    }
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ActivityLog));
+    if (filters.entityType) {
+      q = query(q, where("entityType", "==", filters.entityType));
+    }
+    
+    if (filters.entityId) {
+      q = query(q, where("entityId", "==", filters.entityId));
+    }
+    
+    if (filters.userId) {
+      q = query(q, where("userId", "==", filters.userId));
+    }
+    
+    // Appliquer la limite
+    q = query(q, limit(limitCount));
+    
+    const snapshot = await getDocs(q);
+    const activities: ActivityLog[] = [];
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      
+      // Filtrer par date côté client si nécessaire
+      if (filters.startDate && data.timestamp && 
+          data.timestamp.toDate() < filters.startDate) {
+        return;
+      }
+      
+      if (filters.endDate && data.timestamp && 
+          data.timestamp.toDate() > filters.endDate) {
+        return;
+      }
+      
+      activities.push({
+        id: doc.id,
+        ...data
+      } as ActivityLog);
+    });
+    
+    return activities;
   } catch (error) {
-    console.error(`Error getting activity logs for admin ${adminId}:`, error);
-    throw error;
+    console.error("Erreur lors de la récupération des activités filtrées:", error);
+    return [];
   }
-};
+}

@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Configuration Firebase
 const firebaseConfig = {
@@ -22,7 +23,17 @@ const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// Exporter l'app et les services
-export { app, firestore, auth, storage };
-// Alias pour une compatibilité avec le code existant
+// Initialiser Analytics seulement côté client
+let analytics = null;
+if (typeof window !== "undefined") {
+  // Vérifier si Analytics est supporté avant d'initialiser
+  isSupported().then(supported => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+export { app, firestore, auth, storage, analytics };
+// Alias pour compatibilité
 export const db = firestore;

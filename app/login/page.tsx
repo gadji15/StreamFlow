@@ -1,117 +1,130 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { AlertCircle, Eye, EyeOff } from "lucide-react"
-import { motion } from "framer-motion"
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/hooks/use-auth';
+import AuthGuard from '@/components/auth-guard';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  return (
+    <AuthGuard redirectIfAuthenticated redirectPath="/">
+      <LoginForm />
+    </AuthGuard>
+  );
+}
+
+function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams?.get('returnUrl') || '/';
+  
+  const { login, loginWithGoogle } = useAuth();
   
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    // Validation simple
     if (!email || !password) {
-      setError("Veuillez remplir tous les champs")
-      return
+      return;
     }
     
-    setIsLoading(true)
-    setError(null)
+    setIsSubmitting(true);
     
     try {
-      // Simuler une authentification
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      const success = await login(email, password);
       
-      // En production, vous appelleriez votre API d'authentification ici
-      
-      // Rediriger vers la page d'accueil après connexion
-      router.push("/")
-    } catch (err) {
-      setError("Identifiants incorrects. Veuillez réessayer.")
+      if (success) {
+        // Rediriger l'utilisateur vers la page souhaitée
+        router.push(returnUrl);
+      }
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false);
     }
-  }
+  };
+  
+  const handleGoogleLogin = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      const success = await loginWithGoogle();
+      
+      if (success) {
+        // Rediriger l'utilisateur vers la page souhaitée
+        router.push(returnUrl);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
   
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen flex items-center justify-center bg-black"
-    >
-      <div className="w-full max-w-md">
-        <div className="bg-gray-900 shadow-xl border border-gray-800 rounded-xl p-8">
-          <div className="mb-8 text-center">
-            <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-                StreamFlow
-              </h1>
-            </Link>
-            <h2 className="text-xl font-semibold mt-4 text-white">Connexion</h2>
-            <p className="text-gray-400 mt-1">Accédez à votre compte</p>
-          </div>
+    <div className="container mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto">
+        <div className="bg-gray-800 rounded-lg p-8 shadow-lg">
+          <h1 className="text-2xl font-bold mb-6 text-center">Connexion</h1>
           
-          {error && (
-            <div className="mb-6 p-3 rounded-lg bg-red-900/30 border border-red-800 flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-red-200 text-sm">{error}</p>
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium">
                 Email
               </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                className="w-full bg-gray-800 border-gray-700 text-white"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  placeholder="votre@email.com"
+                  required
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                  Mot de passe
-                </label>
-                <Link href="/reset-password" className="text-xs text-purple-400 hover:text-purple-300">
-                  Mot de passe oublié?
-                </Link>
-              </div>
+              <label htmlFor="password" className="block text-sm font-medium">
+                Mot de passe
+              </label>
               <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
                   placeholder="••••••••"
-                  className="w-full bg-gray-800 border-gray-700 text-white pr-10"
-                  disabled={isLoading}
+                  required
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
+                  onClick={toggleShowPassword}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -121,35 +134,78 @@ export default function LoginPage() {
                 <Checkbox
                   id="remember-me"
                   checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  disabled={isLoading}
+                  onCheckedChange={(checked) => 
+                    setRememberMe(checked === true)
+                  }
                 />
-                <label 
-                  htmlFor="remember-me" 
-                  className="text-sm text-gray-400 cursor-pointer"
-                >
+                <label htmlFor="remember-me" className="text-sm text-gray-400">
                   Se souvenir de moi
                 </label>
               </div>
+              
+              <Link href="/reset-password" className="text-sm text-indigo-400 hover:text-indigo-300">
+                Mot de passe oublié?
+              </Link>
             </div>
             
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
-              disabled={isLoading}
+              className="w-full"
+              disabled={isSubmitting}
             >
-              {isLoading ? "Connexion en cours..." : "Se connecter"}
+              {isSubmitting ? (
+                <>
+                  <span className="spinner mr-2"></span>
+                  Connexion en cours...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Se connecter
+                </>
+              )}
             </Button>
-            
-            <div className="text-center text-sm text-gray-400">
-              Pas encore de compte ?{" "}
-              <Link href="/register" className="text-purple-400 hover:text-purple-300">
-                S&apos;inscrire
-              </Link>
-            </div>
           </form>
+          
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-800 text-gray-400">
+                  Ou continuer avec
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+                  />
+                </svg>
+                Google
+              </Button>
+            </div>
+          </div>
+          
+          <p className="mt-8 text-center text-sm text-gray-400">
+            Pas encore inscrit?{' '}
+            <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium">
+              Créer un compte
+            </Link>
+          </p>
         </div>
       </div>
-    </motion.div>
-  )
+    </div>
+  );
 }

@@ -1,12 +1,12 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/hooks/use-auth";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ScrollToTop from "@/components/scroll-to-top";
 import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
-import PWAUpdatePrompt from "@/components/pwa-update-prompt";
 import ConnectivityIndicator from "@/components/connectivity-indicator";
 
 // Métadonnées pour le SEO et les partages sociaux
@@ -55,18 +55,20 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ToastProvider>
-            <Header />
-            <main className="flex-1 pt-24">
-              {children}
-            </main>
-            <Footer />
-            <ScrollToTop />
-            {/* Composants PWA */}
-            <PWAInstallPrompt />
-            <PWAUpdatePrompt />
-            <ConnectivityIndicator />
-          </ToastProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <Header />
+              <main className="flex-1 pt-24">
+                {children}
+              </main>
+              <Footer />
+              <ScrollToTop />
+              
+              {/* Composants PWA et connectivité */}
+              <PWAInstallPrompt />
+              <ConnectivityIndicator />
+            </ToastProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

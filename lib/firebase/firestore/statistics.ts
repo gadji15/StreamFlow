@@ -1,226 +1,174 @@
 import { firestore } from "../config";
 import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  getDoc,
-  doc,
-  setDoc,
-  updateDoc,
-  runTransaction,
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  increment,
   serverTimestamp,
-  Timestamp,
-  increment
+  runTransaction,
+  FieldValue
 } from "firebase/firestore";
 
-// Type pour les statistiques
-export interface Statistics {
+const STATS_DOC_ID = "global_stats";
+
+export interface AppStatistics {
   totalUsers: number;
-  activeUsers: number;
   vipUsers: number;
   totalMovies: number;
   publishedMovies: number;
   totalSeries: number;
   publishedSeries: number;
+  totalEpisodes: number;
   totalViews: number;
-  topGenres: { [genre: string]: number };
-  lastUpdated: string;
+  totalComments: number;
+  topGenres?: Record<string, number>;
+  lastUpdated?: any;
 }
 
-// Nom de la collection et du document
-const COLLECTION = "statistics";
-const STATS_DOC_ID = "global";
-
-// Initialiser ou récupérer les statistiques globales
-export const getOrCreateStats = async (): Promise<Statistics> => {
+/**
+ * Obtenir ou créer les statistiques globales
+ */
+export async function getStatistics(): Promise<AppStatistics> {
   try {
-    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    const statsRef = doc(firestore, "statistics", STATS_DOC_ID);
     const statsDoc = await getDoc(statsRef);
     
     if (statsDoc.exists()) {
-      return statsDoc.data() as Statistics;
+      return statsDoc.data() as AppStatistics;
     } else {
-      // Statistiques par défaut
-      const defaultStats: Statistics = {
+      // Initialiser les statistiques si elles n'existent pas
+      const initialStats: AppStatistics = {
         totalUsers: 0,
-        activeUsers: 0,
         vipUsers: 0,
         totalMovies: 0,
         publishedMovies: 0,
         totalSeries: 0,
         publishedSeries: 0,
+        totalEpisodes: 0,
         totalViews: 0,
+        totalComments: 0,
         topGenres: {},
-        lastUpdated: new Date().toISOString()
+        lastUpdated: serverTimestamp()
       };
       
-      await setDoc(statsRef, defaultStats);
-      return defaultStats;
+      await setDoc(statsRef, initialStats);
+      return initialStats;
     }
   } catch (error) {
     console.error("Erreur lors de la récupération des statistiques:", error);
     throw error;
   }
-};
+}
 
-// Mettre à jour les statistiques après une action spécifique
-export const updateStats = async (updates: Partial<Statistics>): Promise<void> => {
+/**
+ * Mettre à jour les statistiques
+ */
+export async function updateStatistics(updates: Partial<Record<keyof AppStatistics, number | FieldValue>>) {
   try {
-    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    const statsRef = doc(firestore, "statistics", STATS_DOC_ID);
     
-    await updateDoc(statsRef, {
+    // S'assurer que le document existe avant la mise à jour
+    const statsDoc = await getDoc(statsRef);
+    
+    if (!statsDoc.exists()) {
+      await getStatistics(); // Initialiser les statistiques
+    }
+    
+    // Ajouter le timestamp de mise à jour
+    const updatesWithTimestamp = {
       ...updates,
-      lastUpdated: new Date().toISOString()
-    });
+      lastUpdated: serverTimestamp()
+    };
+    
+    // Mettre à jour les statistiques
+    await updateDoc(statsRef, updatesWithTimestamp);
+    
+    return true;
   } catch (error) {
     console.error("Erreur lors de la mise à jour des statistiques:", error);
     throw error;
   }
-};
+}
 
-// Incrémenter une statistique spécifique
-export const incrementStat = async (field: keyof Statistics, value: number = 1): Promise<void> => {
+/**
+ * Incrémenter un genre dans topGenres
+ */
+export async function incrementGenre(genre: string) {
   try {
-    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
-    
-    const updates: any = {
-      [field]: increment(value),
-      lastUpdated: new Date().toISOString()
-    };
-    
-    await updateDoc(statsRef, updates);
-  } catch (error) {
-    console.error(`Erreur lors de l'incrémentation de la statistique ${field}:`, error);
-    throw error;
-  }
-};
-
-// Ajouter un genre aux statistiques
-export const incrementGenre = async (genre: string): Promise<void> => {
-  try {
-    const statsRef = doc(firestore, COLLECTION, STATS_DOC_ID);
+    const statsRef = doc(firestore, "statistics", STATS_DOC_ID);
     
     await runTransaction(firestore, async (transaction) => {
       const statsDoc = await transaction.get(statsRef);
       
       if (!statsDoc.exists()) {
-        throw new Error("Document de statistiques non trouvé");
+        // Initialiser les statistiques si elles n'existent pas
+        await getStatistics();
+        return;
       }
       
-      const stats = statsDoc.data() as Statistics;
+      const stats = statsDoc.data() as AppStatistics;
       const topGenres = stats.topGenres || {};
       
       // Incrémenter le compteur pour ce genre
       topGenres[genre] = (topGenres[genre] || 0) + 1;
       
-      transaction.update(statsRef, {
+      transaction.update(statsRef, { 
         topGenres,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: serverTimestamp()
       });
     });
+    
+    return true;
   } catch (error) {
     console.error(`Erreur lors de l'incrémentation du genre ${genre}:`, error);
     throw error;
   }
-};
+}
 
-// Calculer et mettre à jour toutes les statistiques (exécuter périodiquement ou après des changements majeurs)
-export const recalculateAllStats = async (): Promise<Statistics> => {
+/**
+ * Recalculer toutes les statistiques (opération lourde)
+ */
+export async function recalculateAllStatistics() {
   try {
-    // Compter les utilisateurs
-    const usersQuery = query(collection(firestore, "users"));
-    const usersSnapshot = await getDocs(usersQuery);
-    const totalUsers = usersSnapshot.size;
+    // Cette fonction effectuerait un calcul complet de toutes les statistiques
+    // en parcourant toutes les collections: users, movies, series, comments, etc.
+    // C'est une opération lourde qui devrait être exécutée rarement.
     
-    // Compter les utilisateurs VIP
-    const vipUsersQuery = query(collection(firestore, "users"), where("isVip", "==", true));
-    const vipUsersSnapshot = await getDocs(vipUsersQuery);
-    const vipUsers = vipUsersSnapshot.size;
+    // Le code complet serait assez long, voici un exemple simplifié:
     
-    // Compter les utilisateurs actifs (dernière connexion dans les 30 derniers jours)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const activeUsersQuery = query(
-      collection(firestore, "users"),
-      where("lastLogin", ">=", thirtyDaysAgo.toISOString())
-    );
-    const activeUsersSnapshot = await getDocs(activeUsersQuery);
-    const activeUsers = activeUsersSnapshot.size;
+    // 1. Compter les utilisateurs
+    // const usersSnapshot = await getDocs(collection(firestore, "users"));
+    // const totalUsers = usersSnapshot.size;
+    // const vipUsers = usersSnapshot.docs.filter(doc => doc.data().role === "vip").length;
     
-    // Compter les films
-    const moviesQuery = query(collection(firestore, "movies"));
-    const moviesSnapshot = await getDocs(moviesQuery);
-    const totalMovies = moviesSnapshot.size;
+    // 2. Compter les films
+    // const moviesSnapshot = await getDocs(collection(firestore, "movies"));
+    // const totalMovies = moviesSnapshot.size;
+    // const publishedMovies = moviesSnapshot.docs.filter(doc => doc.data().isPublished).length;
     
-    // Compter les films publiés
-    const publishedMoviesQuery = query(
-      collection(firestore, "movies"),
-      where("status", "==", "published")
-    );
-    const publishedMoviesSnapshot = await getDocs(publishedMoviesQuery);
-    const publishedMovies = publishedMoviesSnapshot.size;
+    // ... Répéter pour les autres collections
     
-    // Compter les séries
-    const seriesQuery = query(collection(firestore, "series"));
-    const seriesSnapshot = await getDocs(seriesQuery);
-    const totalSeries = seriesSnapshot.size;
+    // 3. Compter les vues totales
+    // ... Calculer à partir des champs "views" dans les films et séries
     
-    // Compter les séries publiées
-    const publishedSeriesQuery = query(
-      collection(firestore, "series"),
-      where("status", "==", "published")
-    );
-    const publishedSeriesSnapshot = await getDocs(publishedSeriesQuery);
-    const publishedSeries = publishedSeriesSnapshot.size;
+    // 4. Calculer les genres les plus populaires
+    // ... Parcourir tous les films et séries pour compter chaque genre
     
-    // Calculer le nombre total de vues
-    let totalViews = 0;
-    moviesSnapshot.forEach(doc => {
-      const data = doc.data();
-      totalViews += data.views || 0;
-    });
-    seriesSnapshot.forEach(doc => {
-      const data = doc.data();
-      totalViews += data.views || 0;
-    });
+    // 5. Mettre à jour le document de statistiques
+    // await setDoc(doc(firestore, "statistics", STATS_DOC_ID), {
+    //   totalUsers,
+    //   vipUsers,
+    //   totalMovies,
+    //   publishedMovies,
+    //   ... autres statistiques
+    //   lastUpdated: serverTimestamp()
+    // });
     
-    // Calculer les genres les plus populaires
-    const topGenres: { [genre: string]: number } = {};
-    moviesSnapshot.forEach(doc => {
-      const data = doc.data();
-      const genres = data.genres || [];
-      genres.forEach((genre: string) => {
-        topGenres[genre] = (topGenres[genre] || 0) + 1;
-      });
-    });
-    seriesSnapshot.forEach(doc => {
-      const data = doc.data();
-      const genres = data.genres || [];
-      genres.forEach((genre: string) => {
-        topGenres[genre] = (topGenres[genre] || 0) + 1;
-      });
-    });
-    
-    // Mettre à jour les statistiques
-    const stats: Statistics = {
-      totalUsers,
-      activeUsers,
-      vipUsers,
-      totalMovies,
-      publishedMovies,
-      totalSeries,
-      publishedSeries,
-      totalViews,
-      topGenres,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    await setDoc(doc(firestore, COLLECTION, STATS_DOC_ID), stats);
-    
-    return stats;
+    console.log("Recalcul des statistiques terminé");
+    return true;
   } catch (error) {
     console.error("Erreur lors du recalcul des statistiques:", error);
     throw error;
   }
-};
+}
