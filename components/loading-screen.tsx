@@ -1,12 +1,20 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import React from 'react';
 
-export default function LoadingScreen() {
+interface LoadingScreenProps {
+  message?: string;
+  fullScreen?: boolean;
+}
+
+export default function LoadingScreen({ 
+  message = "Chargement...", 
+  fullScreen = false 
+}: LoadingScreenProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh]">
-      <Loader2 className="h-16 w-16 animate-spin text-indigo-600" />
-      <p className="mt-4 text-lg text-gray-400">Chargement...</p>
+    <div className={`flex flex-col items-center justify-center ${fullScreen ? 'min-h-screen' : 'py-12'}`}>
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+      {message && <p className="text-gray-400">{message}</p>}
     </div>
   );
 }
