@@ -6,6 +6,8 @@ import Footer from "@/components/footer";
 import ScrollToTop from "@/components/scroll-to-top";
 import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
+import PWAUpdatePrompt from "@/components/pwa-update-prompt";
+import ConnectivityIndicator from "@/components/connectivity-indicator";
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
@@ -60,7 +62,10 @@ export default function RootLayout({
             </main>
             <Footer />
             <ScrollToTop />
+            {/* Composants PWA */}
             <PWAInstallPrompt />
+            <PWAUpdatePrompt />
+            <ConnectivityIndicator />
           </ToastProvider>
         </ThemeProvider>
       </body>

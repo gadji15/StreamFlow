@@ -1,256 +1,291 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
-  Film, 
-  Home, 
-  Search, 
-  Heart, 
-  Download, 
-  Chrome, 
-  Apple, 
-  Menu, 
-  Play,
-  Share2
-} from "lucide-react";
+  Smartphone, Share, PlusSquare, ArrowRight, Download, 
+  ChevronDown, ArrowDown, Info
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+// Interface pour l'événement d'installation
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 export default function MobilePage() {
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [isChrome, setIsChrome] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [browserName, setBrowserName] = useState("votre navigateur");
-
+  
   useEffect(() => {
-    // Détecte l'environnement
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(userAgent);
-    const isChrome = /chrome/.test(userAgent) && !/edge|edg/.test(userAgent);
-    const isSafari = /safari/.test(userAgent) && !/chrome|chromium|edg/.test(userAgent);
-    const isFirefox = /firefox/.test(userAgent);
-    const isEdge = /edge|edg/.test(userAgent);
+    // Vérifier si l'application est déjà installée
+    if (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true) {
+      setIsInstalled(true);
+    }
     
-    setIsIOS(isIOS);
-    setIsChrome(isChrome);
-    setIsSafari(isSafari);
+    // Détecter le système d'exploitation
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+    setIsAndroid(/android/.test(userAgent));
     
-    // Identifie le navigateur pour les instructions
-    if (isChrome) setBrowserName("Chrome");
-    else if (isSafari) setBrowserName("Safari");
-    else if (isFirefox) setBrowserName("Firefox");
-    else if (isEdge) setBrowserName("Edge");
+    // Détecter le navigateur
+    setIsChrome(/chrome|chromium|crios/.test(userAgent));
+    setIsSafari(/safari/.test(userAgent) && !/chrome|chromium|crios/.test(userAgent));
     
-    // Vérifie si l'app est déjà installée en mode standalone
-    setIsStandalone(
-      window.matchMedia('(display-mode: standalone)').matches || 
-      (window.navigator as any).standalone === true
-    );
+    // Intercepter l'événement beforeinstallprompt (Chrome/Edge/Samsung Internet/etc.)
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
-
+  
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    
+    await installPrompt.prompt();
+    const choiceResult = await installPrompt.userChoice;
+    
+    if (choiceResult.outcome === 'accepted') {
+      console.log('Installation acceptée');
+      setInstallPrompt(null);
+    } else {
+      console.log('Installation refusée');
+    }
+  };
+  
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="max-w-md mx-auto px-4 py-12">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text mb-6">
-            StreamFlow Mobile
-          </h1>
-          
-          <div className="flex justify-center mb-8">
-            <div className="relative w-48 h-96 bg-gray-800 rounded-3xl border-4 border-gray-700 overflow-hidden shadow-lg">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-full bg-gray-900 flex flex-col">
-                  <div className="h-10 bg-gray-800 flex items-center justify-center">
-                    <div className="w-24 h-4 rounded-full bg-gray-900"></div>
-                  </div>
-                  <div className="flex-1 p-2 flex flex-col items-center justify-center space-y-4">
-                    <div className="w-full h-32 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 animate-pulse flex items-center justify-center">
-                      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-full p-3">
-                        <Play className="text-white h-8 w-8"/>
-                      </div>
-                    </div>
-                    <div className="w-full h-4 rounded-full bg-gray-800"></div>
-                    <div className="w-3/4 h-4 rounded-full bg-gray-800"></div>
-                    <div className="w-full h-28 rounded-lg grid grid-cols-2 gap-2">
-                      <div className="bg-gray-800 rounded-md"></div>
-                      <div className="bg-gray-800 rounded-md"></div>
-                      <div className="bg-gray-800 rounded-md"></div>
-                      <div className="bg-gray-800 rounded-md"></div>
-                    </div>
-                  </div>
-                  <div className="h-16 bg-gray-800 flex items-center justify-around px-4">
-                    <Home className="h-6 w-6 text-purple-500" />
-                    <Search className="h-6 w-6 text-gray-500" />
-                    <Film className="h-6 w-6 text-gray-500" />
-                    <Heart className="h-6 w-6 text-gray-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <h2 className="text-xl font-medium text-white mb-4">
-            {isStandalone 
-              ? "Vous utilisez déjà l'application StreamFlow!" 
-              : "Installez StreamFlow sur votre appareil"}
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-2">Application StreamFlow</h1>
+      <p className="text-gray-400 mb-8">
+        Installez StreamFlow sur votre appareil pour une expérience optimale.
+      </p>
+      
+      {isInstalled ? (
+        <div className="bg-indigo-900/50 border border-indigo-700 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-2">Application installée !</h2>
+          <p className="text-gray-300 mb-4">
+            Vous utilisez déjà l'application StreamFlow en mode installé. Profitez de l'expérience !
+          </p>
+          <Button asChild>
+            <Link href="/">
+              Retourner à l'accueil
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="bg-gray-800 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Smartphone className="mr-2 h-5 w-5" /> Installer StreamFlow
           </h2>
           
-          <p className="text-gray-400 mb-8">
-            {isStandalone
-              ? "Profitez de la meilleure expérience de streaming directement depuis votre écran d'accueil."
-              : "Accédez rapidement à vos films et séries préférés, recevez des notifications de nouveaux contenus, et profitez d'une expérience optimisée."}
-          </p>
-          
-          {!isStandalone && (
-            <div className="mb-8">
-              {isIOS && (
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <Apple className="h-6 w-6 text-gray-400 mr-2" />
-                    <h3 className="font-medium text-white">iPhone ou iPad</h3>
-                  </div>
-                  <ol className="text-left text-gray-400 space-y-3 mb-4">
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">1</span>
-                      <span>Ouvrez StreamFlow dans <strong>Safari</strong></span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">2</span>
-                      <div className="flex items-center">
-                        <span>Appuyez sur</span>
-                        <Share2 className="mx-1 h-4 w-4 text-blue-400" />
-                        <span>(Partager)</span>
-                      </div>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">3</span>
-                      <span>Faites défiler et sélectionnez <strong>"Sur l'écran d'accueil"</strong></span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">4</span>
-                      <span>Appuyez sur <strong>"Ajouter"</strong> en haut à droite</span>
-                    </li>
-                  </ol>
-                  <div className="flex justify-center">
-                    <div className="bg-gray-900 rounded-lg p-2 w-4/5">
-                      <div className="text-center text-xs text-gray-400 mb-1">Safari iOS - Menu Partager</div>
-                      <div className="bg-gray-800 rounded h-20 flex items-center justify-center">
-                        <Share2 className="h-8 w-8 text-blue-400" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+          {/* Instructions spécifiques à la plateforme */}
+          {isIOS && isSafari && (
+            <div className="space-y-4">
+              <p className="mb-4">
+                Pour installer StreamFlow sur votre appareil iOS, suivez ces étapes :
+              </p>
               
-              {isChrome && !isIOS && (
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <Chrome className="h-6 w-6 text-gray-400 mr-2" />
-                    <h3 className="font-medium text-white">Android avec Chrome</h3>
-                  </div>
-                  <ol className="text-left text-gray-400 space-y-3 mb-4">
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">1</span>
-                      <span>Appuyez sur <strong>Menu</strong> (trois points en haut à droite)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">2</span>
-                      <span>Sélectionnez <strong>"Installer l'application"</strong> ou <strong>"Ajouter à l'écran d'accueil"</strong></span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="bg-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">3</span>
-                      <span>Confirmez en appuyant sur <strong>"Installer"</strong></span>
-                    </li>
-                  </ol>
-                  <div className="flex justify-center">
-                    <div className="bg-gray-900 rounded-lg p-2 w-4/5">
-                      <div className="text-center text-xs text-gray-400 mb-1">Chrome Android - Menu</div>
-                      <div className="bg-gray-800 rounded h-20 flex items-center justify-center">
-                        <Menu className="h-8 w-8 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {!isIOS && !isChrome && (
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <Menu className="h-6 w-6 text-gray-400 mr-2" />
-                    <h3 className="font-medium text-white">Installation sur {browserName}</h3>
-                  </div>
-                  <p className="text-gray-400 mb-4">
-                    Dans {browserName}, recherchez l'option "Installer" ou "Ajouter à l'écran d'accueil" dans le menu principal. Généralement, cette option se trouve dans les trois points verticaux (⋮) ou horizontaux (⋯).
-                  </p>
-                  <div className="bg-gray-900 rounded-md p-3">
-                    <p className="text-sm text-gray-400">
-                      <strong>Astuce</strong>: Si vous ne voyez pas cette option, essayez d'ouvrir StreamFlow dans Chrome sur Android ou Safari sur iOS pour une installation plus facile.
+              <ol className="space-y-6">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">1</div>
+                  <div>
+                    <p className="font-medium">Appuyez sur le bouton de partage</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Touchez l'icône <Share className="inline-block h-4 w-4 mx-1" /> en bas de l'écran (iOS) ou en haut à droite (iPadOS).
                     </p>
+                    <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                      <Share className="h-8 w-8 mx-auto mb-2" />
+                    </div>
                   </div>
-                </div>
-              )}
+                </li>
+                
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">2</div>
+                  <div>
+                    <p className="font-medium">Sélectionnez "Sur l'écran d'accueil"</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Faites défiler et appuyez sur l'option "Sur l'écran d'accueil".
+                    </p>
+                    <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                      <PlusSquare className="h-8 w-8 mx-auto mb-2" />
+                      <p>Sur l'écran d'accueil</p>
+                    </div>
+                  </div>
+                </li>
+                
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">3</div>
+                  <div>
+                    <p className="font-medium">Appuyez sur "Ajouter"</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Vous pouvez personnaliser le nom de l'application, puis appuyez sur "Ajouter" en haut à droite.
+                    </p>
+                    <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                      <ArrowRight className="h-8 w-8 mx-auto mb-2" />
+                      <p>Ajouter</p>
+                    </div>
+                  </div>
+                </li>
+              </ol>
             </div>
           )}
           
-          {isStandalone ? (
-            <Link href="/">
-              <Button size="lg" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-                <Play className="mr-2 h-4 w-4" />
-                Accéder à StreamFlow
-              </Button>
-            </Link>
-          ) : (
+          {isAndroid && isChrome && (
+            <>
+              {installPrompt ? (
+                <div className="space-y-4">
+                  <p className="mb-6">
+                    Votre navigateur permet d'installer StreamFlow directement. Appuyez sur le bouton ci-dessous :
+                  </p>
+                  
+                  <Button className="w-full sm:w-auto" onClick={handleInstall}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Installer StreamFlow
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="mb-4">
+                    Pour installer StreamFlow sur votre appareil Android, suivez ces étapes :
+                  </p>
+                  
+                  <ol className="space-y-6">
+                    <li className="flex items-start">
+                      <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">1</div>
+                      <div>
+                        <p className="font-medium">Appuyez sur le menu (⋮)</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          Touchez l'icône de menu à trois points en haut à droite.
+                        </p>
+                        <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="flex flex-col gap-1">
+                              <div className="w-1 h-1 bg-white rounded-full"></div>
+                              <div className="w-1 h-1 bg-white rounded-full"></div>
+                              <div className="w-1 h-1 bg-white rounded-full"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    
+                    <li className="flex items-start">
+                      <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">2</div>
+                      <div>
+                        <p className="font-medium">Sélectionnez "Installer l'application" ou "Ajouter à l'écran d'accueil"</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          L'option peut varier selon votre version de Chrome.
+                        </p>
+                        <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                          <PlusSquare className="h-8 w-8 mx-auto mb-2" />
+                          <p>Installer l'application</p>
+                        </div>
+                      </div>
+                    </li>
+                    
+                    <li className="flex items-start">
+                      <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">3</div>
+                      <div>
+                        <p className="font-medium">Appuyez sur "Installer"</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          Dans la boîte de dialogue qui apparaît, appuyez sur "Installer" pour confirmer.
+                        </p>
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+              )}
+            </>
+          )}
+          
+          {!isIOS && !isAndroid && (
             <div className="space-y-4">
-              <Link href="/">
-                <Button variant="outline" size="lg" className="w-full">
-                  <Play className="mr-2 h-4 w-4" />
-                  Continuer sur le site
-                </Button>
-              </Link>
+              <p className="mb-4">
+                Pour installer StreamFlow sur votre ordinateur :
+              </p>
               
-              <div className="text-center">
-                <p className="text-sm text-gray-500">
-                  L'application s'installe directement depuis votre navigateur, 
-                  sans passer par l'App Store ou Google Play.
-                </p>
-              </div>
+              <ol className="space-y-6">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">1</div>
+                  <div>
+                    <p className="font-medium">Cliquez sur l'icône d'installation</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Recherchez l'icône d'installation dans la barre d'adresse de votre navigateur.
+                    </p>
+                    <div className="mt-3 bg-gray-700 rounded-lg p-4 text-center">
+                      <Download className="h-8 w-8 mx-auto mb-2" />
+                    </div>
+                  </div>
+                </li>
+                
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-1">2</div>
+                  <div>
+                    <p className="font-medium">Cliquez sur "Installer"</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Dans la boîte de dialogue qui apparaît, cliquez sur "Installer" pour confirmer.
+                    </p>
+                  </div>
+                </li>
+              </ol>
+              
+              {installPrompt && (
+                <div className="mt-6">
+                  <Button onClick={handleInstall}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Installer StreamFlow
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
+      )}
+      
+      <div className="bg-gray-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Info className="mr-2 h-5 w-5" /> Avantages de l'application
+        </h2>
         
-        <div className="space-y-6">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h3 className="font-medium text-white mb-3 flex items-center">
-              <Download className="h-5 w-5 mr-2 text-purple-500" />
-              Avantages de l'application StreamFlow
-            </h3>
-            <ul className="text-gray-400 space-y-2">
-              <li className="flex items-start">
-                <div className="bg-purple-500/20 p-1 rounded-full mr-2 mt-0.5">
-                  <Home className="h-3 w-3 text-purple-400" />
-                </div>
-                <span>Accès rapide depuis votre écran d'accueil</span>
-              </li>
-              <li className="flex items-start">
-                <div className="bg-purple-500/20 p-1 rounded-full mr-2 mt-0.5">
-                  <Film className="h-3 w-3 text-purple-400" />
-                </div>
-                <span>Expérience optimisée pour votre appareil</span>
-              </li>
-              <li className="flex items-start">
-                <div className="bg-purple-500/20 p-1 rounded-full mr-2 mt-0.5">
-                  <Search className="h-3 w-3 text-purple-400" />
-                </div>
-                <span>Navigation plus fluide et temps de chargement réduit</span>
-              </li>
-              <li className="flex items-start">
-                <div className="bg-purple-500/20 p-1 rounded-full mr-2 mt-0.5">
-                  <Heart className="h-3 w-3 text-purple-400" />
-                </div>
-                <span>Mises à jour automatiques avec les nouveaux contenus</span>
-              </li>
-            </ul>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <h3 className="font-medium mb-2">Navigation offline</h3>
+            <p className="text-sm text-gray-300">
+              Accédez à votre contenu même sans connexion internet. Consultez vos favoris et votre historique à tout moment.
+            </p>
+          </div>
+          
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <h3 className="font-medium mb-2">Expérience immersive</h3>
+            <p className="text-sm text-gray-300">
+              Profitez d'une expérience en plein écran sans les distractions du navigateur comme la barre d'adresse.
+            </p>
+          </div>
+          
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <h3 className="font-medium mb-2">Icône sur l'écran d'accueil</h3>
+            <p className="text-sm text-gray-300">
+              Accédez rapidement à StreamFlow depuis l'écran d'accueil de votre appareil comme n'importe quelle autre application.
+            </p>
+          </div>
+          
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <h3 className="font-medium mb-2">Performances améliorées</h3>
+            <p className="text-sm text-gray-300">
+              L'application s'exécute plus rapidement et consomme moins de ressources qu'un onglet de navigateur standard.
+            </p>
           </div>
         </div>
       </div>
