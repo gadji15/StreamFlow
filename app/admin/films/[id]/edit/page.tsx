@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,14 +23,26 @@ import {
   Save, 
   ArrowLeft,
   Plus,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
-import { addMovie, getMovieGenres } from '@/lib/firebase/firestore/movies';
-import { useEffect } from 'react';
+import { 
+  getMovie, 
+  updateMovie, 
+  getMovieGenres,
+  Movie
+} from '@/lib/firebase/firestore/movies';
 
-export default function AdminAddFilmPage() {
+export default function AdminEditFilmPage() {
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
+  const id = params?.id as string;
+  
+  // États pour le film
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // États pour le formulaire
   const [title, setTitle] = useState('');
@@ -44,9 +56,7 @@ export default function AdminAddFilmPage() {
   const [isVIP, setIsVIP] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
-  const [cast, setCast] = useState<{name: string, role: string}[]>([
-    { name: '', role: '' }
-  ]);
+  const [cast, setCast] = useState<{name: string, role: string}[]>([]);
   
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
@@ -55,8 +65,43 @@ export default function AdminAddFilmPage() {
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Charger les genres disponibles
+  // Charger le film
   useEffect(() => {
+    const loadMovie = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      try {
+        const movieData = await getMovie(id);
+        
+        if (!movieData) {
+          setError('Film non trouvé');
+          return;
+        }
+        
+        setMovie(movieData);
+        
+        // Initialiser les champs du formulaire
+        setTitle(movieData.title);
+        setOriginalTitle(movieData.originalTitle || '');
+        setDescription(movieData.description);
+        setYear(movieData.year);
+        setDuration(movieData.duration);
+        setDirector(movieData.director || '');
+        setSelectedGenres(movieData.genres || []);
+        setIsVIP(movieData.isVIP);
+        setIsPublished(movieData.isPublished);
+        setTrailerUrl(movieData.trailerUrl || '');
+        setCast(movieData.cast || [{ name: '', role: '' }]);
+      } catch (error) {
+        console.error('Erreur lors du chargement du film:', error);
+        setError('Impossible de charger les données du film');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // Charger les genres
     const loadGenres = async () => {
       try {
         const genres = await getMovieGenres();
@@ -66,8 +111,9 @@ export default function AdminAddFilmPage() {
       }
     };
     
+    loadMovie();
     loadGenres();
-  }, []);
+  }, [id]);
   
   // Gérer les genres
   const handleGenreChange = (genreId: string, checked: boolean) => {
@@ -96,6 +142,8 @@ export default function AdminAddFilmPage() {
   // Soumettre le formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!id) return;
     
     // Validation de base
     if (!title) {
@@ -127,44 +175,71 @@ export default function AdminAddFilmPage() {
           role: member.role
         }));
       
-      // Préparer les données du film
-      const movieData = {
+      // Préparer les données à mettre à jour
+      const updates: Partial<Movie> = {
         title,
-        originalTitle: originalTitle || undefined,
+        originalTitle: originalTitle || null,
         description,
         year,
         duration,
-        director: director || undefined,
+        director: director || null,
         genres: selectedGenres,
-        cast: formattedCast.length > 0 ? formattedCast : undefined,
-        trailerUrl: trailerUrl || undefined,
+        cast: formattedCast.length > 0 ? formattedCast : [],
+        trailerUrl: trailerUrl || null,
         isVIP,
         isPublished
       };
       
-      // Ajouter le film
-      const result = await addMovie(movieData, posterFile, backdropFile);
+      // Mettre à jour le film
+      const result = await updateMovie(id, updates, posterFile, backdropFile);
       
-      if (result && result.id) {
+      if (result.success) {
         toast({
-          title: 'Film ajouté',
-          description: `Le film "${title}" a été ajouté avec succès.`,
+          title: 'Film mis à jour',
+          description: `Le film "${title}" a été mis à jour avec succès.`,
         });
         
         // Rediriger vers la liste des films
         router.push('/admin/films');
+      } else {
+        throw new Error(result.error);
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout du film:', error);
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du film:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'ajouter le film. Veuillez réessayer.',
+        description: error.message || 'Impossible de mettre à jour le film.',
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  // Afficher le chargement
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+  
+  // Afficher l'erreur
+  if (error || !movie) {
+    return (
+      <div className="bg-red-900/20 border border-red-800 rounded-lg p-6 text-center">
+        <h2 className="text-xl font-bold mb-2">Erreur</h2>
+        <p className="text-gray-300">{error || 'Film non trouvé'}</p>
+        <Button 
+          className="mt-4"
+          onClick={() => router.push('/admin/films')}
+        >
+          Retour à la liste des films
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div>
@@ -178,7 +253,7 @@ export default function AdminAddFilmPage() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Retour
         </Button>
-        <h1 className="text-3xl font-bold">Ajouter un film</h1>
+        <h1 className="text-3xl font-bold">Modifier un film</h1>
       </div>
       
       <form onSubmit={handleSubmit}>
@@ -308,7 +383,7 @@ export default function AdminAddFilmPage() {
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="isPublished">Publier maintenant</Label>
+                    <Label htmlFor="isPublished">Publier</Label>
                     <Switch
                       id="isPublished"
                       checked={isPublished}
@@ -331,8 +406,9 @@ export default function AdminAddFilmPage() {
                   <Label htmlFor="poster">Affiche du film</Label>
                   <ImageUpload
                     onImageSelected={(file) => setPosterFile(file)}
+                    previewUrl={movie.posterUrl}
                     aspectRatio="2:3"
-                    label="Ajouter une affiche"
+                    label="Modifier l'affiche"
                   />
                   <p className="text-xs text-gray-400">
                     Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
@@ -343,8 +419,9 @@ export default function AdminAddFilmPage() {
                   <Label htmlFor="backdrop">Image de fond</Label>
                   <ImageUpload
                     onImageSelected={(file) => setBackdropFile(file)}
+                    previewUrl={movie.backdropUrl}
                     aspectRatio="16:9"
-                    label="Ajouter une image de fond"
+                    label="Modifier l'image de fond"
                   />
                   <p className="text-xs text-gray-400">
                     Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
