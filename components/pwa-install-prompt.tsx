@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 
 // Interface pour gérer l'événement d'installation PWA
 interface BeforeInstallPromptEvent extends Event {
@@ -10,13 +8,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export function PWAInstallPrompt() {
-  // État pour stocker l'événement d'installation
+export default function PWAInstallPrompt() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  // État pour savoir si l'application est déjà installée
   const [isInstalled, setIsInstalled] = useState(false);
-  // État pour mémoriser si l'utilisateur a rejeté l'installation
-  const [userRejected, setUserRejected] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     // Vérifier si l'application est déjà installée
@@ -33,7 +28,7 @@ export function PWAInstallPrompt() {
       
       // Ne pas montrer à nouveau pendant 7 jours
       if (daysSinceRejected < 7) {
-        setUserRejected(true);
+        return;
       } else {
         // Réinitialiser après 7 jours
         localStorage.removeItem("pwaInstallRejected");
@@ -46,6 +41,8 @@ export function PWAInstallPrompt() {
       e.preventDefault();
       // Stocker l'événement pour l'utiliser plus tard
       setInstallPrompt(e as BeforeInstallPromptEvent);
+      // Afficher notre propre invite après 3 secondes
+      setTimeout(() => setShowPrompt(true), 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -58,7 +55,9 @@ export function PWAInstallPrompt() {
   // Fonction pour déclencher l'installation
   const handleInstallClick = async () => {
     if (!installPrompt) return;
-
+    
+    setShowPrompt(false);
+    
     // Afficher l'invite d'installation
     await installPrompt.prompt();
     
@@ -67,47 +66,48 @@ export function PWAInstallPrompt() {
     
     if (choiceResult.outcome === "accepted") {
       console.log("L'utilisateur a accepté l'installation PWA");
-      setInstallPrompt(null);
     } else {
       console.log("L'utilisateur a refusé l'installation PWA");
       // Stocker la date de rejet
       localStorage.setItem("pwaInstallRejected", Date.now().toString());
-      setUserRejected(true);
     }
+    
+    // Réinitialiser l'invite
+    setInstallPrompt(null);
   };
 
-  // Fonction pour ignorer l'installation
-  const handleDismiss = () => {
+  // Fonction pour fermer l'invite
+  const handleClose = () => {
+    setShowPrompt(false);
     localStorage.setItem("pwaInstallRejected", Date.now().toString());
-    setUserRejected(true);
   };
 
-  // Ne rien afficher si l'app est déjà installée ou si l'utilisateur a récemment rejeté
-  if (isInstalled || userRejected || !installPrompt) {
+  // Ne rien afficher si l'app est déjà installée ou si l'invite ne doit pas être affichée
+  if (isInstalled || !showPrompt) {
     return null;
   }
 
+  // Version simplifiée de l'invite
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 p-4 bg-gray-800 rounded-lg shadow-lg border border-gray-700 max-w-md mx-auto">
-      <div className="flex items-start">
-        <div className="flex-1">
-          <h3 className="font-bold mb-1">Installer StreamFlow</h3>
-          <p className="text-sm text-gray-400 mb-3">
-            Installez notre application pour accéder rapidement à vos films et séries préférés, même hors ligne !
-          </p>
-          <div className="flex space-x-2">
-            <Button size="sm" onClick={handleInstallClick} className="flex items-center">
-              <Download className="w-4 h-4 mr-1" />
-              Installer
-            </Button>
-            <Button size="sm" variant="ghost" onClick={handleDismiss}>
-              Plus tard
-            </Button>
-          </div>
-        </div>
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:w-80 bg-gray-800 p-4 rounded-lg shadow-lg z-50 border border-gray-700">
+      <h3 className="font-bold mb-2">Installer StreamFlow</h3>
+      <p className="text-sm text-gray-300 mb-3">
+        Ajoutez notre application à votre écran d'accueil pour y accéder plus facilement.
+      </p>
+      <div className="flex justify-between">
+        <button 
+          onClick={handleInstallClick}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm"
+        >
+          Installer
+        </button>
+        <button 
+          onClick={handleClose}
+          className="text-gray-400 hover:text-white px-2 text-sm"
+        >
+          Plus tard
+        </button>
       </div>
     </div>
   );
 }
-
-export default PWAInstallPrompt;

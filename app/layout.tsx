@@ -1,6 +1,8 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import { ThemeProvider } from "@/components/theme-provider";
 
+// Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
   title: "StreamFlow - Plateforme de streaming",
   description: "Découvrez des films et séries en streaming sur StreamFlow",
@@ -13,10 +15,18 @@ export const metadata: Metadata = {
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
+    apple: [
+      { url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "StreamFlow",
+    statusBarStyle: "default",
   },
 };
 
-// Déplacer themeColor et viewport ici selon les nouvelles directives de Next.js 15
+// Propriétés de viewport séparées selon la nouvelle API Next.js
 export const viewport: Viewport = {
   themeColor: "#7c3aed",
   width: "device-width",
@@ -30,12 +40,14 @@ export default function MinimalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body>
-        <div style={{ color: "white", background: "#111", minHeight: "100vh", padding: "20px" }}>
-          <h1>Test StreamFlow</h1>
-          {children}
-        </div>
+        <ThemeProvider defaultTheme="dark" enableSystem={true}>
+          <div style={{ minHeight: "100vh", padding: "20px" }}>
+            <h1 className="text-2xl font-bold mb-6">StreamFlow</h1>
+            <main>{children}</main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

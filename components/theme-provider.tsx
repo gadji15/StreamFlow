@@ -35,11 +35,28 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [mounted, setMounted] = useState(false);
 
+  // Effet pour initialiser le thème depuis localStorage et s'abonner aux changements
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Attribuer explicitement un style de fond clair pour corriger l'écran noir
+    // Récupérer le thème enregistré si présent
+    const savedTheme = localStorage.getItem(storageKey) as Theme | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+    
+    setMounted(true);
+  }, [storageKey]);
+
+  // Applique le thème au document
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const root = window.document.documentElement;
+    
+    // Appliquer explicitement des styles pour éviter les écrans noirs
     if (theme === "light") {
       root.style.backgroundColor = "#ffffff";
       root.style.color = "#000000";
@@ -49,9 +66,11 @@ export function ThemeProvider({
       root.style.color = "#ffffff";
     }
 
+    // Supprimer les classes existantes
     root.classList.remove("light", "dark");
     
-    if (theme === "system") {
+    // Appliquer la classe selon le thème (ou le thème système)
+    if (theme === "system" && enableSystem) {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
@@ -63,16 +82,38 @@ export function ThemeProvider({
       root.classList.add(theme);
       root.style.colorScheme = theme;
     }
-  }, [theme]);
+  }, [theme, enableSystem, mounted]);
+
+  // S'abonner aux changements de préférence système si enableSystem est true
+  useEffect(() => {
+    if (!enableSystem || !mounted) return;
+    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    // Mettre à jour la classe lorsque la préférence système change
+    const onMediaChange = () => {
+      if (theme === "system") {
+        const root = window.document.documentElement;
+        const systemTheme = mediaQuery.matches ? "dark" : "light";
+        
+        root.classList.remove("light", "dark");
+        root.classList.add(systemTheme);
+      }
+    };
+    
+    mediaQuery.addEventListener("change", onMediaChange);
+    return () => mediaQuery.removeEventListener("change", onMediaChange);
+  }, [enableSystem, theme, mounted]);
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
   };
 
+  // Rendu avec hydration sécurisée
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
       {children}
