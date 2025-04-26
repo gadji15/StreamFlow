@@ -1,4 +1,4 @@
-// Cette version utilise des requêtes fetch à notre API au lieu d'utiliser directement Cloudinary côté client
+// Version client-side de Cloudinary
 
 /**
  * Fonction pour télécharger une image vers Cloudinary via notre API
@@ -68,4 +68,96 @@ export async function deleteImage(publicId: string): Promise<boolean> {
   }
 
   return true;
+}
+
+/**
+ * Fonction pour extraire le public_id depuis une URL Cloudinary
+ */
+export function getPublicIdFromUrl(url: string): string | null {
+  if (!url) return null;
+  
+  try {
+    // Exemple d'URL: https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/streamflow/abcdef.jpg
+    const regex = /\/v\d+\/([^/]+\/[^.]+)/;
+    const match = url.match(regex);
+    
+    if (match && match[1]) {
+      return match[1]; // Returns "streamflow/abcdef"
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting public ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Fonction pour télécharger un poster de film via notre API
+ */
+export async function uploadMoviePoster(file: File): Promise<{ 
+  secure_url: string; 
+  public_id: string;
+}> {
+  // Convertir le fichier en base64
+  const base64 = await fileToBase64(file);
+  
+  // Appeler notre API route
+  const response = await fetch('/api/cloudinary-upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      image: base64,
+      folder: 'streamflow/posters' 
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to upload movie poster');
+  }
+
+  const data = await response.json();
+  
+  return {
+    secure_url: data.url,
+    public_id: data.public_id
+  };
+}
+
+/**
+ * Fonction pour télécharger un backdrop de film via notre API
+ */
+export async function uploadMovieBackdrop(file: File): Promise<{ 
+  secure_url: string; 
+  public_id: string;
+}> {
+  // Convertir le fichier en base64
+  const base64 = await fileToBase64(file);
+  
+  // Appeler notre API route
+  const response = await fetch('/api/cloudinary-upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      image: base64,
+      folder: 'streamflow/backdrops' 
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to upload movie backdrop');
+  }
+
+  const data = await response.json();
+  
+  return {
+    secure_url: data.url,
+    public_id: data.public_id
+  };
 }

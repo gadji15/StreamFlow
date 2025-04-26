@@ -1,162 +1,77 @@
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+import { auth, firestore } from "./config";
+import { 
+  signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
-  onAuthStateChanged,
-  UserCredential,
-  User
+  sendPasswordResetEmail,
+  User 
 } from "firebase/auth";
-import { auth } from "./config";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { firestore } from "./config";
-import { addActivityLog } from "./firestore/activity-logs";
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 
-// Types
-export interface AdminUser {
-  id: string;
-  email: string;
-  name: string;
-  role: "super_admin" | "admin" | "content_manager";
-  isActive: boolean;
-  lastLogin?: string;
-  createdAt: string;
+/**
+ * Connexion utilisateur avec email et mot de passe
+ */
+export async function signIn(email: string, password: string) {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    return { user };
+  } catch (error: any) {
+    return { error: error.message };
+  }
 }
 
-// Authentification
-
-export const signIn = async (email: string, password: string): Promise<AdminUser | null> => {
+/**
+ * Déconnexion utilisateur
+ */
+export async function signOut() {
   try {
-    const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Vérifier si l'utilisateur est un administrateur
-    const adminDoc = await getDoc(doc(firestore, "admins", user.uid));
-    
-    if (adminDoc.exists()) {
-      const adminData = adminDoc.data() as Omit<AdminUser, "id">;
-      
-      // Mettre à jour la dernière connexion
-      await setDoc(
-        doc(firestore, "admins", user.uid),
-        { lastLogin: new Date().toISOString() },
-        { merge: true }
-      );
-      
-      // Journaliser la connexion
-      await addActivityLog({
-        action: "login",
-        entityType: "admin",
-        entityId: user.uid,
-        details: `Connexion de l'administrateur ${adminData.email}`,
-        performedBy: user.uid,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Retourner les données de l'administrateur
-      return {
-        id: user.uid,
-        ...adminData,
-      };
-    } else {
-      // Si l'utilisateur n'est pas un administrateur, le déconnecter
-      await firebaseSignOut(auth);
-      return null;
-    }
-  } catch (error) {
-    console.error("Erreur de connexion:", error);
-    throw error;
+    await firebaseSignOut(auth);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
   }
-};
+}
 
-export const signOut = async (): Promise<void> => {
-  const user = auth.currentUser;
-  if (user) {
-    // Journaliser la déconnexion
-    await addActivityLog({
-      action: "logout",
-      entityType: "admin",
-      entityId: user.uid,
-      details: `Déconnexion de l'administrateur`,
-      performedBy: user.uid,
-      timestamp: new Date().toISOString()
+/**
+ * Vérifier si l'utilisateur est un administrateur
+ */
+export async function isAdmin(user: User) {
+  try {
+    const adminRef = doc(firestore, "admins", user.uid);
+    const adminDoc = await getDoc(adminRef);
+    
+    return adminDoc.exists();
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return false;
+  }
+}
+
+/**
+ * Mettre à jour la dernière connexion de l'administrateur
+ */
+export async function updateAdminLastLogin(adminId: string) {
+  try {
+    const adminRef = doc(firestore, "admins", adminId);
+    await updateDoc(adminRef, {
+      lastLogin: Timestamp.now()
     });
-  }
-  
-  return firebaseSignOut(auth);
-};
-
-export const getCurrentAdmin = async (): Promise<AdminUser | null> => {
-  const user = auth.currentUser;
-  
-  if (!user) {
-    return null;
-  }
-  
-  try {
-    const adminDoc = await getDoc(doc(firestore, "admins", user.uid));
     
-    if (adminDoc.exists()) {
-      const adminData = adminDoc.data() as Omit<AdminUser, "id">;
-      return {
-        id: user.uid,
-        ...adminData,
-      };
-    }
-    
-    return null;
+    return true;
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'administrateur:", error);
-    return null;
+    console.error("Error updating admin last login:", error);
+    return false;
   }
-};
+}
 
-export const createAdmin = async (
-  email: string,
-  password: string,
-  name: string,
-  role: AdminUser["role"] = "content_manager"
-): Promise<AdminUser> => {
+/**
+ * Envoyer un email de réinitialisation de mot de passe
+ */
+export async function resetPassword(email: string) {
   try {
-    // Créer un compte utilisateur Firebase
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Données de l'administrateur
-    const adminData: Omit<AdminUser, "id"> = {
-      email,
-      name,
-      role,
-      isActive: true,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Stocker les données de l'administrateur dans Firestore
-    await setDoc(doc(firestore, "admins", user.uid), adminData);
-    
-    // Journaliser la création d'un nouvel administrateur
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      await addActivityLog({
-        action: "create",
-        entityType: "admin",
-        entityId: user.uid,
-        details: `Création d'un nouvel administrateur: ${name} (${email})`,
-        performedBy: currentUser.uid,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    return {
-      id: user.uid,
-      ...adminData
-    };
-  } catch (error) {
-    console.error("Erreur lors de la création de l'administrateur:", error);
-    throw error;
+    await sendPasswordResetEmail(auth, email);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
   }
-};
-
-// Observer l'état d'authentification
-export const onAuthStateChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, callback);
-};
+}

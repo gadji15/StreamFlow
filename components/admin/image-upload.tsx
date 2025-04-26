@@ -13,7 +13,7 @@ interface ImageUploadProps {
   maxSizeMB?: number;
 }
 
-export default function ImageUpload({
+export function ImageUpload({
   onImageSelected,
   onImageRemoved,
   previewUrl,
@@ -113,3 +113,6 @@ export default function ImageUpload({
     </div>
   );
 }
+
+// Exportation par défaut pour compatibilité avec les deux types d'import
+export default ImageUpload;

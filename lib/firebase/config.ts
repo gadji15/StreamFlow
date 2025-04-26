@@ -1,9 +1,9 @@
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// Firebase configuration
+// Configuration Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -11,13 +11,18 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase only if no instance exists
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialiser Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Initialiser services
 const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
+// Exporter l'app et les services
 export { app, firestore, auth, storage };
+// Alias pour une compatibilité avec le code existant
+export const db = firestore;

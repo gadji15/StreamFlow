@@ -25,17 +25,14 @@ const nextConfig = {
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'X-XSS-Protection', value: 'block' },
         ],
       },
     ];
   },
   
-  // Traiter Cloudinary comme un module externe côté serveur
-  // Ceci empêche Next.js d'essayer de l'inclure dans le bundle client
-  experimental: {
-    serverComponentsExternalPackages: ['cloudinary']
-  },
+  // Correction: déplacé de experimental.serverComponentsExternalPackages à serverExternalPackages
+  serverExternalPackages: ['cloudinary'],
   
   // Configurer webpack pour gérer les imports de modules Node.js
   webpack: (config, { isServer }) => {
