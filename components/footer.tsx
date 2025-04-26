@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone } from "lucide-react"
+import Link from "next/link";
+import { Facebook, Twitter, Instagram, Youtube, Mail, Phone } from "lucide-react";
 
-export function Footer() {
-  const currentYear = new Date().getFullYear()
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
   
   return (
     <footer className="bg-gray-900 border-t border-gray-800">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo et description */}
           <div className="space-y-4">
@@ -34,23 +34,23 @@ export function Footer() {
             </div>
           </div>
           
-          {/* Liens utiles */}
+          {/* Aide et Support */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Liens utiles</h3>
+            <h3 className="font-semibold text-white mb-4">Aide et Support</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/categories" className="text-gray-400 hover:text-white text-sm">
-                  Catégories
+                <Link href="/faq" className="text-gray-400 hover:text-white text-sm">
+                  FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/nouveautes" className="text-gray-400 hover:text-white text-sm">
-                  Les nouveautés
+                <Link href="/aide" className="text-gray-400 hover:text-white text-sm">
+                  Aide et Support
                 </Link>
               </li>
               <li>
-                <Link href="/mon-compte" className="text-gray-400 hover:text-white text-sm">
-                  Mon compte
+                <Link href="/appareils-compatibles" className="text-gray-400 hover:text-white text-sm">
+                  Appareils compatibles
                 </Link>
               </li>
               <li>
@@ -106,7 +106,7 @@ export function Footer() {
                 <span className="text-gray-400 text-sm">+33 1 23 45 67 89</span>
               </li>
               <li className="mt-6">
-                <Link href="/contact" className="inline-block bg-primary hover:bg-primary/90 text-white text-sm px-3 py-2 rounded">
+                <Link href="/contact" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-2 rounded">
                   Nous contacter
                 </Link>
               </li>
@@ -120,7 +120,7 @@ export function Footer() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <Link href="/conditions-utilisation" className="text-gray-500 hover:text-gray-300">
-              Conditions d&apos;utilisation
+              Conditions d'utilisation
             </Link>
             <Link href="/confidentialite" className="text-gray-500 hover:text-gray-300">
               Politique de confidentialité
@@ -132,7 +132,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }
-
-export default Footer;

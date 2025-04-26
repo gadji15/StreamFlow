@@ -1,47 +1,47 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronUp } from "lucide-react"
+import { useState, useEffect } from "react";
+import { ChevronUp } from "lucide-react";
 
-export function ScrollToTop() {
-  const [isVisible, setIsVisible] = useState(false)
+export default function ScrollToTop() {
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Détecter quand afficher le bouton
   useEffect(() => {
+    // Fonction pour vérifier si l'utilisateur a scrollé suffisamment
     const toggleVisibility = () => {
-      if (window.pageYOffset > 300) {
-        setIsVisible(true)
+      if (window.scrollY > 300) {
+        setIsVisible(true);
       } else {
-        setIsVisible(false)
+        setIsVisible(false);
       }
-    }
+    };
 
-    window.addEventListener("scroll", toggleVisibility)
-    return () => window.removeEventListener("scroll", toggleVisibility)
-  }, [])
+    // Ajouter l'écouteur d'événement
+    window.addEventListener("scroll", toggleVisibility);
 
-  // Fonction pour remonter en haut
+    // Nettoyage de l'écouteur d'événement
+    return () => window.removeEventListener("scroll", toggleVisibility);
+  }, []);
+
+  // Fonction pour scrolle vers le haut
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
-    })
-  }
+      behavior: "smooth",
+    });
+  };
 
   return (
     <>
       {isVisible && (
-        <Button
-          className="fixed bottom-6 right-6 z-40 rounded-full bg-primary/90 hover:bg-primary h-10 w-10 p-0"
+        <button
           onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 p-2 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-colors"
           aria-label="Retour en haut"
         >
-          <ChevronUp className="h-5 w-5" />
-        </Button>
+          <ChevronUp size={24} />
+        </button>
       )}
     </>
-  )
+  );
 }
-
-export default ScrollToTop;

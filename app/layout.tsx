@@ -1,6 +1,11 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import ScrollToTop from "@/components/scroll-to-top";
+import { ToastProvider } from "@/components/ui/toaster";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
@@ -34,19 +39,29 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function MinimalLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body>
-        <ThemeProvider defaultTheme="dark" enableSystem={true}>
-          <div style={{ minHeight: "100vh", padding: "20px" }}>
-            <h1 className="text-2xl font-bold mb-6">StreamFlow</h1>
-            <main>{children}</main>
-          </div>
+      <body className="min-h-screen flex flex-col">
+        <ThemeProvider 
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ToastProvider>
+            <Header />
+            <main className="flex-1 pt-24">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTop />
+            <PWAInstallPrompt />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
