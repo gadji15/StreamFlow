@@ -2,125 +2,112 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download } from "lucide-react";
+import { Download } from "lucide-react";
 
-export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+// Interface pour gérer l'événement d'installation PWA
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+export function PWAInstallPrompt() {
+  // État pour stocker l'événement d'installation
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  // État pour savoir si l'application est déjà installée
+  const [isInstalled, setIsInstalled] = useState(false);
+  // État pour mémoriser si l'utilisateur a rejeté l'installation
+  const [userRejected, setUserRejected] = useState(false);
 
   useEffect(() => {
-    // Détecte si l'application peut être installée
+    // Vérifier si l'application est déjà installée
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Vérifier si l'utilisateur a déjà rejeté l'installation récemment
+    const lastRejected = localStorage.getItem("pwaInstallRejected");
+    if (lastRejected) {
+      const rejectedDate = new Date(parseInt(lastRejected));
+      const daysSinceRejected = (new Date().getTime() - rejectedDate.getTime()) / (1000 * 3600 * 24);
+      
+      // Ne pas montrer à nouveau pendant 7 jours
+      if (daysSinceRejected < 7) {
+        setUserRejected(true);
+      } else {
+        // Réinitialiser après 7 jours
+        localStorage.removeItem("pwaInstallRejected");
+      }
+    }
+
+    // Intercepter l'événement beforeinstallprompt
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Empêche Chrome 67+ d'afficher automatiquement la bannière d'installation
+      // Empêcher Chrome 67+ d'afficher automatiquement l'invite
       e.preventDefault();
-      // Sauvegarde l'événement pour pouvoir le déclencher plus tard
-      setDeferredPrompt(e);
-      // Met à jour l'état pour montrer notre bouton personnalisé
-      setShowInstallPrompt(true);
+      // Stocker l'événement pour l'utiliser plus tard
+      setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // Écoute l'événement d'installation réussie
-    const handleAppInstalled = () => {
-      // Masque notre bouton d'installation
-      setShowInstallPrompt(false);
-      // Nettoie la référence à l'événement beforeinstallprompt
-      setDeferredPrompt(null);
-      // Stocke l'information que l'application est installée
-      localStorage.setItem("pwaInstalled", "true");
-      console.log("PWA installée avec succès!");
-    };
-
-    window.addEventListener("appinstalled", handleAppInstalled);
-
-    // Vérifie si nous devons afficher le prompt ou non
-    const shouldShowPrompt = () => {
-      // Si l'app est déjà installée, ne pas montrer le prompt
-      if (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true ||
-        localStorage.getItem("pwaInstalled") === "true"
-      ) {
-        setShowInstallPrompt(false);
-        return;
-      }
-
-      // Si l'utilisateur a récemment fermé le prompt, ne pas le montrer
-      const dismissed = localStorage.getItem("pwaInstallPromptDismissed");
-      if (dismissed) {
-        const dismissedTime = parseInt(dismissed);
-        const now = Date.now();
-        const threeDays = 3 * 24 * 60 * 60 * 1000;
-        
-        if (now - dismissedTime < threeDays) {
-          setShowInstallPrompt(false);
-        }
-      }
-    };
-
-    shouldShowPrompt();
-
-    // Nettoyage des event listeners
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
+  // Fonction pour déclencher l'installation
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!installPrompt) return;
 
-    // Affiche la bannière d'installation
-    deferredPrompt.prompt();
+    // Afficher l'invite d'installation
+    await installPrompt.prompt();
     
-    // Attend que l'utilisateur réponde
-    const choiceResult = await deferredPrompt.userChoice;
-    
-    // Masque le prompt quel que soit le choix
-    setShowInstallPrompt(false);
-    setDeferredPrompt(null);
+    // Attendre la décision de l'utilisateur
+    const choiceResult = await installPrompt.userChoice;
     
     if (choiceResult.outcome === "accepted") {
-      console.log("L'utilisateur a accepté l'installation");
-      localStorage.setItem("pwaInstalled", "true");
+      console.log("L'utilisateur a accepté l'installation PWA");
+      setInstallPrompt(null);
     } else {
-      console.log("L'utilisateur a refusé l'installation");
-      // Stocke temporairement la décision pour ne pas redemander tout de suite
-      localStorage.setItem("pwaInstallPromptDismissed", Date.now().toString());
+      console.log("L'utilisateur a refusé l'installation PWA");
+      // Stocker la date de rejet
+      localStorage.setItem("pwaInstallRejected", Date.now().toString());
+      setUserRejected(true);
     }
   };
 
-  const dismissPrompt = () => {
-    setShowInstallPrompt(false);
-    // Stocke une valeur dans le localStorage pour ne pas afficher à nouveau le prompt pendant un moment
-    localStorage.setItem("pwaInstallPromptDismissed", Date.now().toString());
+  // Fonction pour ignorer l'installation
+  const handleDismiss = () => {
+    localStorage.setItem("pwaInstallRejected", Date.now().toString());
+    setUserRejected(true);
   };
 
-  if (!showInstallPrompt) return null;
+  // Ne rien afficher si l'app est déjà installée ou si l'utilisateur a récemment rejeté
+  if (isInstalled || userRejected || !installPrompt) {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-800 border-t border-gray-700 z-50 flex items-center justify-between">
-      <div>
-        <h3 className="text-white font-medium">Installez StreamFlow</h3>
-        <p className="text-gray-300 text-sm">
-          Profitez de StreamFlow directement sur votre appareil
-        </p>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={dismissPrompt}
-          className="text-gray-400 hover:text-white"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <Button onClick={handleInstallClick} className="flex items-center">
-          <Download className="h-4 w-4 mr-2" />
-          Installer
-        </Button>
+    <div className="fixed bottom-4 left-4 right-4 z-50 p-4 bg-gray-800 rounded-lg shadow-lg border border-gray-700 max-w-md mx-auto">
+      <div className="flex items-start">
+        <div className="flex-1">
+          <h3 className="font-bold mb-1">Installer StreamFlow</h3>
+          <p className="text-sm text-gray-400 mb-3">
+            Installez notre application pour accéder rapidement à vos films et séries préférés, même hors ligne !
+          </p>
+          <div className="flex space-x-2">
+            <Button size="sm" onClick={handleInstallClick} className="flex items-center">
+              <Download className="w-4 h-4 mr-1" />
+              Installer
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleDismiss}>
+              Plus tard
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
+export default PWAInstallPrompt;

@@ -1,15 +1,35 @@
-// Configuration temporaire simplifiée pour garantir un build réussi
+import withPWA from 'next-pwa';
+
+// Configuration PWA
+const pwaConfig = {
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true
+};
+
+// Configuration Next.js
 const nextConfig = {
-  // Désactiver toute étape qui pourrait causer des problèmes de build
+  reactStrictMode: true,
+  
+  // Pour ignorer temporairement les erreurs de type pendant le build
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  
+  // Configuration d'images
+  images: {
+    domains: [
+      'res.cloudinary.com',
+      'firebasestorage.googleapis.com'
+    ],
   },
-  swcMinify: false, // Désactiver la minification SWC pour simplifier
+  
+  // Configuration des packages externes côté serveur
+  serverExternalPackages: ['cloudinary'],
+  
+  // Webpack config
   webpack: (config, { isServer }) => {
-    // Configuration minimale de webpack
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -17,14 +37,13 @@ const nextConfig = {
         path: false,
         os: false,
         crypto: false,
-        tls: false,
         net: false,
-        child_process: false,
+        tls: false,
       };
     }
     return config;
   }
 };
 
-// Utiliser export par défaut simple (sans PWA) pour tester
-export default nextConfig;
+// Export avec la syntaxe ES Modules
+export default withPWA(pwaConfig)(nextConfig);

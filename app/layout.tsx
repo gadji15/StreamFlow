@@ -1,71 +1,56 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider"; 
-import { ToastProvider } from "@/components/ui/toaster";
+import { ReactNode } from "react";
+import { Metadata } from "next";
 import Header from "@/components/header";
-import { Footer } from "@/components/footer";
-import { ScrollToTop } from "@/components/scroll-to-top";
+import Footer from "@/components/footer";
+import { ThemeProvider } from "@/components/theme-provider";
+import ScrollToTop from "@/components/scroll-to-top";
+import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
-
-const inter = Inter({ subsets: ["latin"] });
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "StreamFlow - Plateforme de streaming",
-  description: "Regardez vos films et séries préférés en streaming HD",
-  // Méta-tags PWA
+  description: "Découvrez des films et séries en streaming sur StreamFlow",
   manifest: "/manifest.json",
+  themeColor: "#7c3aed",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "StreamFlow"
+    title: "StreamFlow",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    minimumScale: 1
+  formatDetection: {
+    telephone: false,
   },
-  themeColor: "#7C3AED",
-  verification: {
-    other: {
-      "mobile-web-app-capable": ["yes"],
-      "apple-mobile-web-app-capable": ["yes"],
-      "application-name": ["StreamFlow"],
-      "apple-mobile-web-app-title": ["StreamFlow"],
-      "msapplication-starturl": ["/"],
-      "msapplication-TileColor": ["#7C3AED"]
-    }
-  }
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head>
-        {/* Liens PWA */}
-        <link rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
-        <link rel="apple-touch-icon" href="/logo-icon.svg" />
-        <link rel="mask-icon" href="/logo-icon.svg" color="#7C3AED" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      </head>
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <head />
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
-          <main className="flex-1 pt-24">{children}</main>
-          <Footer />
-          <ScrollToTop />
-          <PWAInstallPrompt />
-          <ToastProvider />
+          <ToastProvider>
+            <Header />
+            <main className="flex-1 pt-24">{children}</main>
+            <Footer />
+            <ScrollToTop />
+            <PWAInstallPrompt />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
