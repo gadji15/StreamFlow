@@ -1,182 +1,167 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { signIn } from "@/lib/firebase/auth";
-import { useToast } from "@/components/ui/toaster";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
-  
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const router = useRouter();
+  const { login } = useAuth();
+  const { toast } = useToast();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
       toast({
         title: "Erreur",
-        description: "Veuillez saisir votre email et votre mot de passe.",
-        variant: "destructive"
+        description: "Veuillez saisir votre email et mot de passe.",
+        variant: "destructive",
       });
       return;
     }
     
-    setIsLoading(true);
+    setIsSubmitting(true);
     
     try {
-      const result = await signIn(email, password);
+      await login(email, password);
       
-      if (result.success && result.user) {
-        // Stocker les infos dans localStorage si "Se souvenir de moi" est coché
-        if (rememberMe) {
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("userId", result.user.uid);
-          localStorage.setItem("userEmail", result.user.email || "");
-          
-          // Stocker isVIP pour le middleware (simulation)
-          if (result.userData?.isVIP) {
-            localStorage.setItem("isVIP", "true");
-          }
-        }
-        
-        // Définir les cookies pour le middleware
-        document.cookie = `isLoggedIn=true; path=/; max-age=${rememberMe ? 30 * 24 * 60 * 60 : 60 * 60}`;
-        
-        if (result.userData?.isVIP) {
-          document.cookie = `isVIP=true; path=/; max-age=${rememberMe ? 30 * 24 * 60 * 60 : 60 * 60}`;
-        }
-        
-        // Afficher un toast de succès
-        toast({
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté.",
-        });
-        
-        // Rediriger vers la page de provenance ou vers l'accueil
-        const from = searchParams.get("from") || "/";
-        router.push(from);
-      } else {
-        toast({
-          title: "Erreur de connexion",
-          description: result.error || "Vérifiez vos identifiants et réessayez.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Login error:", error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion.",
-        variant: "destructive"
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté à votre compte.",
+      });
+      
+      // Rediriger vers la page d'accueil ou la dernière page visitée
+      router.push('/');
+    } catch (error: any) {
+      toast({
+        title: "Erreur d'authentification",
+        description: error.message || "Email ou mot de passe incorrect.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
+
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
-      <h2 className="text-2xl font-bold mb-6">Connexion</h2>
+    <div className="bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
+      <h2 className="text-2xl font-bold mb-6 text-center">Connexion</h2>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="votre@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-            required
-          />
+          <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            Email
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-500" />
+            </div>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10"
+              placeholder="votre@email.com"
+              required
+            />
+          </div>
         </div>
         
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="password">Mot de passe</Label>
-            <Link 
-              href="/mot-de-passe-oublie" 
-              className="text-sm text-indigo-400 hover:text-indigo-300"
-            >
-              Mot de passe oublié ?
-            </Link>
-          </div>
-          
+          <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+            Mot de passe
+          </label>
           <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-gray-500" />
+            </div>
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              className="pl-10 pr-10"
+              placeholder="••••••••"
               required
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={toggleShowPassword}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-400"
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="remember"
-            checked={rememberMe}
-            onCheckedChange={(checked) => 
-              setRememberMe(checked === true)
-            }
-            disabled={isLoading}
-          />
-          <Label 
-            htmlFor="remember" 
-            className="text-sm cursor-pointer"
-          >
-            Se souvenir de moi
-          </Label>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember-me"
+              checked={rememberMe}
+              onCheckedChange={(checked) => 
+                setRememberMe(checked === true)
+              }
+            />
+            <label htmlFor="remember-me" className="text-sm text-gray-400">
+              Se souvenir de moi
+            </label>
+          </div>
+          
+          <div className="text-sm">
+            <Link href="/mot-de-passe-oublie" className="text-indigo-400 hover:text-indigo-300">
+              Mot de passe oublié?
+            </Link>
+          </div>
         </div>
         
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full"
-          disabled={isLoading}
+          disabled={isSubmitting}
         >
-          {isLoading ? (
+          {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
               Connexion en cours...
             </>
           ) : (
-            "Se connecter"
+            <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Se connecter
+            </>
           )}
         </Button>
-      </form>
-      
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-400">
-          Pas encore de compte ?{" "}
+        
+        <div className="text-center text-sm text-gray-400">
+          Vous n'avez pas de compte?{' '}
           <Link href="/inscription" className="text-indigo-400 hover:text-indigo-300">
-            Créer un compte
+            S'inscrire
           </Link>
-        </p>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }
