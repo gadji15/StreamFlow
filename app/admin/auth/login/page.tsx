@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth"
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { doc, getDoc, setDoc } from "firebase/firestore"
+import { auth, firestore } from "@/lib/firebase/config" // Importer depuis notre config
 import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
@@ -25,14 +26,12 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Tentative de connexion à Firebase
-      const auth = getAuth()
+      // Tentative de connexion à Firebase en utilisant l'instance auth importée
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
       // Vérifier si l'utilisateur est un administrateur
-      const db = getFirestore()
-      const adminRef = doc(db, "admins", user.uid)
+      const adminRef = doc(firestore, "admins", user.uid)
       const adminSnap = await getDoc(adminRef)
 
       if (adminSnap.exists()) {

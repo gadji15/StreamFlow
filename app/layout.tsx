@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider"; 
+import { ToastProvider } from "@/components/ui/toaster"; // Ajout du ToastProvider
 import Header from "@/components/header";
-import { Footer } from "@/components/footer";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { Toaster } from "@/components/ui/toaster";
+import Footer from "@/components/footer";
+import ScrollToTop from "@/components/scroll-to-top";
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "StreamFlow - Votre plateforme de streaming",
-  description: "Regardez vos films et séries préférés en streaming HD",
+  title: "StreamFlow - Plateforme de streaming",
+  description: "Regardez vos films et séries préférés en streaming",
 };
 
 export default function RootLayout({
@@ -24,25 +20,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased dark flex flex-col",
-          fontSans.variable
-        )}
-      >
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
+          disableTransitionOnChange
         >
           <Header />
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1 pt-24">{children}</main>
           <Footer />
           <ScrollToTop />
-          <Toaster />
+          <ToastProvider /> {/* Ajout du ToastProvider pour les notifications */}
         </ThemeProvider>
       </body>
     </html>
