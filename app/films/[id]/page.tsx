@@ -1,372 +1,107 @@
 "use client";
+import { useEffect, useState } from 'react';
+import { useParams, notFound } from 'next/navigation';
+import { Play, Star, Calendar, Clock, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { VipBadge } from '@/components/vip-badge'; // Assurez-vous que ce composant existe
+import { CommentsSection } from '@/components/comments-section'; // Assurez-vous que ce composant existe
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Play, Share2, Heart, Clock, Calendar, Star, ChevronLeft } from "lucide-react";
+// Simuler une fonction pour récupérer les détails d'un film par ID
+async function getMovieById(id: string) {
+  // Remplacez ceci par votre appel API réel
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simuler la latence
+  const mockMovies = [
+    { id: '1', title: 'Inception', year: 2010, isVIP: false, posterUrl: '/placeholder-poster.png', description: 'Description détaillée pour Inception...', rating: 4.8, duration: 148, genres: ['Action', 'Sci-Fi'], trailerUrl: 'https://www.youtube.com/watch?v=YoHD9XEInc0' },
+    { id: '2', title: 'The Matrix', year: 1999, isVIP: true, posterUrl: '/placeholder-poster.png', description: 'Description détaillée pour The Matrix...', rating: 4.7, duration: 136, genres: ['Action', 'Sci-Fi'], trailerUrl: 'https://www.youtube.com/watch?v=m8e-FF8MsqU' },
+  ];
+  const movie = mockMovies.find(m => m.id === id);
+  return movie;
+}
 
-// Types
-type Actor = {
-  name: string;
-  role: string;
-  imageUrl?: string;
-};
-
-type Movie = {
-  id: number;
-  title: string;
-  year: number;
-  duration: string;
-  rating: number;
-  genres: string[];
-  director: string;
-  actors: Actor[];
-  description: string;
-  longDescription: string;
-  trailerUrl?: string;
-  posterUrl?: string;
-  backdropUrl?: string;
-  isVIP?: boolean;
-};
-
-// Données simulées 
-const fakeMovie: Movie = {
-  id: 1,
-  title: "Le Grand Voyage",
-  year: 2023,
-  duration: "2h 15min",
-  rating: 4.8,
-  genres: ["Aventure", "Drame", "Science-Fiction"],
-  director: "Jean Réalisateur",
-  actors: [
-    { name: "Acteur Principal", role: "Personnage Principal" },
-    { name: "Actrice Secondaire", role: "Personnage Secondaire" },
-    { name: "Acteur de Soutien", role: "Personnage Tertiaire" },
-    { name: "Actrice Invitée", role: "Rôle Spécial" }
-  ],
-  description: "Un voyage extraordinaire à travers le temps et l'espace qui changera à jamais notre perception de l'univers.",
-  longDescription: "Dans un futur proche, un groupe d'explorateurs entreprend le voyage le plus important de l'histoire de l'humanité : une expédition au-delà de notre galaxie pour découvrir si l'humanité a un avenir parmi les étoiles. Alors que la Terre devient de moins en moins habitable, ce voyage devient une mission de survie pour l'espèce humaine.\n\nCe film épique explore non seulement les mystères de l'univers, mais aussi la profondeur de l'âme humaine, posant des questions fondamentales sur notre place dans le cosmos, le pouvoir de l'amour à travers le temps et l'espace, et les limites de la connaissance humaine.",
-  posterUrl: "/placeholder-poster.jpg",
-  backdropUrl: "/placeholder-backdrop.jpg",
-  trailerUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-  isVIP: false
-};
-
-// Films similaires simulés
-const similarMovies = [
-  { id: 2, title: "Odyssée Spatiale", posterUrl: "/placeholder-poster.jpg" },
-  { id: 3, title: "Terres Inconnues", posterUrl: "/placeholder-poster.jpg" },
-  { id: 4, title: "Frontières du Possible", posterUrl: "/placeholder-poster.jpg" },
-  { id: 5, title: "Au-delà des Étoiles", posterUrl: "/placeholder-poster.jpg" }
-];
-
-export default function MovieDetailPage() {
+export default function FilmDetailPage() {
   const params = useParams();
-  const movieId = params.id as string;
-  
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const id = params?.id as string;
+  const [movie, setMovie] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Simuler le chargement des données
-    const loadMovie = async () => {
+    if (!id) return;
+
+    const fetchMovie = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        // Simuler un appel API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setMovie(fakeMovie);
-      } catch (error) {
-        console.error("Erreur lors du chargement du film:", error);
+        const fetchedMovie = await getMovieById(id);
+        if (!fetchedMovie) {
+          setError("Film non trouvé.");
+          notFound(); // Déclenche la page 404 si le film n'est pas trouvé
+        } else {
+          setMovie(fetchedMovie);
+        }
+      } catch (err) {
+        console.error("Erreur de chargement du film:", err);
+        setError("Impossible de charger les détails du film.");
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadMovie();
-  }, [movieId]);
-  
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-  };
-  
+
+    fetchMovie();
+  }, [id]);
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    );
+    return <div className="container mx-auto px-4 py-8 text-center">Chargement...</div>;
   }
-  
+
+  if (error) {
+    // La fonction notFound() redirige vers la page 404, donc ce message ne devrait pas s'afficher si notFound() est appelé.
+    return <div className="container mx-auto px-4 py-8 text-center text-red-500">{error}</div>;
+  }
+
   if (!movie) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold mb-4">Film non trouvé</h1>
-        <p className="text-gray-400 mb-6">
-          Désolé, nous n'avons pas pu trouver le film que vous recherchez.
-        </p>
-        <Link href="/films">
-          <Button>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Retour aux films
-          </Button>
-        </Link>
-      </div>
-    );
+    // Ceci est une sécurité supplémentaire au cas où notFound() n'est pas appelé
+    return notFound();
   }
-  
+
   return (
-    <div className="min-h-screen">
-      {/* Bannière du film */}
-      <div className="relative h-96 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${movie.backdropUrl})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Poster */}
+        <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+          <img src={movie.posterUrl} alt={`Affiche de ${movie.title}`} className="w-full rounded-lg shadow-lg" />
+          {movie.isVIP && <div className="mt-2"><VipBadge /></div>}
         </div>
-        
-        <div className="absolute inset-x-0 bottom-0 container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row items-end md:items-end gap-6">
-            <div className="w-48 h-64 rounded-lg overflow-hidden shadow-lg bg-gray-800 hidden md:block">
-              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                <div className="text-gray-500 text-lg">Poster</div>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex flex-wrap gap-2 mb-2">
-                {movie.genres.map((genre, index) => (
-                  <Badge key={index} variant="secondary" className="bg-gray-700">
-                    {genre}
-                  </Badge>
-                ))}
-                
-                {movie.isVIP && (
-                  <Badge className="bg-gradient-to-r from-yellow-500 to-amber-600 text-white">
-                    VIP
-                  </Badge>
-                )}
-              </div>
-              
-              <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
-              
-              <div className="flex flex-wrap items-center gap-4 text-gray-300 mb-4">
-                <div className="flex items-center">
-                  <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                  <span>{movie.rating}/5</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 mr-1" />
-                  <span>{movie.duration}</span>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  <span>{movie.year}</span>
-                </div>
-              </div>
-              
-              <p className="text-gray-300 mb-6 max-w-3xl">
-                {movie.description}
-              </p>
-              
-              <div className="flex flex-wrap gap-3">
-                <Button className="flex items-center">
-                  <Play className="mr-2 h-4 w-4" />
-                  Regarder
-                </Button>
-                
-                <Button
-                  variant={isFavorite ? "secondary" : "outline"}
-                  onClick={toggleFavorite}
-                  className="flex items-center"
-                >
-                  <Heart className={`mr-2 h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-                  {isFavorite ? "Ajouté" : "Ajouter aux favoris"}
-                </Button>
-                
-                <Button variant="outline" className="flex items-center">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Partager
-                </Button>
-              </div>
-            </div>
+
+        {/* Détails */}
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{movie.title}</h1>
+          <div className="flex items-center space-x-4 text-gray-400 mb-4">
+            <span className="flex items-center"><Calendar className="mr-1 h-4 w-4" /> {movie.year}</span>
+            <span className="flex items-center"><Clock className="mr-1 h-4 w-4" /> {Math.floor(movie.duration / 60)}h {movie.duration % 60}min</span>
+            <span className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-400" /> {movie.rating}/10</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {movie.genres.map((genre: string) => (
+              <span key={genre} className="px-3 py-1 bg-gray-700 text-xs rounded-full">{genre}</span>
+            ))}
+          </div>
+          <p className="text-gray-300 mb-6">{movie.description}</p>
+          <div className="flex flex-wrap gap-4">
+            <Button size="lg">
+              <Play className="mr-2 h-5 w-5" /> Regarder
+            </Button>
+            <Button variant="outline" size="lg">
+              <Info className="mr-2 h-5 w-5" /> Bande-annonce
+            </Button>
           </div>
         </div>
       </div>
-      
-      {/* Contenu détaillé */}
-      <div className="container mx-auto px-4 py-12">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="mb-8 grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Synopsis</TabsTrigger>
-            <TabsTrigger value="related">Similaires</TabsTrigger>
-            <TabsTrigger value="comments">Commentaires</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-2 space-y-8">
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
-                  <p className="text-gray-300 whitespace-pre-line">
-                    {movie.longDescription}
-                  </p>
-                </div>
-                
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Trailer</h2>
-                  <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-                    <Play className="h-12 w-12 text-gray-500" />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Détails</h2>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-gray-400 text-sm">Réalisateur</h3>
-                      <p>{movie.director}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-gray-400 text-sm">Genres</h3>
-                      <p>{movie.genres.join(", ")}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-gray-400 text-sm">Année</h3>
-                      <p>{movie.year}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-gray-400 text-sm">Durée</h3>
-                      <p>{movie.duration}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  <div className="space-y-4">
-                    {movie.actors.map((actor, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0"></div>
-                        <div>
-                          <p className="font-medium">{actor.name}</p>
-                          <p className="text-sm text-gray-400">{actor.role}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="related">
-            <h2 className="text-xl font-semibold mb-6">Films similaires</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-              {similarMovies.map((movie) => (
-                <Link key={movie.id} href={`/films/${movie.id}`}>
-                  <div className="bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105">
-                    <div className="aspect-[2/3] bg-gray-700 flex items-center justify-center">
-                      <div className="text-gray-500">Poster</div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium truncate">{movie.title}</h3>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="comments">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-xl font-semibold mb-6">Commentaires & Avis</h2>
-              
-              <div className="bg-gray-800 p-6 rounded-lg mb-8">
-                <h3 className="font-medium mb-4">Ajouter un commentaire</h3>
-                <textarea
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 mb-4"
-                  rows={4}
-                  placeholder="Partagez votre avis sur ce film..."
-                ></textarea>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="mr-2">Note :</p>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className="h-5 w-5 text-gray-400 cursor-pointer hover:text-yellow-400"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <Button>Publier</Button>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="bg-gray-800 p-6 rounded-lg">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
-                      <div>
-                        <p className="font-medium">Utilisateur 1</p>
-                        <p className="text-xs text-gray-400">Il y a 3 jours</p>
-                      </div>
-                    </div>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < 4 ? "text-yellow-400" : "text-gray-400"}`}
-                          fill={i < 4 ? "currentColor" : "none"}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-gray-300">
-                    Un film captivant du début à la fin. Les effets spéciaux sont impressionnants et l'histoire est vraiment prenante.
-                  </p>
-                </div>
-                
-                <div className="bg-gray-800 p-6 rounded-lg">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gray-700 rounded-full mr-3"></div>
-                      <div>
-                        <p className="font-medium">Utilisateur 2</p>
-                        <p className="text-xs text-gray-400">Il y a 1 semaine</p>
-                      </div>
-                    </div>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < 5 ? "text-yellow-400" : "text-gray-400"}`}
-                          fill={i < 5 ? "currentColor" : "none"}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-gray-300">
-                    Chef-d'œuvre absolu ! La réalisation est impeccable, les acteurs sont excellents et l'histoire est profonde et touchante. Un must-see !
-                  </p>
-                </div>
-              </div>
-              
-              <div className="text-center mt-8">
-                <Button variant="outline">Voir plus de commentaires</Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+
+      {/* Section Commentaires */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-semibold mb-6">Commentaires</h2>
+        <CommentsSection contentId={id} contentType="movie" />
       </div>
     </div>
   );

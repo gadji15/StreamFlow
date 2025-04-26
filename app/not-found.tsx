@@ -1,64 +1,30 @@
-import Link from "next/link";
-import { Home, Search, Film, Tv } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { Search, Home, Film, Tv } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[70vh] text-center">
-      <h1 className="text-9xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text mb-4">
-        404
-      </h1>
-      <h2 className="text-2xl font-bold mb-6">Page non trouvée</h2>
-      <p className="text-gray-400 max-w-md mb-8">
-        Désolé, la page que vous recherchez ne semble pas exister ou a été déplacée.
+    <div className="min-h-[calc(100vh-theme(space.24))] flex flex-col items-center justify-center text-center px-4 py-16">
+      <h1 className="text-6xl font-bold text-indigo-500 mb-4">404</h1>
+      <h2 className="text-3xl font-semibold mb-2">Page non trouvée</h2>
+      <p className="text-gray-400 mb-8 max-w-md">
+        Oups ! La page que vous recherchez semble s'être égarée dans l'univers numérique.
       </p>
-      
-      <div className="flex flex-wrap gap-4 justify-center">
-        <Link href="/">
-          <Button className="flex items-center">
-            <Home className="mr-2 h-4 w-4" />
-            Accueil
-          </Button>
+
+      <div className="flex flex-wrap justify-center gap-4 mb-8">
+        <Link href="/" className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors">
+          <Home className="mr-2 h-4 w-4" /> Retour à l'accueil
         </Link>
-        
-        <Link href="/films">
-          <Button variant="outline" className="flex items-center">
-            <Film className="mr-2 h-4 w-4" />
-            Films
-          </Button>
+        <Link href="/films" className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors">
+          <Film className="mr-2 h-4 w-4" /> Voir les films
         </Link>
-        
-        <Link href="/series">
-          <Button variant="outline" className="flex items-center">
-            <Tv className="mr-2 h-4 w-4" />
-            Séries
-          </Button>
+        <Link href="/series" className="flex items-center bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors">
+          <Tv className="mr-2 h-4 w-4" /> Voir les séries
         </Link>
       </div>
-      
-      <div className="mt-12 bg-gray-800 p-6 rounded-lg max-w-lg">
-        <h3 className="font-semibold mb-4">Suggestions populaires</h3>
-        <ul className="space-y-2">
-          <li>
-            <Link href="/films" className="text-purple-400 hover:underline flex items-center justify-center">
-              <Film className="mr-2 h-4 w-4" />
-              Explorer tous les films
-            </Link>
-          </li>
-          <li>
-            <Link href="/series" className="text-purple-400 hover:underline flex items-center justify-center">
-              <Tv className="mr-2 h-4 w-4" />
-              Explorer toutes les séries
-            </Link>
-          </li>
-          <li>
-            <Link href="/categories" className="text-purple-400 hover:underline flex items-center justify-center">
-              <Search className="mr-2 h-4 w-4" />
-              Parcourir les catégories
-            </Link>
-          </li>
-        </ul>
-      </div>
+
+      <p className="text-sm text-gray-500">
+        Si vous pensez qu'il s'agit d'une erreur, n'hésitez pas à <Link href="/contact" className="text-indigo-400 hover:underline">nous contacter</Link>.
+      </p>
     </div>
   );
 }
