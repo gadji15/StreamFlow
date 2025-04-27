@@ -1,65 +1,63 @@
-import withPWAInit from 'next-pwa';
+import withPWA from "next-pwa";
 
-/** @type {import('next-pwa').PWAConfig} */
-const pwaConfig = {
+/**
+ * Configuration Next.js avec PWA support
+ * @type {import('next').NextConfig}
+ */
+const nextConfig = withPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
-  skipWaiting: true,
-  // Vous pouvez ajouter d'autres configurations PWA ici si nécessaire
-  // runtimeCaching: [...] // Décommenter pour des stratégies de cache personnalisées
-};
-
-const withPWA = withPWAInit(pwaConfig);
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+  skipWaiting: true
+})({
   reactStrictMode: true,
+  
+  // Configuration pour les images externes
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
-      },
-      // Ajoutez d'autres domaines si nécessaire (ex: pour les avatars)
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com', // Pour Google Sign-In Avatars
-      }
+    domains: [
+      'res.cloudinary.com',
+      'firebasestorage.googleapis.com'
     ],
+    formats: ['image/avif', 'image/webp'],
   },
-  // Option pour ignorer les erreurs TypeScript pendant le build (temporaire)
-  // typescript: {
-  //   ignoreBuildErrors: true,
-  // },
-  // Option pour ignorer les erreurs ESLint pendant le build (temporaire)
-  // eslint: {
-  //   ignoreDuringBuilds: true,
-  // },
+  
+  // Compression pour optimiser la performance
+  compress: true,
+  
+  // En-têtes HTTP pour la sécurité
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: 'block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
+  },
+  
+  // Configuration pour Cloudinary
+  serverExternalPackages: ['cloudinary'],
+  
+  // Configurer webpack pour gérer les imports de modules Node.js
   webpack: (config, { isServer }) => {
-    // Exclure certains modules Node.js du bundle client
     if (!isServer) {
+      // Empêcher les modules Node.js d'être inclus dans le bundle client
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        net: false,
-        tls: false,
         child_process: false,
+        net: false,
+        tls: false
       };
     }
-
-    // Important pour éviter les erreurs avec Cloudinary côté serveur
-    config.externals = config.externals || [];
-    config.externals.push('cloudinary');
-
+    
     return config;
-  },
-  // Déplacé hors de 'experimental' pour Next.js 14+
-  serverExternalPackages: ['cloudinary'],
-};
+  }
+});
 
-export default withPWA(nextConfig);
+export default nextConfig;

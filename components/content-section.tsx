@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, Plus, Play, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
 import { useAuth } from '@/hooks/use-auth';
-import { getMovieGenres, getPopularMovies } from '@/lib/firebase/firestore/movies';
+import { getMovieGenres, getPopularMovies, getMoviesByGenre } from '@/lib/firebase/firestore/movies';
 import { getPopularSeries } from '@/lib/firebase/firestore/series';
 
 interface ContentSectionProps {
@@ -79,11 +79,12 @@ export default function ContentSection({
               isVIP: movie.isVIP
             }));
           } else if (filter === 'genre' && genreId) {
-            // TODO: Implémenter la récupération des films par genre
+            // Implémentation de la récupération des films par genre
             const genres = await getMovieGenres();
             const genreName = genres.find(g => g.id === genreId)?.name || genreId;
             
-            const genreMovies = await getPopularMovies(limit, true, isVIP);
+            // Utiliser la fonction getMoviesByGenre pour récupérer les films par genre
+            const genreMovies = await getMoviesByGenre(genreId, limit, true, isVIP);
             fetchedItems = genreMovies.map(movie => ({
               id: movie.id!,
               title: movie.title,
