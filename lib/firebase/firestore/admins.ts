@@ -1,97 +1,123 @@
-import { firestore, storage } from "../config";
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  Timestamp 
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { firestore } from "../config";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 
-// Interface pour les administrateurs
-interface Admin {
+// Interface pour le type Admin
+export interface Admin {
   id: string;
-  name: string;
   email: string;
-  role: 'super_admin' | 'content_manager' | 'moderator';
-  avatar?: string;
+  displayName: string;
+  role: 'admin' | 'super_admin';
   isActive: boolean;
-  createdAt: Timestamp;
-  lastLogin?: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin?: Date;
 }
 
 /**
- * Vérifier si un utilisateur est administrateur
+ * Récupère un administrateur par son email
  */
-export async function verifyAdmin(uid: string) {
+export async function getAdminByEmail(email: string): Promise<Admin | null> {
   try {
-    const adminRef = doc(firestore, "admins", uid);
-    const adminDoc = await getDoc(adminRef);
+    const q = query(
+      collection(firestore, "admins"),
+      where("email", "==", email)
+    );
     
-    if (adminDoc.exists()) {
-      const adminData = adminDoc.data() as Omit<Admin, 'id'>;
-      
-      if (!adminData.isActive) {
-        return { isAdmin: false, message: "Compte administrateur désactivé" };
-      }
-      
-      return { 
-        isAdmin: true, 
-        adminData: {
-          id: adminDoc.id,
-          ...adminData
-        } 
-      };
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
     }
     
-    return { isAdmin: false, message: "Utilisateur non trouvé dans les administrateurs" };
-  } catch (error) {
-    console.error("Error verifying admin:", error);
-    return { isAdmin: false, message: "Erreur lors de la vérification de l'administrateur" };
-  }
-}
-
-/**
- * Obtenir un administrateur par son ID
- */
-export async function getAdmin(adminId: string) {
-  try {
-    const adminRef = doc(firestore, "admins", adminId);
-    const adminDoc = await getDoc(adminRef);
+    const adminDoc = querySnapshot.docs[0];
     
-    if (adminDoc.exists()) {
-      return {
-        id: adminDoc.id,
-        ...adminDoc.data()
-      } as Admin;
-    }
-    
-    return null;
+    return {
+      id: adminDoc.id,
+      ...adminDoc.data(),
+      createdAt: adminDoc.data().createdAt?.toDate(),
+      updatedAt: adminDoc.data().updatedAt?.toDate(),
+      lastLogin: adminDoc.data().lastLogin?.toDate()
+    } as Admin;
   } catch (error) {
-    console.error("Error getting admin:", error);
+    console.error("Erreur lors de la récupération de l'admin par email:", error);
     return null;
   }
 }
 
 /**
- * Récupérer la liste des administrateurs
+ * Récupère un administrateur par son ID
  */
-export async function getAdmins() {
+export async function getAdminById(id: string): Promise<Admin | null> {
   try {
-    const adminsRef = collection(firestore, "admins");
-    const adminsSnapshot = await getDocs(adminsRef);
+    const adminDoc = await getDoc(doc(firestore, "admins", id));
     
-    return adminsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Admin));
+    if (!adminDoc.exists()) {
+      return null;
+    }
+    
+    return {
+      id: adminDoc.id,
+      ...adminDoc.data(),
+      createdAt: adminDoc.data().createdAt?.toDate(),
+      updatedAt: adminDoc.data().updatedAt?.toDate(),
+      lastLogin: adminDoc.data().lastLogin?.toDate()
+    } as Admin;
   } catch (error) {
-    console.error("Error getting admins:", error);
-    return [];
+    console.error(`Erreur lors de la récupération de l'admin ${id}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Crée un nouvel administrateur
+ */
+export async function createAdmin(userId: string, adminData: Omit<Admin, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+  try {
+    const timestamp = serverTimestamp();
+    
+    await setDoc(doc(firestore, "admins", userId), {
+      ...adminData,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Erreur lors de la création de l'admin:", error);
+    return false;
+  }
+}
+
+/**
+ * Met à jour un administrateur
+ */
+export async function updateAdmin(id: string, adminData: Partial<Omit<Admin, 'id' | 'createdAt' | 'updatedAt'>>): Promise<boolean> {
+  try {
+    await updateDoc(doc(firestore, "admins", id), {
+      ...adminData,
+      updatedAt: serverTimestamp()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error(`Erreur lors de la mise à jour de l'admin ${id}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Met à jour la date de dernière connexion d'un admin
+ */
+export async function updateAdminLastLogin(id: string): Promise<boolean> {
+  try {
+    await updateDoc(doc(firestore, "admins", id), {
+      lastLogin: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    
+    return true;
+  } catch (error) {
+    console.error(`Erreur lors de la mise à jour de la dernière connexion de l'admin ${id}:`, error);
+    return false;
   }
 }

@@ -10,9 +10,8 @@ const nextConfig = {
       'lh3.googleusercontent.com',
     ],
   },
-  experimental: {
-    serverActions: true,
-  },
+  // La propriété serverActions a été supprimée car elle est maintenant activée par défaut
+  // et était incorrectement définie comme booléen au lieu d'un objet
 };
 
 // Configuration PWA
