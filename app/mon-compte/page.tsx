@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   User, Clock, Heart, Settings, Edit, LogOut, 
-  Sparkles, AlertTriangle, Shield, Activity 
+  Sparkles, AlertTriangle, Shield, Activity, Film, Tv, Devices
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
