@@ -1,217 +1,96 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "./firebase/config";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, firestore } from "./firebase/config";
 
-export type UserData = {
-  id: string;
-  email: string;
-  displayName: string;
-  photoURL?: string;
-  isVIP: boolean;
-  createdAt: Date;
-  subscription?: {
-    plan: string;
-    status: string;
-    expiresAt: Date;
-  };
-};
-
-// Register a new user
-export const registerUser = async (
-  email: string,
-  password: string,
-  displayName: string
-): Promise<UserData> => {
-  try {
-    // Create the user in Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Create the user document in Firestore
-    const userData = {
-      email: user.email,
-      displayName,
-      isVIP: false,
-      createdAt: serverTimestamp(),
-      photoURL: null,
-      favorites: [],
-      watchHistory: [],
-    };
-    
-    await setDoc(doc(db, "users", user.uid), userData);
-    
-    return {
-      id: user.uid,
-      email: user.email || email,
-      displayName,
-      isVIP: false,
-      createdAt: new Date(),
-    };
-  } catch (error: any) {
-    console.error("Error in registerUser:", error);
-    throw new Error(error.message);
-  }
-};
-
-// Sign in a user
-export const signInUser = async (email: string, password: string): Promise<UserData> => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Get the user data from Firestore
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    
-    if (!userDoc.exists()) {
-      throw new Error("User document does not exist");
-    }
-    
-    const userData = userDoc.data();
-    
-    return {
-      id: user.uid,
-      email: user.email || email,
-      displayName: userData.displayName,
-      photoURL: userData.photoURL,
-      isVIP: userData.isVIP || false,
-      createdAt: userData.createdAt.toDate(),
-      subscription: userData.subscription ? {
-        plan: userData.subscription.plan,
-        status: userData.subscription.status,
-        expiresAt: userData.subscription.expiresAt.toDate(),
-      } : undefined,
-    };
-  } catch (error: any) {
-    console.error("Error in signInUser:", error);
-    throw new Error(error.message);
-  }
-};
-
-// Reset password
-export const resetPassword = async (email: string): Promise<void> => {
-  try {
-    await sendPasswordResetEmail(auth, email);
-  } catch (error: any) {
-    console.error("Error in resetPassword:", error);
-    throw new Error(error.message);
-  }
-};
-
-// Get current user data
-export const getCurrentUserData = async (): Promise<UserData | null> => {
-  try {
-    const user = auth.currentUser;
-    
-    if (!user) {
-      return null;
-    }
-    
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    
-    if (!userDoc.exists()) {
-      return null;
-    }
-    
-    const userData = userDoc.data();
-    
-    return {
-      id: user.uid,
-      email: user.email || "",
-      displayName: userData.displayName,
-      photoURL: userData.photoURL,
-      isVIP: userData.isVIP || false,
-      createdAt: userData.createdAt.toDate(),
-      subscription: userData.subscription ? {
-        plan: userData.subscription.plan,
-        status: userData.subscription.status,
-        expiresAt: userData.subscription.expiresAt.toDate(),
-      } : undefined,
-    };
-  } catch (error: any) {
-    console.error("Error in getCurrentUserData:", error);
-    return null;
-  }
-};
-
-// Upgrade to VIP
-export const upgradeToVIP = async (
-  userId: string,
-  plan: string,
-  paymentInfo: any
-): Promise<void> => {
-  try {
-    // Create a subscription expiration date
-    const now = new Date();
-    const expiresAt = new Date(now.setMonth(now.getMonth() + 1)); // One month from now
-    
-    // Update the user document
-    await setDoc(doc(db, "users", userId), {
-      isVIP: true,
-      subscription: {
-        plan,
-        status: "active",
-        startedAt: serverTimestamp(),
-        expiresAt,
-        paymentInfo,
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Mot de passe", type: "password" }
       },
-    }, { merge: true });
-    
-    // Record the payment
-    await setDoc(doc(db, "payments", `${userId}_${Date.now()}`), {
-      userId,
-      amount: plan === "monthly" ? 9.99 : 99.99,
-      currency: "EUR",
-      planType: plan,
-      status: "completed",
-      date: serverTimestamp(),
-      paymentMethod: paymentInfo.method,
-      paymentId: paymentInfo.id,
-    });
-    
-  } catch (error: any) {
-    console.error("Error in upgradeToVIP:", error);
-    throw new Error(error.message);
-  }
-};
-
-// Check if content is accessible by user
-export const canAccessContent = async (
-  contentId: string,
-  contentType: "movie" | "series"
-): Promise<boolean> => {
-  try {
-    const user = auth.currentUser;
-    
-    if (!user) {
-      return false; // Not logged in
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email et mot de passe requis");
+        }
+        
+        try {
+          // Authentification Firebase
+          const userCredential = await signInWithEmailAndPassword(
+            auth,
+            credentials.email,
+            credentials.password
+          );
+          const user = userCredential.user;
+          
+          // Récupérer les données utilisateur depuis Firestore
+          const userDoc = await getDoc(doc(firestore, "users", user.uid));
+          const userData = userDoc.data();
+          
+          if (!userData) {
+            throw new Error("Données utilisateur non trouvées");
+          }
+          
+          return {
+            id: user.uid,
+            email: user.email,
+            name: userData.displayName,
+            image: userData.photoURL,
+            role: userData.role || "user",
+            isVIP: userData.isVIP || false,
+            vipExpiry: userData.vipExpiry ? new Date(userData.vipExpiry).toISOString() : null
+          };
+        } catch (error: any) {
+          console.error("Erreur d'authentification:", error);
+          throw new Error(error.message || "Échec de l'authentification");
+        }
+      }
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
+    })
+  ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 jours
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.isVIP = user.isVIP;
+        token.vipExpiry = user.vipExpiry;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.isVIP = token.isVIP as boolean;
+        session.user.vipExpiry = token.vipExpiry as string | null;
+      }
+      return session;
     }
-    
-    // Get content details
-    const contentDoc = await getDoc(doc(db, contentType === "movie" ? "movies" : "series", contentId));
-    
-    if (!contentDoc.exists()) {
-      return false; // Content doesn't exist
-    }
-    
-    const contentData = contentDoc.data();
-    
-    // If content is not VIP-only, anyone can access
-    if (!contentData.vipOnly) {
-      return true;
-    }
-    
-    // Check if user is VIP
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    
-    if (!userDoc.exists()) {
-      return false;
-    }
-    
-    const userData = userDoc.data();
-    
-    return userData.isVIP === true;
-  } catch (error: any) {
-    console.error("Error in canAccessContent:", error);
-    return false;
-  }
+  },
+  pages: {
+    signIn: "/login",
+    error: "/auth/error",
+    verifyRequest: "/auth/verify-request",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
