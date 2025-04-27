@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import LoadingScreen from '@/components/loading-screen';
 import { getMovieGenres } from '@/lib/firebase/firestore/movies';
-import { getMovies, Movie, Genre } from '@/lib/firebase/firestore/films';
+import { getMovies, searchMovies, Movie, Genre } from '@/lib/firebase/firestore/films';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function FilmsPage() {
@@ -56,13 +56,25 @@ export default function FilmsPage() {
       setError(null);
       
       try {
-        const result = await getMovies({
-          isPublished: true,
-          isVIP: showVIP === null ? undefined : showVIP,
-          searchTerm: searchTerm || undefined,
-          genres: selectedGenre ? [selectedGenre] : undefined,
-          pageSize: 50
-        });
+        let result;
+        
+        // Utiliser searchMovies si un terme de recherche est fourni
+        if (searchTerm && searchTerm.trim() !== '') {
+          result = await searchMovies(searchTerm, {
+            isPublished: true,
+            isVIP: showVIP === null ? undefined : showVIP,
+            genres: selectedGenre ? [selectedGenre] : undefined,
+            pageSize: 50
+          });
+        } else {
+          // Sinon utiliser getMovies pour le filtrage standard
+          result = await getMovies({
+            isPublished: true,
+            isVIP: showVIP === null ? undefined : showVIP,
+            genres: selectedGenre ? [selectedGenre] : undefined,
+            pageSize: 50
+          });
+        }
         
         setMovies(result.movies);
       } catch (err) {
@@ -204,6 +216,7 @@ interface FilmCardProps {
 }
 
 function FilmCard({ movie, isUserVIP }: FilmCardProps) {
+  // Adapter l'accès aux propriétés en fonction de la structure de l'objet Movie de films.ts
   const { id, title, poster, releaseYear, rating, isVIP } = movie;
   
   // Fallback pour le poster
