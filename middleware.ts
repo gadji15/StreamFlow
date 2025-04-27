@@ -30,27 +30,29 @@ export async function middleware(request: NextRequest) {
   
   // Pour toutes les routes protégées
   if (isProtectedApi || isAdminApi || isVipApi) {
-    // Vérifier l'origine pour CORS
+    // Vérifier l'origine pour CORS si configuré
     const origin = request.headers.get('origin');
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    const allowedOriginsStr = process.env.ALLOWED_ORIGINS;
     
-    if (origin && !allowedOrigins.includes(origin)) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Origine non autorisée' }),
-        { 
-          status: 403,
-          headers: {
-            'Content-Type': 'application/json'
+    if (origin && allowedOriginsStr) {
+      const allowedOrigins = allowedOriginsStr.split(',');
+      if (!allowedOrigins.includes(origin)) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Origine non autorisée' }),
+          { 
+            status: 403,
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
+        );
+      }
     }
     
     // Récupérer le token d'authentification
     const token = await getToken({ 
       req: request, 
-      secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === 'production'
+      secret: process.env.NEXTAUTH_SECRET || 'un-secret-temporaire-pour-le-developpement'
     });
     
     // Si pas de token ou token expiré
@@ -67,16 +69,6 @@ export async function middleware(request: NextRequest) {
     if (isVipApi && !token.isVIP) {
       return NextResponse.json({ error: 'Abonnement VIP requis' }, { status: 403 });
     }
-    
-    // Ajouter des en-têtes de sécurité
-    const response = NextResponse.next();
-    
-    // Ajouter des en-têtes de sécurité supplémentaires
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    
-    return response;
   }
   
   return NextResponse.next();
