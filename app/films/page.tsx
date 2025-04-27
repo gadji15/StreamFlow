@@ -7,7 +7,8 @@ import { Film, Search, Filter, SlidersHorizontal, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import LoadingScreen from '@/components/loading-screen';
-import { getMovies, getMovieGenres, Movie, Genre } from '@/lib/firebase/firestore/movies';
+import { getMovieGenres } from '@/lib/firebase/firestore/movies';
+import { getMovies, Movie, Genre } from '@/lib/firebase/firestore/films';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function FilmsPage() {
@@ -56,11 +57,11 @@ export default function FilmsPage() {
       
       try {
         const result = await getMovies({
-          limit: 50,
-          onlyPublished: true,
-          genreFilter: selectedGenre || undefined,
+          isPublished: true,
           isVIP: showVIP === null ? undefined : showVIP,
-          searchTerm: searchTerm || undefined
+          searchTerm: searchTerm || undefined,
+          genres: selectedGenre ? [selectedGenre] : undefined,
+          pageSize: 50
         });
         
         setMovies(result.movies);
@@ -203,10 +204,10 @@ interface FilmCardProps {
 }
 
 function FilmCard({ movie, isUserVIP }: FilmCardProps) {
-  const { id, title, posterUrl, year, rating, isVIP } = movie;
+  const { id, title, poster, releaseYear, rating, isVIP } = movie;
   
   // Fallback pour le poster
-  const posterSrc = posterUrl || '/placeholder-poster.png';
+  const posterSrc = poster || '/placeholder-poster.png';
   
   return (
     <Link 
@@ -240,7 +241,7 @@ function FilmCard({ movie, isUserVIP }: FilmCardProps) {
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400">{year}</p>
+        <p className="text-xs text-gray-400">{releaseYear}</p>
       </div>
     </Link>
   );
