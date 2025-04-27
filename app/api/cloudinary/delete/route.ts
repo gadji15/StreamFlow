@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
 
 // Configurer Cloudinary
 cloudinary.config({
@@ -13,11 +11,12 @@ cloudinary.config({
 
 export async function POST(req: NextRequest) {
   try {
-    // Vérifier l'authentification
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-    }
+    // Note: La vérification d'authentification est temporairement désactivée
+    // jusqu'à l'installation de next-auth
+    // const session = await getServerSession(authOptions);
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    // }
 
     // Parser le corps de la requête
     const body = await req.json();

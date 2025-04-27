@@ -20,7 +20,7 @@ export default function MonComptePage() {
   
   // Formatage de la date d'expiration VIP
   const formatExpiryDate = () => {
-    if (!userData?.vipExpiry) return 'Aucune date d'expiration';
+    if (!userData?.vipExpiry) return "Aucune date d'expiration";
     
     const expiryDate = new Date(userData.vipExpiry);
     return new Intl.DateTimeFormat('fr-FR', {
@@ -93,7 +93,7 @@ export default function MonComptePage() {
             </div>
           ) : (
             <p className="text-sm text-gray-400">
-              Vous n'êtes pas encore membre VIP. Accédez à du contenu exclusif et profitez de tous les avantages.
+              Vous n&apos;êtes pas encore membre VIP. Accédez à du contenu exclusif et profitez de tous les avantages.
             </p>
           )}
         </CardContent>
@@ -123,7 +123,7 @@ export default function MonComptePage() {
         </CardHeader>
         <CardContent>
           {historyLoading ? (
-            <p className="text-sm text-gray-400">Chargement de l'historique...</p>
+            <p className="text-sm text-gray-400">Chargement de l&apos;historique...</p>
           ) : lastWatched.length > 0 ? (
             <div className="space-y-3">
               {lastWatched.map(item => (
@@ -160,12 +160,12 @@ export default function MonComptePage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">Vous n'avez pas encore regardé de contenu.</p>
+            <p className="text-sm text-gray-400">Vous n&apos;avez pas encore regardé de contenu.</p>
           )}
         </CardContent>
         <CardFooter>
           <Button variant="outline" asChild>
-            <Link href="/mon-compte/historique">Voir tout l'historique</Link>
+            <Link href="/mon-compte/historique">Voir tout l&apos;historique</Link>
           </Button>
         </CardFooter>
       </Card>

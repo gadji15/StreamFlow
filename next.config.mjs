@@ -1,3 +1,5 @@
+import withPWA from 'next-pwa';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -11,7 +13,14 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  // Vous pouvez ajouter d'autres options valides selon vos besoins
 };
 
-export default nextConfig;
+// Configuration PWA
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+});
+
+// Exporter la configuration combinée
+export default pwaConfig(nextConfig);
