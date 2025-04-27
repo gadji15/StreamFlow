@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Supprimer l'option serverExternalPackages non reconnue
-  // serverExternalPackages: [...],
-  
-  // Options valides pour Next.js
   reactStrictMode: true,
   images: {
     domains: [
@@ -13,10 +9,9 @@ const nextConfig = {
     ],
   },
   experimental: {
-    // Si vous avez besoin de fonctionnalités expérimentales, les placer ici
     serverActions: true,
   },
-  // Autres options valides
+  // Vous pouvez ajouter d'autres options valides selon vos besoins
 };
 
 export default nextConfig;

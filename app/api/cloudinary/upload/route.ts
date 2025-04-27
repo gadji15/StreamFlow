@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cloudinary, CLOUDINARY_FOLDERS } from '@/lib/cloudinary/config';
+import { v2 as cloudinary } from 'cloudinary';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+
+// Configurer Cloudinary
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
 
 // Types de médias autorisés
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
@@ -40,13 +48,10 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Sélectionner le dossier de destination
-    const targetFolder = CLOUDINARY_FOLDERS[folder?.toUpperCase()] || CLOUDINARY_FOLDERS.MISC;
-
     // Définir les options d'upload
     const uploadOptions = {
-      folder: targetFolder,
-      public_id: publicId, // Optionnel
+      folder: folder || 'streamflow',
+      public_id: publicId,
       resource_type: 'image',
       tags: tags || [],
       // Optimisations automatiques

@@ -69,6 +69,16 @@ export async function middleware(request: NextRequest) {
     if (isVipApi && !token.isVIP) {
       return NextResponse.json({ error: 'Abonnement VIP requis' }, { status: 403 });
     }
+    
+    // Ajouter des en-têtes de sécurité
+    const response = NextResponse.next();
+    
+    // Ajouter des en-têtes de sécurité supplémentaires
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    
+    return response;
   }
   
   return NextResponse.next();

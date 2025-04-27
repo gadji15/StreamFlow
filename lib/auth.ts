@@ -50,6 +50,8 @@ export const authOptions: NextAuthOptions = {
         }
       }
     }),
+    // Décommentez cette partie si vous utilisez l'authentification Google
+    /*
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -61,6 +63,7 @@ export const authOptions: NextAuthOptions = {
         }
       }
     })
+    */
   ],
   session: {
     strategy: "jwt",

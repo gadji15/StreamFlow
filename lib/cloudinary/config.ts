@@ -47,9 +47,6 @@ export const CLOUDINARY_TRANSFORMATIONS = {
   }
 };
 
-// Instance cloudinary configurée
-export { cloudinary };
-
 // Fonction utilitaire pour créer des URLs optimisées
 export function getOptimizedUrl(publicId: string, transformation: any = {}) {
   return cloudinary.url(publicId, {
@@ -57,3 +54,6 @@ export function getOptimizedUrl(publicId: string, transformation: any = {}) {
     ...transformation
   });
 }
+
+// Instance cloudinary configurée
+export { cloudinary };
