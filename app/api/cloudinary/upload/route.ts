@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import { cloudinary, CLOUDINARY_FOLDERS } from '@/lib/cloudinary/config';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-// Configurer Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
+// Types de médias autorisés
+const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,22 +17,39 @@ export async function POST(req: NextRequest) {
 
     // Parser le corps de la requête
     const body = await req.json();
-    const { image, folder } = body;
+    const { image, folder, publicId, tags } = body;
 
     if (!image) {
       return NextResponse.json({ error: 'Image manquante' }, { status: 400 });
     }
 
     // Vérifier le format de l'image
-    if (!image.startsWith('data:image/')) {
-      return NextResponse.json({ error: 'Format d\'image invalide' }, { status: 400 });
+    const formatMatch = image.match(/^data:(image\/\w+);base64,/);
+    if (!formatMatch || !ALLOWED_FORMATS.includes(formatMatch[1])) {
+      return NextResponse.json({ 
+        error: 'Format d\'image invalide. Formats acceptés: JPEG, PNG, WebP' 
+      }, { status: 400 });
     }
+
+    // Vérifier la taille de l'image
+    const base64Data = image.split(',')[1];
+    const fileSize = Buffer.from(base64Data, 'base64').length;
+    if (fileSize > MAX_FILE_SIZE) {
+      return NextResponse.json({ 
+        error: `Image trop volumineuse. Taille maximale: ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+      }, { status: 400 });
+    }
+
+    // Sélectionner le dossier de destination
+    const targetFolder = CLOUDINARY_FOLDERS[folder?.toUpperCase()] || CLOUDINARY_FOLDERS.MISC;
 
     // Définir les options d'upload
     const uploadOptions = {
-      folder: folder || 'streamflow',
+      folder: targetFolder,
+      public_id: publicId, // Optionnel
       resource_type: 'image',
-      // Ajouter des transformations si nécessaire
+      tags: tags || [],
+      // Optimisations automatiques
       transformation: [
         { quality: 'auto:good', fetch_format: 'auto' }
       ]
@@ -45,13 +58,18 @@ export async function POST(req: NextRequest) {
     // Uploader l'image vers Cloudinary
     const result = await cloudinary.uploader.upload(image, uploadOptions);
 
+    // Journaliser l'upload
+    console.log(`Image uploadée: ${result.public_id} (${Math.round(result.bytes / 1024)}KB)`);
+
     // Retourner les informations de l'image
     return NextResponse.json({
       public_id: result.public_id,
       secure_url: result.secure_url,
       width: result.width,
       height: result.height,
-      format: result.format
+      format: result.format,
+      bytes: result.bytes,
+      created_at: result.created_at
     });
   } catch (error: any) {
     console.error('Erreur lors de l\'upload vers Cloudinary:', error);
