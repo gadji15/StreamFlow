@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Tv, Search, Filter, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { VipBadge } from '@/components/vip-badge';
 import LoadingScreen from '@/components/loading-screen';
 import { getAllSeries, Series } from '@/lib/firebase/firestore/series';
 import { useAuth } from '@/hooks/use-auth';
@@ -48,14 +49,20 @@ export default function SeriesPage() {
         startAfter: loadMore ? lastVisible : undefined,
         onlyPublished: true,
         genreFilter: genreFilter || undefined,
-        isVIP: showVIP === null ? undefined : showVIP,
-        searchTerm: searchTerm || undefined
+        isVIP: showVIP === null ? undefined : showVIP
       });
       
+      // Filtrer par recherche côté client
+      const filteredSeries = searchTerm
+        ? result.series.filter(series =>
+            series.title.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : result.series;
+      
       if (loadMore) {
-        setSeriesList(prev => [...prev, ...result.series]);
+        setSeriesList(prev => [...prev, ...filteredSeries]);
       } else {
-        setSeriesList(result.series);
+        setSeriesList(filteredSeries);
       }
       
       setLastVisible(result.lastVisible);
@@ -86,7 +93,7 @@ export default function SeriesPage() {
   // Charger les séries au chargement de la page et lorsque les filtres changent
   useEffect(() => {
     loadSeries();
-  }, [genreFilter, showVIP, searchTerm, isVIP]);
+  }, [genreFilter, showVIP, isVIP]);
   
   // Mettre à jour les paramètres d'URL lorsque les filtres changent
   useEffect(() => {
@@ -106,7 +113,7 @@ export default function SeriesPage() {
   // Gérer la recherche
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // La recherche est déjà gérée par l'effet
+    loadSeries(); // Déclencher une nouvelle recherche
   };
   
   // Réinitialiser les filtres
@@ -198,7 +205,12 @@ export default function SeriesPage() {
           <Tv className="h-12 w-12 mx-auto mb-4 text-gray-500" />
           <h2 className="text-xl font-semibold mb-2">Aucune série trouvée</h2>
           <p className="text-gray-400 mb-6">
-            Aucune série ne correspond à vos critères de recherche.
+            {searchTerm 
+              ? `Aucune série ne correspond à votre recherche "${searchTerm}".`
+              : genreFilter 
+                ? "Aucune série trouvée pour ce genre."
+                : "Aucune série disponible pour le moment."
+            }
           </p>
           <Button onClick={resetFilters}>
             Voir toutes les séries
@@ -266,8 +278,8 @@ function SeriesCard({ series, isUserVIP }: SeriesCardProps) {
           className="w-full h-full object-cover"
         />
         {isVIP && (
-          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-            VIP
+          <div className="absolute top-2 right-2">
+            <VipBadge />
           </div>
         )}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
