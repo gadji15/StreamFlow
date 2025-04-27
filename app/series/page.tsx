@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Tv, Search, Filter, Star, Eye } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Tv, Search, Filter, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { VipBadge } from '@/components/vip-badge';
+import LoadingScreen from '@/components/loading-screen';
 import { getAllSeries, Series } from '@/lib/firebase/firestore/series';
 import { useAuth } from '@/hooks/use-auth';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
@@ -13,44 +14,55 @@ import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 export default function SeriesPage() {
   const [seriesList, setSeriesList] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [showVIP, setShowVIP] = useState<boolean | null>(null);
   const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [availableGenres, setAvailableGenres] = useState<{id: string, name: string}[]>([]);
   
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { isVIP } = useAuth();
+  
+  // Initialiser les filtres à partir des paramètres d'URL
+  useEffect(() => {
+    const genre = searchParams?.get('genre');
+    const search = searchParams?.get('q');
+    const vip = searchParams?.get('vip');
+    
+    if (genre) setGenreFilter(genre);
+    if (search) setSearchTerm(search);
+    if (vip) setShowVIP(vip === 'true');
+  }, [searchParams]);
   
   // Fonction pour charger la liste des séries
   const loadSeries = async (loadMore = false) => {
     try {
       setLoading(true);
+      setError(null);
       
       const result = await getAllSeries({
         limit: 12,
         startAfter: loadMore ? lastVisible : undefined,
         onlyPublished: true,
         genreFilter: genreFilter || undefined,
-        isVIP: isVIP ? undefined : false // Si l'utilisateur n'est pas VIP, filtrer les contenus non-VIP
+        isVIP: showVIP === null ? undefined : showVIP,
+        searchTerm: searchTerm || undefined
       });
       
-      // Filtrer par recherche côté client (si nécessaire)
-      const filteredSeries = searchTerm
-        ? result.series.filter(series =>
-            series.title.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        : result.series;
-      
       if (loadMore) {
-        setSeriesList(prev => [...prev, ...filteredSeries]);
+        setSeriesList(prev => [...prev, ...result.series]);
       } else {
-        setSeriesList(filteredSeries);
+        setSeriesList(result.series);
       }
       
       setLastVisible(result.lastVisible);
       setHasMore(result.series.length === 12); // Supposons que s'il y a exactement 12 résultats, il y en a probablement d'autres
     } catch (error) {
       console.error('Erreur lors du chargement des séries:', error);
+      setError('Erreur lors du chargement des séries. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -74,12 +86,34 @@ export default function SeriesPage() {
   // Charger les séries au chargement de la page et lorsque les filtres changent
   useEffect(() => {
     loadSeries();
-  }, [genreFilter, isVIP]);
+  }, [genreFilter, showVIP, searchTerm, isVIP]);
+  
+  // Mettre à jour les paramètres d'URL lorsque les filtres changent
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (genreFilter) params.set('genre', genreFilter);
+    if (searchTerm) params.set('q', searchTerm);
+    if (showVIP !== null) params.set('vip', showVIP.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/series?${queryString}` : '/series';
+    
+    // Ne pas recharger la page, juste mettre à jour l'URL
+    window.history.replaceState({}, '', url);
+  }, [genreFilter, searchTerm, showVIP]);
   
   // Gérer la recherche
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadSeries();
+    // La recherche est déjà gérée par l'effet
+  };
+  
+  // Réinitialiser les filtres
+  const resetFilters = () => {
+    setSearchTerm('');
+    setGenreFilter(null);
+    setShowVIP(null);
   };
   
   // Gérer le chargement de plus de séries
@@ -89,85 +123,96 @@ export default function SeriesPage() {
     }
   };
   
+  // Afficher l'écran de chargement initial
+  if (loading && seriesList.length === 0) {
+    return <LoadingScreen />;
+  }
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Catalogue des Séries</h1>
 
       {/* Barre de recherche et filtres */}
-      <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Rechercher une série..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="bg-gray-800 rounded-lg p-4 mb-6">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Input
+              type="search"
+              placeholder="Rechercher une série..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={genreFilter || ''}
+              onChange={(e) => setGenreFilter(e.target.value || null)}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Tous les genres</option>
+              {availableGenres.map((genre) => (
+                <option key={genre.id} value={genre.id}>
+                  {genre.name}
+                </option>
+              ))}
+            </select>
+            
+            <select
+              value={showVIP === null ? '' : showVIP.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                setShowVIP(value === '' ? null : value === 'true');
+              }}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Tous les contenus</option>
+              <option value="false">Contenus gratuits</option>
+              <option value="true">Contenus VIP</option>
+            </select>
+            
+            {(genreFilter || searchTerm || showVIP !== null) && (
+              <Button 
+                variant="ghost" 
+                onClick={resetFilters}
+                className="text-sm"
+              >
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {error && (
+        <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6 text-center">
+          {error}
         </div>
-        
-        <select
-          value={genreFilter || ''}
-          onChange={(e) => setGenreFilter(e.target.value || null)}
-          className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
-        >
-          <option value="">Tous les genres</option>
-          {availableGenres.map((genre) => (
-            <option key={genre.id} value={genre.id}>
-              {genre.name}
-            </option>
-          ))}
-        </select>
-        
-        <Button type="submit" variant="outline">
-          <Filter className="mr-2 h-4 w-4" /> Filtrer
-        </Button>
-      </form>
+      )}
 
       {/* Affichage des résultats */}
-      {loading && seriesList.length === 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-shimmer aspect-[2/3]"></div>
-          ))}
+      {!loading && seriesList.length === 0 ? (
+        <div className="text-center py-12">
+          <Tv className="h-12 w-12 mx-auto mb-4 text-gray-500" />
+          <h2 className="text-xl font-semibold mb-2">Aucune série trouvée</h2>
+          <p className="text-gray-400 mb-6">
+            Aucune série ne correspond à vos critères de recherche.
+          </p>
+          <Button onClick={resetFilters}>
+            Voir toutes les séries
+          </Button>
         </div>
-      ) : seriesList.length > 0 ? (
+      ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {seriesList.map((series) => (
-              <Link 
+              <SeriesCard 
                 key={series.id} 
-                href={`/series/${series.id}`} 
-                className="group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg"
-              >
-                <div className="relative aspect-[2/3]">
-                  <img
-                    src={series.posterUrl || '/placeholder-poster.png'}
-                    alt={`Affiche de ${series.title}`}
-                    className="w-full h-full object-cover"
-                  />
-                  {series.isVIP && (
-                    <div className="absolute top-2 right-2">
-                      <VipBadge />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Tv className="h-12 w-12 text-white" />
-                  </div>
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold truncate text-sm">{series.title}</h3>
-                  <div className="flex justify-between items-center mt-1 text-xs text-gray-400">
-                    <span>{series.startYear}{series.endYear ? ` - ${series.endYear}` : ''}</span>
-                    {series.rating && (
-                      <span className="flex items-center">
-                        <Star className="h-3 w-3 text-yellow-500 mr-1 fill-current" />
-                        {series.rating.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+                series={series} 
+                isUserVIP={isVIP}
+              />
             ))}
           </div>
           
@@ -191,31 +236,58 @@ export default function SeriesPage() {
             </div>
           )}
         </>
-      ) : (
-        <div className="text-center py-16 bg-gray-800 rounded-lg">
-          <Tv className="h-16 w-16 mx-auto mb-6 text-gray-600" />
-          <h2 className="text-2xl font-semibold mb-2">Aucune série trouvée</h2>
-          <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            {searchTerm 
-              ? `Aucune série ne correspond à votre recherche "${searchTerm}".`
-              : genreFilter 
-                ? "Aucune série trouvée pour ce genre."
-                : "Aucune série disponible pour le moment."
-            }
-          </p>
-          {(searchTerm || genreFilter) && (
-            <Button 
-              onClick={() => {
-                setSearchTerm('');
-                setGenreFilter(null);
-                loadSeries();
-              }}
-            >
-              Réinitialiser les filtres
-            </Button>
-          )}
-        </div>
       )}
     </div>
+  );
+}
+
+interface SeriesCardProps {
+  series: Series;
+  isUserVIP: boolean;
+}
+
+function SeriesCard({ series, isUserVIP }: SeriesCardProps) {
+  const { id, title, posterUrl, startYear, endYear, rating, isVIP } = series;
+  
+  // Fallback pour le poster
+  const posterSrc = posterUrl || '/placeholder-poster.png';
+  
+  return (
+    <Link 
+      href={`/series/${id}`}
+      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
+        isVIP && !isUserVIP ? 'opacity-70' : ''
+      }`}
+    >
+      <div className="relative aspect-[2/3]">
+        <img
+          src={posterSrc}
+          alt={`Affiche de ${title}`}
+          className="w-full h-full object-cover"
+        />
+        {isVIP && (
+          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+            VIP
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <Tv className="h-12 w-12 text-white" />
+        </div>
+      </div>
+      <div className="p-3">
+        <div className="flex justify-between items-start">
+          <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
+          {rating && (
+            <div className="flex items-center ml-2">
+              <Star className="h-3 w-3 text-yellow-400 fill-current" />
+              <span className="text-xs ml-0.5">{rating.toFixed(1)}</span>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-gray-400">
+          {startYear}{endYear ? ` - ${endYear}` : ''}
+        </p>
+      </div>
+    </Link>
   );
 }
