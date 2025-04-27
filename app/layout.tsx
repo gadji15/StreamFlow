@@ -1,17 +1,17 @@
-import "./globals.css"; // Assurez-vous que ce fichier existe et est correct
+import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import { Inter } from 'next/font/google'; // Exemple de police, adaptez si nécessaire
-import { ThemeProvider } from "@/components/theme-provider"; // Vérifiez l'existence et l'export
-import Header from "@/components/header"; // Vérifiez l'existence et l'export
-import Footer from "@/components/footer"; // Vérifiez l'existence et l'export
-import ScrollToTop from "@/components/scroll-to-top"; // Vérifiez l'existence et l'export
-import { ToastProvider } from "@/components/ui/toaster"; // Vérifiez l'existence et l'export
-import PWAInstallPrompt from "@/components/pwa-install-prompt"; // Vérifiez l'existence et l'export
-import PWAUpdatePrompt from "@/components/pwa-update-prompt"; // Vérifiez l'existence et l'export
-import ConnectivityIndicator from "@/components/connectivity-indicator"; // Vérifiez l'existence et l'export
-import { AuthProvider } from "@/hooks/use-auth"; // Vérifiez l'existence et l'export (doit être use-auth.tsx)
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from "@/components/theme-provider";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import ScrollToTop from "@/components/scroll-to-top";
+import { ToastProvider } from "@/components/ui/toaster";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
+import PWAUpdatePrompt from "@/components/pwa-update-prompt";
+import ConnectivityIndicator from "@/components/connectivity-indicator";
+import { AuthProvider } from "@/hooks/use-auth";
 
-const inter = Inter({ subsets: ['latin'] }); // Exemple de configuration de police
+const inter = Inter({ subsets: ['latin'] });
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "StreamFlow",
-    statusBarStyle: "default", // ou 'black-translucent'
+    statusBarStyle: "default",
   },
   openGraph: {
     title: "StreamFlow - Plateforme de streaming Films et Séries",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     siteName: 'StreamFlow',
     images: [
       {
-        url: '/og-image.png', // Créez cette image (1200x630)
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Logo StreamFlow',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "StreamFlow - Plateforme de streaming Films et Séries",
     description: "Regardez des films et séries en ligne sur StreamFlow.",
-    images: ['/og-image.png'], // Doit être une URL absolue en production
+    images: ['/og-image.png'],
   },
 };
 
@@ -68,13 +68,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }, // Adaptez à votre couleur de fond dark
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
   ],
   colorScheme: 'dark light',
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  viewportFit: 'cover', // Pour PWA sur appareils mobiles
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -88,18 +88,17 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark" // Thème par défaut
-            enableSystem // Permettre de suivre le thème système
-            disableTransitionOnChange // Désactiver les transitions lors du changement de thème
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
           >
             <ToastProvider>
               <Header />
-              <main className="flex-1 pt-16 md:pt-20"> {/* Ajuster padding top selon hauteur header */}
+              <main className="flex-1 pt-16 md:pt-20">
                 {children}
               </main>
               <Footer />
               <ScrollToTop />
-              {/* Composants PWA globaux */}
               <PWAInstallPrompt />
               <PWAUpdatePrompt />
               <ConnectivityIndicator />
