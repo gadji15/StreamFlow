@@ -41,41 +41,26 @@ cd streamflow
 pnpm install
 ```
 
-3. Créez un fichier `.env.local` avec les variables d'environnement suivantes:
+3. Créez un fichier `.env.local` à partir du modèle
+```bash
+cp .env.example .env.local
+```
+
+4. Modifiez le fichier `.env.local` avec vos propres valeurs:
 ```
 # Firebase
 NEXT_PUBLIC_FIREBASE_API_KEY=xxx
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
-NEXT_PUBLIC_FIREBASE_APP_ID=xxx
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=xxx
-
-# Firebase Admin (pour les routes API)
-FIREBASE_ADMIN_CLIENT_EMAIL=xxx
-FIREBASE_ADMIN_PRIVATE_KEY=xxx
-FIREBASE_ADMIN_PROJECT_ID=xxx
-
-# TMDB API (pour les données de films)
-NEXT_PUBLIC_TMDB_API_KEY=xxx
-TMDB_API_KEY=xxx
-
-# Cloudinary (pour le stockage d'images)
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=xxx
-NEXT_PUBLIC_CLOUDINARY_API_KEY=xxx
-CLOUDINARY_API_SECRET=xxx
-
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# ... autres variables
 ```
 
-4. Lancez le serveur de développement
+5. Lancez le serveur de développement
 ```bash
 pnpm dev
 ```
 
-5. Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur
+6. Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur
 
 ### Commandes disponibles
 
