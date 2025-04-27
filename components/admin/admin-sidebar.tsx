@@ -1,139 +1,198 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { 
-  Home, 
-  Film, 
-  Tv, 
-  Users, 
-  Settings, 
-  LogOut, 
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Film,
+  Tv,
+  Users,
+  Settings,
+  Activity,
+  ChevronDown,
+  PlusSquare,
+  ListChecks,
+  ExternalLink,
+  HelpCircle,
+  Bell,
+  Tv2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default function AdminSidebar() {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [adminRole, setAdminRole] = useState<string | null>(null)
+interface NavItemProps {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  isActive: boolean;
+  hasDropdown?: boolean;
+  isOpen?: boolean;
+  onClick?: () => void;
+}
 
-  useEffect(() => {
-    // Récupérer le rôle d'administrateur depuis le localStorage
-    const role = localStorage.getItem("adminRole")
-    setAdminRole(role)
-  }, [])
-
-  const navItems = [
-    {
-      title: "Tableau de bord",
-      href: "/admin",
-      icon: <Home size={20} />,
-      roles: ["admin", "super_admin", "content_manager"]
-    },
-    {
-      title: "Films",
-      href: "/admin/films",
-      icon: <Film size={20} />,
-      roles: ["admin", "super_admin", "content_manager"]
-    },
-    {
-      title: "Séries",
-      href: "/admin/series",
-      icon: <Tv size={20} />,
-      roles: ["admin", "super_admin", "content_manager"]
-    },
-    {
-      title: "Utilisateurs",
-      href: "/admin/users",
-      icon: <Users size={20} />,
-      roles: ["admin", "super_admin"]
-    },
-    {
-      title: "Paramètres",
-      href: "/admin/settings",
-      icon: <Settings size={20} />,
-      roles: ["super_admin"]
-    }
-  ]
-
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated")
-    localStorage.removeItem("adminEmail")
-    localStorage.removeItem("adminRole")
-    window.location.href = "/admin/auth/login"
-  }
-
+function NavItem({ href, icon, title, isActive, hasDropdown, isOpen, onClick }: NavItemProps) {
   return (
-    <div 
+    <Link 
+      href={href}
+      onClick={onClick}
       className={cn(
-        "bg-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col z-50",
-        collapsed ? "w-16" : "w-60"
+        "flex items-center py-2 px-3 rounded-md mb-1 transition-colors",
+        isActive 
+          ? "bg-primary/10 text-primary" 
+          : "text-gray-400 hover:text-white hover:bg-gray-800"
       )}
     >
-      {/* En-tête du Sidebar */}
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-        {!collapsed && (
-          <Link href="/admin" className="font-bold text-lg bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
-            StreamFlow
-          </Link>
-        )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-gray-400 hover:text-white"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </Button>
+      {icon}
+      <span className="ml-3 flex-1">{title}</span>
+      {hasDropdown && (
+        <ChevronDown className={cn(
+          "h-4 w-4 transition-transform",
+          isOpen ? "transform rotate-180" : ""
+        )} />
+      )}
+    </Link>
+  );
+}
+
+export default function AdminSidebar() {
+  const pathname = usePathname();
+  const [filmsOpen, setFilmsOpen] = useState(pathname?.startsWith('/admin/films'));
+  const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
+  
+  return (
+    <div className="w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block">
+      <div className="p-6">
+        <Link href="/admin" className="flex items-center">
+          <h1 className="text-xl font-bold">StreamFlow Admin</h1>
+        </Link>
       </div>
       
-      {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <ul className="space-y-1 px-2">
-          {navItems.map((item) => {
-            // Vérifier si l'utilisateur a le rôle requis pour voir cet élément
-            if (!adminRole || !item.roles.includes(adminRole)) {
-              return null
-            }
-            
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-2 rounded-md transition-colors",
-                    pathname === item.href
-                      ? "bg-primary/20 text-primary"
-                      : "text-gray-400 hover:text-white hover:bg-gray-800",
-                    collapsed && "justify-center"
-                  )}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  {!collapsed && <span>{item.title}</span>}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-      
-      {/* Pied du Sidebar */}
-      <div className="p-4 border-t border-gray-800">
-        <button
-          onClick={handleLogout}
-          className={cn(
-            "flex items-center px-3 py-2 w-full rounded-md text-gray-400 hover:text-white hover:bg-gray-800 transition-colors",
-            collapsed && "justify-center"
+      <nav className="px-3 py-2">
+        <div className="mb-6">
+          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">General</p>
+          
+          <NavItem
+            href="/admin"
+            icon={<LayoutDashboard className="h-5 w-5" />}
+            title="Tableau de bord"
+            isActive={pathname === '/admin'}
+          />
+          
+          <NavItem
+            href="/admin/activity-logs"
+            icon={<Activity className="h-5 w-5" />}
+            title="Journaux d'activité"
+            isActive={pathname === '/admin/activity-logs'}
+          />
+          
+          <NavItem
+            href="/admin/users"
+            icon={<Users className="h-5 w-5" />}
+            title="Utilisateurs"
+            isActive={pathname === '/admin/users'}
+          />
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Contenu</p>
+          
+          <NavItem
+            href="#"
+            icon={<Film className="h-5 w-5" />}
+            title="Films"
+            isActive={pathname?.startsWith('/admin/films')}
+            hasDropdown={true}
+            isOpen={filmsOpen}
+            onClick={() => setFilmsOpen(!filmsOpen)}
+          />
+          
+          {filmsOpen && (
+            <div className="ml-4 pl-2 border-l border-gray-800">
+              <NavItem
+                href="/admin/films"
+                icon={<ListChecks className="h-4 w-4" />}
+                title="Liste des films"
+                isActive={pathname === '/admin/films'}
+              />
+              <NavItem
+                href="/admin/films/add"
+                icon={<PlusSquare className="h-4 w-4" />}
+                title="Ajouter un film"
+                isActive={pathname === '/admin/films/add'}
+              />
+            </div>
           )}
-        >
-          <LogOut size={20} className="mr-3" />
-          {!collapsed && <span>Déconnexion</span>}
-        </button>
-      </div>
+          
+          <NavItem
+            href="#"
+            icon={<Tv className="h-5 w-5" />}
+            title="Séries"
+            isActive={pathname?.startsWith('/admin/series')}
+            hasDropdown={true}
+            isOpen={seriesOpen}
+            onClick={() => setSeriesOpen(!seriesOpen)}
+          />
+          
+          {seriesOpen && (
+            <div className="ml-4 pl-2 border-l border-gray-800">
+              <NavItem
+                href="/admin/series"
+                icon={<ListChecks className="h-4 w-4" />}
+                title="Liste des séries"
+                isActive={pathname === '/admin/series'}
+              />
+              <NavItem
+                href="/admin/series/add"
+                icon={<PlusSquare className="h-4 w-4" />}
+                title="Ajouter une série"
+                isActive={pathname === '/admin/series/add'}
+              />
+            </div>
+          )}
+          
+          <NavItem
+            href="/admin/episodes"
+            icon={<Tv2 className="h-5 w-5" />}
+            title="Épisodes"
+            isActive={pathname === '/admin/episodes'}
+          />
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Système</p>
+          
+          <NavItem
+            href="/admin/settings"
+            icon={<Settings className="h-5 w-5" />}
+            title="Paramètres"
+            isActive={pathname === '/admin/settings'}
+          />
+          
+          <NavItem
+            href="/admin/notifications"
+            icon={<Bell className="h-5 w-5" />}
+            title="Notifications"
+            isActive={pathname === '/admin/notifications'}
+          />
+          
+          <NavItem
+            href="/admin/help"
+            icon={<HelpCircle className="h-5 w-5" />}
+            title="Aide & Support"
+            isActive={pathname === '/admin/help'}
+          />
+        </div>
+        
+        <div className="mt-8 px-3">
+          <Link 
+            href="/"
+            className="flex items-center text-sm text-gray-400 hover:text-white"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Voir le site
+          </Link>
+        </div>
+      </nav>
     </div>
-  )
+  );
 }
