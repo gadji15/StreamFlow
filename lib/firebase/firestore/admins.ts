@@ -121,3 +121,30 @@ export async function updateAdminLastLogin(id: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Vérifie si un utilisateur est admin
+ */
+export async function verifyAdmin(userId: string): Promise<{ isAdmin: boolean; role?: string }> {
+  try {
+    const adminDoc = await getDoc(doc(firestore, "admins", userId));
+    
+    if (!adminDoc.exists()) {
+      return { isAdmin: false };
+    }
+    
+    const adminData = adminDoc.data();
+    
+    if (!adminData.isActive) {
+      return { isAdmin: false };
+    }
+    
+    return { 
+      isAdmin: true,
+      role: adminData.role
+    };
+  } catch (error) {
+    console.error(`Erreur lors de la vérification admin pour ${userId}:`, error);
+    return { isAdmin: false };
+  }
+}

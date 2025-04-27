@@ -146,6 +146,9 @@ export async function getMovieById(id: string): Promise<Movie | null> {
   }
 }
 
+// Alias pour la compatibilité
+export const getMovie = getMovieById;
+
 /**
  * Ajoute un nouveau film
  */
@@ -264,6 +267,77 @@ export async function getMovieGenres(): Promise<Genre[]> {
     }));
   } catch (error) {
     console.error("Erreur lors de la récupération des genres:", error);
+    return [];
+  }
+}
+
+/**
+ * Récupère les films populaires (basé sur le nombre de vues)
+ */
+export async function getPopularMovies(count: number = 10, includeVIP: boolean = true): Promise<Movie[]> {
+  try {
+    let constraints = [
+      where("isPublished", "==", true),
+      orderBy("views", "desc"),
+      limit(count)
+    ];
+    
+    // Si on ne veut pas inclure les films VIP
+    if (!includeVIP) {
+      constraints.splice(1, 0, where("isVIP", "==", false));
+    }
+    
+    const popularMoviesQuery = query(
+      collection(firestore, "movies"),
+      ...constraints
+    );
+    
+    const snapshot = await getDocs(popularMoviesQuery);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate(),
+      updatedAt: doc.data().updatedAt?.toDate()
+    } as Movie));
+  } catch (error) {
+    console.error("Erreur lors de la récupération des films populaires:", error);
+    return [];
+  }
+}
+
+/**
+ * Récupère les films par genre
+ */
+export async function getMoviesByGenre(genreId: string, count: number = 10, includeVIP: boolean = true): Promise<Movie[]> {
+  try {
+    let constraints = [
+      where("isPublished", "==", true),
+      where("genre", "array-contains", genreId),
+      orderBy("createdAt", "desc"),
+      limit(count)
+    ];
+    
+    // Si on ne veut pas inclure les films VIP
+    if (!includeVIP) {
+      constraints.splice(2, 0, where("isVIP", "==", false));
+    }
+    
+    const genreMoviesQuery = query(
+      collection(firestore, "movies"),
+      ...constraints
+    );
+    
+    const snapshot = await getDocs(genreMoviesQuery);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate(),
+      updatedAt: doc.data().updatedAt?.toDate()
+    } as Movie));
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des films du genre ${genreId}:`, error);
     return [];
   }
 }

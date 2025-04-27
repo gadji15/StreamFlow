@@ -70,7 +70,12 @@ export default function PaiementPage() {
       // Appeler la fonction de mise à niveau VIP
       const result = await upgradeToVIP(
         user.uid,
-        selectedPlan,
+        {
+          planId: selectedPlan.id,
+          planName: selectedPlan.name,
+          durationMonths: selectedPlan.durationMonths,
+          price: selectedPlan.price
+        },
         { method: paymentMethod, timestamp: new Date() }
       );
       

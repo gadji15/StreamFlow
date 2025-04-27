@@ -36,15 +36,20 @@ export const authOptions = {
   debug: process.env.NODE_ENV === "development",
 };
 
-// Ajouter la fonction upgradeToVIP manquante
+// Interface pour le plan d'abonnement
+interface VIPPlanDetails {
+  planId: string;
+  planName: string;
+  durationMonths: number;
+  price: number;
+}
+
+/**
+ * Mise à niveau d'un utilisateur vers le statut VIP
+ */
 export async function upgradeToVIP(
   userId: string,
-  planDetails: {
-    planId: string;
-    planName: string;
-    durationMonths: number;
-    price: number;
-  },
+  planDetails: VIPPlanDetails,
   paymentDetails: any
 ) {
   try {
