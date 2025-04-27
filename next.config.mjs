@@ -32,6 +32,21 @@ const nextConfig = {
       }
     ],
   },
+  compress: true,
+  
+  headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: 'block' },
+        ],
+      },
+    ];
+  },
+  
   // Option pour ignorer les erreurs TypeScript pendant le build (temporaire)
   // typescript: {
   //   ignoreBuildErrors: true,
