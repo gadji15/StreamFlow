@@ -216,7 +216,6 @@ interface FilmCardProps {
 }
 
 function FilmCard({ movie, isUserVIP }: FilmCardProps) {
-  // Adapter l'accès aux propriétés en fonction de la structure de l'objet Movie de films.ts
   const { id, title, poster, releaseYear, rating, isVIP } = movie;
   
   // Fallback pour le poster
