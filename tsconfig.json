@@ -1,43 +1,35 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
-    "target": "ES2017",
+    "target": "es5", // Cible ES5 pour compatibilité navigateur
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true, // Autoriser les fichiers JS
+    "skipLibCheck": true, // Ignorer la vérification des types des bibliothèques
+    "strict": true, // Activer toutes les vérifications strictes
+    "forceConsistentCasingInFileNames": true, // Assurer la cohérence de la casse des noms de fichiers
+    "noEmit": true, // Ne pas émettre de fichiers JS (Next.js s'en charge)
+    "esModuleInterop": true, // Permettre l'interopérabilité avec les modules CommonJS
+    "module": "esnext", // Utiliser le système de modules ESNext
+    "moduleResolution": "bundler", // Mode de résolution des modules moderne
+    "resolveJsonModule": true, // Permettre l'importation de fichiers JSON
+    "isolatedModules": true, // Chaque fichier est traité comme un module séparé
+    "jsx": "preserve", // Conserver le JSX pour traitement par Next.js/React
+    "incremental": true, // Activer la compilation incrémentale
     "plugins": [
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@/*": ["./*"] // Alias de chemin pour les imports
+    },
+    "types": ["node", "@types/react", "@types/react-dom"] // Inclure les types Node et React explicitement
   },
   "include": [
+    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "next-env.d.ts",
-    "src/types.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts", // Important pour les types générés par Next.js App Router
+    "types.d.ts" // Inclure les déclarations personnalisées si elles existent
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"] // Exclure le dossier node_modules
 }

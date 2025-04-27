@@ -1,94 +1,65 @@
-import withPWA from 'next-pwa';
+import withPWAInit from 'next-pwa';
 
-// Configuration PWA améliorée
+/** @type {import('next-pwa').PWAConfig} */
 const pwaConfig = {
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  sw: '/sw-custom.js', // Utiliser notre service worker personnalisé
-  buildExcludes: [/middleware-manifest\.json$/],
-  // Configurer les routes à précacher
-  publicExcludes: [
-    '!*.png',
-    '!*.jpg',
-    '!*.svg',
-    '!favicon.ico',
-    '!sw-custom.js',
-  ],
-  // Configuration du mode hors ligne
-  fallbacks: {
-    // Spécifier une page hors ligne personnalisée
-    document: '/offline',
-    // Fallback pour les images (image vide/placeholder)
-    image: '/images/fallback.png',
-  },
+  // Vous pouvez ajouter d'autres configurations PWA ici si nécessaire
+  // runtimeCaching: [...] // Décommenter pour des stratégies de cache personnalisées
 };
 
-// Configuration Next.js
+const withPWA = withPWAInit(pwaConfig);
+
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
-  // Pour ignorer temporairement les erreurs de type pendant le build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Configuration d'images
   images: {
-    domains: [
-      'res.cloudinary.com',
-      'firebasestorage.googleapis.com'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      // Ajoutez d'autres domaines si nécessaire (ex: pour les avatars)
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com', // Pour Google Sign-In Avatars
+      }
     ],
-    // Formats d'image optimisés
-    formats: ['image/avif', 'image/webp'],
   },
-  
-  // Important pour les packages avec modules Node.js côté serveur
-  serverExternalPackages: ['cloudinary'],
-  
-  // En-têtes pour améliorer la sécurité et le cache
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: 'block' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        ],
-      },
-      {
-        // Mise en cache des ressources statiques
-        source: '/(images|icons|fonts)/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-    ];
-  },
-  
-  // Webpack config pour gérer les imports de modules Node.js côté client
+  // Option pour ignorer les erreurs TypeScript pendant le build (temporaire)
+  // typescript: {
+  //   ignoreBuildErrors: true,
+  // },
+  // Option pour ignorer les erreurs ESLint pendant le build (temporaire)
+  // eslint: {
+  //   ignoreDuringBuilds: true,
+  // },
   webpack: (config, { isServer }) => {
+    // Exclure certains modules Node.js du bundle client
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        path: false,
-        os: false,
-        crypto: false,
         net: false,
         tls: false,
         child_process: false,
       };
     }
+
+    // Important pour éviter les erreurs avec Cloudinary côté serveur
+    config.externals = config.externals || [];
+    config.externals.push('cloudinary');
+
     return config;
-  }
+  },
+  // Déplacé hors de 'experimental' pour Next.js 14+
+  serverExternalPackages: ['cloudinary'],
 };
 
-// Export avec PWA activé
-export default withPWA(pwaConfig)(nextConfig);
+export default withPWA(nextConfig);
