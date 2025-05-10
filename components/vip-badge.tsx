@@ -4,7 +4,8 @@ import { Sparkles } from 'lucide-react';
 // Version optimisée du badge VIP
 export function VipBadge({ size = 'default', variant = 'default' }) {
   // Utilisation d'une image Cloudinary pour le badge VIP
-  const badgeUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/v1/streamflow/badges/vip-badge`;
+  // TODO : Remplacer l’URL par celle de Supabase Storage
+const badgeUrl = 'https://<project-ref>.supabase.co/storage/v1/object/public/images/vip-badge.png';
   
   // Tailles disponibles
   const sizeClasses = {

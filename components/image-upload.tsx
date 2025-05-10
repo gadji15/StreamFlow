@@ -68,7 +68,7 @@ export default function ImageUpload({
       const base64 = await toBase64(file);
       
       // Appeler l'API
-      const response = await fetch('/api/cloudinary/upload', {
+      const response = await fetch('/api/upload-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

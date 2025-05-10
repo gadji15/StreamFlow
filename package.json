@@ -41,8 +41,7 @@
     "@t3-oss/env-nextjs": "^0.13.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
-    "cloudinary": "^2.6.0",
-    "cloudinary-react": "^1.8.1",
+    
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "^4.1.0",
