@@ -1,92 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import LoadingScreen from '@/components/loading-screen';
 
-type AuthGuardProps = {
+interface AuthGuardProps {
   children: React.ReactNode;
-  requiredRole?: 'user' | 'vip' | 'admin' | 'super_admin';
-  loginPath?: string;
-  redirectIfAuthenticated?: boolean;
-  redirectPath?: string;
-};
+  requireVIP?: boolean;
+}
 
-export default function AuthGuard({
-  children,
-  requiredRole = 'user',
-  loginPath = '/login',
-  redirectIfAuthenticated = false,
-  redirectPath = '/'
-}: AuthGuardProps) {
-  const { user, loading, isAdmin, isVIP, userData } = useAuth();
+export default function AuthGuard({ children, requireVIP = false }: AuthGuardProps) {
+  const { isLoading, isLoggedIn, isVIP } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [authorized, setAuthorized] = useState(false);
-  const [checking, setChecking] = useState(true);
-
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  
   useEffect(() => {
-    // Fonction pour vérifier l'autorisation
-    const checkAuth = () => {
-      if (loading) return;
-
-      // Si la redirection est activée et que l'utilisateur est connecté
-      if (redirectIfAuthenticated && user) {
-        router.push(redirectPath);
-        return;
+    if (!isLoading) {
+      if (!isLoggedIn) {
+        // Mémoriser la page que l'utilisateur essayait d'atteindre
+        sessionStorage.setItem('redirectAfterLogin', pathname);
+        router.push('/login?redirect=' + encodeURIComponent(pathname));
+      } else if (requireVIP && !isVIP) {
+        // Rediriger vers la page d'abonnement VIP si l'accès VIP est requis
+        router.push('/vip?from=' + encodeURIComponent(pathname));
+      } else {
+        setIsAuthChecked(true);
       }
-
-      // Si l'accès requiert l'authentification et que l'utilisateur n'est pas connecté
-      if (!redirectIfAuthenticated && !user) {
-        // Rediriger vers la page de connexion avec un retour à la page actuelle
-        router.push(`${loginPath}?returnUrl=${encodeURIComponent(pathname)}`);
-        return;
-      }
-
-      // Vérifier le rôle requis
-      if (!redirectIfAuthenticated && user) {
-        if (requiredRole === 'super_admin' && userData?.role !== 'super_admin') {
-          router.push('/403');
-          return;
-        }
-        
-        if (requiredRole === 'admin' && !isAdmin) {
-          router.push('/403');
-          return;
-        }
-        
-        if (requiredRole === 'vip' && !isVIP && !isAdmin) {
-          router.push('/vip');
-          return;
-        }
-      }
-
-      // Tout est OK, autorisé
-      setAuthorized(true);
-      setChecking(false);
-    };
-
-    checkAuth();
-  }, [
-    user, 
-    loading, 
-    isAdmin, 
-    isVIP, 
-    userData, 
-    requiredRole, 
-    redirectIfAuthenticated,
-    router, 
-    pathname, 
-    loginPath, 
-    redirectPath
-  ]);
-
+    }
+  }, [isLoading, isLoggedIn, isVIP, requireVIP, router, pathname]);
+  
   // Afficher un écran de chargement pendant la vérification
-  if (checking || loading) {
-    return <LoadingScreen />;
+  if (isLoading || !isAuthChecked) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
-
-  // Rendre les enfants seulement si l'accès est autorisé
-  return authorized ? <>{children}</> : null;
+  
+  // Si l'authentification est vérifiée et valide, afficher le contenu
+  return <>{children}</>;
 }

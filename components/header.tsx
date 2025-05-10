@@ -1,148 +1,324 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, User, Bell, Download } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { useMediaQuery } from "@/hooks/use-media-query";
-
-// Simuler un état connecté (à remplacer par votre système d'authentification)
-const isLoggedIn = false;
-const isUserVIP = false;
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Menu, X, User, Film, Tv, Search, Bell, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ModeToggle } from '@/components/mode-toggle';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  
-  // Effet de défilement pour changer l'apparence de l'en-tête
+  const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useAuth();
+
+  // Gérer le scroll pour changer l'apparence du header
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (window.scrollY > 10) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
     };
-    
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Définir les liens de navigation
-  const navLinks = [
-    { href: "/", label: "Accueil" },
-    { href: "/films", label: "Films" },
-    { href: "/series", label: "Séries" },
-    { href: "/categories", label: "Catégories" },
-    { href: "/mobile", label: "Application Mobile", icon: Download },
-    { href: "/exclusif", label: "VIP", isVIPLink: true }
-  ];
+  // Fermer le menu lorsqu'on navigue
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+  
+  // Gérer la déconnexion
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // La redirection est gérée dans useAuth
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    }
+  };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-      isScrolled ? "bg-gray-900/95 backdrop-blur shadow-md" : "bg-transparent"
+    <header className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
+      scrolled ? 'bg-black/90 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
     }`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold">
-            <span className="bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-              StreamFlow
-            </span>
+          <Link href="/" className="flex items-center">
+            <span className="text-xl font-bold">StreamFlow</span>
           </Link>
-          
-          {/* Navigation sur desktop */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {navLinks.map((link) => (
-              !link.isVIPLink || (link.isVIPLink && isUserVIP) ? (
-                <Link 
-                  key={link.href}
-                  href={link.href} 
-                  className={`transition-colors ${
-                    pathname === link.href 
-                      ? "text-white font-medium" 
-                      : "text-gray-300 hover:text-white"
-                  } ${link.isVIPLink ? "text-amber-400" : ""}`}
-                >
-                  {link.icon && <link.icon className="inline mr-1 h-4 w-4" />}
-                  {link.label}
-                </Link>
-              ) : null
-            ))}
-          </nav>
-          
-          {/* Actions utilisateur */}
-          <div className="flex items-center space-x-4">
-            {/* Bouton thème */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-full hover:bg-gray-800"
-              aria-label="Changer de thème"
+
+          {/* Navigation principale - Desktop */}
+          <nav className="hidden md:flex space-x-6">
+            <Link
+              href="/films"
+              className={`hover:text-white ${pathname === '/films' ? 'text-white' : 'text-gray-300'}`}
             >
-              {theme === "dark" ? (
-                <span>🌙</span>
-              ) : (
-                <span>☀️</span>
-              )}
-            </button>
-            
-            {/* Login/Profil */}
-            {isLoggedIn ? (
-              <div className="flex items-center space-x-3">
-                <button 
-                  className="p-2 rounded-full hover:bg-gray-800"
-                  aria-label="Notifications"
-                >
-                  <Bell size={20} />
-                </button>
-                <button 
-                  className="p-2 rounded-full hover:bg-gray-800"
-                  aria-label="Profil"
-                >
-                  <User size={20} />
-                </button>
-              </div>
-            ) : (
+              Films
+            </Link>
+            <Link
+              href="/series"
+              className={`hover:text-white ${pathname === '/series' ? 'text-white' : 'text-gray-300'}`}
+            >
+              Séries
+            </Link>
+            <Link
+              href="/categories"
+              className={`hover:text-white ${pathname === '/categories' ? 'text-white' : 'text-gray-300'}`}
+            >
+              Catégories
+            </Link>
+            <Link
+              href="/nouveates"
+              className={`hover:text-white ${pathname === '/nouveates' ? 'text-white' : 'text-gray-300'}`}
+            >
+              Nouveautés
+            </Link>
+            {isVIP && (
               <Link
-                href="/login"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+                href="/exclusif"
+                className="text-amber-400 hover:text-amber-300 flex items-center"
               >
-                Connexion
+                <Sparkles className="w-4 h-4 mr-1" />
+                Exclusif
               </Link>
             )}
+          </nav>
+
+          {/* Actions - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link href="/search">
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+            </Link>
             
-            {/* Menu mobile */}
-            <button
-              className="md:hidden p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Menu"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {isLoggedIn ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative rounded-full h-8 w-8 p-0">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={userData?.photoURL || ''} alt={userData?.displayName || ''} />
+                        <AvatarFallback>
+                          {userData?.displayName?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isVIP && (
+                        <span className="absolute -top-1 -right-1 bg-amber-400 rounded-full w-3 h-3 border-2 border-background"></span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>
+                      {userData?.displayName || 'Utilisateur'}
+                      {isVIP && <span className="ml-1 text-amber-400">(VIP)</span>}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/mon-compte">Mon compte</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/mon-compte/historique">Historique</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/mon-compte/favoris">Favoris</Link>
+                    </DropdownMenuItem>
+                    {!isVIP && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/vip" className="text-amber-400">Devenir VIP</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">Administration</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Se déconnecter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost">Connexion</Button>
+                </Link>
+                <Link href="/inscription">
+                  <Button>S'inscrire</Button>
+                </Link>
+              </>
+            )}
+            
+            <ModeToggle />
+          </div>
+
+          {/* Menu mobile - bouton */}
+          <div className="flex items-center md:hidden">
+            <Link href="/search" className="mr-2">
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+            </Link>
+            
+            <Button variant="ghost" size="icon" onClick={() => setNavOpen(!navOpen)}>
+              {navOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
           </div>
         </div>
       </div>
-      
-      {/* Navigation mobile */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-gray-900 border-t border-gray-800">
-          <div className="container mx-auto px-4 py-2">
-            <nav className="flex flex-col space-y-3 py-4">
-              {navLinks.map((link) => (
-                !link.isVIPLink || (link.isVIPLink && isUserVIP) ? (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-4 py-2 rounded hover:bg-gray-800 ${
-                      pathname === link.href ? "bg-gray-800" : ""
-                    } ${link.isVIPLink ? "text-amber-400" : ""}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.icon && <link.icon className="inline mr-2 h-4 w-4" />}
-                    {link.label}
-                  </Link>
-                ) : null
-              ))}
+
+      {/* Menu mobile - contenu */}
+      {navOpen && (
+        <div className="md:hidden bg-background border-t border-gray-800">
+          <div className="container mx-auto px-4 py-4">
+            <nav className="space-y-4">
+              <Link
+                href="/films"
+                className="block py-2 hover:text-white"
+                onClick={() => setNavOpen(false)}
+              >
+                <div className="flex items-center">
+                  <Film className="mr-2 h-5 w-5" />
+                  Films
+                </div>
+              </Link>
+              <Link
+                href="/series"
+                className="block py-2 hover:text-white"
+                onClick={() => setNavOpen(false)}
+              >
+                <div className="flex items-center">
+                  <Tv className="mr-2 h-5 w-5" />
+                  Séries
+                </div>
+              </Link>
+              <Link
+                href="/categories"
+                className="block py-2 hover:text-white"
+                onClick={() => setNavOpen(false)}
+              >
+                Catégories
+              </Link>
+              <Link
+                href="/nouveates"
+                className="block py-2 hover:text-white"
+                onClick={() => setNavOpen(false)}
+              >
+                Nouveautés
+              </Link>
+              {isVIP && (
+                <Link
+                  href="/exclusif"
+                  className="block py-2 text-amber-400 hover:text-amber-300"
+                  onClick={() => setNavOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Contenu exclusif
+                  </div>
+                </Link>
+              )}
+              
+              <div className="border-t border-gray-800 pt-4 mt-4">
+                {isLoggedIn ? (
+                  <>
+                    <Link
+                      href="/mon-compte"
+                      className="block py-2 hover:text-white"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      <div className="flex items-center">
+                        <User className="mr-2 h-5 w-5" />
+                        Mon compte {isVIP && <span className="ml-1 text-amber-400">(VIP)</span>}
+                      </div>
+                    </Link>
+                    <Link
+                      href="/mon-compte/historique"
+                      className="block py-2 hover:text-white"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      Historique
+                    </Link>
+                    <Link
+                      href="/mon-compte/favoris"
+                      className="block py-2 hover:text-white"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      Favoris
+                    </Link>
+                    {!isVIP && (
+                      <Link
+                        href="/vip"
+                        className="block py-2 text-amber-400 hover:text-amber-300"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        Devenir VIP
+                      </Link>
+                    )}
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="block py-2 hover:text-white"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        Administration
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setNavOpen(false);
+                      }}
+                      className="block w-full text-left py-2 hover:text-white"
+                    >
+                      Se déconnecter
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block py-2 hover:text-white"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      Connexion
+                    </Link>
+                    <Link
+                      href="/inscription"
+                      className="block py-2 hover:text-white"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      S'inscrire
+                    </Link>
+                  </>
+                )}
+                
+                <div className="flex items-center justify-between mt-4">
+                  <span>Thème</span>
+                  <ModeToggle />
+                </div>
+              </div>
             </nav>
           </div>
         </div>
