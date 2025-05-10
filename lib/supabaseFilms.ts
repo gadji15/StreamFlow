@@ -12,6 +12,9 @@ export type Movie = {
   popularity?: number;
 };
 
+/**
+ * Récupère tous les films (du plus récent au plus ancien)
+ */
 export async function getFilms(): Promise<Movie[]> {
   const { data, error } = await supabase
     .from('films')
@@ -24,6 +27,9 @@ export async function getFilms(): Promise<Movie[]> {
   return data || [];
 }
 
+/**
+ * Récupère un film par son ID
+ */
 export async function getFilmById(id: string): Promise<Movie | null> {
   const { data, error } = await supabase
     .from('films')
@@ -37,6 +43,9 @@ export async function getFilmById(id: string): Promise<Movie | null> {
   return data;
 }
 
+/**
+ * Ajoute un nouveau film
+ */
 export async function addFilm(film: Omit<Movie, 'id' | 'created_at'>): Promise<boolean> {
   const { error } = await supabase.from('films').insert([film]);
   if (error) {
@@ -46,6 +55,9 @@ export async function addFilm(film: Omit<Movie, 'id' | 'created_at'>): Promise<b
   return true;
 }
 
+/**
+ * Met à jour un film
+ */
 export async function updateFilm(id: string, data: Partial<Movie>): Promise<boolean> {
   const { error } = await supabase.from('films').update(data).eq('id', id);
   if (error) {
@@ -55,6 +67,9 @@ export async function updateFilm(id: string, data: Partial<Movie>): Promise<bool
   return true;
 }
 
+/**
+ * Supprime un film
+ */
 export async function deleteFilm(id: string): Promise<boolean> {
   const { error } = await supabase.from('films').delete().eq('id', id);
   if (error) {
@@ -81,7 +96,7 @@ export async function getPopularMovies(limit = 6): Promise<Movie[]> {
 }
 
 /**
- * Récupère les films par genre (champ 'genre' requis, format texte ou array)
+ * Récupère les films par genre (champ 'genre' requis)
  */
 export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movie[]> {
   const { data, error } = await supabase
