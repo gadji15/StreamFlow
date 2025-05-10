@@ -9,8 +9,10 @@ interface AuthGuardProps {
   requireVIP?: boolean;
 }
 
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+
 export default function AuthGuard({ children, requireVIP = false }: AuthGuardProps) {
-  const { isLoading, isLoggedIn, isVIP } = useAuth();
+  const { isLoading, isLoggedIn, isVIP } = useSupabaseAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
