@@ -3,129 +3,114 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Tv, Search, Filter, Star } from 'lucide-react';
+import { Tv, Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VipBadge } from '@/components/vip-badge';
 import LoadingScreen from '@/components/loading-screen';
 import { getSeries, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-// Supprime les imports liés à Firebase
 
-// ...
-
+export default function SeriesPage() {
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [showVIP, setShowVIP] = useState<boolean | null>(null);
+  const [availableGenres, setAvailableGenres] = useState<{ id: string; name: string }[]>([
+    { id: 'thriller', name: 'Thriller' },
+    { id: 'sci-fi', name: 'Science-Fiction' },
+    { id: 'comedy', name: 'Comédie' },
+    { id: 'drama', name: 'Drame' },
+    { id: 'animation', name: 'Animation' },
+    { id: 'family', name: 'Famille' },
+    { id: 'adventure', name: 'Aventure' },
+    { id: 'documentary', name: 'Documentaire' },
+    // Ajoutez d'autres genres selon votre base
+  ]);
+  const { isVIP } = useSupabaseAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isVIP } = useSupabaseAuth();
-  
+
   // Initialiser les filtres à partir des paramètres d'URL
   useEffect(() => {
     const genre = searchParams?.get('genre');
     const search = searchParams?.get('q');
     const vip = searchParams?.get('vip');
-    
+
     if (genre) setGenreFilter(genre);
     if (search) setSearchTerm(search);
     if (vip) setShowVIP(vip === 'true');
   }, [searchParams]);
-  
-  // Fonction pour charger la liste des séries
-  const loadSeries = async (loadMore = false) => {
-    try {
+
+  // Charger les séries depuis Supabase
+  useEffect(() => {
+    const loadSeries = async () => {
       setLoading(true);
       setError(null);
-      
-      const result = await getAllSeries({
-        limit: 12,
-        startAfter: loadMore ? lastVisible : undefined,
-        onlyPublished: true,
-        genreFilter: genreFilter || undefined,
-        isVIP: showVIP === null ? undefined : showVIP
-      });
-      
-      // Filtrer par recherche côté client
-      const filteredSeries = searchTerm
-        ? result.series.filter(series =>
-            series.title.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        : result.series;
-      
-      if (loadMore) {
-        setSeriesList(prev => [...prev, ...filteredSeries]);
-      } else {
-        setSeriesList(filteredSeries);
-      }
-      
-      setLastVisible(result.lastVisible);
-      setHasMore(result.series.length === 12); // Supposons que s'il y a exactement 12 résultats, il y en a probablement d'autres
-    } catch (error) {
-      console.error('Erreur lors du chargement des séries:', error);
-      setError('Erreur lors du chargement des séries. Veuillez réessayer.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Charger les genres disponibles
-  useEffect(() => {
-    const fetchGenres = async () => {
+
       try {
-        // Utiliser la même fonction que pour les films
-        const genresData = await fetch('/api/genres').then(res => res.json());
-        setAvailableGenres(genresData);
-      } catch (error) {
-        console.error('Erreur lors du chargement des genres:', error);
+        let results: Series[] = await getSeries();
+
+        if (genreFilter) {
+          results = results.filter(s =>
+            (s.genre || '').toLowerCase().includes(genreFilter.toLowerCase())
+          );
+        }
+        if (showVIP !== null) {
+          results = results.filter(s => !!s.isVIP === showVIP);
+        }
+        if (searchTerm.trim() !== '') {
+          const term = searchTerm.trim().toLowerCase();
+          results = results.filter(s => s.title.toLowerCase().includes(term));
+        }
+
+        setSeriesList(results);
+      } catch (err) {
+        console.error('Erreur lors du chargement des séries:', err);
+        setError('Erreur lors du chargement des séries. Veuillez réessayer.');
+      } finally {
+        setLoading(false);
       }
     };
-    
-    fetchGenres();
-  }, []);
-  
-  // Charger les séries au chargement de la page et lorsque les filtres changent
-  useEffect(() => {
+
     loadSeries();
-  }, [genreFilter, showVIP, isVIP]);
-  
+  }, [genreFilter, showVIP, searchTerm]);
+
   // Mettre à jour les paramètres d'URL lorsque les filtres changent
   useEffect(() => {
     const params = new URLSearchParams();
-    
+
     if (genreFilter) params.set('genre', genreFilter);
     if (searchTerm) params.set('q', searchTerm);
     if (showVIP !== null) params.set('vip', showVIP.toString());
-    
+
     const queryString = params.toString();
     const url = queryString ? `/series?${queryString}` : '/series';
-    
+
     // Ne pas recharger la page, juste mettre à jour l'URL
     window.history.replaceState({}, '', url);
   }, [genreFilter, searchTerm, showVIP]);
-  
+
   // Gérer la recherche
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadSeries(); // Déclencher une nouvelle recherche
+    // Le useEffect s'occupe du filtrage
   };
-  
+
   // Réinitialiser les filtres
   const resetFilters = () => {
     setSearchTerm('');
     setGenreFilter(null);
     setShowVIP(null);
   };
-  
-  // Gérer le chargement de plus de séries
-  const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      loadSeries(true);
-    }
-  };
-  
+
   // Afficher l'écran de chargement initial
   if (loading && seriesList.length === 0) {
     return <LoadingScreen />;
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Catalogue des Séries</h1>
@@ -208,53 +193,31 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
           </Button>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {seriesList.map((series) => (
-              <SeriesCard 
-                key={series.id} 
-                series={series} 
-                isUserVIP={isVIP}
-              />
-            ))}
-          </div>
-          
-          {(loading || hasMore) && (
-            <div className="mt-8 text-center">
-              <Button 
-                onClick={handleLoadMore} 
-                disabled={loading || !hasMore}
-                variant="outline"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    Chargement...
-                  </>
-                ) : (
-                  'Charger plus de séries'
-                )}
-              </Button>
-            </div>
-          )}
-        </>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {seriesList.map((series) => (
+            <SeriesCard 
+              key={series.id} 
+              series={series} 
+              isUserVIP={isVIP}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
+// Composant carte série
 interface SeriesCardProps {
   series: Series;
   isUserVIP: boolean;
 }
 
 function SeriesCard({ series, isUserVIP }: SeriesCardProps) {
-  const { id, title, posterUrl, startYear, endYear, rating, isVIP } = series;
-  
+  const { id, title, poster, startYear, endYear, isVIP } = series;
   // Fallback pour le poster
-  const posterSrc = posterUrl || '/placeholder-poster.png';
-  
+  const posterSrc = poster || '/placeholder-poster.png';
+
   return (
     <Link 
       href={`/series/${id}`}
@@ -280,12 +243,6 @@ function SeriesCard({ series, isUserVIP }: SeriesCardProps) {
       <div className="p-3">
         <div className="flex justify-between items-start">
           <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
-          {rating && (
-            <div className="flex items-center ml-2">
-              <Star className="h-3 w-3 text-yellow-400 fill-current" />
-              <span className="text-xs ml-0.5">{rating.toFixed(1)}</span>
-            </div>
-          )}
         </div>
         <p className="text-xs text-gray-400">
           {startYear}{endYear ? ` - ${endYear}` : ''}
