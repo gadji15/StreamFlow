@@ -32,30 +32,81 @@ export default function LoginPage() {
   import { supabase } from "@/lib/supabaseClient"; // Ajoute ceci en haut avec les autres imports
 import { FcGoogle } from "react-icons/fc"; // Google icon, install 'react-icons' si besoin
 
-return (
-  <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 px-4">
-    <div className="w-full max-w-md rounded-2xl bg-gray-900/95 shadow-2xl p-8 border border-gray-800">
-      <h1 className="text-2xl font-bold mb-1 text-center flex items-center gap-2 justify-center">
-        <LogIn className="w-6 h-6 text-primary" /> Connexion
-      </h1>
-      <p className="text-center text-gray-400 mb-6">Connectez-vous à votre compte StreamFlow</p>
+'use client';
 
-      {/* Google Button */}
-      <button
-        type="button"
-        onClick={async () => {
-          setIsLoading(true);
-          const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-          setIsLoading(false);
-          // Redirection automatique après login Google
-        }}
-        className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 py-2.5 text-sm font-semibold text-gray-100 hover:bg-gray-700 transition mb-5 shadow-sm"
-        disabled={isLoading}
-        aria-label="Connexion avec Google"
-      >
-        <FcGoogle className="w-6 h-6" />
-        Se connecter avec Google
-      </button>
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { FcGoogle } from "react-icons/fc";
+import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Eye, EyeOff, Lock, Mail, LogIn } from "lucide-react";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        toast({
+          title: "Erreur de connexion",
+          description: error.message || "Impossible de se connecter.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue sur StreamFlow !",
+        });
+        router.replace("/");
+      }
+    } catch (e: any) {
+      toast({
+        title: "Erreur",
+        description: e.message || "Erreur inconnue.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-gray-900/95 shadow-2xl p-8 border border-gray-800">
+        <h1 className="text-2xl font-bold mb-1 text-center flex items-center gap-2 justify-center">
+          <LogIn className="w-6 h-6 text-primary" /> Connexion
+        </h1>
+        <p className="text-center text-gray-400 mb-6">Connectez-vous à votre compte StreamFlow</p>
+
+        {/* Google Button */}
+        <button
+          type="button"
+          onClick={async () => {
+            setIsLoading(true);
+            const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+            setIsLoading(false);
+            // Redirection automatique après login Google
+          }}
+          className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 py-2.5 text-sm font-semibold text-gray-100 hover:bg-gray-700 transition mb-5 shadow-sm"
+          disabled={isLoading}
+          aria-label="Connexion avec Google"
+        >
+          <FcGoogle className="w-6 h-6" />
+          Se connecter avec Google
+        </button>
 
       <div className="flex items-center my-6">
         <div className="flex-1 h-px bg-gray-700" />
