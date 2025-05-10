@@ -93,7 +93,15 @@ export default function RootLayout({
          >
            {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
            <Header />
-           {children}
+           <main style={{
+             maxWidth: 1200,
+             margin: '0 auto',
+             padding: '2rem 1rem',
+             minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
+           }}>
+             {children}
+           </main>
+           <Footer />
          </ThemeProvider>
       </body>
     </html>
