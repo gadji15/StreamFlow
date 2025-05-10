@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, User, Film, Tv, Search, Bell, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ModeToggle } from '@/components/mode-toggle';
+// import { ModeToggle } from '@/components/mode-toggle';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import {
   DropdownMenu,
@@ -169,8 +169,7 @@ export default function Header() {
                 </Link>
               </>
             )}
-            
-            <ModeToggle />
+            {/* ModeToggle supprimé */}
           </div>
 
           {/* Menu mobile - bouton */}
@@ -314,10 +313,7 @@ export default function Header() {
                   </>
                 )}
                 
-                <div className="flex items-center justify-between mt-4">
-                  <span>Thème</span>
-                  <ModeToggle />
-                </div>
+                {/* ModeToggle supprimé */}
               </div>
             </nav>
           </div>

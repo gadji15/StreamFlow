@@ -88,15 +88,15 @@ export default function RootLayout({
         <ThemeProvider
            attribute="class"
            defaultTheme="dark"
-           enableSystem
+           enableSystem={false}
            disableTransitionOnChange
          >
            {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
            <Header />
            <main style={{
-             maxWidth: 1200,
+             maxWidth: 1440,
              margin: '0 auto',
-             padding: '2rem 1rem',
+             padding: '2.5rem 2rem',
              minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
            }}>
              {children}
