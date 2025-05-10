@@ -176,59 +176,6 @@ export default function NouveautePage() {
   );
 }
 
-// (NouveauteCard identique à la version précédente)
-function NouveauteCard({
-  item,
-  type,
-  isUserVIP,
-}: {
-  item: Movie | Series;
-  type: 'film' | 'serie';
-  isUserVIP: boolean;
-}) {
-  const isVIP = 'isVIP' in item && item.isVIP;
-  const poster = (item as Movie | Series).poster || '/placeholder-poster.png';
-  const year =
-    type === 'film'
-      ? (item as Movie).year
-      : `${(item as Series).startYear ?? ''}${(item as Series).endYear ? ` - ${(item as Series).endYear}` : ''}`;
-
-  return (
-    <Link
-      href={`/${type === 'film' ? 'films' : 'series'}/${item.id}`}
-      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
-        isVIP && !isUserVIP ? 'opacity-70' : ''
-      }`}
-    >
-      <div className="relative aspect-[2/3]">
-        <img
-          src={poster}
-          alt={item.title}
-          className="w-full h-full object-cover"
-        />
-        {isVIP && (
-          <div className="absolute top-2 right-2">
-            <VipBadge />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          {type === 'film' ? (
-            <Film className="h-10 w-10 text-white" />
-          ) : (
-            <Tv className="h-10 w-10 text-white" />
-          )}
-        </div>
-      </div>
-      <div className="p-3">
-        <div className="flex justify-between items-start">
-          <h3 className="font-semibold truncate text-sm flex-1">{item.title}</h3>
-        </div>
-        <p className="text-xs text-gray-400">{year}</p>
-      </div>
-    </Link>
-  );
-}
-
 function NouveauteCard({
   item,
   type,
