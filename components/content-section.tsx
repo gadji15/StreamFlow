@@ -47,12 +47,14 @@ export function ContentSection({
   genreId = '',
   count = 6
 }: ContentSectionProps) {
-  const [items, setItems] = useState<Movie[] | Series[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { isVIP } = useAuth();
-  
-  useEffect(() => {
-    // Si c'est un contenu personnalisé, ne pas charger de données
+  import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+
+   const [items, setItems] = useState<Movie[] | Series[]>([]);
+   const [loading, setLoading] = useState(false);
+   const { isVIP } = useSupabaseAuth();
+   
+   useEffect(() => {
+     // Si c'est un contenu personnalisé, ne pas charger de données
     if (type === 'custom') return;
     
     const loadContent = async () => {
