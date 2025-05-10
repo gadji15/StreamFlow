@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: [
-      'res.cloudinary.com',
+      
       'image.tmdb.org',
       'lh3.googleusercontent.com',
     ],

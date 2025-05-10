@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, User, Film, Tv, Search, Bell, Sparkles } from 'lucide-react';
+import { Menu, X, User, Film, Tv, Search, Bell, Sparkles, Home, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ModeToggle } from '@/components/mode-toggle';
-import { useAuth } from '@/hooks/use-auth';
+// import { ModeToggle } from '@/components/mode-toggle';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ export default function Header() {
   const [navOpen, setNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useAuth();
+  const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useSupabaseAuth();
 
   // Gérer le scroll pour changer l'apparence du header
   useEffect(() => {
@@ -58,43 +58,82 @@ export default function Header() {
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold">StreamFlow</span>
+          {/* Logo dynamique */}
+          <Link href="/" className="flex items-center group select-none">
+            <Home className="w-7 h-7 mr-2 text-fuchsia-400 group-hover:animate-bounce group-hover:text-blue-400 transition-colors" />
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-blue-500 to-purple-600 text-transparent bg-clip-text group-hover:scale-105 transition-transform">
+              StreamFlow
+            </span>
           </Link>
 
           {/* Navigation principale - Desktop */}
-          <nav className="hidden md:flex space-x-6">
+          <nav className="hidden md:flex space-x-2">
+            <Link
+              href="/"
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/' 
+                    ? 'bg-gradient-to-r from-fuchsia-500 to-blue-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-blue-500 hover:text-white hover:shadow'
+                }`}
+            >
+              <Home className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/' ? 'text-white drop-shadow' : 'text-fuchsia-300 group-hover:text-white'}`} />
+              Accueil
+            </Link>
             <Link
               href="/films"
-              className={`hover:text-white ${pathname === '/films' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/films'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:shadow'
+                }`}
             >
+              <Film className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/films' ? 'text-white drop-shadow' : 'text-indigo-300 group-hover:text-white'}`} />
               Films
             </Link>
             <Link
               href="/series"
-              className={`hover:text-white ${pathname === '/series' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/series'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow'
+                }`}
             >
+              <Tv className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/series' ? 'text-white drop-shadow' : 'text-pink-300 group-hover:text-white'}`} />
               Séries
             </Link>
             <Link
               href="/categories"
-              className={`hover:text-white ${pathname === '/categories' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/categories'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-400 hover:text-white hover:shadow'
+                }`}
             >
+              <Layers className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/categories' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
               Catégories
             </Link>
             <Link
               href="/nouveates"
-              className={`hover:text-white ${pathname === '/nouveates' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/nouveates'
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-400 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-orange-400 hover:text-white hover:shadow'
+                }`}
             >
+              <Bell className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/nouveates' ? 'text-white drop-shadow' : 'text-yellow-300 group-hover:text-white'}`} />
               Nouveautés
             </Link>
             {isVIP && (
               <Link
                 href="/exclusif"
-                className="text-amber-400 hover:text-amber-300 flex items-center"
+                className="group flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-base shadow bg-gradient-to-r from-amber-400 to-yellow-300 text-black border border-yellow-200 hover:from-yellow-200 hover:to-yellow-400 hover:text-amber-700 transition-all"
               >
-                <Sparkles className="w-4 h-4 mr-1" />
+                <Sparkles className="w-5 h-5 mr-1 text-amber-600 group-hover:scale-110 transition-transform duration-200" />
                 Exclusif
               </Link>
             )}
@@ -169,8 +208,7 @@ export default function Header() {
                 </Link>
               </>
             )}
-            
-            <ModeToggle />
+            {/* ModeToggle supprimé */}
           </div>
 
           {/* Menu mobile - bouton */}
@@ -314,10 +352,7 @@ export default function Header() {
                   </>
                 )}
                 
-                <div className="flex items-center justify-between mt-4">
-                  <span>Thème</span>
-                  <ModeToggle />
-                </div>
+                {/* ModeToggle supprimé */}
               </div>
             </nav>
           </div>

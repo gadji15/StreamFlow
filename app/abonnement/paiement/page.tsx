@@ -18,7 +18,7 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { upgradeToVIP } from '@/lib/auth';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function PaiementPage() {
   const { user, isLoggedIn, refreshUserData } = useAuth();

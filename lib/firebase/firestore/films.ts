@@ -21,7 +21,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../config";
 import { addActivityLog } from "./activity-logs";
-import { uploadImage, deleteImage } from "@/lib/cloudinary"; // Importer les fonctions Cloudinary
+// (Cloudinary supprimé, migrer upload/delete vers Supabase Storage si besoin)
 import { updateStatistics } from "./statistics";
 
 // Types
