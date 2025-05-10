@@ -15,41 +15,109 @@ export default function HomePage() {
 
   // Animation pour le titre de section
   const container = {
-    hidden: { opacity: 0 },
-    show: {
+    hidden: { opacity: 1, scale: 0 },
+    visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+      scale: 1,
+      transition: { delayChildren: 0.3, staggerChildren: 0.2 },
+    },
   };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
-  // Hook d'intersection pour l'animation au scroll
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1
-  });
 
   return (
-    <main>
-      {/* Section Hero avec carousel */}
+    <div>
       <HeroSection />
 
-      {/* Présentation du site */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto text-center max-w-3xl">
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="mb-8"
-          >
-            <motion.h2 variants={item} className="text-3xl md:text-4xl font-bold mb-6">
+      <ContentSection
+        title="Films populaires"
+        type="popular_movies"
+        count={6}
+      />
+      <ContentSection
+        title="Séries populaires"
+        type="popular_series"
+        count={6}
+      />
+      <ContentSection
+        title="Action"
+        type="movies_by_genre"
+        genreId="action"
+        count={6}
+      />
+      <ContentSection
+        title="Comédie"
+        type="movies_by_genre"
+        genreId="comedy"
+        count={6}
+      />
+      <ContentSection
+        title="Drame"
+        type="movies_by_genre"
+        genreId="drama"
+        count={6}
+      />
+      <ContentSection
+        title="Animation"
+        type="movies_by_genre"
+        genreId="animation"
+        count={6}
+      />
+      <ContentSection
+        title="Romance"
+        type="movies_by_genre"
+        genreId="romance"
+        count={6}
+      />
+      <ContentSection
+        title="Documentaire"
+        type="movies_by_genre"
+        genreId="documentary"
+        count={6}
+      />
+      <ContentSection
+        title="Suspense"
+        type="movies_by_genre"
+        genreId="suspense"
+        count={6}
+      />
+      <ContentSection
+        title="Science Fiction"
+        type="movies_by_genre"
+        genreId="science-fiction"
+        count={6}
+      />
+      <ContentSection
+        title="Aventure"
+        type="movies_by_genre"
+        genreId="adventure"
+        count={6}
+      />
+      <ContentSection
+        title="Horreur"
+        type="movies_by_genre"
+        genreId="horror"
+        count={6}
+      />
+      <ContentSection
+        title="Fantastique"
+        type="movies_by_genre"
+        genreId="fantasy"
+        count={6}
+      />
+      <ContentSection
+        title="Familial"
+        type="movies_by_genre"
+        genreId="family"
+        count={6}
+      />
+      <ContentSection
+        title="Musique"
+        type="movies_by_genre"
+        genreId="music"
+        count={6}
+      />
+    </div>
+  );
+} className="text-3xl md:text-4xl font-bold mb-6">
               Découvrez StreamFlow, votre nouvelle plateforme de streaming
             </motion.h2>
             <motion.p variants={item} className="text-lg text-gray-300 mb-8">
