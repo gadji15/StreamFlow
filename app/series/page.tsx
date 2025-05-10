@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VipBadge } from '@/components/vip-badge';
 import LoadingScreen from '@/components/loading-screen';
-import { getAllSeries, Series } from '@/lib/firebase/firestore/series';
+import { getSeries, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+// Supprime les imports liés à Firebase
 
 export default function SeriesPage() {
   const [seriesList, setSeriesList] = useState<Series[]>([]);
