@@ -44,11 +44,11 @@ export function ContentSection({
   className = '', 
   children,
   type = 'custom',
-  genreId = '',
-  count = 6
-}: ContentSectionProps) {
   import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
+   genreId = '',
+   count = 6
+ }: ContentSectionProps) {
    const [items, setItems] = useState<Movie[] | Series[]>([]);
    const [loading, setLoading] = useState(false);
    const { isVIP } = useSupabaseAuth();
