@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { uploadToStorage, deleteFromStorage } from '../lib/supabaseStorage'
 
 /**
- * Permet l’upload d’une image sur Supabase Storage et retourne l’URL publique.
- * Nécessite un bucket nommé 'images' sur Supabase Storage.
+ * Permet l’upload d’une image via l’API Next.js (Supabase Storage) et retourne l’URL publique.
  */
 export default function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
@@ -15,15 +13,20 @@ export default function ImageUpload({ onUpload }: { onUpload: (url: string) => v
     setUploading(true)
     setError(null)
 
-    // Génère un chemin unique (par exemple: `${Date.now()}-${file.name}`)
-    const path = `${Date.now()}-${file.name}`
+    const formData = new FormData()
+    formData.append('file', file)
 
-    const { publicUrl, error } = await uploadToStorage('images', path, file)
+    const res = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await res.json()
     setUploading(false)
-    if (error || !publicUrl) {
-      setError(error?.message ?? 'Erreur upload')
+
+    if (!res.ok || !data.url) {
+      setError(data?.error ?? 'Erreur upload')
     } else {
-      onUpload(publicUrl)
+      onUpload(data.url)
     }
   }
 
