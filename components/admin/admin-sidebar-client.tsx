@@ -12,7 +12,7 @@ import {
   MessageSquare,
   Eye
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface NavItem {
   href: string;
@@ -24,7 +24,7 @@ interface NavItem {
 
 export default function AdminSidebarClient() {
   const pathname = usePathname();
-  const { userData } = useAuth();
+  const { userData } = useSupabaseAuth();
   const isSuperAdmin = userData?.role === 'super_admin';
   
   const navItems: NavItem[] = [
