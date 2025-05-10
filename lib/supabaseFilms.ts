@@ -236,33 +236,34 @@ export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movi
 // --------- AJOUT POUR LES DONNÉES RÉELLES ---------
 
 /**
- * Récupère les films populaires (suppose un champ 'popularity' ou 'views')
- * @param {number} limit Nombre de films à retourner
+ * Récupère les films populaires (champ 'popularity' requis)
  */
-export async function getPopularMovies(limit = 6) {
+export async function getPopularMovies(limit = 6): Promise<Movie[]> {
   const { data, error } = await supabase
     .from('films')
     .select('*')
     .order('popularity', { ascending: false })
     .limit(limit);
-
-  if (error) throw error;
+  if (error) {
+    console.error('Erreur getPopularMovies:', error);
+    return [];
+  }
   return data || [];
 }
 
 /**
- * Récupère les films par genre (suppose un champ 'genre' ou une relation)
- * @param {string} genreId ID ou nom du genre (ex: 'thriller', 'sci-fi')
- * @param {number} limit Nombre de films à retourner
+ * Récupère les films par genre (champ 'genre' requis, format texte ou array)
  */
-export async function getMoviesByGenre(genreId: string, limit = 6) {
+export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movie[]> {
   const { data, error } = await supabase
     .from('films')
     .select('*')
     .ilike('genre', `%${genreId}%`)
     .order('created_at', { ascending: false })
     .limit(limit);
-
-  if (error) throw error;
+  if (error) {
+    console.error('Erreur getMoviesByGenre:', error);
+    return [];
+  }
   return data || [];
 }
