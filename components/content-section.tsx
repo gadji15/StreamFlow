@@ -41,10 +41,11 @@ interface ContentSectionProps {
 export function ContentSection({ 
   title, 
   viewAllLink, 
-  className = '', 
-  children,
-  type = 'custom',
   import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+
+   className = '', 
+   children,
+   type = 'custom',
 
    genreId = '',
    count = 6
