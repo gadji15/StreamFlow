@@ -10,8 +10,6 @@ import HeroSection from '@/components/hero-section';
 import ContentSection from '@/components/content-section';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-
 export default function HomePage() {
   const { isVIP } = useSupabaseAuth();
 
