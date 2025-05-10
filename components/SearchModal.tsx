@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Search, X } from 'lucide-react';
-import SearchBar from './SearchBar';
+import { useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Search, X } from "lucide-react";
+import SearchBar from "./search-bar";
 
 export default function SearchModal() {
   const [open, setOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Focus input on modal open
+  // Focus input automatically when modal opens
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -19,21 +19,20 @@ export default function SearchModal() {
     }
   }, [open]);
 
-  // Close modal on Escape
+  // Escape key closes modal
   useEffect(() => {
-    if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === "Escape") setOpen(false);
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    if (open) window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  // Click outside modal closes
+  // Click outside modal closes it
   useEffect(() => {
-    if (!open) return;
     function handleClick(e: MouseEvent) {
       if (
+        open &&
         overlayRef.current &&
         e.target instanceof Node &&
         e.target === overlayRef.current
@@ -41,13 +40,15 @@ export default function SearchModal() {
         setOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
   return (
     <>
+      {/* Loupe bouton */}
       <button
+        type="button"
         aria-label="Rechercher"
         onClick={() => setOpen(true)}
         className="p-2 rounded-md hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-primary"
@@ -55,6 +56,7 @@ export default function SearchModal() {
         <Search className="w-6 h-6 text-gray-200" />
       </button>
 
+      {/* Modal de recherche */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -72,10 +74,12 @@ export default function SearchModal() {
               initial={{ scale: 0.96, y: 40, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 40, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 26, duration: 0.25 }}
+              transition={{ type: "spring", stiffness: 340, damping: 26, duration: 0.25 }}
               onClick={e => e.stopPropagation()}
             >
+              {/* Fermer bouton */}
               <button
+                type="button"
                 aria-label="Fermer la recherche"
                 className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-700 transition"
                 onClick={() => setOpen(false)}
@@ -92,15 +96,8 @@ export default function SearchModal() {
                 </p>
               </div>
 
-              <SearchBar />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-              <div>
+              {/* SearchBar : dynamique et réel */}
+              <div id="search-modal">
                 <SearchBar />
               </div>
             </motion.div>
