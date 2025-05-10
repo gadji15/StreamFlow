@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { Menu, LogOut, Eye } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 
 export default function AdminHeaderClient() {
-  const { logout } = useAuth();
+  const { logout } = useSupabaseAuth();
   const { toast } = useToast();
   
   const handleLogout = async () => {
