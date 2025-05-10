@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // import { ModeToggle } from '@/components/mode-toggle';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import SearchModal from '@/components/SearchModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -141,11 +142,7 @@ export default function Header() {
 
           {/* Actions - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/search">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
+            <SearchModal />
             
             {isLoggedIn ? (
               <>
@@ -213,11 +210,7 @@ export default function Header() {
 
           {/* Menu mobile - bouton */}
           <div className="flex items-center md:hidden">
-            <Link href="/search" className="mr-2">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
+            <SearchModal />
             
             <Button variant="ghost" size="icon" onClick={() => setNavOpen(!navOpen)}>
               {navOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

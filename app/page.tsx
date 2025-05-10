@@ -76,35 +76,69 @@ export default function HomePage() {
       {/* Films populaires */}
       <ContentSection 
         title="Films populaires"
-        type="movies"
-        filter="popular"
-        animated={true}
+        type="popular_movies"
       />
 
       {/* Séries populaires */}
       <ContentSection 
         title="Séries populaires"
-        type="series"
-        filter="popular"
-        animated={true}
+        type="popular_series"
       />
 
-      {/* Films de suspense */}
+      {/* Suspense */}
       <ContentSection 
         title="Suspense"
-        type="movies"
-        filter="genre"
+        type="movies_by_genre"
         genreId="thriller"
-        animated={true}
       />
 
       {/* Science Fiction */}
       <ContentSection 
         title="Science Fiction"
-        type="movies"
-        filter="genre"
+        type="movies_by_genre"
         genreId="sci-fi"
-        animated={true}
+      />
+
+      {/* Action */}
+      <ContentSection 
+        title="Action"
+        type="movies_by_genre"
+        genreId="action"
+      />
+
+      {/* Animation */}
+      <ContentSection 
+        title="Animation"
+        type="movies_by_genre"
+        genreId="animation"
+      />
+
+      {/* Comédie */}
+      <ContentSection 
+        title="Comédie"
+        type="movies_by_genre"
+        genreId="comedy"
+      />
+
+      {/* Documentaire */}
+      <ContentSection 
+        title="Documentaire"
+        type="movies_by_genre"
+        genreId="documentary"
+      />
+
+      {/* Séries - Science Fiction */}
+      <ContentSection 
+        title="Séries Science Fiction"
+        type="series_by_genre"
+        genreId="sci-fi"
+      />
+
+      {/* Séries - Thriller */}
+      <ContentSection 
+        title="Séries Thriller"
+        type="series_by_genre"
+        genreId="thriller"
       />
 
       {/* Exclusivités VIP */}
