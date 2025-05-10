@@ -29,7 +29,117 @@ export default function LoginPage() {
     }
   };
 
-  return (
+  import { supabase } from "@/lib/supabaseClient"; // Ajoute ceci en haut avec les autres imports
+import { FcGoogle } from "react-icons/fc"; // Google icon, install 'react-icons' si besoin
+
+return (
+  <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 px-4">
+    <div className="w-full max-w-md rounded-2xl bg-gray-900/95 shadow-2xl p-8 border border-gray-800">
+      <h1 className="text-2xl font-bold mb-1 text-center flex items-center gap-2 justify-center">
+        <LogIn className="w-6 h-6 text-primary" /> Connexion
+      </h1>
+      <p className="text-center text-gray-400 mb-6">Connectez-vous à votre compte StreamFlow</p>
+
+      {/* Google Button */}
+      <button
+        type="button"
+        onClick={async () => {
+          setIsLoading(true);
+          const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+          setIsLoading(false);
+          // Redirection automatique après login Google
+        }}
+        className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 py-2.5 text-sm font-semibold text-gray-100 hover:bg-gray-700 transition mb-5 shadow-sm"
+        disabled={isLoading}
+        aria-label="Connexion avec Google"
+      >
+        <FcGoogle className="w-6 h-6" />
+        Se connecter avec Google
+      </button>
+
+      <div className="flex items-center my-6">
+        <div className="flex-1 h-px bg-gray-700" />
+        <span className="px-3 text-gray-500 text-xs">Ou avec votre email</span>
+        <div className="flex-1 h-px bg-gray-700" />
+      </div>
+
+      <form
+        onSubmit={handleLogin}
+        className="space-y-6"
+        autoComplete="off"
+      >
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-sm font-semibold mb-1 text-gray-300">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              autoFocus
+              autoComplete="email"
+              required
+              placeholder="Adresse email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="pl-10"
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        {/* Password */}
+        <div>
+          <label htmlFor="password" className="block text-sm font-semibold mb-1 text-gray-300">
+            Mot de passe
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              placeholder="Votre mot de passe"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="pl-10 pr-10"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              className="absolute right-2 top-2 text-gray-400 hover:text-gray-200"
+              tabIndex={-1}
+              onClick={() => setShowPassword(v => !v)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              disabled={isLoading}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full flex items-center justify-center font-semibold"
+          disabled={isLoading}
+        >
+          {isLoading && <Loader2 className="animate-spin h-5 w-5 mr-2" />}
+          Se connecter
+        </Button>
+
+        <div className="text-center text-sm text-gray-400 mt-4">
+          Pas encore de compte ?{" "}
+          <a href="/inscription" className="text-primary hover:underline font-semibold">
+            S'inscrire
+          </a>
+        </div>
+      </form>
+    </div>
+  </main>
+);
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-gray-900 to-purple-900">
       <form
         onSubmit={handleSubmit}
