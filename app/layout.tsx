@@ -91,6 +91,8 @@ export default function RootLayout({
            enableSystem
            disableTransitionOnChange
          >
+           {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
+           <Header />
            {children}
          </ThemeProvider>
       </body>
