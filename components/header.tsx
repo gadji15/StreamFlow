@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, User, Film, Tv, Search, Bell, Sparkles } from 'lucide-react';
+import { Menu, X, User, Film, Tv, Search, Bell, Sparkles, Home, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // import { ModeToggle } from '@/components/mode-toggle';
@@ -58,20 +58,35 @@ export default function Header() {
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold">StreamFlow</span>
+          {/* Logo dynamique */}
+          <Link href="/" className="flex items-center group select-none">
+            <Home className="w-7 h-7 mr-2 text-fuchsia-400 group-hover:animate-bounce group-hover:text-blue-400 transition-colors" />
+            <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-blue-500 to-purple-600 text-transparent bg-clip-text group-hover:scale-105 transition-transform">
+              StreamFlow
+            </span>
           </Link>
 
           {/* Navigation principale - Desktop */}
           <nav className="hidden md:flex space-x-2">
+            <Link
+              href="/"
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/' 
+                    ? 'bg-gradient-to-r from-fuchsia-500 to-blue-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-fuchsia-500 hover:to-blue-500 hover:text-white hover:shadow'
+                }`}
+            >
+              <Home className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/' ? 'text-white drop-shadow' : 'text-fuchsia-300 group-hover:text-white'}`} />
+              Accueil
+            </Link>
             <Link
               href="/films"
               className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
                 ${
                   pathname === '/films'
                     ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-400 hover:text-white hover:shadow'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-purple-600 hover:text-white hover:shadow'
                 }`}
             >
               <Film className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/films' ? 'text-white drop-shadow' : 'text-indigo-300 group-hover:text-white'}`} />
@@ -98,7 +113,7 @@ export default function Header() {
                     : 'text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-400 hover:text-white hover:shadow'
                 }`}
             >
-              <Sparkles className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/categories' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
+              <Layers className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/categories' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
               Catégories
             </Link>
             <Link
