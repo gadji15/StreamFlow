@@ -13,7 +13,10 @@ export type Movie = {
 };
 
 export async function getFilms(): Promise<Movie[]> {
-  const { data, error } = await supabase.from('films').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('films')
+    .select('*')
+    .order('created_at', { ascending: false });
   if (error) {
     console.error('Erreur getFilms:', error);
     return [];
@@ -22,7 +25,11 @@ export async function getFilms(): Promise<Movie[]> {
 }
 
 export async function getFilmById(id: string): Promise<Movie | null> {
-  const { data, error } = await supabase.from('films').select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('films')
+    .select('*')
+    .eq('id', id)
+    .single();
   if (error) {
     console.error('Erreur getFilmById:', error);
     return null;
