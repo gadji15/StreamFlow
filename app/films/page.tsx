@@ -7,76 +7,59 @@ import { Film, Search, Filter, SlidersHorizontal, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import LoadingScreen from '@/components/loading-screen';
-import { getMovieGenres } from '@/lib/firebase/firestore/movies';
-import { getMovies, searchMovies, Movie, Genre } from '@/lib/firebase/firestore/films';
+import { getFilms, Movie } from '@/lib/supabaseFilms';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+// Si tu veux gérer les genres, il faudra une fonction dédiée Supabase (à ajouter)
+// import { getMovieGenres } from '@/lib/supabaseFilms'; // (décommente si tu l'implémentes)
 
 export default function FilmsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [genres, setGenres] = useState<Genre[]>([]);
+  // (Genres optionnel, à activer si tu ajoutes une table/colonne genres côté Supabase)
+  // const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [showVIP, setShowVIP] = useState<boolean | null>(null);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isVIP } = useAuth();
-  
+  const { isVIP } = useSupabaseAuth();
+
   // Initialiser les filtres à partir des paramètres d'URL
   useEffect(() => {
     const genre = searchParams?.get('genre');
     const search = searchParams?.get('q');
     const vip = searchParams?.get('vip');
-    
+
     if (genre) setSelectedGenre(genre);
     if (search) setSearchTerm(search);
     if (vip) setShowVIP(vip === 'true');
   }, [searchParams]);
-  
-  // Charger les genres
-  useEffect(() => {
-    const loadGenres = async () => {
-      try {
-        const genresList = await getMovieGenres();
-        setGenres(genresList);
-      } catch (err) {
-        console.error('Error loading genres:', err);
-      }
-    };
-    
-    loadGenres();
-  }, []);
-  
-  // Charger les films
+
+  // Charger les films depuis Supabase (filtrage simple par genre/VIP)
   useEffect(() => {
     const loadMovies = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
-        let result;
-        
-        // Utiliser searchMovies si un terme de recherche est fourni
-        if (searchTerm && searchTerm.trim() !== '') {
-          result = await searchMovies(searchTerm, {
-            isPublished: true,
-            isVIP: showVIP === null ? undefined : showVIP,
-            genres: selectedGenre ? [selectedGenre] : undefined,
-            pageSize: 50
-          });
+        let results: Movie[] = [];
+        if (selectedGenre) {
+          // Filtrage par genre
+          results = await getFilms();
+          results = results.filter(m => (m.genre || '').toLowerCase().includes(selectedGenre.toLowerCase()));
         } else {
-          // Sinon utiliser getMovies pour le filtrage standard
-          result = await getMovies({
-            isPublished: true,
-            isVIP: showVIP === null ? undefined : showVIP,
-            genres: selectedGenre ? [selectedGenre] : undefined,
-            pageSize: 50
-          });
+          results = await getFilms();
         }
-        
-        setMovies(result.movies);
+        if (showVIP !== null) {
+          results = results.filter(m => !!m.isVIP === showVIP);
+        }
+        if (searchTerm.trim() !== '') {
+          const term = searchTerm.trim().toLowerCase();
+          results = results.filter(m => m.title.toLowerCase().includes(term));
+        }
+        setMovies(results);
       } catch (err) {
         console.error('Error loading movies:', err);
         setError('Erreur lors du chargement des films. Veuillez réessayer.');
@@ -84,7 +67,7 @@ export default function FilmsPage() {
         setLoading(false);
       }
     };
-    
+
     loadMovies();
   }, [selectedGenre, showVIP, searchTerm]);
   
@@ -139,19 +122,24 @@ export default function FilmsPage() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2">
+            {/* Genre filter: en dur pour l'instant, adapte selon ta base */}
             <select
               value={selectedGenre || ''}
               onChange={(e) => setSelectedGenre(e.target.value || null)}
               className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
             >
               <option value="">Tous les genres</option>
-              {genres.map((genre) => (
-                <option key={genre.id} value={genre.id}>
-                  {genre.name}
-                </option>
-              ))}
+              <option value="action">Action</option>
+              <option value="comedy">Comédie</option>
+              <option value="drama">Drame</option>
+              <option value="animation">Animation</option>
+              <option value="family">Famille</option>
+              <option value="sci-fi">Science-Fiction</option>
+              <option value="adventure">Aventure</option>
+              <option value="documentary">Documentaire</option>
+              {/* Ajoute d'autres genres selon ta base */}
             </select>
-            
+
             <select
               value={showVIP === null ? '' : showVIP.toString()}
               onChange={(e) => {
@@ -164,7 +152,7 @@ export default function FilmsPage() {
               <option value="false">Contenus gratuits</option>
               <option value="true">Contenus VIP</option>
             </select>
-            
+
             {(selectedGenre || searchTerm || showVIP !== null) && (
               <Button 
                 variant="ghost" 
@@ -216,7 +204,7 @@ interface FilmCardProps {
 }
 
 function FilmCard({ movie, isUserVIP }: FilmCardProps) {
-  const { id, title, poster, releaseYear, rating, isVIP } = movie;
+  const { id, title, poster, year, popularity, isVIP } = movie;
   
   // Fallback pour le poster
   const posterSrc = poster || '/placeholder-poster.png';
@@ -246,14 +234,14 @@ function FilmCard({ movie, isUserVIP }: FilmCardProps) {
       <div className="p-3">
         <div className="flex justify-between items-start">
           <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
-          {rating && (
+          {popularity && (
             <div className="flex items-center ml-2">
               <Star className="h-3 w-3 text-yellow-400 fill-current" />
-              <span className="text-xs ml-0.5">{rating.toFixed(1)}</span>
+              <span className="text-xs ml-0.5">{popularity}</span>
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400">{releaseYear}</p>
+        <p className="text-xs text-gray-400">{year}</p>
       </div>
     </Link>
   );
