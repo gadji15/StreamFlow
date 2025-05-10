@@ -38,7 +38,7 @@ interface ContentSectionProps {
   count?: number;
 }
 
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+// (Import unique déjà présent plus haut, à supprimer ici)
 
 export function ContentSection({ 
   title, 
