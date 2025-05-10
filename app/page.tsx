@@ -8,10 +8,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import HeroSection from '@/components/hero-section';
 import ContentSection from '@/components/content-section';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function HomePage() {
-  const { isVIP } = useAuth();
+  const { isVIP } = useSupabaseAuth();
 
   // Animation pour le titre de section
   const container = {

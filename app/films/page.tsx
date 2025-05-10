@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import LoadingScreen from '@/components/loading-screen';
 import { getMovieGenres } from '@/lib/firebase/firestore/movies';
 import { getMovies, searchMovies, Movie, Genre } from '@/lib/firebase/firestore/films';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function FilmsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);

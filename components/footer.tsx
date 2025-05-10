@@ -1,34 +1,51 @@
 import Link from "next/link";
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone } from "lucide-react";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Mail,
+  Phone,
+  Film,
+  Tv,
+  Sparkles,
+  User,
+  Home,
+  HelpCircle,
+  Layers,
+  MonitorSmartphone,
+  Smartphone
+} from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-900 border-t border-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <footer className="bg-gradient-to-tr from-gray-900 via-gray-950 to-blue-950 border-t border-gray-800 shadow-inner">
+      <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo et description */}
           <div className="space-y-4">
-            <Link href="/" className="inline-block">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text">
+            <Link href="/" className="inline-block group">
+              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-fuchsia-500 to-blue-500 text-transparent bg-clip-text group-hover:scale-110 transition-transform">
+                <Film className="inline-block w-7 h-7 mr-2 text-fuchsia-400 group-hover:text-blue-400 transition-colors" />
                 StreamFlow
               </h2>
             </Link>
             <p className="text-gray-400 text-sm">
               Votre plateforme de streaming premium pour les films et séries du monde entier.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white">
+            <div className="flex space-x-4 mt-2">
+              <a href="#" className="text-gray-400 hover:text-blue-500 transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-sky-400 transition-colors">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-pink-400 transition-colors">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a href="#" className="text-gray-400 hover:text-red-600 transition-colors">
                 <Youtube size={20} />
               </a>
             </div>
@@ -39,22 +56,26 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4">Aide et Support</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/faq" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/faq" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
+                  <HelpCircle className="w-4 h-4 mr-1" />
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/aide" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/aide" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
+                  <HelpCircle className="w-4 h-4 mr-1" />
                   Aide et Support
                 </Link>
               </li>
               <li>
-                <Link href="/appareils-compatibles" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/appareils-compatibles" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
+                  <MonitorSmartphone className="w-4 h-4 mr-1" />
                   Appareils compatibles
                 </Link>
               </li>
               <li>
-                <Link href="/mobile" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/mobile" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
+                  <Smartphone className="w-4 h-4 mr-1" />
                   Installer l'application
                 </Link>
               </li>
@@ -66,27 +87,32 @@ export default function Footer() {
             <h3 className="font-semibold text-white mb-4">Navigation</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                  <Home className="w-4 h-4 mr-1" />
                   Accueil
                 </Link>
               </li>
               <li>
-                <Link href="/films" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/films" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                  <Film className="w-4 h-4 mr-1" />
                   Films
                 </Link>
               </li>
               <li>
-                <Link href="/series" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/series" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                  <Tv className="w-4 h-4 mr-1" />
                   Séries
                 </Link>
               </li>
               <li>
-                <Link href="/categories" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/categories" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
+                  <Layers className="w-4 h-4 mr-1" />
                   Catégories
                 </Link>
               </li>
               <li>
-                <Link href="/exclusif" className="text-gray-400 hover:text-white text-sm">
+                <Link href="/exclusif" className="flex items-center text-amber-400 hover:text-yellow-400 transition-colors text-sm">
+                  <Sparkles className="w-4 h-4 mr-1" />
                   Exclusif VIP
                 </Link>
               </li>
@@ -106,7 +132,7 @@ export default function Footer() {
                 <span className="text-gray-400 text-sm">+221 76 630 43 80</span>
               </li>
               <li className="mt-6">
-                <Link href="/contact" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-2 rounded">
+                <Link href="/contact" className="inline-block bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-fuchsia-500 hover:to-indigo-500 text-white text-sm px-3 py-2 rounded shadow transition-all">
                   Nous contacter
                 </Link>
               </li>
@@ -119,13 +145,13 @@ export default function Footer() {
             &copy; {currentYear} StreamFlow. Tous droits réservés 🇸🇳.
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <Link href="/conditions-utilisation" className="text-gray-500 hover:text-gray-300">
+            <Link href="/conditions-utilisation" className="text-gray-500 hover:text-fuchsia-400 transition-colors">
               Conditions d'utilisation
             </Link>
-            <Link href="/confidentialite" className="text-gray-500 hover:text-gray-300">
+            <Link href="/confidentialite" className="text-gray-500 hover:text-fuchsia-400 transition-colors">
               Politique de confidentialité
             </Link>
-            <Link href="/mentions-legales" className="text-gray-500 hover:text-gray-300">
+            <Link href="/mentions-legales" className="text-gray-500 hover:text-fuchsia-400 transition-colors">
               Mentions légales
             </Link>
           </div>

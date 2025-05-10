@@ -3,9 +3,30 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Film, Tv } from 'lucide-react';
-import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/firebase/firestore/movies';
-import { getPopularSeries, Series } from '@/lib/firebase/firestore/series';
-import { useAuth } from '@/hooks/use-auth';
+// Remplacer l'import Firebase par Supabase :
+import { getFilms } from '@/lib/supabaseFilms';
+import { getSeries } from '@/lib/supabaseSeries';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+
+// Types de fallback si besoin (adapter selon ta structure)
+export type Movie = {
+  id: string
+  title: string
+  description?: string
+  poster?: string
+  year?: number
+  isVIP?: boolean
+}
+
+export type Series = {
+  id: string
+  title: string
+  description?: string
+  poster?: string
+  startYear?: number
+  endYear?: number
+  isVIP?: boolean
+}
 
 interface ContentSectionProps {
   title: string;
@@ -17,6 +38,8 @@ interface ContentSectionProps {
   count?: number;
 }
 
+// (Import unique déjà présent plus haut, à supprimer ici)
+
 export function ContentSection({ 
   title, 
   viewAllLink, 
@@ -26,12 +49,12 @@ export function ContentSection({
   genreId = '',
   count = 6
 }: ContentSectionProps) {
-  const [items, setItems] = useState<Movie[] | Series[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { isVIP } = useAuth();
-  
-  useEffect(() => {
-    // Si c'est un contenu personnalisé, ne pas charger de données
+   const [items, setItems] = useState<Movie[] | Series[]>([]);
+   const [loading, setLoading] = useState(false);
+   const { isVIP } = useSupabaseAuth();
+   
+   useEffect(() => {
+     // Si c'est un contenu personnalisé, ne pas charger de données
     if (type === 'custom') return;
     
     const loadContent = async () => {

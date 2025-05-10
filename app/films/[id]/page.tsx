@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { CommentsSection } from '@/components/comments-section';
 import { getMovie, Movie, incrementMovieViews } from '@/lib/firebase/firestore/movies';
 import { logActivity } from '@/lib/firebase/firestore/activity-logs';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function FilmDetailPage() {
   const params = useParams();
