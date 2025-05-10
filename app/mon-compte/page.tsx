@@ -17,6 +17,13 @@ export default function MonComptePage() {
   const { userData, isVIP, isLoggedIn, logout } = useSupabaseAuth();
   const { history, loading: historyLoading } = useWatchHistory();
   const router = useRouter();
+
+  // Redirige vers /login si l'utilisateur n'est pas connecté
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      router.replace('/login');
+    }
+  }, [isLoggedIn, router]);
   
   // Formatage de la date d'expiration VIP
   const formatExpiryDate = () => {
@@ -32,7 +39,12 @@ export default function MonComptePage() {
   
   // Derniers éléments regardés
   const lastWatched = historyLoading ? [] : history.slice(0, 3);
-  
+
+  // Optionnel : afficher rien ou un loader si le statut de connexion est inconnu
+  if (isLoggedIn === false) {
+    return null; // ou un spinner si tu veux
+  }
+
   return (
     <div className="space-y-6">
       {/* Profil utilisateur */}
