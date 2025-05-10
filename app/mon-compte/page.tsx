@@ -18,12 +18,25 @@ export default function MonComptePage() {
   const { history, loading: historyLoading } = useWatchHistory();
   const router = useRouter();
 
-  // Redirige vers /login si l'utilisateur n'est pas connecté
+  // Redirige vers /login si l'utilisateur n'est pas connecté,
+  // mais attend que l'état d'auth soit déterminé
   useEffect(() => {
     if (isLoggedIn === false) {
-      router.replace('/login');
+      router.replace('/login?redirect=/mon-compte');
     }
   }, [isLoggedIn, router]);
+  
+  // Affiche un loader tant que l'état d'auth n'est pas déterminé
+  if (typeof isLoggedIn === 'undefined') {
+    return (
+      <div className="flex justify-center items-center min-h-[40vh]">
+        <span className="text-gray-400">Chargement...</span>
+      </div>
+    );
+  }
+  if (isLoggedIn === false) {
+    return null;
+  }
   
   // Formatage de la date d'expiration VIP
   const formatExpiryDate = () => {
@@ -39,11 +52,6 @@ export default function MonComptePage() {
   
   // Derniers éléments regardés
   const lastWatched = historyLoading ? [] : history.slice(0, 3);
-
-  // Optionnel : afficher rien ou un loader si le statut de connexion est inconnu
-  if (isLoggedIn === false) {
-    return null; // ou un spinner si tu veux
-  }
 
   return (
     <div className="space-y-6">
