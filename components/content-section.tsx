@@ -7,6 +7,7 @@ import { ChevronRight, Film, Tv } from 'lucide-react';
 import { getFilms } from '@/lib/supabaseFilms';
 import { getSeries } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+// (Import unique, à ne garder qu'une seule fois dans le fichier)
 
 // Types de fallback si besoin (adapter selon ta structure)
 export type Movie = {
