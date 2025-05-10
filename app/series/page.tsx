@@ -12,20 +12,11 @@ import { getSeries, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 // Supprime les imports liés à Firebase
 
-export default function SeriesPage() {
-  const [seriesList, setSeriesList] = useState<Series[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [genreFilter, setGenreFilter] = useState<string | null>(null);
-  const [showVIP, setShowVIP] = useState<boolean | null>(null);
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [availableGenres, setAvailableGenres] = useState<{id: string, name: string}[]>([]);
-  
+// ...
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isVIP } = useAuth();
+  const { isVIP } = useSupabaseAuth();
   
   // Initialiser les filtres à partir des paramètres d'URL
   useEffect(() => {
