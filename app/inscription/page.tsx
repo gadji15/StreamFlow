@@ -18,51 +18,22 @@ export default function RegisterPage() {
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Inline validation states
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [pwdError, setPwdError] = useState<string | null>(null);
-  const [confirmPwdError, setConfirmPwdError] = useState<string | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
+  // Validation and feedback
+  const [fieldError, setFieldError] = useState<{ [k: string]: string }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const emailRef = useRef<HTMLInputElement>(null);
-
-  // Email format validation
-  function validateEmail(val: string) {
-    if (!val) return "L'email est requis";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return "Format d'email invalide";
-    return null;
-  }
-  // Password validation
-  function validatePassword(val: string) {
-    if (!val) return 'Le mot de passe est requis';
-    if (val.length < 6) return '6 caractères minimum';
-    return null;
-  }
-  // Confirm password
-  function validateConfirmPwd(val: string) {
-    if (!val) return 'Veuillez confirmer le mot de passe';
-    if (val !== password) return 'Les mots de passe ne correspondent pas';
-    return null;
-  }
-  // Name validation
-  function validateName(val: string) {
-    if (!val.trim()) return 'Votre nom ou prénom est requis';
-    return null;
-  }
-
-  function handleBlurEmail() {
-    setEmailError(validateEmail(email));
-  }
-  function handleBlurPassword() {
-    setPwdError(validatePassword(password));
-  }
-  function handleBlurConfirmPwd() {
-    setConfirmPwdError(validateConfirmPwd(confirmPwd));
-  }
-  function handleBlurName() {
-    setNameError(validateName(fullName));
+  // Validation helpers
+  function validateAll() {
+    const errors: { [k: string]: string } = {};
+    if (!fullName.trim()) errors.fullName = "Nom requis";
+    if (!email.trim()) errors.email = "Email requis";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Format email invalide";
+    if (!password) errors.password = "Mot de passe requis";
+    else if (password.length < 6) errors.password = "6 caractères min.";
+    if (!confirmPwd) errors.confirmPwd = "Confirmation requise";
+    else if (confirmPwd !== password) errors.confirmPwd = "Les mots de passe ne correspondent pas";
+    return errors;
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -70,19 +41,10 @@ export default function RegisterPage() {
     setFormError(null);
     setSuccess(false);
 
-    // Validate all fields before submit
-    const nameE = validateName(fullName);
-    const emailE = validateEmail(email);
-    const pwdE = validatePassword(password);
-    const confirmE = validateConfirmPwd(confirmPwd);
-
-    setNameError(nameE);
-    setEmailError(emailE);
-    setPwdError(pwdE);
-    setConfirmPwdError(confirmE);
-
-    if (nameE || emailE || pwdE || confirmE) {
-      setFormError("Veuillez corriger les champs en erreur.");
+    const errors = validateAll();
+    setFieldError(errors);
+    if (Object.keys(errors).length > 0) {
+      setFormError("Corrigez les champs en erreur.");
       return;
     }
 
@@ -94,7 +56,6 @@ export default function RegisterPage() {
         options: { data: { full_name: fullName } }
       });
       if (error) {
-        // Friendly error for common auth issues
         if (error.message && /already/i.test(error.message)) {
           setFormError("Cet email est déjà utilisé. Essayez de vous connecter.");
         } else {
@@ -148,16 +109,15 @@ export default function RegisterPage() {
                   id="fullname"
                   type="text"
                   placeholder="Votre nom ou prénom"
-                  className={`pl-10 ${nameError ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${fieldError.fullName ? 'border-red-500' : ''}`}
                   value={fullName}
-                  onChange={e => { setFullName(e.target.value); setNameError(null); }}
-                  onBlur={handleBlurName}
+                  onChange={e => { setFullName(e.target.value); setFieldError(f => ({ ...f, fullName: '' })); }}
                   disabled={loading}
                   required
                   autoComplete="name"
                 />
               </div>
-              {nameError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {nameError}</div>}
+              {fieldError.fullName && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {fieldError.fullName}</div>}
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1" htmlFor="email">
@@ -169,17 +129,15 @@ export default function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
-                  className={`pl-10 ${emailError ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${fieldError.email ? 'border-red-500' : ''}`}
                   value={email}
-                  onChange={e => { setEmail(e.target.value); setEmailError(null); }}
-                  onBlur={handleBlurEmail}
+                  onChange={e => { setEmail(e.target.value); setFieldError(f => ({ ...f, email: '' })); }}
                   disabled={loading}
                   required
                   autoComplete="email"
-                  ref={emailRef}
                 />
               </div>
-              {emailError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {emailError}</div>}
+              {fieldError.email && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {fieldError.email}</div>}
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1" htmlFor="password">
@@ -191,10 +149,9 @@ export default function RegisterPage() {
                   id="password"
                   type={showPwd ? "text" : "password"}
                   placeholder="Créer un mot de passe"
-                  className={`pl-10 pr-12 ${pwdError ? 'border-red-500' : ''}`}
+                  className={`pl-10 pr-12 ${fieldError.password ? 'border-red-500' : ''}`}
                   value={password}
-                  onChange={e => { setPassword(e.target.value); setPwdError(null); }}
-                  onBlur={handleBlurPassword}
+                  onChange={e => { setPassword(e.target.value); setFieldError(f => ({ ...f, password: '' })); }}
                   disabled={loading}
                   required
                   minLength={6}
@@ -211,7 +168,7 @@ export default function RegisterPage() {
                   {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {pwdError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {pwdError}</div>}
+              {fieldError.password && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {fieldError.password}</div>}
             </div>
             <div>
               <label className="block text-sm font-semibold mb-1" htmlFor="confirm-pwd">
@@ -223,10 +180,9 @@ export default function RegisterPage() {
                   id="confirm-pwd"
                   type={showConfirmPwd ? "text" : "password"}
                   placeholder="Répétez votre mot de passe"
-                  className={`pl-10 pr-12 ${confirmPwdError ? 'border-red-500' : ''}`}
+                  className={`pl-10 pr-12 ${fieldError.confirmPwd ? 'border-red-500' : ''}`}
                   value={confirmPwd}
-                  onChange={e => { setConfirmPwd(e.target.value); setConfirmPwdError(null); }}
-                  onBlur={handleBlurConfirmPwd}
+                  onChange={e => { setConfirmPwd(e.target.value); setFieldError(f => ({ ...f, confirmPwd: '' })); }}
                   disabled={loading}
                   required
                   minLength={6}
@@ -243,7 +199,7 @@ export default function RegisterPage() {
                   {showConfirmPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {confirmPwdError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {confirmPwdError}</div>}
+              {fieldError.confirmPwd && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {fieldError.confirmPwd}</div>}
             </div>
             {formError && (
               <div className="bg-red-900/85 border border-red-700 text-red-200 rounded px-3 py-2 text-sm flex items-center gap-2">
