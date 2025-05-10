@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient'
 
 export type Movie = {
   id: string;
@@ -13,10 +13,7 @@ export type Movie = {
 };
 
 export async function getFilms(): Promise<Movie[]> {
-  const { data, error } = await supabase
-    .from('films')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('films').select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Erreur getFilms:', error);
     return [];
@@ -25,11 +22,7 @@ export async function getFilms(): Promise<Movie[]> {
 }
 
 export async function getFilmById(id: string): Promise<Movie | null> {
-  const { data, error } = await supabase
-    .from('films')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await supabase.from('films').select('*').eq('id', id).single();
   if (error) {
     console.error('Erreur getFilmById:', error);
     return null;
@@ -69,6 +62,33 @@ export async function deleteFilm(id: string): Promise<boolean> {
  */
 export async function getPopularMovies(limit = 6): Promise<Movie[]> {
   const { data, error } = await supabase
+    .from('films')
+    .select('*')
+    .order('popularity', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Erreur getPopularMovies:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Récupère les films par genre (champ 'genre' requis, format texte ou array)
+ */
+export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movie[]> {
+  const { data, error } = await supabase
+    .from('films')
+    .select('*')
+    .ilike('genre', `%${genreId}%`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Erreur getMoviesByGenre:', error);
+    return [];
+  }
+  return data || [];
+} = await supabase
     .from('films')
     .select('*')
     .order('popularity', { ascending: false })
