@@ -73,18 +73,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Catégories dynamiques */}
+      {/* Catégories universelles dynamiques */}
       {[
-        { title: "Films populaires", type: "popular_movies" },
-        { title: "Séries populaires", type: "popular_series" },
-        { title: "Suspense", type: "movies_by_genre", genreId: "thriller" },
-        { title: "Science Fiction", type: "movies_by_genre", genreId: "sci-fi" },
+        { title: "Nouveautés", type: "movies_by_genre", genreId: "nouveaute" },
+        { title: "Tendance", type: "popular_movies" },
         { title: "Action", type: "movies_by_genre", genreId: "action" },
-        { title: "Animation", type: "movies_by_genre", genreId: "animation" },
         { title: "Comédie", type: "movies_by_genre", genreId: "comedy" },
-        { title: "Documentaire", type: "movies_by_genre", genreId: "documentary" },
-        { title: "Séries Science Fiction", type: "series_by_genre", genreId: "sci-fi" },
-        { title: "Séries Thriller", type: "series_by_genre", genreId: "thriller" }
+        { title: "Drame", type: "movies_by_genre", genreId: "drama" },
+        { title: "Animation", type: "movies_by_genre", genreId: "animation" },
+        { title: "Famille", type: "movies_by_genre", genreId: "family" },
+        { title: "Science-Fiction", type: "movies_by_genre", genreId: "sci-fi" },
+        { title: "Aventure", type: "movies_by_genre", genreId: "adventure" },
+        { title: "Documentaire", type: "movies_by_genre", genreId: "documentary" }
       ].map((cat, idx) => (
         <ContentSection
           key={idx}
