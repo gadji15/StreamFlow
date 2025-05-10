@@ -4,10 +4,10 @@ import { supabase } from './supabaseClient'
  * Upload un fichier dans le bucket Supabase Storage.
  * @param bucket string - Nom du bucket (ex: 'images')
  * @param path string - Chemin/nom du fichier dans le bucket (ex: 'user-123/photo.png')
- * @param file File|Blob
+ * @param file File|Blob|Buffer
  * @returns {publicUrl, error}
  */
-export async function uploadToStorage(bucket: string, path: string, file: File | Blob) {
+export async function uploadToStorage(bucket: string, path: string, file: File | Blob | Buffer) {
   const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
   if (error) return { publicUrl: null, error }
 

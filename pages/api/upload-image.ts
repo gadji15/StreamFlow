@@ -10,8 +10,9 @@ export const config = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed')
 
-  const busboy = require('busboy')
-  const bb = busboy({ headers: req.headers })
+  // Import dynamique de busboy pour éviter les erreurs SSR
+  const Busboy = (await import('busboy')).default
+  const bb = Busboy({ headers: req.headers })
   let uploadFile: Buffer | null = null
   let fileName = ''
 
