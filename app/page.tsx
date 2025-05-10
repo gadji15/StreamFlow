@@ -73,39 +73,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Films populaires */}
-      <ContentSection 
-        title="Films populaires"
-        type="movies"
-        filter="popular"
-        animated={true}
-      />
-
-      {/* Séries populaires */}
-      <ContentSection 
-        title="Séries populaires"
-        type="series"
-        filter="popular"
-        animated={true}
-      />
-
-      {/* Films de suspense */}
-      <ContentSection 
-        title="Suspense"
-        type="movies"
-        filter="genre"
-        genreId="thriller"
-        animated={true}
-      />
-
-      {/* Science Fiction */}
-      <ContentSection 
-        title="Science Fiction"
-        type="movies"
-        filter="genre"
-        genreId="sci-fi"
-        animated={true}
-      />
+      {/* Catégories universelles dynamiques */}
+      {[
+        { title: "Nouveautés", type: "movies_by_genre", genreId: "nouveaute" },
+        { title: "Tendance", type: "popular_movies" },
+        { title: "Action", type: "movies_by_genre", genreId: "action" },
+        { title: "Comédie", type: "movies_by_genre", genreId: "comedy" },
+        { title: "Drame", type: "movies_by_genre", genreId: "drama" },
+        { title: "Animation", type: "movies_by_genre", genreId: "animation" },
+        { title: "Famille", type: "movies_by_genre", genreId: "family" },
+        { title: "Science-Fiction", type: "movies_by_genre", genreId: "sci-fi" },
+        { title: "Aventure", type: "movies_by_genre", genreId: "adventure" },
+        { title: "Documentaire", type: "movies_by_genre", genreId: "documentary" }
+      ].map((cat, idx) => (
+        <ContentSection
+          key={idx}
+          title={cat.title}
+          type={cat.type as any}
+          genreId={cat.genreId}
+        />
+      ))}
 
       {/* Exclusivités VIP */}
       <motion.section
