@@ -21,7 +21,7 @@ export default function Header() {
   const [navOpen, setNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useAuth();
+  const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useSupabaseAuth();
 
   // Gérer le scroll pour changer l'apparence du header
   useEffect(() => {
