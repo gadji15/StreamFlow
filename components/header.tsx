@@ -64,37 +64,61 @@ export default function Header() {
           </Link>
 
           {/* Navigation principale - Desktop */}
-          <nav className="hidden md:flex space-x-6">
+          <nav className="hidden md:flex space-x-2">
             <Link
               href="/films"
-              className={`hover:text-white ${pathname === '/films' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/films'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-400 hover:text-white hover:shadow'
+                }`}
             >
+              <Film className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/films' ? 'text-white drop-shadow' : 'text-indigo-300 group-hover:text-white'}`} />
               Films
             </Link>
             <Link
               href="/series"
-              className={`hover:text-white ${pathname === '/series' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/series'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow'
+                }`}
             >
+              <Tv className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/series' ? 'text-white drop-shadow' : 'text-pink-300 group-hover:text-white'}`} />
               Séries
             </Link>
             <Link
               href="/categories"
-              className={`hover:text-white ${pathname === '/categories' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/categories'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-400 hover:text-white hover:shadow'
+                }`}
             >
+              <Sparkles className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/categories' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
               Catégories
             </Link>
             <Link
               href="/nouveates"
-              className={`hover:text-white ${pathname === '/nouveates' ? 'text-white' : 'text-gray-300'}`}
+              className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
+                ${
+                  pathname === '/nouveates'
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-400 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-orange-400 hover:text-white hover:shadow'
+                }`}
             >
+              <Bell className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/nouveates' ? 'text-white drop-shadow' : 'text-yellow-300 group-hover:text-white'}`} />
               Nouveautés
             </Link>
             {isVIP && (
               <Link
                 href="/exclusif"
-                className="text-amber-400 hover:text-amber-300 flex items-center"
+                className="group flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-base shadow bg-gradient-to-r from-amber-400 to-yellow-300 text-black border border-yellow-200 hover:from-yellow-200 hover:to-yellow-400 hover:text-amber-700 transition-all"
               >
-                <Sparkles className="w-4 h-4 mr-1" />
+                <Sparkles className="w-5 h-5 mr-1 text-amber-600 group-hover:scale-110 transition-transform duration-200" />
                 Exclusif
               </Link>
             )}
