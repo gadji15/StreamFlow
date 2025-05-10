@@ -1,285 +1,273 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
-import { ArrowLeft, Eye, EyeOff, Mail, User, Lock, UserPlus } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Loader2, Lock, Mail, User as UserIcon, Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
+  const router = useRouter();
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const router = useRouter();
-  const { register, isLoggedIn } = useAuth();
-  const { toast } = useToast();
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Rediriger si déjà connecté
-  useEffect(() => {
-    if (isLoggedIn) {
-      router.push('/');
-    }
-  }, [isLoggedIn, router]);
+  // Inline validation states
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [confirmPwdError, setConfirmPwdError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const validateForm = () => {
-    if (!name) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir votre nom.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (!email) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir votre adresse email.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (!agreedToTerms) {
-      toast({
-        title: "Erreur",
-        description: "Vous devez accepter les conditions d'utilisation.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    return true;
-  };
+  const emailRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Email format validation
+  function validateEmail(val: string) {
+    if (!val) return "L'email est requis";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return "Format d'email invalide";
+    return null;
+  }
+  // Password validation
+  function validatePassword(val: string) {
+    if (!val) return 'Le mot de passe est requis';
+    if (val.length < 6) return '6 caractères minimum';
+    return null;
+  }
+  // Confirm password
+  function validateConfirmPwd(val: string) {
+    if (!val) return 'Veuillez confirmer le mot de passe';
+    if (val !== password) return 'Les mots de passe ne correspondent pas';
+    return null;
+  }
+  // Name validation
+  function validateName(val: string) {
+    if (!val.trim()) return 'Votre nom ou prénom est requis';
+    return null;
+  }
+
+  function handleBlurEmail() {
+    setEmailError(validateEmail(email));
+  }
+  function handleBlurPassword() {
+    setPwdError(validatePassword(password));
+  }
+  function handleBlurConfirmPwd() {
+    setConfirmPwdError(validateConfirmPwd(confirmPwd));
+  }
+  function handleBlurName() {
+    setNameError(validateName(fullName));
+  }
+
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    
-    if (!validateForm()) {
+    setFormError(null);
+    setSuccess(false);
+
+    // Validate all fields before submit
+    const nameE = validateName(fullName);
+    const emailE = validateEmail(email);
+    const pwdE = validatePassword(password);
+    const confirmE = validateConfirmPwd(confirmPwd);
+
+    setNameError(nameE);
+    setEmailError(emailE);
+    setPwdError(pwdE);
+    setConfirmPwdError(confirmE);
+
+    if (nameE || emailE || pwdE || confirmE) {
+      setFormError("Veuillez corriger les champs en erreur.");
       return;
     }
-    
-    setIsSubmitting(true);
-    
-    try {
-      await register(email, password, name);
-      
-      toast({
-        title: "Inscription réussie",
-        description: "Votre compte a été créé avec succès.",
-      });
-      
-      // Rediriger vers la page d'accueil ou la dernière page visitée
-      router.push('/');
-    } catch (error: any) {
-      toast({
-        title: "Erreur d'inscription",
-        description: error.message || "Une erreur est survenue lors de l'inscription.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } }
+      });
+      if (error) {
+        // Friendly error for common auth issues
+        if (error.message && /already/i.test(error.message)) {
+          setFormError("Cet email est déjà utilisé. Essayez de vous connecter.");
+        } else {
+          setFormError(error.message || "Erreur lors de l'inscription.");
+        }
+        setLoading(false);
+        return;
+      }
+      setSuccess(true);
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2400);
+    } catch (e: any) {
+      setFormError(e.message || 'Erreur inconnue.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <Link 
-            href="/" 
-            className="inline-flex items-center text-sm text-gray-400 hover:text-white mb-8"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour à l'accueil
-          </Link>
-          
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Créer un compte
-          </h1>
-          <p className="text-gray-400">
-            Rejoignez StreamFlow pour accéder à tout notre contenu
-          </p>
-        </div>
-        
-        <div className="bg-gray-800 rounded-lg shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nom */}
-            <div className="space-y-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300">
-                Nom
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-black px-4">
+      <div className="w-full max-w-md bg-gray-900/95 rounded-xl shadow-xl p-8 border border-gray-800">
+        <h1 className="text-2xl font-bold text-center mb-2 flex items-center gap-2 justify-center">
+          <UserIcon className="w-6 h-6 text-primary" /> Créer un compte
+        </h1>
+        <p className="text-center text-gray-400 mb-6">
+          Profitez de tout le catalogue StreamFlow gratuitement.
+        </p>
+
+        {success ? (
+          <div className="bg-green-900/85 border border-green-700 text-green-200 rounded px-3 py-6 text-center mb-6 flex flex-col items-center">
+            <CheckCircle2 className="w-10 h-10 mb-2 text-green-400" />
+            <div className="text-lg font-bold mb-1">Inscription réussie !</div>
+            <div>Vérifiez votre boîte email pour activer votre compte.</div>
+            <Button
+              className="mt-6 w-full"
+              onClick={() => router.replace('/login')}
+            >
+              Se connecter
+            </Button>
+          </div>
+        ) : (
+          <form className="space-y-5" onSubmit={handleRegister} autoComplete="off" noValidate>
+            <div>
+              <label className="block text-sm font-semibold mb-1" htmlFor="fullname">
+                Nom complet
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-500" />
-                </div>
+                <UserIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <Input
-                  id="name"
+                  id="fullname"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10"
-                  placeholder="Votre nom"
+                  placeholder="Votre nom ou prénom"
+                  className={`pl-10 ${nameError ? 'border-red-500' : ''}`}
+                  value={fullName}
+                  onChange={e => { setFullName(e.target.value); setNameError(null); }}
+                  onBlur={handleBlurName}
+                  disabled={loading}
                   required
+                  autoComplete="name"
                 />
               </div>
+              {nameError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {nameError}</div>}
             </div>
-            
-            {/* Email */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+            <div>
+              <label className="block text-sm font-semibold mb-1" htmlFor="email">
                 Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-500" />
-                </div>
+                <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
                   placeholder="votre@email.com"
+                  className={`pl-10 ${emailError ? 'border-red-500' : ''}`}
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setEmailError(null); }}
+                  onBlur={handleBlurEmail}
+                  disabled={loading}
                   required
+                  autoComplete="email"
+                  ref={emailRef}
                 />
               </div>
+              {emailError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {emailError}</div>}
             </div>
-            
-            {/* Mot de passe */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+            <div>
+              <label className="block text-sm font-semibold mb-1" htmlFor="password">
                 Mot de passe
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-500" />
-                </div>
+                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPwd ? "text" : "password"}
+                  placeholder="Créer un mot de passe"
+                  className={`pl-10 pr-12 ${pwdError ? 'border-red-500' : ''}`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  placeholder="••••••••"
+                  onChange={e => { setPassword(e.target.value); setPwdError(null); }}
+                  onBlur={handleBlurPassword}
+                  disabled={loading}
                   required
                   minLength={6}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
-                  onClick={toggleShowPassword}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-400"
+                  tabIndex={-1}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-primary focus:outline-none"
+                  onClick={() => setShowPwd(v => !v)}
+                  disabled={loading}
+                  aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {pwdError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {pwdError}</div>}
             </div>
-            
-            {/* Confirmer mot de passe */}
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+            <div>
+              <label className="block text-sm font-semibold mb-1" htmlFor="confirm-pwd">
                 Confirmer le mot de passe
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-500" />
-                </div>
+                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10"
-                  placeholder="••••••••"
+                  id="confirm-pwd"
+                  type={showConfirmPwd ? "text" : "password"}
+                  placeholder="Répétez votre mot de passe"
+                  className={`pl-10 pr-12 ${confirmPwdError ? 'border-red-500' : ''}`}
+                  value={confirmPwd}
+                  onChange={e => { setConfirmPwd(e.target.value); setConfirmPwdError(null); }}
+                  onBlur={handleBlurConfirmPwd}
+                  disabled={loading}
                   required
+                  minLength={6}
+                  autoComplete="new-password"
                 />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-primary focus:outline-none"
+                  onClick={() => setShowConfirmPwd(v => !v)}
+                  disabled={loading}
+                  aria-label={showConfirmPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showConfirmPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
+              {confirmPwdError && <div className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {confirmPwdError}</div>}
             </div>
-            
-            {/* Conditions */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreedToTerms}
-                onCheckedChange={(checked) => 
-                  setAgreedToTerms(checked === true)
-                }
-                required
-              />
-              <label htmlFor="terms" className="text-sm text-gray-400">
-                J'accepte les{' '}
-                <Link href="/conditions-utilisation" className="text-indigo-400 hover:text-indigo-300">
-                  conditions d'utilisation
-                </Link>
-                {' '}et la{' '}
-                <Link href="/confidentialite" className="text-indigo-400 hover:text-indigo-300">
-                  politique de confidentialité
-                </Link>
-              </label>
-            </div>
-            
+            {formError && (
+              <div className="bg-red-900/85 border border-red-700 text-red-200 rounded px-3 py-2 text-sm flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" /> {formError}
+              </div>
+            )}
             <Button
               type="submit"
-              className="w-full"
-              disabled={isSubmitting}
+              className="w-full justify-center font-semibold"
+              disabled={loading}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                  Inscription en cours...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Créer un compte
-                </>
-              )}
+              {loading && <Loader2 className="animate-spin h-5 w-5 mr-2" />}
+              S'inscrire
             </Button>
-            
-            <div className="text-center text-sm text-gray-400">
-              Vous avez déjà un compte?{' '}
-              <Link href="/login" className="text-indigo-400 hover:text-indigo-300">
-                Se connecter
-              </Link>
-            </div>
           </form>
+        )}
+
+        <div className="text-center mt-6 text-sm text-gray-400">
+          Déjà inscrit ?{' '}
+          <Link href="/login" className="text-primary hover:underline font-semibold">
+            Se connecter
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
