@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function UnauthorizedPage() {
   const { isLoggedIn } = useAuth();

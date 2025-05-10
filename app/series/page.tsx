@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { VipBadge } from '@/components/vip-badge';
 import LoadingScreen from '@/components/loading-screen';
 import { getAllSeries, Series } from '@/lib/firebase/firestore/series';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 export default function SeriesPage() {

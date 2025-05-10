@@ -7,7 +7,7 @@ import { Menu, X, User, Film, Tv, Search, Bell, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ModeToggle } from '@/components/mode-toggle';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import {
   DropdownMenu,
   DropdownMenuContent,

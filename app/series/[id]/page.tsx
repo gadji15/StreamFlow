@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommentsSection } from '@/components/comments-section';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { getSeries, getSeriesEpisodes, incrementSeriesViews, Series, Episode } from '@/lib/firebase/firestore/series';
 import { formatDuration } from '@/lib/utils';

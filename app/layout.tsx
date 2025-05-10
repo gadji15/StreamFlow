@@ -9,7 +9,7 @@ import { ToastProvider } from "@/components/ui/toaster";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PWAUpdatePrompt from "@/components/pwa-update-prompt";
 import ConnectivityIndicator from "@/components/connectivity-indicator";
-import { AuthProvider } from "@/hooks/use-auth";
+// (Supabase : plus besoin de AuthProvider, supprimez ou remplacez la logique par un simple layout)
 
 const inter = Inter({ subsets: ['latin'] });
 

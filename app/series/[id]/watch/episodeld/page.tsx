@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Info, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VideoPlayer } from '@/components/video-player';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { getSeries, getEpisode, getSeriesEpisodes, Episode } from '@/lib/firebase/firestore/series';
 

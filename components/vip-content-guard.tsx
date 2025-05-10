@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Lock, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface VipContentGuardProps {
   children: React.ReactNode;

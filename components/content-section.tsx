@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Film, Tv } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/firebase/firestore/movies';
 import { getPopularSeries, Series } from '@/lib/firebase/firestore/series';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface ContentSectionProps {
   title: string;
