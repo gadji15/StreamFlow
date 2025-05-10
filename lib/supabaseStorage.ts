@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 /**
  * Upload un fichier dans le bucket Supabase Storage.

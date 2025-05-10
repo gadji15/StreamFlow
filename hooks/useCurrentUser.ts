@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 /**
  * Hook React pour obtenir l'utilisateur actuellement connecté (client-side)

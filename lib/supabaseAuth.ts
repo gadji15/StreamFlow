@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 /**
  * Inscription d'un nouvel utilisateur (email/password)

@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
 export async function getProfile(userId: string) {
   return await supabase.from('profiles').select('*').eq('id', userId).single()
