@@ -11,6 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json(data)
   } else if (req.method === 'PATCH') {
     const { full_name, role } = req.body
+    if (!full_name && !role) return res.status(400).json({ error: 'Aucune modification' })
     const { data, error } = await updateProfile(id, { full_name, role })
     if (error) return res.status(400).json({ error: error.message })
     return res.status(200).json(data)

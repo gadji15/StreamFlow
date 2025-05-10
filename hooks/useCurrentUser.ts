@@ -8,16 +8,16 @@ export function useCurrentUser() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    let ignore = false
+    let isMounted = true
     supabase.auth.getUser().then(({ data }) => {
-      if (!ignore) setUser(data.user)
+      if (isMounted) setUser(data.user)
     })
-    const sub = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) setUser(session?.user ?? null)
     })
     return () => {
-      ignore = true
-      sub.data.subscription.unsubscribe()
+      isMounted = false
+      listener?.subscription.unsubscribe()
     }
   }, [])
 

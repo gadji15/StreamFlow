@@ -27,3 +27,12 @@ export async function signOut() {
 export async function getCurrentUser() {
   return (await supabase.auth.getUser()).data.user
 }
+
+/**
+ * Surveille l'état d'auth en temps réel (callback à chaque changement)
+ */
+export function onAuthStateChange(callback: (user: any | null) => void) {
+  return supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session?.user ?? null)
+  })
+}

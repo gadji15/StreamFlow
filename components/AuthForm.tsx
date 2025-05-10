@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signInWithEmail, signUpWithEmail } from '../lib/supabaseAuth'
+import { createProfile } from '../lib/supabaseProfiles'
 
 export default function AuthForm() {
   const [email, setEmail] = useState('')
@@ -12,11 +13,22 @@ export default function AuthForm() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const fn = isSignUp ? signUpWithEmail : signInWithEmail
-    const { error } = await fn(email, password)
+    if (isSignUp) {
+      const { data, error } = await signUpWithEmail(email, password)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+      // Créer le profil utilisateur après inscription (optionnel)
+      const userId = data?.user?.id
+      if (userId) await createProfile({ id: userId, full_name: '', role: 'user' })
+    } else {
+      const { error } = await signInWithEmail(email, password)
+      if (error) setError(error.message)
+    }
     setLoading(false)
-    if (error) setError(error.message)
-    else window.location.reload()
+    window.location.reload()
   }
 
   return (
