@@ -1,5 +1,21 @@
 import Link from "next/link";
-import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, Film, Tv, Sparkles, User } from "lucide-react";
+import {
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Mail,
+  Phone,
+  Film,
+  Tv,
+  Sparkles,
+  User,
+  Home,
+  HelpCircle,
+  Layers,
+  MonitorSmartphone,
+  Smartphone
+} from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -41,25 +57,25 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/faq" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
-                  <Sparkles className="w-4 h-4 mr-1" />
+                  <HelpCircle className="w-4 h-4 mr-1" />
                   FAQ
                 </Link>
               </li>
               <li>
                 <Link href="/aide" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
-                  <User className="w-4 h-4 mr-1" />
+                  <HelpCircle className="w-4 h-4 mr-1" />
                   Aide et Support
                 </Link>
               </li>
               <li>
                 <Link href="/appareils-compatibles" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
-                  <Tv className="w-4 h-4 mr-1" />
+                  <MonitorSmartphone className="w-4 h-4 mr-1" />
                   Appareils compatibles
                 </Link>
               </li>
               <li>
                 <Link href="/mobile" className="flex items-center text-gray-400 hover:text-fuchsia-400 transition-colors text-sm">
-                  <Phone className="w-4 h-4 mr-1" />
+                  <Smartphone className="w-4 h-4 mr-1" />
                   Installer l'application
                 </Link>
               </li>
@@ -72,7 +88,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
-                  <Film className="w-4 h-4 mr-1" />
+                  <Home className="w-4 h-4 mr-1" />
                   Accueil
                 </Link>
               </li>
@@ -90,7 +106,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/categories" className="flex items-center text-gray-400 hover:text-blue-400 transition-colors text-sm">
-                  <Sparkles className="w-4 h-4 mr-1" />
+                  <Layers className="w-4 h-4 mr-1" />
                   Catégories
                 </Link>
               </li>
