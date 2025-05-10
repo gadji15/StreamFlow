@@ -99,6 +99,48 @@ export default function HomePage() {
         genreId="sci-fi"
       />
 
+      {/* Action */}
+      <ContentSection 
+        title="Action"
+        type="movies_by_genre"
+        genreId="action"
+      />
+
+      {/* Animation */}
+      <ContentSection 
+        title="Animation"
+        type="movies_by_genre"
+        genreId="animation"
+      />
+
+      {/* Comédie */}
+      <ContentSection 
+        title="Comédie"
+        type="movies_by_genre"
+        genreId="comedy"
+      />
+
+      {/* Documentaire */}
+      <ContentSection 
+        title="Documentaire"
+        type="movies_by_genre"
+        genreId="documentary"
+      />
+
+      {/* Séries - Science Fiction */}
+      <ContentSection 
+        title="Séries Science Fiction"
+        type="series_by_genre"
+        genreId="sci-fi"
+      />
+
+      {/* Séries - Thriller */}
+      <ContentSection 
+        title="Séries Thriller"
+        type="series_by_genre"
+        genreId="thriller"
+      />
+
       {/* Exclusivités VIP */}
       <motion.section
         ref={ref}
