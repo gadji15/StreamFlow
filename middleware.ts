@@ -19,5 +19,11 @@ export function middleware(request: NextRequest) {
 
 // Configuration du middleware : matcher sur les routes protégées
 export const config = {
-  matcher: protectedApiRoutes,
+  matcher: [
+    '/api/user/',
+    '/api/favorites/:path*',
+    '/api/watch-history/:path*',
+    '/api/admin/:path*',
+    '/api/vip/:path*'
+  ],
 };
