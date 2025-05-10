@@ -73,73 +73,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Films populaires */}
-      <ContentSection 
-        title="Films populaires"
-        type="popular_movies"
-      />
-
-      {/* Séries populaires */}
-      <ContentSection 
-        title="Séries populaires"
-        type="popular_series"
-      />
-
-      {/* Suspense */}
-      <ContentSection 
-        title="Suspense"
-        type="movies_by_genre"
-        genreId="thriller"
-      />
-
-      {/* Science Fiction */}
-      <ContentSection 
-        title="Science Fiction"
-        type="movies_by_genre"
-        genreId="sci-fi"
-      />
-
-      {/* Action */}
-      <ContentSection 
-        title="Action"
-        type="movies_by_genre"
-        genreId="action"
-      />
-
-      {/* Animation */}
-      <ContentSection 
-        title="Animation"
-        type="movies_by_genre"
-        genreId="animation"
-      />
-
-      {/* Comédie */}
-      <ContentSection 
-        title="Comédie"
-        type="movies_by_genre"
-        genreId="comedy"
-      />
-
-      {/* Documentaire */}
-      <ContentSection 
-        title="Documentaire"
-        type="movies_by_genre"
-        genreId="documentary"
-      />
-
-      {/* Séries - Science Fiction */}
-      <ContentSection 
-        title="Séries Science Fiction"
-        type="series_by_genre"
-        genreId="sci-fi"
-      />
-
-      {/* Séries - Thriller */}
-      <ContentSection 
-        title="Séries Thriller"
-        type="series_by_genre"
-        genreId="thriller"
-      />
+      {/* Catégories dynamiques */}
+      {[
+        { title: "Films populaires", type: "popular_movies" },
+        { title: "Séries populaires", type: "popular_series" },
+        { title: "Suspense", type: "movies_by_genre", genreId: "thriller" },
+        { title: "Science Fiction", type: "movies_by_genre", genreId: "sci-fi" },
+        { title: "Action", type: "movies_by_genre", genreId: "action" },
+        { title: "Animation", type: "movies_by_genre", genreId: "animation" },
+        { title: "Comédie", type: "movies_by_genre", genreId: "comedy" },
+        { title: "Documentaire", type: "movies_by_genre", genreId: "documentary" },
+        { title: "Séries Science Fiction", type: "series_by_genre", genreId: "sci-fi" },
+        { title: "Séries Thriller", type: "series_by_genre", genreId: "thriller" }
+      ].map((cat, idx) => (
+        <ContentSection
+          key={idx}
+          title={cat.title}
+          type={cat.type as any}
+          genreId={cat.genreId}
+        />
+      ))}
 
       {/* Exclusivités VIP */}
       <motion.section
