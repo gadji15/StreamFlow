@@ -14,7 +14,7 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useWatchHistory } from '@/hooks/use-watch-history';
 
 export default function MonComptePage() {
-  const { userData, isVIP, isLoggedIn, logout } = useAuth();
+  const { userData, isVIP, isLoggedIn, logout } = useSupabaseAuth();
   const { history, loading: historyLoading } = useWatchHistory();
   const router = useRouter();
   
