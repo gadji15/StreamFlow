@@ -85,26 +85,14 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
-        <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ToastProvider>
-              <Header />
-              <main className="flex-1 pt-16 md:pt-20">
-                {children}
-              </main>
-              <Footer />
-              <ScrollToTop />
-              <PWAInstallPrompt />
-              <PWAUpdatePrompt />
-              <ConnectivityIndicator />
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <ThemeProvider
+           attribute="class"
+           defaultTheme="dark"
+           enableSystem
+           disableTransitionOnChange
+         >
+           {children}
+         </ThemeProvider>
       </body>
     </html>
   );
