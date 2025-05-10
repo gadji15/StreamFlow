@@ -70,19 +70,13 @@ export default function SearchModal() {
           >
             <motion.div
               id="search-modal"
-              className="w-full max-w-xl mx-auto mt-24 rounded-2xl bg-gray-900 shadow-xl border border-gray-700 relative px-6 py-8"
+              className="w-full max-w-xl mx-auto mt-24 rounded-2xl bg-gray-900/80 shadow-xl border border-gray-700 relative px-6 py-8"
               initial={{ scale: 0.96, y: 40, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 40, opacity: 0 }}
               transition={{ type: "spring", stiffness: 340, damping: 26, duration: 0.25 }}
               onClick={e => e.stopPropagation()}
-            >
-              {/* Fermer bouton */}
-              <button
-                type="button"
-                aria-label="Fermer la recherche"
-                className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-700 transition"
-                onClick={() => setOpen(false)}
+            > setOpen(false)}
               >
                 <X className="w-6 h-6 text-gray-400" />
               </button>
