@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
-// Type pour les résultats
+// Type pour les résultats de recherche
 type ResultType = {
   id: string;
   title: string;
