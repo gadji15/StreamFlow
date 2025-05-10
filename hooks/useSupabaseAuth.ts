@@ -7,16 +7,16 @@ import { signOut } from '../lib/supabaseAuth'
  * Hook d’auth avancé avec Supabase : expose isLoggedIn, userData, isVIP, isAdmin, logout, etc.
  */
 export function useSupabaseAuth() {
-  const user = useCurrentUser()
+  const { user, loading } = useCurrentUser()
   const [userData, setUserData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(true)
   const [isVIP, setIsVIP] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     let ignore = false
     if (user?.id) {
-      setIsLoading(true)
+      setProfileLoading(true)
       getProfile(user.id).then(({ data }) => {
         if (ignore) return
         setUserData({
@@ -28,20 +28,20 @@ export function useSupabaseAuth() {
         })
         setIsVIP(!!data?.is_vip)
         setIsAdmin(data?.role === 'admin')
-        setIsLoading(false)
+        setProfileLoading(false)
       })
     } else {
       setUserData(null)
       setIsVIP(false)
       setIsAdmin(false)
-      setIsLoading(false)
+      setProfileLoading(false)
     }
     return () => { ignore = true }
   }, [user])
 
   return {
     isLoggedIn: !!user,
-    isLoading,
+    isLoading: loading || profileLoading,
     userData,
     isVIP,
     isAdmin,

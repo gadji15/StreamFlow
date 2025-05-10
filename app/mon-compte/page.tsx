@@ -14,20 +14,20 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useWatchHistory } from '@/hooks/use-watch-history';
 
 export default function MonComptePage() {
-  const { userData, isVIP, isLoggedIn, logout } = useSupabaseAuth();
+  const { userData, isVIP, isLoggedIn, isLoading, logout } = useSupabaseAuth();
   const { history, loading: historyLoading } = useWatchHistory();
   const router = useRouter();
 
   // Redirige vers /login si l'utilisateur n'est pas connecté,
   // mais attend que l'état d'auth soit déterminé
   useEffect(() => {
-    if (isLoggedIn === false) {
+    if (!isLoading && isLoggedIn === false) {
       router.replace('/login?redirect=/mon-compte');
     }
-  }, [isLoggedIn, router]);
+  }, [isLoading, isLoggedIn, router]);
   
   // Affiche un loader tant que l'état d'auth n'est pas déterminé
-  if (typeof isLoggedIn === 'undefined') {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[40vh]">
         <span className="text-gray-400">Chargement...</span>
