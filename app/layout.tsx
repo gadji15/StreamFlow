@@ -10,6 +10,8 @@ import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PWAUpdatePrompt from "@/components/pwa-update-prompt";
 import ConnectivityIndicator from "@/components/connectivity-indicator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import GlobalErrorLogger from "@/components/GlobalErrorLogger";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -86,24 +88,27 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
         <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
-            <Header />
-            <main style={{
-              maxWidth: 1440,
-              margin: '0 auto',
-              padding: '2.5rem 2rem',
-              minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
-            }}>
-              {children}
-            </main>
-            <Footer />
-          </ThemeProvider>
+          <ErrorBoundary>
+            <GlobalErrorLogger />
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
+              <Header />
+              <main style={{
+                maxWidth: 1440,
+                margin: '0 auto',
+                padding: '2.5rem 2rem',
+                minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
+              }}>
+                {children}
+              </main>
+              <Footer />
+            </ThemeProvider>
+          </ErrorBoundary>
         </AuthProvider>
       </body>
     </html>
