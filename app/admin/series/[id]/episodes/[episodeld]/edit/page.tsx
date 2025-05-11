@@ -10,11 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { ImageUpload } from '@/components/admin/image-upload';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
-import { 
-  getSeries, 
-  getEpisode, 
-  updateEpisode 
-} from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminEditEpisodePage() {
   const router = useRouter();
@@ -54,33 +50,41 @@ export default function AdminEditEpisodePage() {
       setLoading(true);
       try {
         // Charger la série
-        const seriesData = await getSeries(seriesId);
-        
-        if (!seriesData) {
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('series')
+          .select('title')
+          .eq('id', seriesId)
+          .single();
+
+        if (seriesError || !seriesData) {
           setError('Série non trouvée');
           return;
         }
-        
+
         setSeriesTitle(seriesData.title);
-        
+
         // Charger l'épisode
-        const episodeData = await getEpisode(episodeId);
-        
-        if (!episodeData) {
+        const { data: episodeData, error: episodeError } = await supabase
+          .from('episodes')
+          .select('*')
+          .eq('id', episodeId)
+          .single();
+
+        if (episodeError || !episodeData) {
           setError('Épisode non trouvé');
           return;
         }
-        
+
         // Remplir le formulaire avec les données de l'épisode
         setTitle(episodeData.title);
         setDescription(episodeData.description);
         setSeason(episodeData.season);
-        setEpisodeNumber(episodeData.episodeNumber);
+        setEpisodeNumber(episodeData.episode_number);
         setDuration(episodeData.duration);
-        setVideoUrl(episodeData.videoUrl || '');
-        setThumbnailUrl(episodeData.thumbnailUrl);
-        setIsVIP(episodeData.isVIP);
-        setIsPublished(episodeData.isPublished);
+        setVideoUrl(episodeData.video_url || '');
+        setThumbnailUrl(episodeData.thumbnail_url);
+        setIsVIP(episodeData.is_vip);
+        setIsPublished(episodeData.published);
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
         setError('Impossible de charger les données de l\'épisode');
@@ -109,26 +113,45 @@ export default function AdminEditEpisodePage() {
     setIsSubmitting(true);
     
     try {
+      // Upload de la miniature si modifiée
+      let publicThumbnailUrl = thumbnailUrl || '';
+      if (thumbnailFile) {
+        const { data, error } = await supabase.storage
+          .from('episode-thumbnails')
+          .upload(`thumbnails/${Date.now()}-${thumbnailFile.name}`, thumbnailFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('episode-thumbnails').getPublicUrl(data.path);
+        publicThumbnailUrl = urlData?.publicUrl || '';
+      }
+
       // Préparer les données de l'épisode
-      const episodeData = {
+      const updateFields = {
         title,
         description,
         season,
-        episodeNumber,
+        episode_number: episodeNumber,
         duration,
-        videoUrl: videoUrl || null,
-        isVIP,
-        isPublished
+        video_url: videoUrl || null,
+        is_vip: isVIP,
+        published: isPublished,
+        thumbnail_url: publicThumbnailUrl || null,
       };
-      
+
       // Mettre à jour l'épisode
-      const result = await updateEpisode(episodeId, episodeData, thumbnailFile);
-      
+      const { error: updateError } = await supabase
+        .from('episodes')
+        .update(updateFields)
+        .eq('id', episodeId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
       toast({
         title: 'Épisode mis à jour',
         description: `L'épisode "${title}" a été mis à jour avec succès.`,
       });
-      
+
       // Rediriger vers la liste des épisodes
       router.push(`/admin/series/${seriesId}/episodes`);
     } catch (error) {
