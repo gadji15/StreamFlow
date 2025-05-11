@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,14 +16,13 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const router = useRouter();
-  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "Erreur",
@@ -32,28 +31,67 @@ export default function AdminLoginPage() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      const result = await login(email, password);
-      
-      if (result) {
-        // Authentification réussie, vérifier maintenant le rôle admin
+      // Authentification Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data?.user) {
         toast({
-          title: "Connexion réussie",
-          description: "Redirection vers le tableau de bord administrateur..."
+          title: "Erreur d'authentification",
+          description: "Email ou mot de passe incorrect.",
+          variant: "destructive",
         });
-        
-        // Dans une application réelle, nous devrions vérifier sur le serveur que l'utilisateur est un admin
-        // Pour cette démonstration, nous utiliserons le hook useAuth qui a déjà vérifié le rôle
-        
-        router.push('/admin/dashboard');
+        setIsSubmitting(false);
+        return;
       }
+
+      // Vérifier le rôle admin dans user_roles_flat
+      const { user } = data;
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles_flat')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (rolesError) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de vérifier le rôle utilisateur.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const roleNames = (roles || []).map(r => r.role);
+      const isAdmin = roleNames.includes('admin') || roleNames.includes('super_admin');
+
+      if (!isAdmin) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits administrateur.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue, accès admin autorisé.",
+      });
+
+      router.push('/admin/dashboard');
     } catch (error) {
       toast({
         title: "Erreur d'authentification",
-        description: "Email ou mot de passe incorrect.",
+        description: "Une erreur est survenue lors de la connexion.",
         variant: "destructive",
       });
     } finally {

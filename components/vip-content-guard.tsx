@@ -1,74 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Lock, Sparkles } from 'lucide-react';
+import { ReactNode } from 'react';
+import { useVipStatus } from '@/hooks/useVipStatus';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { Lock, AlarmClock } from 'lucide-react';
 
-interface VipContentGuardProps {
-  children: React.ReactNode;
-  isVIPContent: boolean;
-  contentTitle: string;
-  contentType: 'film' | 'série' | 'épisode';
-}
-
-export default function VipContentGuard({ 
-  children, 
-  isVIPContent, 
-  contentTitle,
-  contentType
-}: VipContentGuardProps) {
-  const { isVIP, isLoading, isLoggedIn } = useAuth();
+/**
+ * Composant de protection du contenu VIP.
+ * Affiche un message et un bouton d’abonnement si l’utilisateur n’est pas VIP.
+ */
+export function VipContentGuard({ children }: { children: ReactNode }) {
+  const { isVIP, loading } = useVipStatus();
   const router = useRouter();
-  
-  // Si ce n'est pas du contenu VIP ou si l'utilisateur est VIP, afficher le contenu normalement
-  if (!isVIPContent || isVIP) {
-    return <>{children}</>;
-  }
-  
-  // Si l'authentification est en cours de chargement, afficher un indicateur
-  if (isLoading) {
+
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[30vh]">
+        <AlarmClock className="h-8 w-8 animate-spin text-indigo-500" />
+        <span className="ml-3">Vérification du statut VIP…</span>
       </div>
     );
   }
-  
-  // Afficher la garde pour le contenu VIP
-  return (
-    <div className="rounded-lg border border-amber-600/30 bg-gradient-to-b from-amber-950/20 to-amber-900/10 p-8 text-center">
-      <div className="flex justify-center mb-4">
-        <div className="bg-amber-600/20 p-3 rounded-full">
-          <Lock className="h-8 w-8 text-amber-500" />
-        </div>
-      </div>
-      
-      <h2 className="text-2xl font-bold mb-2">Contenu VIP exclusif</h2>
-      <p className="text-gray-300 mb-6">
-        Ce {contentType} fait partie de notre contenu exclusif VIP. 
-        Abonnez-vous pour débloquer <strong>{contentTitle}</strong> et des centaines d'autres titres premium.
-      </p>
-      
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button 
-          onClick={() => router.push('/vip')}
+
+  if (!isVIP) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] bg-gray-900 rounded-lg p-8">
+        <Lock className="h-10 w-10 text-amber-500 mb-4" />
+        <p className="text-amber-400 text-lg font-semibold mb-3">
+          Ce contenu est réservé aux membres VIP.
+        </p>
+        <Button
+          size="lg"
           className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+          onClick={() => router.push('/abonnement')}
         >
-          <Sparkles className="mr-2 h-4 w-4" />
-          Devenir membre VIP
+          Devenir VIP
         </Button>
-        
-        {!isLoggedIn && (
-          <Button 
-            variant="outline" 
-            onClick={() => router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))}
-          >
-            Se connecter
-          </Button>
-        )}
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <>{children}</>;
 }
