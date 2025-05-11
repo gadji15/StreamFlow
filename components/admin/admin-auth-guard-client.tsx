@@ -9,7 +9,7 @@ export default function AdminAuthGuardClient({
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading, isAdmin } = useAuth();
+  const { isLoading, isAdmin } = useSupabaseAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthChecked, setIsAuthChecked] = useState(false);

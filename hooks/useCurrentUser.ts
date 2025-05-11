@@ -6,14 +6,17 @@ import { supabase } from '@/lib/supabaseClient'
  */
 export function useCurrentUser() {
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true
     supabase.auth.getUser().then(({ data }) => {
       if (isMounted) setUser(data.user)
+      if (isMounted) setLoading(false)
     })
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (isMounted) setUser(session?.user ?? null)
+      if (isMounted) setLoading(false)
     })
     return () => {
       isMounted = false
@@ -21,5 +24,5 @@ export function useCurrentUser() {
     }
   }, [])
 
-  return user
+  return { user, loading }
 }
