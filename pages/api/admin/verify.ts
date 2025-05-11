@@ -1,6 +1,6 @@
 // pages/api/admin/verify.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyAdmin } from '@/lib/firebase/firestore/admins';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,17 +17,27 @@ export default async function handler(
       return res.status(400).json({ message: 'UID is required' });
     }
     
-    const result = await verifyAdmin(uid);
+    // Nouvelle logique Supabase : vérifier via user_roles_flat ou profiles
+    const supabase = createServerSupabaseClient({ req, res });
+    // Vérifier dans user_roles_flat
+    const { data: roles, error } = await supabase
+      .from('user_roles_flat')
+      .select('role')
+      .eq('user_id', uid)
+      .in('role', ['admin', 'super_admin']);
     
-    if (result.isAdmin) {
-      return res.status(200).json({ 
-        isAdmin: true, 
-        adminData: result.adminData 
+    if (error) {
+      return res.status(500).json({ message: 'Erreur lors de la vérification Supabase', error: error.message });
+    }
+    if (roles && roles.length > 0) {
+      return res.status(200).json({
+        isAdmin: true,
+        adminData: { user_id: uid, roles: roles.map(r => r.role) }
       });
     } else {
-      return res.status(403).json({ 
-        isAdmin: false, 
-        message: result.message 
+      return res.status(403).json({
+        isAdmin: false,
+        message: "L'utilisateur n'est pas administrateur"
       });
     }
   } catch (error) {
