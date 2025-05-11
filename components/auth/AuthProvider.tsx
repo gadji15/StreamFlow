@@ -17,18 +17,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let ignore = false;
 
-    supabase.auth.getUser().then(({ data }) => {
+    // Initial session load
+    supabase.auth.getSession().then(({ data }) => {
       if (!ignore) {
-        setUser(data.user);
+        setUser(data.session?.user ?? null);
         setLoading(false);
       }
     });
+
+    // Listen for session changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!ignore) {
         setUser(session?.user ?? null);
         setLoading(false);
       }
     });
+
     return () => {
       ignore = true;
       listener?.subscription.unsubscribe();
