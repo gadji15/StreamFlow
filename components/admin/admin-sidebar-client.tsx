@@ -24,7 +24,7 @@ interface NavItem {
 
 export default function AdminSidebarClient() {
   const pathname = usePathname();
-  const { userData } = useAuth();
+  const { user: userData } = useCurrentUser();
   const isSuperAdmin = userData?.role === 'super_admin';
   
   const navItems: NavItem[] = [
