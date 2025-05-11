@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true); // Toujours loading avant le verdict
 
+    // 1. Restaure la session à froid
     supabase.auth.getSession().then(({ data, error }) => {
       // LOG pour diagnostic de session et du localStorage
       console.log('SESSION INIT', {
@@ -48,13 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (ignore) return;
       setUser(data.session?.user ?? null);
-      setLoading(false);
+      setLoading(false); // On ne passe loading à false qu'après la restauration initiale
     });
 
+    // 2. Met à jour la session à chaud (login/logout)
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (ignore) return;
       setUser(session?.user ?? null);
-      setLoading(false);
+      // NE PAS mettre setLoading(false) ici : on laisse loading géré uniquement par l'init
     });
 
     return () => {
