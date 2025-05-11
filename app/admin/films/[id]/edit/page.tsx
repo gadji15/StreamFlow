@@ -192,21 +192,6 @@ export default function AdminEditFilmPage() {
           role: member.role
         }));
       
-      // Préparer les données à mettre à jour
-      const updates: Partial<Movie> = {
-        title,
-        originalTitle: originalTitle || null,
-        description,
-        year,
-        duration,
-        director: director || null,
-        genres: selectedGenres,
-        cast: formattedCast.length > 0 ? formattedCast : [],
-        trailerUrl: trailerUrl || null,
-        isVIP,
-        isPublished
-      };
-      
       // Upload des images si modifiées
       let posterUrl = movie?.poster_url || '';
       let backdropUrl = movie?.backdrop_url || '';
@@ -238,7 +223,7 @@ export default function AdminEditFilmPage() {
         duration,
         director: director || null,
         genres: selectedGenres,
-        cast: cast.filter(member => member.name.trim() !== ''),
+        cast: formattedCast.length > 0 ? formattedCast : [],
         trailer_url: trailerUrl || null,
         is_vip: isVIP,
         published: isPublished,
