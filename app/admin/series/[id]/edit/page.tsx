@@ -26,12 +26,24 @@ import {
   X,
   Loader2
 } from 'lucide-react';
-import { 
-  getSeries, 
-  updateSeries, 
-  getMovieGenres,
-  Series
-} from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
+
+type Series = {
+  id: string;
+  title: string;
+  original_title?: string;
+  description: string;
+  start_year: number;
+  end_year?: number | null;
+  creator?: string;
+  genres?: string[];
+  cast?: { name: string; role: string }[];
+  trailer_url?: string;
+  is_vip?: boolean;
+  published?: boolean;
+  poster_url?: string;
+  backdrop_url?: string;
+};
 
 export default function AdminEditSeriesPage() {
   const router = useRouter();
@@ -69,29 +81,33 @@ export default function AdminEditSeriesPage() {
   useEffect(() => {
     const loadSeries = async () => {
       if (!id) return;
-      
+
       setLoading(true);
       try {
-        const seriesData = await getSeries(id);
-        
-        if (!seriesData) {
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('series')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (seriesError || !seriesData) {
           setError('Série non trouvée');
           return;
         }
-        
+
         setSeries(seriesData);
-        
+
         // Initialiser les champs du formulaire
         setTitle(seriesData.title);
-        setOriginalTitle(seriesData.originalTitle || '');
+        setOriginalTitle(seriesData.original_title || '');
         setDescription(seriesData.description);
-        setStartYear(seriesData.startYear);
-        setEndYear(seriesData.endYear || null);
+        setStartYear(seriesData.start_year);
+        setEndYear(seriesData.end_year || null);
         setCreator(seriesData.creator || '');
         setSelectedGenres(seriesData.genres || []);
-        setIsVIP(seriesData.isVIP);
-        setIsPublished(seriesData.isPublished);
-        setTrailerUrl(seriesData.trailerUrl || '');
+        setIsVIP(seriesData.is_vip || false);
+        setIsPublished(seriesData.published || false);
+        setTrailerUrl(seriesData.trailer_url || '');
         setCast(seriesData.cast || [{ name: '', role: '' }]);
       } catch (error) {
         console.error('Erreur lors du chargement de la série:', error);
@@ -100,17 +116,18 @@ export default function AdminEditSeriesPage() {
         setLoading(false);
       }
     };
-    
+
     // Charger les genres
     const loadGenres = async () => {
       try {
-        const genres = await getMovieGenres();
-        setAvailableGenres(genres);
+        const { data, error } = await supabase.from('genres').select('id, name');
+        if (error) throw error;
+        setAvailableGenres(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des genres:', error);
       }
     };
-    
+
     loadSeries();
     loadGenres();
   }, [id]);
@@ -190,16 +207,60 @@ export default function AdminEditSeriesPage() {
         isPublished
       };
       
+      // Upload des images si modifiées
+      let posterUrl = series?.poster_url || '';
+      let backdropUrl = series?.backdrop_url || '';
+
+      if (posterFile) {
+        const { data, error } = await supabase.storage
+          .from('series-posters')
+          .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('series-posters').getPublicUrl(data.path);
+        posterUrl = urlData?.publicUrl || '';
+      }
+
+      if (backdropFile) {
+        const { data, error } = await supabase.storage
+          .from('series-backdrops')
+          .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('series-backdrops').getPublicUrl(data.path);
+        backdropUrl = urlData?.publicUrl || '';
+      }
+
+      // Préparer les données à mettre à jour
+      const updates: Partial<Series> = {
+        title,
+        original_title: originalTitle || null,
+        description,
+        start_year: startYear,
+        end_year: endYear || null,
+        creator: creator || null,
+        genres: selectedGenres,
+        cast: cast.filter(member => member.name.trim() !== ''),
+        trailer_url: trailerUrl || null,
+        is_vip: isVIP,
+        published: isPublished,
+        poster_url: posterUrl || null,
+        backdrop_url: backdropUrl || null,
+      };
+
       // Mettre à jour la série
-      await updateSeries(id, updates, posterFile, backdropFile);
-      
-      toast({
-        title: 'Série mise à jour',
-        description: `La série "${title}" a été mise à jour avec succès.`,
-      });
-      
-      // Rediriger vers la liste des séries
-      router.push('/admin/series');
+      const { error: updateError } = await supabase
+        .from('series')
+        .update(updates)
+        .eq('id', id);
+
+      if (!updateError) {
+        toast({
+          title: 'Série mise à jour',
+          description: `La série "${title}" a été mise à jour avec succès.`,
+        });
+        router.push('/admin/series');
+      } else {
+        throw updateError;
+      }
     } catch (error: any) {
       console.error('Erreur lors de la mise à jour de la série:', error);
       toast({
