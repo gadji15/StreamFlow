@@ -192,21 +192,6 @@ export default function AdminEditSeriesPage() {
           role: member.role
         }));
       
-      // Préparer les données à mettre à jour
-      const updates: Partial<Series> = {
-        title,
-        originalTitle: originalTitle || null,
-        description,
-        startYear,
-        endYear: endYear || null,
-        creator: creator || null,
-        genres: selectedGenres,
-        cast: formattedCast.length > 0 ? formattedCast : [],
-        trailerUrl: trailerUrl || null,
-        isVIP,
-        isPublished
-      };
-      
       // Upload des images si modifiées
       let posterUrl = series?.poster_url || '';
       let backdropUrl = series?.backdrop_url || '';
