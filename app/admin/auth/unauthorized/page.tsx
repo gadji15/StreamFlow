@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export default function UnauthorizedPage() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn } = useSupabaseAuth();
   const router = useRouter();
   
   return (
