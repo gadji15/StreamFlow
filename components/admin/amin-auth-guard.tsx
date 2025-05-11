@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import LoadingScreen from '@/components/loading-screen';
 
 export default function AdminAuthGuard({
@@ -12,7 +13,9 @@ export default function AdminAuthGuard({
   children: React.ReactNode;
   requiredRole?: 'admin' | 'super_admin';
 }) {
-  const { user, userData, loading, isAdmin } = useAuth();
+  const { user } = useCurrentUser();
+  const { userData, isAdmin, isLoading } = useSupabaseAuth();
+  const loading = isLoading;
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
