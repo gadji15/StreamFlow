@@ -24,20 +24,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
-import { getUserActivities } from '@/lib/firebase/firestore/activity-logs';
+import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent } from '@/components/ui/card';
 import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminHeader from '@/components/admin/admin-header';
 
-// Interface pour le type d'activité
+// Interface pour le type d'activité (Supabase)
 interface Activity {
   id: string;
-  userId: string;
+  user_id: string;
   action: string;
-  contentType: 'movie' | 'series' | 'episode';
-  contentId: string;
-  details: Record<string, any>;
-  timestamp: Date;
+  content_type: 'movie' | 'series' | 'episode';
+  content_id: string;
+  details: Record<string, any> | null;
+  timestamp: string; // ISO string
 }
 
 export default function ActivityLogsPage() {
@@ -48,15 +48,19 @@ export default function ActivityLogsPage() {
   
   useEffect(() => {
     fetchActivities();
+    // eslint-disable-next-line
   }, []);
   
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      // Récupérer toutes les activités
-      // Cette fonction doit être adaptée pour récupérer les activités de tous les utilisateurs
-      const allActivities = await getUserActivities('all', 100);
-      setActivities(allActivities);
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      setActivities(data || []);
     } catch (error) {
       console.error('Erreur lors de la récupération des activités:', error);
     } finally {
@@ -67,22 +71,21 @@ export default function ActivityLogsPage() {
   // Filtrer les activités
   const filteredActivities = activities.filter(activity => {
     // Filtrer par type de contenu
-    if (filter !== 'all' && activity.contentType !== filter) {
+    if (filter !== 'all' && activity.content_type !== filter) {
       return false;
     }
-    
+
     // Filtrer par terme de recherche
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      const detailsString = JSON.stringify(activity.details).toLowerCase();
+      const detailsString = JSON.stringify(activity.details || {}).toLowerCase();
       return (
-        activity.userId.toLowerCase().includes(searchLower) ||
+        (activity.user_id || '').toLowerCase().includes(searchLower) ||
         activity.action.toLowerCase().includes(searchLower) ||
-        activity.contentId.toLowerCase().includes(searchLower) ||
+        (activity.content_id || '').toLowerCase().includes(searchLower) ||
         detailsString.includes(searchLower)
       );
     }
-    
     return true;
   });
   
@@ -175,9 +178,9 @@ export default function ActivityLogsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start">
                       <div className="bg-gray-800 p-2 rounded-full mr-4">
-                        {activity.contentType === 'movie' ? (
+                        {activity.content_type === 'movie' ? (
                           <Film className="h-6 w-6 text-primary" />
-                        ) : activity.contentType === 'series' ? (
+                        ) : activity.content_type === 'series' ? (
                           <Tv className="h-6 w-6 text-primary" />
                         ) : (
                           <Play className="h-6 w-6 text-primary" />
@@ -187,7 +190,7 @@ export default function ActivityLogsPage() {
                       <div className="flex-1">
                         <div className="flex items-center mb-1">
                           <h3 className="font-medium">
-                            {activity.details?.title || activity.contentId}
+                            {activity.details?.title || activity.content_id}
                           </h3>
                           <Badge className="ml-2 flex items-center" variant="outline">
                             {getActionIcon(activity.action)}
@@ -196,10 +199,10 @@ export default function ActivityLogsPage() {
                         </div>
                         
                         <div className="text-sm text-gray-400 flex items-center mb-2">
-                          <span className="font-mono mr-2">ID: {activity.userId.substring(0, 8)}...</span>
+                          <span className="font-mono mr-2">ID: {activity.user_id?.substring(0, 8)}...</span>
                           <span className="flex items-center ml-2">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {activity.timestamp.toLocaleString()}
+                            {new Date(activity.timestamp).toLocaleString()}
                           </span>
                         </div>
                         
