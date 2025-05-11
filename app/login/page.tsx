@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Lock, LogIn, Mail } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
