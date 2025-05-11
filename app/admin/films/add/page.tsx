@@ -25,7 +25,7 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { addMovie, getMovieGenres } from '@/lib/firebase/firestore/movies';
+import { supabase } from '@/lib/supabaseClient';
 import { useEffect } from 'react';
 
 export default function AdminAddFilmPage() {
@@ -59,13 +59,14 @@ export default function AdminAddFilmPage() {
   useEffect(() => {
     const loadGenres = async () => {
       try {
-        const genres = await getMovieGenres();
-        setAvailableGenres(genres);
+        const { data, error } = await supabase.from('genres').select('id, name');
+        if (error) throw error;
+        setAvailableGenres(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des genres:', error);
       }
     };
-    
+
     loadGenres();
   }, []);
   
@@ -142,18 +143,59 @@ export default function AdminAddFilmPage() {
         isPublished
       };
       
-      // Ajouter le film
-      const result = await addMovie(movieData, posterFile, backdropFile);
-      
-      if (result && result.id) {
-        toast({
-          title: 'Film ajouté',
-          description: `Le film "${title}" a été ajouté avec succès.`,
-        });
-        
-        // Rediriger vers la liste des films
-        router.push('/admin/films');
+      // Upload des images si présentes
+      let posterUrl = '';
+      let backdropUrl = '';
+
+      if (posterFile) {
+        const { data, error } = await supabase.storage
+          .from('film-posters')
+          .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('film-posters').getPublicUrl(data.path);
+        posterUrl = urlData?.publicUrl || '';
       }
+
+      if (backdropFile) {
+        const { data, error } = await supabase.storage
+          .from('film-backdrops')
+          .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('film-backdrops').getPublicUrl(data.path);
+        backdropUrl = urlData?.publicUrl || '';
+      }
+
+      // Insertion du film dans la table 'films'
+      const { data: insertData, error: insertError } = await supabase
+        .from('films')
+        .insert([{
+          title,
+          original_title: originalTitle || null,
+          description,
+          year,
+          duration,
+          director: director || null,
+          genres: selectedGenres,
+          cast,
+          trailer_url: trailerUrl || null,
+          is_vip: isVIP,
+          published: isPublished,
+          poster_url: posterUrl || null,
+          backdrop_url: backdropUrl || null,
+        }])
+        .select()
+        .single();
+
+      if (insertError || !insertData) {
+        throw insertError || new Error("Impossible d'ajouter le film.");
+      }
+
+      toast({
+        title: 'Film ajouté',
+        description: `Le film "${title}" a été ajouté avec succès.`,
+      });
+
+      router.push('/admin/films');
     } catch (error) {
       console.error('Erreur lors de l\'ajout du film:', error);
       toast({
