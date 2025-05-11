@@ -23,6 +23,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fonction login exposée au context
   const login = async (email: string, password: string) => {
     const { data, error } = await signInWithEmail(email, password);
+    // Ajout du log pour diagnostic
+    console.log('LOGIN RESULT', { data, error });
     if (error || !data.session) {
       throw error || new Error('Aucune session');
     }
