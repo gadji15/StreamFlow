@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabaseClient'
-import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
 
 /**
  * Inscription d'un nouvel utilisateur (email/password)
