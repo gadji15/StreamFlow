@@ -8,19 +8,19 @@ import LoadingScreen from '@/components/loading-screen';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { CommentsSection } from '@/components/comments-section';
-import { getMovie, Movie, incrementMovieViews } from '@/lib/firebase/firestore/movies';
-import { logActivity } from '@/lib/firebase/firestore/activity-logs';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/lib/supabaseClient';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function FilmDetailPage() {
   const params = useParams();
   const id = params?.id as string;
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const [movie, setMovie] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  
-  const { user, isVIP } = useAuth();
+
+  const { user } = useCurrentUser();
+  const [isVIP, setIsVIP] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -30,29 +30,44 @@ export default function FilmDetailPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedMovie = await getMovie(id);
-        if (!fetchedMovie) {
+        const { data: fetchedMovie, error: movieError } = await supabase
+          .from('films')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (movieError || !fetchedMovie) {
           setError("Film non trouvé.");
-          notFound(); // Déclenche la page 404 si le film n'est pas trouvé
+          notFound();
         } else {
           setMovie(fetchedMovie);
-          
-          // Incrémenter le nombre de vues
-          incrementMovieViews(id);
-          
-          // Journaliser l'activité de visionnage
+
+          // Incrémenter le nombre de vues (côté serveur)
+          supabase
+            .from('films')
+            .update({ views: (fetchedMovie.views || 0) + 1 })
+            .eq('id', id);
+
+          // Récupérer le statut VIP de l'utilisateur (si besoin)
           if (user) {
-            logActivity({
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('is_vip')
+              .eq('id', user.id)
+              .single();
+            setIsVIP(profile?.is_vip || false);
+
+            // Journaliser l'activité
+            supabase.from('activities').insert([{
+              user_id: user.id,
               action: "content_view",
-              entityType: "movie",
-              entityId: id,
-              details: { 
-                title: fetchedMovie.title,
-                isVIP: fetchedMovie.isVIP
-              }
-            });
+              content_type: "movie",
+              content_id: id,
+              details: { title: fetchedMovie.title, isVIP: fetchedMovie.is_vip },
+              timestamp: new Date().toISOString()
+            }]);
           }
-          
+
           // Vérifier si le film est dans les favoris
           checkIfFavorite(id);
         }
@@ -105,12 +120,16 @@ export default function FilmDetailPage() {
       });
       
       // Journaliser l'activité
-      logActivity({
-        action: "favorite_remove",
-        entityType: "movie",
-        entityId: id,
-        details: { title: movie.title }
-      });
+      if (user) {
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_remove",
+          content_type: "movie",
+          content_id: id,
+          details: { title: movie.title },
+          timestamp: new Date().toISOString()
+        }]);
+      }
     } else {
       favorites.push(id);
       localStorage.setItem('favorites', JSON.stringify(favorites));
@@ -122,12 +141,16 @@ export default function FilmDetailPage() {
       });
       
       // Journaliser l'activité
-      logActivity({
-        action: "favorite_add",
-        entityType: "movie",
-        entityId: id,
-        details: { title: movie.title }
-      });
+      if (user) {
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_add",
+          content_type: "movie",
+          content_id: id,
+          details: { title: movie.title },
+          timestamp: new Date().toISOString()
+        }]);
+      }
     }
   };
 
