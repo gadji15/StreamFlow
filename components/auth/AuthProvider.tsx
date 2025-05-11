@@ -28,7 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error || !data.session) {
       throw error || new Error('Aucune session');
     }
-    setUser(data.user);
+    // Synchronise le context d'auth immédiatement après login
+    const sessionResult = await supabase.auth.getSession();
+    setUser(sessionResult.data.session?.user ?? null);
     return data.user;
   };
 
