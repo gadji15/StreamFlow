@@ -17,6 +17,9 @@ export default function AdminAuthGuard({
   useEffect(() => {
     if (isLoading || checked) return;
 
+    // Ajout d'un log de debug détaillé
+    console.log('DEBUG ADMIN GUARD', { userData, isAdmin, isLoading });
+
     // Si utilisateur non connecté → redirection vers la page de login globale
     if (!userData) {
       router.replace('/login');
