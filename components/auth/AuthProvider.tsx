@@ -36,23 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let ignore = false;
 
-    // Toujours forcer la lecture de la session au montage
-    const restoreSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!ignore) {
-        setUser(data.session?.user ?? null);
-        setLoading(false);
-      }
-    };
+    setLoading(true); // Toujours loading avant le verdict
 
-    restoreSession();
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (ignore) return;
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
 
-    // Ecoute les changements de session
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!ignore) {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
+      if (ignore) return;
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => {
