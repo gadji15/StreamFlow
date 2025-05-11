@@ -12,7 +12,7 @@ import {
   MessageSquare,
   Eye
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface NavItem {
   href: string;
