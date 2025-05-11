@@ -22,6 +22,7 @@ interface NavItem {
   superAdminOnly?: boolean;
 }
 
+
 export default function AdminSidebarClient() {
   const pathname = usePathname();
   const { user: userData } = useCurrentUser();
