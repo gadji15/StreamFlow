@@ -5,11 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Shield, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import LoadingScreen from '@/components/loading-screen';
 
 export default function UnauthorizedPage() {
-  const { isLoggedIn } = useSupabaseAuth();
+  const { isLoggedIn, isLoading } = useSupabaseAuth();
   const router = useRouter();
-  
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 px-4">
       <div className="text-center">
