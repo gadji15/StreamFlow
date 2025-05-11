@@ -5,9 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Info, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VideoPlayer } from '@/components/video-player';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from '@/components/ui/use-toast';
-import { getSeries, getEpisode, getSeriesEpisodes, Episode } from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
+
+// Aligne avec la table Supabase "episodes"
+type Episode = {
+  id: string;
+  title: string;
+  description: string;
+  season: number;
+  episode_number: number;
+  duration: number;
+  is_vip?: boolean;
+  published?: boolean;
+  video_url?: string;
+  thumbnail_url?: string;
+};
 
 export default function WatchEpisodePage() {
   const params = useParams();
@@ -20,72 +33,100 @@ export default function WatchEpisodePage() {
   const [nextEpisode, setNextEpisode] = useState<Episode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const { isLoggedIn, isVIP } = useAuth();
+
+  const [isVIP, setIsVIP] = useState(false);
   const { toast } = useToast();
   
   // Charger les détails de l'épisode et de la série
   useEffect(() => {
     const loadEpisodeAndSeries = async () => {
       if (!seriesId || !episodeId) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Charger l'épisode demandé
-        const episodeData = await getEpisode(episodeId);
-        
-        if (!episodeData) {
+        const { data: episodeData, error: epErr } = await supabase
+          .from('episodes')
+          .select('*')
+          .eq('id', episodeId)
+          .single();
+
+        if (epErr || !episodeData) {
           setError("Épisode non trouvé.");
           return;
         }
-        
+
         // Vérifier si l'épisode est publié
-        if (!episodeData.isPublished) {
+        if (!episodeData.published) {
           setError("Cet épisode n'est pas disponible.");
           return;
         }
-        
+
+        // Récupérer le statut VIP de l'utilisateur (si besoin)
+        let userIsVIP = false;
+        // (ici tu peux ajouter la logique pour récupérer le statut VIP de l'utilisateur connecté via profils)
+        // setIsVIP(userIsVIP);
+
         // Vérifier si l'épisode est VIP et si l'utilisateur est VIP
-        if (episodeData.isVIP && !isVIP) {
+        if (episodeData.is_vip && !userIsVIP) {
           setError("Cet épisode est réservé aux membres VIP.");
           return;
         }
-        
-        setEpisode(episodeData);
-        
+
+        setEpisode({
+          ...episodeData,
+          isVIP: episodeData.is_vip,
+          episodeNumber: episodeData.episode_number,
+          thumbnailUrl: episodeData.thumbnail_url,
+          videoUrl: episodeData.video_url,
+        });
+
         // Charger les informations de la série
-        const seriesData = await getSeries(seriesId);
-        
+        const { data: seriesData } = await supabase
+          .from('series')
+          .select('title')
+          .eq('id', seriesId)
+          .single();
+
         if (seriesData) {
           setSeriesTitle(seriesData.title);
         }
-        
+
         // Charger tous les épisodes pour trouver le suivant
-        const allEpisodes = await getSeriesEpisodes(seriesId, {
-          onlyPublished: true
-        });
-        
+        const { data: allEpisodes } = await supabase
+          .from('episodes')
+          .select('*')
+          .eq('series_id', seriesId)
+          .eq('published', true);
+
         // Filtrer les épisodes VIP si l'utilisateur n'est pas VIP
-        const filteredEpisodes = isVIP 
-          ? allEpisodes 
-          : allEpisodes.filter(ep => !ep.isVIP);
-        
+        const filteredEpisodes = userIsVIP
+          ? (allEpisodes || [])
+          : (allEpisodes || []).filter((ep: any) => !ep.is_vip);
+
         // Trier les épisodes par saison et numéro
-        const sortedEpisodes = filteredEpisodes.sort((a, b) => {
+        const sortedEpisodes = filteredEpisodes.sort((a: any, b: any) => {
           if (a.season !== b.season) {
             return a.season - b.season;
           }
-          return a.episodeNumber - b.episodeNumber;
+          return a.episode_number - b.episode_number;
         });
-        
+
         // Trouver l'index de l'épisode actuel
-        const currentIndex = sortedEpisodes.findIndex(ep => ep.id === episodeId);
-        
+        const currentIndex = sortedEpisodes.findIndex((ep: any) => ep.id === episodeId);
+
         // Si ce n'est pas le dernier épisode, définir le suivant
         if (currentIndex !== -1 && currentIndex < sortedEpisodes.length - 1) {
-          setNextEpisode(sortedEpisodes[currentIndex + 1]);
+          const nextEp = sortedEpisodes[currentIndex + 1];
+          setNextEpisode({
+            ...nextEp,
+            isVIP: nextEp.is_vip,
+            episodeNumber: nextEp.episode_number,
+            thumbnailUrl: nextEp.thumbnail_url,
+            videoUrl: nextEp.video_url,
+          });
         }
       } catch (error) {
         console.error("Erreur de chargement de l'épisode:", error);
@@ -94,9 +135,9 @@ export default function WatchEpisodePage() {
         setIsLoading(false);
       }
     };
-    
+
     loadEpisodeAndSeries();
-  }, [seriesId, episodeId, isVIP]);
+  }, [seriesId, episodeId]);
   
   // Gérer la navigation vers l'épisode suivant
   const goToNextEpisode = () => {
