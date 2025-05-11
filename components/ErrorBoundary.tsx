@@ -3,7 +3,6 @@ import React from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 type Props = { children: React.ReactNode };
-
 type State = { hasError: boolean };
 
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -14,19 +13,24 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   async componentDidCatch(error: any, errorInfo: any) {
     this.setState({ hasError: true });
-    // Log vers Supabase
     try {
       const user = await supabase.auth.getUser();
       await supabase.from('error_logs').insert([{
         user_id: user?.data?.user?.id || null,
         location: errorInfo?.componentStack || 'unknown',
         error_message: error?.message || String(error),
-        error_stack: error?.stack || null
+        error_stack: error?.stack || null,
+        error_type: 'react',
+        severity: 'error',
+        url: typeof window !== 'undefined' ? window.location.href : null,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+        environment: process.env.NODE_ENV || 'production',
+        http_status: null,
+        metadata: {}
       }]);
     } catch (e) {
       // Ignore logging error
     }
-    // Log aussi dans la console
     console.error('Erreur capturée par ErrorBoundary:', error, errorInfo);
   }
 
