@@ -103,7 +103,8 @@ export default function RegisterPage() {
         description: "Votre compte a été créé. Vérifiez vos emails pour activer votre compte.",
       });
 
-      setTimeout(() => router.replace('/login'), 2000);
+      // Redirection immédiate vers la page de confirmation avec l'email
+      router.replace(`/confirmation-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast({
         title: "Erreur d'inscription",

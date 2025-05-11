@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Lock, LogIn, Mail } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,23 +16,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
+  const { login } = useAuth();
 
   // For Google button loading state
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Handle email/password login
+  // Handle email/password login via context/provider
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-
-    if (error) {
-      setErrorMsg(error.message || "Erreur lors de la connexion.");
-    } else {
+    try {
+      await login(email, password);
       router.push('/');
+    } catch (error: any) {
+      setErrorMsg(error.message || "Erreur lors de la connexion.");
     }
+    setLoading(false);
   };
 
   // Handle Google OAuth login

@@ -7,12 +7,9 @@ import LoadingScreen from '@/components/loading-screen';
 
 export default function AdminAuthGuard({
   children,
-  requiredRole = 'admin'
 }: {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'super_admin';
 }) {
-  // Une seule source d'état utilisateur/chargement
   const { userData, isAdmin, isLoading } = useSupabaseAuth();
   const router = useRouter();
   const [checked, setChecked] = useState(false);
@@ -20,20 +17,23 @@ export default function AdminAuthGuard({
   useEffect(() => {
     if (isLoading || checked) return;
 
-    // Si utilisateur non connecté
+    // Ajout d'un log de debug détaillé
+    console.log('DEBUG ADMIN GUARD', { userData, isAdmin, isLoading });
+
+    // Si utilisateur non connecté → redirection vers la page de login globale
     if (!userData) {
-      router.replace('/admin/auth/login');
+      router.replace('/login');
       return;
     }
 
-    // Si admin requis et non admin
-    if (!isAdmin || (requiredRole === 'super_admin' && userData?.role !== 'super_admin')) {
-      router.replace('/admin/auth/unauthorized');
+    // Si utilisateur connecté mais non admin → accès refusé
+    if (!isAdmin) {
+      router.replace('/admin/access-denied');
       return;
     }
 
     setChecked(true);
-  }, [userData, isAdmin, isLoading, requiredRole, router, checked]);
+  }, [userData, isAdmin, isLoading, router, checked]);
 
   if (isLoading || !checked) {
     return <LoadingScreen />;
