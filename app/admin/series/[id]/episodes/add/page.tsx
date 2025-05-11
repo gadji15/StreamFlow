@@ -10,11 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { ImageUpload } from '@/components/admin/image-upload';
 import { ArrowLeft, Save, Film } from 'lucide-react';
-import { 
-  getSeries, 
-  getSeriesEpisodes, 
-  addEpisode 
-} from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminAddEpisodePage() {
   const router = useRouter();
@@ -54,36 +50,42 @@ export default function AdminAddEpisodePage() {
       setLoading(true);
       try {
         // Charger la série
-        const seriesData = await getSeries(seriesId);
-        
-        if (!seriesData) {
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('series')
+          .select('title, seasons')
+          .eq('id', seriesId)
+          .single();
+
+        if (seriesError || !seriesData) {
           setError('Série non trouvée');
           return;
         }
-        
+
         setSeriesTitle(seriesData.title);
-        
-        // Récupérer le nombre de saisons
+
+        // Nombre de saisons
         const currentSeasons = seriesData.seasons || 0;
         setSeasons(currentSeasons);
         setSeason(currentSeasons > 0 ? currentSeasons : 1);
-        
+
         // Charger les épisodes pour déterminer le prochain numéro d'épisode
-        const episodes = await getSeriesEpisodes(seriesId);
-        
+        const { data: episodes } = await supabase
+          .from('episodes')
+          .select('season, episode_number')
+          .eq('series_id', seriesId);
+
         // Trouver le dernier numéro d'épisode pour chaque saison
         const episodeNumbersBySeason: Record<number, number> = {};
-        episodes.forEach(episode => {
+        (episodes || []).forEach(episode => {
           const s = episode.season;
-          const num = episode.episodeNumber;
-          
+          const num = episode.episode_number;
           if (!episodeNumbersBySeason[s] || num > episodeNumbersBySeason[s]) {
             episodeNumbersBySeason[s] = num;
           }
         });
-        
+
         setLatestEpisodeNumbers(episodeNumbersBySeason);
-        
+
         // Définir le numéro d'épisode par défaut
         if (currentSeasons > 0) {
           const lastEpisodeNumber = episodeNumbersBySeason[currentSeasons] || 0;
@@ -123,31 +125,49 @@ export default function AdminAddEpisodePage() {
     setIsSubmitting(true);
     
     try {
+      // Upload de la miniature si présente
+      let thumbnailUrl = '';
+      if (thumbnailFile) {
+        const { data, error } = await supabase.storage
+          .from('episode-thumbnails')
+          .upload(`thumbnails/${Date.now()}-${thumbnailFile.name}`, thumbnailFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('episode-thumbnails').getPublicUrl(data.path);
+        thumbnailUrl = urlData?.publicUrl || '';
+      }
+
       // Préparer les données de l'épisode
       const episodeData = {
-        seriesId,
+        series_id: seriesId,
         title,
         description,
         season,
-        episodeNumber,
+        episode_number: episodeNumber,
         duration,
-        videoUrl: videoUrl || undefined,
-        isVIP,
-        isPublished
+        video_url: videoUrl || null,
+        is_vip: isVIP,
+        published: isPublished,
+        thumbnail_url: thumbnailUrl || null,
       };
-      
+
       // Ajouter l'épisode
-      const result = await addEpisode(episodeData, thumbnailFile);
-      
-      if (result && result.id) {
-        toast({
-          title: 'Épisode ajouté',
-          description: `L'épisode "${title}" a été ajouté avec succès.`,
-        });
-        
-        // Rediriger vers la liste des épisodes
-        router.push(`/admin/series/${seriesId}/episodes`);
+      const { data: insertData, error: insertError } = await supabase
+        .from('episodes')
+        .insert([episodeData])
+        .select()
+        .single();
+
+      if (insertError || !insertData) {
+        throw insertError || new Error("Impossible d'ajouter l'épisode.");
       }
+
+      toast({
+        title: 'Épisode ajouté',
+        description: `L'épisode "${title}" a été ajouté avec succès.`,
+      });
+
+      // Rediriger vers la liste des épisodes
+      router.push(`/admin/series/${seriesId}/episodes`);
     } catch (error) {
       console.error('Erreur lors de l\'ajout de l\'épisode:', error);
       toast({

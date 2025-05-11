@@ -25,7 +25,7 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { addSeries, getMovieGenres } from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
 import { useEffect } from 'react';
 
 export default function AdminAddSeriesPage() {
@@ -59,13 +59,14 @@ export default function AdminAddSeriesPage() {
   useEffect(() => {
     const loadGenres = async () => {
       try {
-        const genres = await getMovieGenres(); // Réutiliser les mêmes genres que pour les films
-        setAvailableGenres(genres);
+        const { data, error } = await supabase.from('genres').select('id, name');
+        if (error) throw error;
+        setAvailableGenres(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des genres:', error);
       }
     };
-    
+
     loadGenres();
   }, []);
   
@@ -142,18 +143,59 @@ export default function AdminAddSeriesPage() {
         isPublished
       };
       
-      // Ajouter la série
-      const result = await addSeries(seriesData, posterFile, backdropFile);
-      
-      if (result && result.id) {
-        toast({
-          title: 'Série ajoutée',
-          description: `La série "${title}" a été ajoutée avec succès.`,
-        });
-        
-        // Rediriger vers la liste des séries
-        router.push('/admin/series');
+      // Upload des images si présentes
+      let posterUrl = '';
+      let backdropUrl = '';
+
+      if (posterFile) {
+        const { data, error } = await supabase.storage
+          .from('series-posters')
+          .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('series-posters').getPublicUrl(data.path);
+        posterUrl = urlData?.publicUrl || '';
       }
+
+      if (backdropFile) {
+        const { data, error } = await supabase.storage
+          .from('series-backdrops')
+          .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('series-backdrops').getPublicUrl(data.path);
+        backdropUrl = urlData?.publicUrl || '';
+      }
+
+      // Insertion de la série dans la table 'series'
+      const { data: insertData, error: insertError } = await supabase
+        .from('series')
+        .insert([{
+          title,
+          original_title: originalTitle || null,
+          description,
+          start_year: startYear,
+          end_year: endYear || null,
+          creator: creator || null,
+          genres: selectedGenres,
+          cast: cast.filter(member => member.name.trim() !== ''),
+          trailer_url: trailerUrl || null,
+          is_vip: isVIP,
+          published: isPublished,
+          poster_url: posterUrl || null,
+          backdrop_url: backdropUrl || null,
+        }])
+        .select()
+        .single();
+
+      if (insertError || !insertData) {
+        throw insertError || new Error("Impossible d'ajouter la série.");
+      }
+
+      toast({
+        title: 'Série ajoutée',
+        description: `La série "${title}" a été ajoutée avec succès.`,
+      });
+
+      router.push('/admin/series');
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la série:', error);
       toast({

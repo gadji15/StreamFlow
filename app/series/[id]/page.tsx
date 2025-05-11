@@ -17,10 +17,9 @@ import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CommentsSection } from '@/components/comments-section';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/components/ui/use-toast';
-import { getSeries, getSeriesEpisodes, incrementSeriesViews, Series, Episode } from '@/lib/firebase/firestore/series';
-import { formatDuration } from '@/lib/utils';
+import { supabase } from '@/lib/supabaseClient';
 import SeasonEpisodeList from '@/components/series/season-episode-list';
 import { 
   Dialog,
@@ -28,14 +27,44 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+
+// TypeScript type for Series and Episode (aligned with Supabase)
+type Series = {
+  id: string;
+  title: string;
+  original_title?: string;
+  description: string;
+  start_year: number;
+  end_year?: number | null;
+  creator?: string;
+  genres: string[];
+  cast?: { name: string; role: string }[];
+  trailer_url?: string;
+  is_vip?: boolean;
+  published?: boolean;
+  poster_url?: string;
+  backdrop_url?: string;
+  seasons?: number;
+  rating?: number;
+};
+
+type Episode = {
+  id: string;
+  title: string;
+  description: string;
+  season: number;
+  episode_number: number;
+  is_vip?: boolean;
+  published?: boolean;
+  // ...other fields as needed
+};
 
 export default function SeriesDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  
+
   const [series, setSeries] = useState<Series | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,63 +72,101 @@ export default function SeriesDetailPage() {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showVipDialog, setShowVipDialog] = useState(false);
-  
-  const { user, isLoggedIn, isVIP } = useAuth();
+  const { user } = useCurrentUser();
+  const [isVIP, setIsVIP] = useState(false);
+
   const { toast } = useToast();
-  
+
   // Charger les détails de la série et ses épisodes
   useEffect(() => {
     const loadSeriesDetails = async () => {
       if (!id) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        // Charger les détails de la série
-        const seriesData = await getSeries(id);
-        
-        if (!seriesData) {
+        // Charger la série depuis Supabase
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('series')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (seriesError || !seriesData) {
           setError("Série non trouvée.");
           return;
         }
-        
+
         // Vérifier si la série est publiée
-        if (!seriesData.isPublished) {
+        if (!seriesData.published) {
           setError("Cette série n'est pas disponible.");
           return;
         }
-        
-        // Vérifier si la série est VIP et si l'utilisateur est VIP
-        if (seriesData.isVIP && !isVIP) {
+
+        setSeries(seriesData);
+
+        // VIP: vérifier le statut de l'utilisateur
+        let userIsVIP = false;
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_vip')
+            .eq('id', user.id)
+            .single();
+          userIsVIP = !!profile?.is_vip;
+          setIsVIP(userIsVIP);
+        } else {
+          setIsVIP(false);
+        }
+
+        // Afficher le dialog VIP si la série est VIP et l'utilisateur ne l'est pas
+        if (seriesData.is_vip && !userIsVIP) {
           setShowVipDialog(true);
         }
-        
-        setSeries(seriesData);
-        
+
         // Définir la saison sélectionnée par défaut (la plus récente)
         if (seriesData.seasons && seriesData.seasons > 0) {
           setSelectedSeason(seriesData.seasons);
         }
-        
-        // Charger les épisodes
-        const episodesData = await getSeriesEpisodes(id, {
-          onlyPublished: true
-        });
-        
-        // Filtrer les épisodes VIP si l'utilisateur n'est pas VIP
-        const filteredEpisodes = isVIP 
-          ? episodesData 
-          : episodesData.filter(episode => !episode.isVIP);
-        
-        setEpisodes(filteredEpisodes);
-        
-        // Incrémenter le nombre de vues
-        await incrementSeriesViews(id);
-        
+
+        // Charger les épisodes depuis Supabase
+        const { data: episodesData, error: episodesError } = await supabase
+          .from('episodes')
+          .select('*')
+          .eq('series_id', id)
+          .eq('published', true);
+
+        if (episodesError) {
+          setEpisodes([]);
+        } else {
+          // Filtrer les épisodes VIP si l'utilisateur n'est pas VIP
+          const filteredEpisodes = userIsVIP
+            ? (episodesData || [])
+            : (episodesData || []).filter((ep: any) => !ep.is_vip);
+          setEpisodes(filteredEpisodes);
+        }
+
+        // Incrémenter le nombre de vues côté serveur
+        supabase
+          .from('series')
+          .update({ views: (seriesData.views || 0) + 1 })
+          .eq('id', id);
+
+        // Journaliser l'activité de vue de série
+        if (user) {
+          supabase.from('activities').insert([{
+            user_id: user.id,
+            action: "content_view",
+            content_type: "series",
+            content_id: id,
+            details: { title: seriesData.title, isVIP: seriesData.is_vip },
+            timestamp: new Date().toISOString()
+          }]);
+        }
+
         // Vérifier si la série est dans les favoris de l'utilisateur
-        if (isLoggedIn) {
-          // Récupérer les favoris depuis le localStorage
+        if (user) {
           const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
           setIsFavorite(favorites.includes(id));
         }
@@ -110,13 +177,14 @@ export default function SeriesDetailPage() {
         setIsLoading(false);
       }
     };
-    
+
     loadSeriesDetails();
-  }, [id, isVIP, isLoggedIn]);
-  
+    // eslint-disable-next-line
+  }, [id, user]);
+
   // Gérer l'ajout/suppression des favoris
   const toggleFavorite = () => {
-    if (!isLoggedIn) {
+    if (!user) {
       toast({
         title: "Connectez-vous",
         description: "Vous devez être connecté pour ajouter des séries à vos favoris.",
@@ -124,52 +192,62 @@ export default function SeriesDetailPage() {
       });
       return;
     }
-    
-    // Récupérer les favoris actuels
+
     const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
-    
     let newFavorites;
     if (isFavorite) {
-      // Retirer des favoris
       newFavorites = favorites.filter((favId: string) => favId !== id);
       toast({
         title: "Retiré des favoris",
         description: `"${series?.title}" a été retiré de vos favoris.`,
       });
+      // Log activity
+      supabase.from('activities').insert([{
+        user_id: user.id,
+        action: "favorite_remove",
+        content_type: "series",
+        content_id: id,
+        details: { title: series?.title },
+        timestamp: new Date().toISOString()
+      }]);
     } else {
-      // Ajouter aux favoris
       newFavorites = [...favorites, id];
       toast({
         title: "Ajouté aux favoris",
         description: `"${series?.title}" a été ajouté à vos favoris.`,
       });
+      // Log activity
+      supabase.from('activities').insert([{
+        user_id: user.id,
+        action: "favorite_add",
+        content_type: "series",
+        content_id: id,
+        details: { title: series?.title },
+        timestamp: new Date().toISOString()
+      }]);
     }
-    
-    // Mettre à jour le localStorage
     localStorage.setItem('favoritesSeries', JSON.stringify(newFavorites));
     setIsFavorite(!isFavorite);
-    
-    // À terme, cette fonction devrait aussi mettre à jour les favoris dans Firestore
   };
-  
+
   // Obtenir les épisodes de la saison sélectionnée
   const getSeasonEpisodes = (season: number) => {
     return episodes.filter(episode => episode.season === season);
   };
-  
+
   // Obtenir la liste des saisons disponibles
   const getAvailableSeasons = () => {
     const seasons = [...new Set(episodes.map(episode => episode.season))];
     return seasons.sort((a, b) => a - b);
   };
-  
+
   // Rediriger vers la page VIP
   const goToVipPage = () => {
     setShowVipDialog(false);
     router.push('/vip');
   };
-  
-  // Afficher un écran de chargement
+
+  // Chargement
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -178,8 +256,8 @@ export default function SeriesDetailPage() {
       </div>
     );
   }
-  
-  // Afficher un message d'erreur
+
+  // Erreur
   if (error || !series) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
@@ -196,18 +274,18 @@ export default function SeriesDetailPage() {
       </div>
     );
   }
-  
+
   // Obtenir les saisons disponibles
   const availableSeasons = getAvailableSeasons();
   const seasonEpisodes = getSeasonEpisodes(selectedSeason);
-  
+
   return (
     <div className="pb-8">
       {/* Backdrop et informations principales */}
       <div 
         className="relative w-full h-[50vh] md:h-[60vh] bg-cover bg-center bg-no-repeat mb-6"
         style={{ 
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url(${series.backdropUrl || '/placeholder-backdrop.png'})` 
+          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url(${series.backdrop_url || '/placeholder-backdrop.png'})` 
         }}
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8">
@@ -215,7 +293,7 @@ export default function SeriesDetailPage() {
             {/* Poster */}
             <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl">
               <img 
-                src={series.posterUrl || '/placeholder-poster.png'} 
+                src={series.poster_url || '/placeholder-poster.png'} 
                 alt={series.title} 
                 className="w-full h-full object-cover"
               />
@@ -225,7 +303,7 @@ export default function SeriesDetailPage() {
             <div className="flex-1">
               <div className="flex items-center">
                 <h1 className="text-2xl md:text-4xl font-bold">{series.title}</h1>
-                {series.isVIP && (
+                {series.is_vip && (
                   <div className="ml-2">
                     <VipBadge />
                   </div>
@@ -235,11 +313,11 @@ export default function SeriesDetailPage() {
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300 mt-2">
                 <span className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" /> 
-                  {series.startYear}{series.endYear ? ` - ${series.endYear}` : ' - Présent'}
+                  {series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}
                 </span>
                 <span className="flex items-center">
                   <Film className="mr-1 h-4 w-4" /> 
-                  {series.seasons} Saison{series.seasons > 1 ? 's' : ''}
+                  {series.seasons} Saison{series.seasons && series.seasons > 1 ? 's' : ''}
                 </span>
                 {series.rating && (
                   <span className="flex items-center">
@@ -279,7 +357,7 @@ export default function SeriesDetailPage() {
                       });
                     }
                   }}
-                  disabled={seasonEpisodes.length === 0 || (series.isVIP && !isVIP)}
+                  disabled={seasonEpisodes.length === 0 || (series.is_vip && !isVIP)}
                 >
                   <Play className="h-5 w-5" /> 
                   Regarder
@@ -357,13 +435,13 @@ export default function SeriesDetailPage() {
                 </div>
                 
                 {/* Bande-annonce */}
-                {series.trailerUrl && (
+                {series.trailer_url && (
                   <div className="bg-gray-800 rounded-lg p-6">
                     <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
                     <div className="aspect-video">
                       <iframe
                         className="w-full h-full rounded-lg"
-                        src={`https://www.youtube.com/embed/${extractYouTubeId(series.trailerUrl)}`}
+                        src={`https://www.youtube.com/embed/${extractYouTubeId(series.trailer_url)}`}
                         title={`Bande-annonce de ${series.title}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -382,15 +460,15 @@ export default function SeriesDetailPage() {
                       <span className="text-gray-400">Titre :</span>
                       <span>{series.title}</span>
                     </li>
-                    {series.originalTitle && (
+                    {series.original_title && (
                       <li className="flex justify-between">
                         <span className="text-gray-400">Titre original :</span>
-                        <span>{series.originalTitle}</span>
+                        <span>{series.original_title}</span>
                       </li>
                     )}
                     <li className="flex justify-between">
                       <span className="text-gray-400">Années :</span>
-                      <span>{series.startYear}{series.endYear ? ` - ${series.endYear}` : ' - Présent'}</span>
+                      <span>{series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}</span>
                     </li>
                     <li className="flex justify-between">
                       <span className="text-gray-400">Saisons :</span>
@@ -474,6 +552,7 @@ export default function SeriesDetailPage() {
 
 // Fonction pour extraire l'ID YouTube d'une URL
 function extractYouTubeId(url: string) {
+  if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;

@@ -1,28 +1,8 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useAuthContext } from '@/components/auth/AuthProvider'
 
 /**
- * Hook React pour obtenir l'utilisateur actuellement connecté (client-side)
+ * Hook React pour obtenir l'utilisateur actuellement connecté (client-side) via le contexte global
  */
 export function useCurrentUser() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let isMounted = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (isMounted) setUser(data.user)
-      if (isMounted) setLoading(false)
-    })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (isMounted) setUser(session?.user ?? null)
-      if (isMounted) setLoading(false)
-    })
-    return () => {
-      isMounted = false
-      listener?.subscription.unsubscribe()
-    }
-  }, [])
-
-  return { user, loading }
+  return useAuthContext();
 }

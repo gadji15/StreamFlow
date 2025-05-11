@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface AdminHeaderProps {
   title: string;
@@ -20,7 +20,7 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
-  const { userData, logout } = useAuth();
+  const { userData, logout } = useSupabaseAuth();
   
   return (
     <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">

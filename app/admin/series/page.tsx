@@ -18,11 +18,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  getAllSeries, 
-  deleteSeries,
-  Series
-} from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
+
+type Series = {
+  id: string;
+  title: string;
+  posterUrl?: string;
+  genres?: string[];
+  rating?: number;
+  views?: number;
+  published?: boolean;
+  isVIP?: boolean;
+  startYear?: number;
+  endYear?: number;
+  seasons?: number;
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,19 +67,21 @@ export default function AdminSeriesPage() {
     const loadSeries = async () => {
       setLoading(true);
       try {
-        const result = await getAllSeries({
-          limit: 100, // Augmenter la limite pour l'administration
-          onlyPublished: statusFilter === 'published' ? true : undefined,
-          searchTerm: searchTerm || undefined
-        });
-        
-        let filteredSeries = result.series;
-        
-        // Filtrer côté client si nécessaire (selon le statut)
-        if (statusFilter === 'draft') {
-          filteredSeries = filteredSeries.filter(series => !series.isPublished);
+        let query = supabase.from('series').select('*').limit(100);
+        if (statusFilter === 'published') {
+          query = query.eq('published', true);
         }
-        
+        if (searchTerm) {
+          query = query.ilike('title', `%${searchTerm}%`);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+
+        let filteredSeries = data || [];
+        if (statusFilter === 'draft') {
+          filteredSeries = filteredSeries.filter((series: Series) => !series.published);
+        }
+
         setSeriesList(filteredSeries);
       } catch (error) {
         console.error('Erreur lors du chargement des séries:', error);
@@ -82,27 +94,26 @@ export default function AdminSeriesPage() {
         setLoading(false);
       }
     };
-    
+
     loadSeries();
   }, [searchTerm, statusFilter, toast]);
   
   // Gérer la suppression d'une série
   const handleDeleteSeries = async () => {
     if (!seriesToDelete) return;
-    
+
     setIsDeleting(true);
     try {
-      const result = await deleteSeries(seriesToDelete.id!);
-      
-      // Mettre à jour la liste locale
+      const { error } = await supabase.from('series').delete().eq('id', seriesToDelete.id);
+      if (error) throw error;
+
       setSeriesList(seriesList.filter(series => series.id !== seriesToDelete.id));
-      
+
       toast({
         title: 'Série supprimée',
-        description: `La série "${seriesToDelete.title}" a été supprimée avec succès. ${result.episodesDeleted} épisode(s) supprimé(s).`,
+        description: `La série "${seriesToDelete.title}" a été supprimée avec succès.`,
       });
-      
-      // Fermer le dialogue
+
       setDeleteDialogOpen(false);
       setSeriesToDelete(null);
     } catch (error) {
