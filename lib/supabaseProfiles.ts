@@ -31,8 +31,8 @@ export async function getUserRoles(userId: string) {
     .select('role_id, roles(name)')
     .eq('user_id', userId);
 
-  if (error) return { roles: [], error };
-  // Extraire les noms des rôles
-  const roleNames = data?.map((r: any) => r.roles?.name).filter(Boolean) || [];
+  if (error) return { roles: [] as string[], error };
+  // Extraire les noms des rôles et typer explicitement en string[]
+  const roleNames: string[] = (data?.map((r: any) => r.roles?.name).filter(Boolean) || []) as string[];
   return { roles: roleNames, error: null };
 }
