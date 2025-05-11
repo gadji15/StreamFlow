@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Eye
 } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface NavItem {
   href: string;
