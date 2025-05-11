@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
 import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
-import { signOut } from '../lib/supabaseAuth'
 
 /**
  * Inscription d'un nouvel utilisateur (email/password)
