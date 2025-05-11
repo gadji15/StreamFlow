@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, ArrowLeft } from "lucide-react"
-import { resetPassword } from "@/lib/firebase/auth"
-import { getAdminByEmail } from "@/lib/firebase/firestore/admins"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function AdminForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -27,14 +26,23 @@ export default function AdminForgotPasswordPage() {
         throw new Error("Veuillez saisir votre adresse e-mail")
       }
       
-      // Check if user is an admin
-      const adminUser = await getAdminByEmail(email)
-      if (!adminUser) {
-        throw new Error("Cette adresse e-mail n'est pas associée à un compte administrateur")
+      // Vérifier que l'utilisateur est admin/super_admin dans 'profiles'
+      const { data: adminUser, error: adminError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .in('role', ['admin', 'super_admin'])
+        .single();
+
+      if (adminError || !adminUser) {
+        throw new Error("Cette adresse e-mail n'est pas associée à un compte administrateur");
       }
       
-      // Send password reset email
-      await resetPassword(email)
+      // Envoyer l'email de réinitialisation avec Supabase
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+      if (resetError) {
+        throw resetError;
+      }
       
       // Show success message
       setSuccess(true)
