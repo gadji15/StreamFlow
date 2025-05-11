@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useCurrentUser } from './useCurrentUser'
-import { getProfile } from '../lib/supabaseProfiles'
+import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
 import { signOut } from '../lib/supabaseAuth'
 
 /**
@@ -17,17 +17,21 @@ export function useSupabaseAuth() {
     let ignore = false
     if (user?.id) {
       setProfileLoading(true)
-      getProfile(user.id).then(({ data }) => {
+      Promise.all([
+        getProfile(user.id),
+        getUserRoles(user.id)
+      ]).then(([{ data: profile }, { roles }]) => {
         if (ignore) return
         setUserData({
-          ...data,
+          ...profile,
           email: user.email,
           id: user.id,
-          displayName: data?.full_name || '',
-          photoURL: data?.avatar_url || '',
+          displayName: profile?.full_name || '',
+          photoURL: profile?.avatar_url || '',
+          roles,
         })
-        setIsVIP(!!data?.is_vip)
-        setIsAdmin(data?.role === 'admin')
+        setIsVIP(!!profile?.is_vip)
+        setIsAdmin(roles.includes('admin') || roles.includes('super_admin'))
         setProfileLoading(false)
       })
     } else {
