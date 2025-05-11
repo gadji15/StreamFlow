@@ -6,7 +6,18 @@ import { Play, Lock, Clock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
 import { formatDuration } from '@/lib/utils';
-import { Episode } from '@/lib/firebase/firestore/series';
+// Aligné avec la table Supabase "episodes"
+type Episode = {
+  id: string;
+  title: string;
+  description: string;
+  season: number;
+  episodeNumber: number;
+  duration: number;
+  isVIP?: boolean;
+  published?: boolean;
+  thumbnailUrl?: string;
+};
 import { useToast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
 
