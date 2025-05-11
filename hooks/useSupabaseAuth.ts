@@ -43,7 +43,23 @@ export function useSupabaseAuth() {
     return () => { ignore = true }
   }, [user])
 
+  // LOG DEBUG pour diagnostic approfondi
+  console.log('DEBUG useSupabaseAuth', {
+    user,
+    userData,
+    isAdmin,
+    isVIP,
+    isLoading: loading || profileLoading,
+  });
+
   return {
+    isLoggedIn: !!user,
+    isLoading: loading || profileLoading,
+    userData,
+    isVIP,
+    isAdmin,
+    logout,
+  };
     isLoggedIn: !!user,
     isLoading: loading || profileLoading,
     userData,
