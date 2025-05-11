@@ -20,13 +20,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  getSeries, 
-  getSeriesEpisodes, 
-  deleteEpisode,
-  Series,
-  Episode
-} from '@/lib/firebase/firestore/series';
+import { supabase } from '@/lib/supabaseClient';
+
+type Series = {
+  id: string;
+  title: string;
+  start_year?: number;
+  // autres champs si besoin
+};
+
+type Episode = {
+  id: string;
+  title: string;
+  description: string;
+  season: number;
+  episode_number: number;
+  duration: number;
+  is_vip?: boolean;
+  published?: boolean;
+  thumbnail_url?: string;
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,18 +83,29 @@ export default function AdminSeriesEpisodesPage() {
       setLoading(true);
       try {
         // Charger la série
-        const seriesData = await getSeries(seriesId);
-        
-        if (!seriesData) {
+        const { data: seriesData, error: seriesError } = await supabase
+          .from('series')
+          .select('id, title, start_year')
+          .eq('id', seriesId)
+          .single();
+
+        if (seriesError || !seriesData) {
           setError('Série non trouvée');
           return;
         }
-        
         setSeries(seriesData);
-        
+
         // Charger les épisodes
-        const episodesData = await getSeriesEpisodes(seriesId);
-        setEpisodes(episodesData);
+        const { data: episodesData, error: episodesError } = await supabase
+          .from('episodes')
+          .select('*')
+          .eq('series_id', seriesId);
+
+        if (episodesError) {
+          setEpisodes([]);
+        } else {
+          setEpisodes(episodesData || []);
+        }
       } catch (error) {
         console.error('Erreur lors du chargement de la série et des épisodes:', error);
         setError('Impossible de charger les données de la série et des épisodes');
@@ -126,16 +150,23 @@ export default function AdminSeriesEpisodesPage() {
     
     setIsDeleting(true);
     try {
-      await deleteEpisode(episodeToDelete.id!);
-      
+      const { error: deleteError } = await supabase
+        .from('episodes')
+        .delete()
+        .eq('id', episodeToDelete.id);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
       // Mettre à jour la liste locale
       setEpisodes(episodes.filter(episode => episode.id !== episodeToDelete.id));
-      
+
       toast({
         title: 'Épisode supprimé',
         description: `L'épisode "${episodeToDelete.title}" a été supprimé avec succès.`,
       });
-      
+
       // Fermer le dialogue
       setDeleteDialogOpen(false);
       setEpisodeToDelete(null);
@@ -298,9 +329,9 @@ export default function AdminSeriesEpisodesPage() {
                     <td className="py-4">
                       <div className="flex items-center">
                         <div className="h-10 w-16 overflow-hidden rounded mr-3 flex-shrink-0">
-                          {episode.thumbnailUrl ? (
+                          {episode.thumbnail_url ? (
                             <img 
-                              src={episode.thumbnailUrl} 
+                              src={episode.thumbnail_url} 
                               alt={episode.title}
                               className="h-full w-full object-cover" 
                             />
@@ -324,7 +355,7 @@ export default function AdminSeriesEpisodesPage() {
                       </span>
                     </td>
                     <td className="py-4 text-center">
-                      {episode.episodeNumber}
+                      {episode.episode_number}
                     </td>
                     <td className="py-4 text-center">
                       <div className="flex items-center justify-center text-sm">
@@ -334,20 +365,20 @@ export default function AdminSeriesEpisodesPage() {
                     </td>
                     <td className="py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        episode.isPublished
+                        episode.published
                           ? 'bg-green-500/20 text-green-500'
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {episode.isPublished ? 'Publié' : 'Brouillon'}
+                        {episode.published ? 'Publié' : 'Brouillon'}
                       </span>
                     </td>
                     <td className="py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        episode.isVIP
+                        episode.is_vip
                           ? 'bg-amber-500/20 text-amber-500'
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {episode.isVIP ? 'VIP' : 'Non'}
+                        {episode.is_vip ? 'VIP' : 'Non'}
                       </span>
                     </td>
                     <td className="py-4 text-right">
