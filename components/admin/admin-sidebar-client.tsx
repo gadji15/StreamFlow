@@ -40,7 +40,7 @@ export default function AdminSidebarClient() {
   // Filtrer les éléments en fonction des rôles
   const filteredNavItems = navItems.filter(item => {
     if (item.superAdminOnly && !isSuperAdmin) return false;
-    if (item.adminOnly && !isSuperAdmin && userData?.role !== 'admin') return false;
+    if (item.adminOnly && !(userData?.role === 'admin' || userData?.role === 'super_admin')) return false;
     return true;
   });
   
