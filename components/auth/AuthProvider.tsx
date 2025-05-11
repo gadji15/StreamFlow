@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fonction login exposée au context
   const login = async (email: string, password: string) => {
     const { data, error } = await signInWithEmail(email, password);
-    // Ajout du log pour diagnostic
     console.log('LOGIN RESULT', { data, error });
     if (error || !data.session) {
       throw error || new Error('Aucune session');
@@ -37,15 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let ignore = false;
 
-    // Initial session load
-    supabase.auth.getSession().then(({ data }) => {
+    // Toujours forcer la lecture de la session au montage
+    const restoreSession = async () => {
+      const { data } = await supabase.auth.getSession();
       if (!ignore) {
         setUser(data.session?.user ?? null);
         setLoading(false);
       }
-    });
+    };
 
-    // Listen for session changes
+    restoreSession();
+
+    // Ecoute les changements de session
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!ignore) {
         setUser(session?.user ?? null);
