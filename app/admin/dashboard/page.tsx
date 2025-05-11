@@ -12,9 +12,7 @@ import {
   Star,
   Clock
 } from 'lucide-react';
-import { getStatistics } from '@/lib/firebase/firestore/statistics';
-import { getRecentActivities } from '@/lib/firebase/firestore/activity-logs';
-import { getPopularMovies } from '@/lib/firebase/firestore/movies';
+import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -27,24 +25,48 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Charger les statistiques
-        const statsData = await getStatistics();
-        setStats(statsData);
-        
-        // Charger les activités récentes
-        const activitiesData = await getRecentActivities(10);
-        setActivities(activitiesData);
-        
-        // Charger les films populaires
-        const moviesData = await getPopularMovies(5);
-        setPopularMovies(moviesData);
+        // Statistiques des utilisateurs
+        const { data: allUsers, error: userError } = await supabase.from('profiles').select('*');
+        const { data: vipUsers } = await supabase.from('profiles').select('*').eq('is_vip', true);
+        // Statistiques des films
+        const { data: allMovies } = await supabase.from('films').select('*');
+        const { data: publishedMovies } = await supabase.from('films').select('*').eq('published', true);
+        // Statistiques des séries
+        const { data: allSeries } = await supabase.from('series').select('*');
+        const { data: publishedSeries } = await supabase.from('series').select('*').eq('published', true);
+        // Statistiques des vues
+        const { data: allViews } = await supabase.from('view_history').select('*');
+        // Activités récentes
+        const { data: activitiesData } = await supabase
+          .from('activities')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(10);
+        // Films populaires
+        const { data: popularMoviesData } = await supabase
+          .from('films')
+          .select('*')
+          .order('views', { ascending: false })
+          .limit(5);
+
+        setStats({
+          totalUsers: allUsers ? allUsers.length : 0,
+          vipUsers: vipUsers ? vipUsers.length : 0,
+          totalMovies: allMovies ? allMovies.length : 0,
+          publishedMovies: publishedMovies ? publishedMovies.length : 0,
+          totalSeries: allSeries ? allSeries.length : 0,
+          publishedSeries: publishedSeries ? publishedSeries.length : 0,
+          totalViews: allViews ? allViews.length : 0,
+        });
+        setActivities(activitiesData || []);
+        setPopularMovies(popularMoviesData || []);
       } catch (error) {
         console.error('Erreur lors du chargement des données du tableau de bord:', error);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchDashboardData();
   }, []);
   
@@ -197,7 +219,7 @@ export default function AdminDashboardPage() {
                           <ActivityDescription activity={activity} />
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {activity.timestamp && formatDistanceToNow(activity.timestamp.toDate(), {
+                          {activity.timestamp && formatDistanceToNow(new Date(activity.timestamp), {
                             addSuffix: true,
                             locale: fr
                           })}

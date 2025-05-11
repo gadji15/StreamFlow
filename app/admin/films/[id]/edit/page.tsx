@@ -26,12 +26,24 @@ import {
   X,
   Loader2
 } from 'lucide-react';
-import { 
-  getMovie, 
-  updateMovie, 
-  getMovieGenres,
-  Movie
-} from '@/lib/firebase/firestore/movies';
+import { supabase } from '@/lib/supabaseClient';
+
+type Movie = {
+  id: string;
+  title: string;
+  original_title?: string;
+  description: string;
+  year: number;
+  duration: number;
+  director?: string;
+  genres?: string[];
+  cast?: { name: string; role: string }[];
+  trailer_url?: string;
+  is_vip?: boolean;
+  published?: boolean;
+  poster_url?: string;
+  backdrop_url?: string;
+};
 
 export default function AdminEditFilmPage() {
   const router = useRouter();
@@ -69,29 +81,33 @@ export default function AdminEditFilmPage() {
   useEffect(() => {
     const loadMovie = async () => {
       if (!id) return;
-      
+
       setLoading(true);
       try {
-        const movieData = await getMovie(id);
-        
-        if (!movieData) {
+        const { data: movieData, error: movieError } = await supabase
+          .from('films')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (movieError || !movieData) {
           setError('Film non trouvé');
           return;
         }
-        
+
         setMovie(movieData);
-        
+
         // Initialiser les champs du formulaire
         setTitle(movieData.title);
-        setOriginalTitle(movieData.originalTitle || '');
+        setOriginalTitle(movieData.original_title || '');
         setDescription(movieData.description);
         setYear(movieData.year);
         setDuration(movieData.duration);
         setDirector(movieData.director || '');
         setSelectedGenres(movieData.genres || []);
-        setIsVIP(movieData.isVIP);
-        setIsPublished(movieData.isPublished);
-        setTrailerUrl(movieData.trailerUrl || '');
+        setIsVIP(movieData.is_vip || false);
+        setIsPublished(movieData.published || false);
+        setTrailerUrl(movieData.trailer_url || '');
         setCast(movieData.cast || [{ name: '', role: '' }]);
       } catch (error) {
         console.error('Erreur lors du chargement du film:', error);
@@ -100,17 +116,18 @@ export default function AdminEditFilmPage() {
         setLoading(false);
       }
     };
-    
+
     // Charger les genres
     const loadGenres = async () => {
       try {
-        const genres = await getMovieGenres();
-        setAvailableGenres(genres);
+        const { data, error } = await supabase.from('genres').select('id, name');
+        if (error) throw error;
+        setAvailableGenres(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des genres:', error);
       }
     };
-    
+
     loadMovie();
     loadGenres();
   }, [id]);
@@ -175,34 +192,59 @@ export default function AdminEditFilmPage() {
           role: member.role
         }));
       
+      // Upload des images si modifiées
+      let posterUrl = movie?.poster_url || '';
+      let backdropUrl = movie?.backdrop_url || '';
+
+      if (posterFile) {
+        const { data, error } = await supabase.storage
+          .from('film-posters')
+          .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('film-posters').getPublicUrl(data.path);
+        posterUrl = urlData?.publicUrl || '';
+      }
+
+      if (backdropFile) {
+        const { data, error } = await supabase.storage
+          .from('film-backdrops')
+          .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('film-backdrops').getPublicUrl(data.path);
+        backdropUrl = urlData?.publicUrl || '';
+      }
+
       // Préparer les données à mettre à jour
       const updates: Partial<Movie> = {
         title,
-        originalTitle: originalTitle || null,
+        original_title: originalTitle || null,
         description,
         year,
         duration,
         director: director || null,
         genres: selectedGenres,
         cast: formattedCast.length > 0 ? formattedCast : [],
-        trailerUrl: trailerUrl || null,
-        isVIP,
-        isPublished
+        trailer_url: trailerUrl || null,
+        is_vip: isVIP,
+        published: isPublished,
+        poster_url: posterUrl || null,
+        backdrop_url: backdropUrl || null,
       };
-      
+
       // Mettre à jour le film
-      const result = await updateMovie(id, updates, posterFile, backdropFile);
-      
-      if (result.success) {
+      const { error: updateError } = await supabase
+        .from('films')
+        .update(updates)
+        .eq('id', id);
+
+      if (!updateError) {
         toast({
           title: 'Film mis à jour',
           description: `Le film "${title}" a été mis à jour avec succès.`,
         });
-        
-        // Rediriger vers la liste des films
         router.push('/admin/films');
       } else {
-        throw new Error(result.error);
+        throw updateError;
       }
     } catch (error: any) {
       console.error('Erreur lors de la mise à jour du film:', error);

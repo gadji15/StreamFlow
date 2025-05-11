@@ -44,8 +44,10 @@ interface VIPPlanDetails {
   price: number;
 }
 
+import { supabase } from './supabaseClient';
+
 /**
- * Mise à niveau d'un utilisateur vers le statut VIP
+ * Mise à niveau d'un utilisateur vers le statut VIP (version Supabase)
  */
 export async function upgradeToVIP(
   userId: string,
@@ -53,21 +55,43 @@ export async function upgradeToVIP(
   paymentDetails: any
 ) {
   try {
-    // Cette fonction sera implémentée plus tard avec la véritable logique
-    // Pour l'instant, elle renvoie juste true pour permettre la compilation
-    console.log("Mise à niveau VIP pour l'utilisateur:", userId);
-    console.log("Détails du plan:", planDetails);
-    console.log("Détails du paiement:", paymentDetails);
-    
+    // Calculer la date d'expiration VIP
+    const now = new Date();
+    const expiry = new Date(now);
+    expiry.setMonth(now.getMonth() + (planDetails.durationMonths || 1));
+    const vipExpiry = expiry.toISOString();
+
+    // Mettre à jour le profil utilisateur dans Supabase
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ is_vip: true, vip_expiry: vipExpiry })
+      .eq('id', userId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    // Ajouter une entrée dans la table subscriptions pour audit (optionnel)
+    await supabase.from('subscriptions').insert([{
+      user_id: userId,
+      plan_id: planDetails.planId,
+      plan_name: planDetails.planName,
+      duration_months: planDetails.durationMonths,
+      price: planDetails.price,
+      payment_method: paymentDetails.method,
+      payment_timestamp: paymentDetails.timestamp,
+      vip_expiry: vipExpiry,
+    }]);
+
     return {
       success: true,
       message: "Mise à niveau VIP réussie",
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors de la mise à niveau VIP:", error);
     return {
       success: false,
-      message: "Échec de la mise à niveau VIP",
+      message: error.message || "Échec de la mise à niveau VIP",
     };
   }
 }

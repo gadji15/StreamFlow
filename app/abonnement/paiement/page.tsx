@@ -18,10 +18,10 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { upgradeToVIP } from '@/lib/auth';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function PaiementPage() {
-  const { user, isLoggedIn, refreshUserData } = useAuth();
+  const { user, loading } = useCurrentUser();
   const searchParams = useSearchParams();
   const router = useRouter();
   const planId = searchParams?.get("plan") || "premium";
@@ -56,20 +56,21 @@ export default function PaiementPage() {
   
   // Effectuer le paiement
   const handlePayment = async () => {
-    if (!isLoggedIn || !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login?redirect=' + encodeURIComponent('/abonnement/paiement?plan=' + planId));
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
       // Simuler un délai de traitement
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Appeler la fonction de mise à niveau VIP
       const result = await upgradeToVIP(
-        user.uid,
+        user.id,  // Supabase UID
         {
           planId: selectedPlan.id,
           planName: selectedPlan.name,
@@ -78,11 +79,9 @@ export default function PaiementPage() {
         },
         { method: paymentMethod, timestamp: new Date() }
       );
-      
+
       if (result.success) {
-        // Rafraîchir les données utilisateur
-        await refreshUserData();
-        
+        // Optionnel : recharger la page ou fetch user avec Supabase si besoin
         // Rediriger vers la page de confirmation
         router.push('/abonnement/confirmation');
       } else {

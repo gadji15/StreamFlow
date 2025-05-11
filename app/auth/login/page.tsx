@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { doc, getDoc, setDoc } from "firebase/firestore"
-import { auth, firestore } from "@/lib/firebase/config" // Importation depuis config
+import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/components/ui/use-toast"
 
 export default function LoginPage() {
@@ -26,56 +24,61 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Tentative de connexion à Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
-
-      // Vérifier si l'utilisateur est un administrateur
-      const adminRef = doc(firestore, "admins", user.uid)
-      const adminSnap = await getDoc(adminRef)
-
-      if (adminSnap.exists()) {
-        // Mise à jour de la dernière connexion
-        await setDoc(adminRef, { lastLogin: new Date().toISOString() }, { merge: true })
-
-        // Sauvegarder l'état de connexion et les infos admin dans localStorage
-        localStorage.setItem("adminId", user.uid)
-        localStorage.setItem("adminEmail", user.email || "")
-        localStorage.setItem("adminName", adminSnap.data().name || "")
-        localStorage.setItem("adminRole", adminSnap.data().role || "")
-        localStorage.setItem("isAdminLoggedIn", "true")
-
-        // Afficher une notification de succès
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue dans l'interface d'administration",
-          variant: "default",
-        })
-
-        // Rediriger vers le tableau de bord admin
-        router.push("/admin")
-      } else {
-        // L'utilisateur n'est pas un administrateur
-        await auth.signOut()
-        setError("Vous n'avez pas les droits d'administration nécessaires")
+      // Tentative de connexion à Supabase
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInError || !data?.user) {
+        if (signInError?.message?.includes('Invalid login credentials')) {
+          setError("Adresse email ou mot de passe incorrect");
+        } else if (signInError?.status === 429) {
+          setError("Trop de tentatives échouées. Veuillez réessayer plus tard");
+        } else {
+          setError(signInError?.message || "Erreur de connexion. Veuillez réessayer");
+        }
+        setIsLoading(false);
+        return;
       }
+
+      const user = data.user;
+
+      // Vérifier si l'utilisateur est admin/super_admin via user_roles_flat
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles_flat')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'super_admin']);
+
+      if (rolesError) {
+        setError("Erreur serveur lors de la vérification du rôle administrateur");
+        setIsLoading(false);
+        return;
+      }
+      if (!rolesData || rolesData.length === 0) {
+        setError("Vous n'avez pas les droits d'administration nécessaires");
+        // Déconnexion
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      // Sauvegarder l'état de connexion et les infos admin dans localStorage
+      localStorage.setItem("adminId", user.id)
+      localStorage.setItem("adminEmail", user.email || "")
+      localStorage.setItem("adminRole", rolesData[0].role || "")
+      localStorage.setItem("isAdminLoggedIn", "true")
+
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue dans l'interface d'administration",
+        variant: "default",
+      })
+
+      router.push("/admin")
     } catch (error: any) {
       console.error("Erreur de connexion:", error)
-      
-      // Gérer les différents types d'erreurs
-      if (error.code === 'auth/invalid-email') {
-        setError("Adresse email invalide")
-      } else if (error.code === 'auth/user-disabled') {
-        setError("Ce compte a été désactivé")
-      } else if (error.code === 'auth/user-not-found') {
-        setError("Aucun compte trouvé avec cette adresse email")
-      } else if (error.code === 'auth/wrong-password') {
-        setError("Mot de passe incorrect")
-      } else if (error.code === 'auth/too-many-requests') {
-        setError("Trop de tentatives échouées. Veuillez réessayer plus tard")
-      } else {
-        setError("Erreur de connexion. Veuillez réessayer")
-      }
+      setError("Erreur de connexion. Veuillez réessayer");
     } finally {
       setIsLoading(false)
     }

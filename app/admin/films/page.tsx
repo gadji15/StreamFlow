@@ -17,11 +17,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  getMovies, 
-  deleteMovie,
-  Movie
-} from '@/lib/firebase/firestore/movies';
+import { supabase } from '@/lib/supabaseClient';
+
+type Movie = {
+  id: string;
+  title: string;
+  year: number;
+  posterUrl?: string;
+  genres?: string[];
+  rating?: number;
+  views?: number;
+  isPublished?: boolean;
+  isVIP?: boolean;
+};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,19 +64,24 @@ export default function AdminFilmsPage() {
     const loadMovies = async () => {
       setLoading(true);
       try {
-        const result = await getMovies({
-          limit: 100, // Augmenter la limite pour l'administration
-          onlyPublished: statusFilter === 'published' ? true : undefined,
-          searchTerm: searchTerm || undefined
-        });
-        
-        let filteredMovies = result.movies;
-        
-        // Filtrer côté client si nécessaire (selon le statut)
-        if (statusFilter === 'draft') {
-          filteredMovies = filteredMovies.filter(movie => !movie.isPublished);
+        let query = supabase.from('films').select('*').limit(100);
+
+        if (statusFilter === 'published') {
+          query = query.eq('published', true);
         }
-        
+        if (searchTerm) {
+          // Supabase ne supporte pas LIKE sur tous les champs, on filtre sur 'title'
+          query = query.ilike('title', `%${searchTerm}%`);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+
+        let filteredMovies = data || [];
+
+        if (statusFilter === 'draft') {
+          filteredMovies = filteredMovies.filter((movie: Movie) => !movie.published);
+        }
+
         setMovies(filteredMovies);
       } catch (error) {
         console.error('Erreur lors du chargement des films:', error);
@@ -81,27 +94,26 @@ export default function AdminFilmsPage() {
         setLoading(false);
       }
     };
-    
+
     loadMovies();
   }, [searchTerm, statusFilter, toast]);
   
   // Gérer la suppression d'un film
   const handleDeleteMovie = async () => {
     if (!movieToDelete) return;
-    
+
     setIsDeleting(true);
     try {
-      await deleteMovie(movieToDelete.id!);
-      
-      // Mettre à jour la liste locale
+      const { error } = await supabase.from('films').delete().eq('id', movieToDelete.id);
+      if (error) throw error;
+
       setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
-      
+
       toast({
         title: 'Film supprimé',
         description: `Le film "${movieToDelete.title}" a été supprimé avec succès.`,
       });
-      
-      // Fermer le dialogue
+
       setDeleteDialogOpen(false);
       setMovieToDelete(null);
     } catch (error) {

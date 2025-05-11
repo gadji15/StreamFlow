@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Eye
 } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface NavItem {
   href: string;
@@ -23,7 +24,7 @@ interface NavItem {
 
 export default function AdminSidebarClient() {
   const pathname = usePathname();
-  const { userData } = useSupabaseAuth();
+  const { user: userData } = useCurrentUser();
   const isSuperAdmin = userData?.role === 'super_admin';
   
   const navItems: NavItem[] = [
@@ -39,7 +40,7 @@ export default function AdminSidebarClient() {
   // Filtrer les éléments en fonction des rôles
   const filteredNavItems = navItems.filter(item => {
     if (item.superAdminOnly && !isSuperAdmin) return false;
-    if (item.adminOnly && !(userData?.role === 'admin' || userData?.role === 'super_admin')) return false;
+    if (item.adminOnly && !isSuperAdmin && userData?.role !== 'admin') return false;
     return true;
   });
   

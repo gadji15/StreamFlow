@@ -1,7 +1,14 @@
 import { supabase } from '@/lib/supabaseClient'
 
 export async function getProfile(userId: string) {
-  return await supabase.from('profiles').select('*').eq('id', userId).single()
+  const { data, error } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', userId)
+  .limit(1)
+
+if (error) return { data: null, error }
+return { data: data?.[0] || null, error: null }
 }
 
 export async function updateProfile(userId: string, data: Partial<{ full_name: string, role: string }>) {
