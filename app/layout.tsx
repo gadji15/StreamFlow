@@ -90,12 +90,7 @@ export default function RootLayout({
         <AuthProvider>
           <ErrorBoundary>
             <GlobalErrorLogger />
-            <ThemeProvider
-              themeAttribute="class"
-              defaultTheme="dark"
-              enableSystem={false}
-              disableTransitionOnChange
-            >
+            <ThemeProvider>
               {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
               <Header />
               <main style={{
