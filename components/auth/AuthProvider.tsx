@@ -39,6 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true); // Toujours loading avant le verdict
 
     supabase.auth.getSession().then(({ data, error }) => {
+      // LOG pour diagnostic de session et du localStorage
+      console.log('SESSION INIT', {
+        data,
+        error,
+        token: typeof window !== 'undefined' ? localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('sb-') && k.includes('-auth-token')) || '') : undefined,
+        allStorage: typeof window !== 'undefined' ? {...localStorage} : undefined,
+      });
       if (ignore) return;
       setUser(data.session?.user ?? null);
       setLoading(false);
