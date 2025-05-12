@@ -60,7 +60,7 @@ export default function AdminSidebar() {
   const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
   
   return (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block">
+    <div className="w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen hidden md:block">
       <div className="p-6">
         <Link href="/admin" className="flex items-center">
           <h1 className="text-xl font-bold">StreamFlow Admin</h1>
