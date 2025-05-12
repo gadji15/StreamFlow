@@ -489,6 +489,38 @@ export default function AdminAddFilmPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Catégories d’accueil */}
+              <div className="space-y-2 mt-5">
+                <Label>Catégories d’accueil</Label>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { key: "featured", label: "À la une" },
+                    { key: "new", label: "Nouveautés" },
+                    { key: "top", label: "Top" },
+                    { key: "vip", label: "VIP" }
+                  ].map(category => (
+                    <div key={category.key} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`category-${category.key}`}
+                        checked={selectedCategories.includes(category.key)}
+                        onCheckedChange={(checked) => handleCategoryChange(category.key, checked === true)}
+                        aria-checked={selectedCategories.includes(category.key)}
+                        aria-label={category.label}
+                      />
+                      <Label
+                        htmlFor={`category-${category.key}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {category.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400">
+                  Cochez une ou plusieurs sections où ce film apparaîtra sur la page d’accueil.
+                </p>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
