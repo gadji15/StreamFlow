@@ -15,7 +15,7 @@ import {
   Star, 
   TrendingUp 
 } from "lucide-react"
-import firebase from "@/lib/admin/firebase"
+// import firebase from "@/lib/admin/firebase"
 import Image from "next/image"
 
 // Composant pour les cartes de statistiques
