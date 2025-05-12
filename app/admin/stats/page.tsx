@@ -60,34 +60,33 @@ export default function StatsPage() {
     fetchStats()
   }, [])
   
+  let content = null;
+
   if (loading) {
-    return (
+    content = (
       <>
         <AdminHeader title="Statistiques" />
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-gray-400">Chargement des statistiques...</div>
         </main>
       </>
-    )
-  }
-  
-  if (!stats) {
-    return (
+    );
+  } else if (!stats) {
+    content = (
       <>
         <AdminHeader title="Statistiques" />
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-gray-400">Impossible de charger les statistiques</div>
         </main>
       </>
-    )
-  }
-  
-  return (
-    <>
-      <AdminHeader title="Statistiques et Analyses" />
-      <main className="flex-1 p-6">
-        <div className="space-y-6">
-          {/* Utilisateurs */}
+    );
+  } else {
+    content = (
+      <>
+        <AdminHeader title="Statistiques et Analyses" />
+        <main className="flex-1 p-6">
+          <div className="space-y-6">
+            {/* Utilisateurs */}
             <div>
               <h2 className="text-xl font-semibold text-white mb-4">Utilisateurs</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -231,34 +230,35 @@ export default function StatsPage() {
             </div>
             
             {/* Section graphiques (placeholder) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">Évolution des vues (30 derniers jours)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
-                    <BarChart3 className="h-12 w-12 text-gray-600" />
-                    <span className="ml-2 text-gray-400">Graphique de visualisation</span>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">Répartition des genres</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
-                    <BarChart3 className="h-12 w-12 text-gray-600" />
-                    <span className="ml-2 text-gray-400">Graphique de visualisation</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Évolution des vues (30 derniers jours)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-12 w-12 text-gray-600" />
+                  <span className="ml-2 text-gray-400">Graphique de visualisation</span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Répartition des genres</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-12 w-12 text-gray-600" />
+                  <span className="ml-2 text-gray-400">Graphique de visualisation</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
-      </div>
-    </div>
-  )
+      </>
+    );
+  }
+
+  return content;
 }
