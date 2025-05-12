@@ -54,13 +54,48 @@ function NavItem({ href, icon, title, isActive, hasDropdown, isOpen, onClick }: 
   );
 }
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  onCloseMobile?: () => void;
+}
+
+export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
   const pathname = usePathname();
   const [filmsOpen, setFilmsOpen] = useState(pathname?.startsWith('/admin/films'));
   const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
-  
+
+  // Detect mobile (hydration-safe)
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   return (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block">
+    <div
+      className={cn(
+        "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto",
+        "hidden md:block md:sticky md:top-0 md:z-20", // Desktop
+        "block md:hidden fixed z-50 top-0 left-0 h-full", // Mobile
+      )}
+      style={{ display: isMobile ? "block" : undefined }}
+      tabIndex={-1}
+      aria-modal={isMobile ? "true" : undefined}
+      role={isMobile ? "dialog" : undefined}
+    >
+      <div className="p-6 flex items-center justify-between">
+        <Link href="/admin" className="flex items-center">
+          <h1 className="text-xl font-bold">StreamFlow Admin</h1>
+        </Link>
+        {onCloseMobile && (
+          <button
+            className="md:hidden text-gray-400 hover:text-white ml-2"
+            onClick={onCloseMobile}
+            aria-label="Fermer la navigation"
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+      <nav className="px-3 py-2">
+        {/* ...tout le reste inchangé... */}
       <div className="p-6">
         <Link href="/admin" className="flex items-center">
           <h1 className="text-xl font-bold">StreamFlow Admin</h1>
