@@ -1,23 +1,35 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import AdminHeaderClient from '@/components/admin/admin-header-client';
-import AdminSidebarClient from '@/components/admin/admin-sidebar-client';
+import AdminHeader from '@/components/admin/admin-header';
+import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname ?? "";
 
-  // Ne protège pas et n'applique pas le layout aux pages d'accès refusé
+  // Cas spécial : pas de layout/admin sur la page d'accès refusé
   if (pathname === '/admin/access-denied') {
     return <>{children}</>;
   }
 
+  // Détermination dynamique du titre pour le header admin
+  let pageTitle = "StreamFlow Admin";
+  if (pathname.startsWith("/admin/films")) pageTitle = "Gestion des films";
+  else if (pathname.startsWith("/admin/series")) pageTitle = "Gestion des séries";
+  else if (pathname.startsWith("/admin/stats")) pageTitle = "Statistiques";
+  else if (pathname.startsWith("/admin/activity-logs")) pageTitle = "Journaux d'activité";
+  else if (pathname.startsWith("/admin/users")) pageTitle = "Utilisateurs";
+  else if (pathname.startsWith("/admin/comments")) pageTitle = "Commentaires";
+  else if (pathname.startsWith("/admin/settings")) pageTitle = "Paramètres";
+  else if (pathname === "/admin") pageTitle = "Tableau de bord";
+
   const content = (
     <div className="min-h-screen bg-gray-900">
-      <AdminHeaderClient />
+      <AdminHeader title={pageTitle} />
       <div className="flex">
-        <AdminSidebarClient />
+        <AdminSidebar />
         <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
           {children}
         </main>

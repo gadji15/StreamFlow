@@ -167,7 +167,6 @@ export default function ActivityLogsPage() {
 
   return (
     <div className="min-h-screen flex bg-gray-950">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title="Journaux d'activité (admin)" />
         <main className="flex-1 p-6">

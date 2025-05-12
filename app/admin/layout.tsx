@@ -11,5 +11,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Ici, on n'inclut PAS le Header/Footer global du site !
+  // On encapsule UNIQUEMENT le layout admin (header admin, sidebar, etc.)
   return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }

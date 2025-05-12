@@ -96,6 +96,24 @@ export async function getPopularMovies(limit = 6): Promise<Movie[]> {
 }
 
 /**
+ * Récupère les films par catégorie d'accueil (champ 'homepage_categories')
+ * @param category une des valeurs : 'featured', 'new', 'top', 'vip'
+ */
+export async function getMoviesByHomepageCategory(category: string, limit = 6): Promise<Movie[]> {
+  const { data, error } = await supabase
+    .from('films')
+    .select('*')
+    .contains('homepage_categories', [category])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Erreur getMoviesByHomepageCategory:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
  * Récupère les films par genre (champ 'genre' requis)
  */
 export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movie[]> {

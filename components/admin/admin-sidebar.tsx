@@ -96,6 +96,7 @@ export default function AdminSidebar() {
         <div className="mb-6">
           <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Contenu</p>
           
+          {/* FILMS */}
           <NavItem
             href="#"
             icon={<Film className="h-5 w-5" />}
@@ -105,7 +106,6 @@ export default function AdminSidebar() {
             isOpen={filmsOpen}
             onClick={() => setFilmsOpen(!filmsOpen)}
           />
-          
           {filmsOpen && (
             <div className="ml-4 pl-2 border-l border-gray-800">
               <NavItem
@@ -122,7 +122,8 @@ export default function AdminSidebar() {
               />
             </div>
           )}
-          
+
+          {/* SERIES */}
           <NavItem
             href="#"
             icon={<Tv className="h-5 w-5" />}
@@ -132,7 +133,6 @@ export default function AdminSidebar() {
             isOpen={seriesOpen}
             onClick={() => setSeriesOpen(!seriesOpen)}
           />
-          
           {seriesOpen && (
             <div className="ml-4 pl-2 border-l border-gray-800">
               <NavItem
@@ -147,15 +147,18 @@ export default function AdminSidebar() {
                 title="Ajouter une série"
                 isActive={pathname === '/admin/series/add'}
               />
+              <NavItem
+                href="/admin/series/saisons"
+                icon={<ListChecks className="h-4 w-4" />}
+                title="Gestion des saisons"
+                isActive={pathname === '/admin/series/saisons'}
+              />
             </div>
           )}
-          
-          <NavItem
-            href="/admin/episodes"
-            icon={<Tv2 className="h-5 w-5" />}
-            title="Épisodes"
-            isActive={pathname === '/admin/episodes'}
-          />
+
+          {/* SUPPRESSION DU LIEN EPISODES GLOBAL (évite la 404) */}
+          {/* Ici on ne met pas de NavItem "Épisodes" global car il n'y a pas de page /admin/episodes */}
+          {/* La gestion des épisodes se fait dans le contexte d'une série/saison */}
         </div>
         
         <div className="mb-6">
