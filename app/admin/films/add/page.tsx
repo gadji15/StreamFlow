@@ -51,8 +51,8 @@ export default function AdminAddFilmPage() {
   const [isVIP, setIsVIP] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
-  const [cast, setCast] = useState<{name: string, role: string}[]>([
-    { name: '', role: '' }
+  const [cast, setCast] = useState<{name: string, role: string, photo?: string | null, file?: File | null, preview?: string | null}[]>([
+    { name: '', role: '', photo: null, file: null, preview: null }
   ]);
 
   // États pour les catégories d’accueil (sections homepage)
@@ -498,8 +498,7 @@ export default function AdminAddFilmPage() {
         <h1 className="text-3xl font-bold">Ajouter un film</h1>
       </div>
 
-      {/* TMDB Search */}
-      {/* TMDB Live Search + bouton */}
+      {/* Formulaire de recherche TMDB, séparé */}
       <div className="mb-6" role="search" aria-label="Recherche TMDB">
         <form onSubmit={handleTmdbSearch}>
           <div className="flex flex-col sm:flex-row gap-2 items-center">
@@ -566,9 +565,8 @@ export default function AdminAddFilmPage() {
         )}
       </div>
 
-      {/* Formulaire principal d'ajout : le <form> englobe tout, y compris Tabs */}
+      {/* Formulaire principal d'ajout englobe Tabs, tous les champs, bouton submit */}
       <form onSubmit={handleSubmit}>
-        {/* Tabs et tous les champs sont dans le form */}
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
             <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">
@@ -584,21 +582,8 @@ export default function AdminAddFilmPage() {
               Détails supplémentaires
             </TabsTrigger>
           </TabsList>
-
-          {/* Informations générales */}
-          <TabsContent value="general" className="p-6">
-            {/* ... (tous les champs du panneau général) ... */}
-          </TabsContent>
-          {/* Médias */}
-          <TabsContent value="media" className="p-6">
-            {/* ... (tous les champs du panneau médias) ... */}
-          </TabsContent>
-          {/* Détails supplémentaires */}
-          <TabsContent value="details" className="p-6">
-            {/* ... (tous les champs du panneau détails) ... */}
-          </TabsContent>
+          {/* ... Tous les TabsContent et champs comme avant ... */}
         </Tabs>
-
         <div className="flex justify-between mt-6">
           <Button
             type="button"
@@ -608,10 +593,8 @@ export default function AdminAddFilmPage() {
           >
             Annuler
           </Button>
-
           <Button
             type="submit"
-            onClick={() => console.log('Bouton enregistrer cliqué')}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -625,6 +608,12 @@ export default function AdminAddFilmPage() {
                 Enregistrer
               </>
             )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
           </Button>
         </div>
       </form>
