@@ -50,12 +50,19 @@ export default function AdminEditFilmPage() {
   const params = useParams();
   const { toast } = useToast();
   const id = params?.id as string;
-  
+
+  // TMDB Search State
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [tmdbError, setTmdbError] = useState<string | null>(null);
+  const tmdbInputRef = useRef<HTMLInputElement>(null);
+
   // États pour le film
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // États pour le formulaire
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
@@ -69,14 +76,16 @@ export default function AdminEditFilmPage() {
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
   const [cast, setCast] = useState<{name: string, role: string}[]>([]);
-  
+
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
-  
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Charger le film
   useEffect(() => {
     const loadMovie = async () => {
@@ -109,6 +118,8 @@ export default function AdminEditFilmPage() {
         setIsPublished(movieData.published || false);
         setTrailerUrl(movieData.trailer_url || '');
         setCast(movieData.cast || [{ name: '', role: '' }]);
+        setPosterPreview(movieData.poster_url || null);
+        setBackdropPreview(movieData.backdrop_url || null);
       } catch (error) {
         console.error('Erreur lors du chargement du film:', error);
         setError('Impossible de charger les données du film');
@@ -131,6 +142,71 @@ export default function AdminEditFilmPage() {
     loadMovie();
     loadGenres();
   }, [id]);
+
+  // TMDB: Lancer la recherche
+  const handleTmdbSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tmdbQuery.trim()) return;
+    setTmdbLoading(true);
+    setTmdbError(null);
+    setTmdbResults([]);
+    try {
+      const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTmdbResults(data.results || []);
+    } catch (err: any) {
+      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+    } finally {
+      setTmdbLoading(false);
+    }
+  };
+
+  // TMDB: Sélectionner un film et remplir le formulaire
+  const handleSelectTmdbMovie = async (movie: any) => {
+    setTitle(movie.title || '');
+    setOriginalTitle(movie.original_title || '');
+    setDescription(movie.overview || '');
+    setYear(movie.release_date ? parseInt(movie.release_date.split('-')[0]) : new Date().getFullYear());
+    setPosterPreview(
+      movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null
+    );
+    setBackdropPreview(
+      movie.backdrop_path
+        ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
+        : null
+    );
+    // Genres TMDB → genres du projet
+    if (Array.isArray(movie.genre_ids) && availableGenres.length > 0) {
+      setSelectedGenres([]);
+      try {
+        if (movie.id) {
+          const res = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+          const details = await res.json();
+          if (details.runtime) setDuration(details.runtime);
+          // Mappe genres TMDB → genres locaux si même nom
+          if (Array.isArray(details.genres)) {
+            const genreNames = details.genres.map((g: any) => g.name);
+            const localGenreIds = availableGenres
+              .filter(g => genreNames.includes(g.name))
+              .map(g => g.id);
+            setSelectedGenres(localGenreIds);
+          }
+        }
+      } catch {}
+    }
+    setTmdbResults([]);
+    setTmdbQuery('');
+    setTimeout(() => {
+      tmdbInputRef.current?.focus();
+    }, 100);
+    toast({
+      title: "Champs remplis automatiquement",
+      description: "Tous les champs peuvent être édités avant l’enregistrement.",
+    });
+  };
   
   // Gérer les genres
   const handleGenreChange = (genreId: string, checked: boolean) => {
