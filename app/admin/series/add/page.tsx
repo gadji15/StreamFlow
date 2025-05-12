@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +23,9 @@ import {
   Save, 
   ArrowLeft,
   Plus,
-  X,
-  Video
+  X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { useEffect } from 'react';
 
 const HOMEPAGE_CATEGORIES = [
   { key: "featured", label: "À la une" },
@@ -40,14 +38,14 @@ export default function AdminAddSeriesPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // TMDB Search State
+  // Etats pour TMDB (à implémenter à l'étape suivante)
   const [tmdbQuery, setTmdbQuery] = useState('');
   const [tmdbResults, setTmdbResults] = useState<any[]>([]);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [tmdbError, setTmdbError] = useState<string | null>(null);
   const tmdbInputRef = useRef<HTMLInputElement>(null);
 
-  // États pour le formulaire
+  // Etats principaux du formulaire
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -56,30 +54,24 @@ export default function AdminAddSeriesPage() {
   const [creator, setCreator] = useState('');
   const [availableGenres, setAvailableGenres] = useState<{id: string, name: string}[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [duration, setDuration] = useState<number>(0);
   const [isVIP, setIsVIP] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
-  const [cast, setCast] = useState<{name: string, role: string, photo?: File | string | null}[]>([
-    { name: '', role: '', photo: null }
-  ]);
-
-  // États pour les médias
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
-
-  // Vidéo (upload ou URL)
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState('');
-
-  // Catégories d’accueil
+  const [cast, setCast] = useState<{name: string, role: string, photo?: string | null, file?: File | null, preview?: string | null}[]>([
+    { name: '', role: '', photo: null, file: null, preview: null }
+  ]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Charger les genres disponibles
+  // Charger les genres disponibles (à compléter si besoin)
   useEffect(() => {
     const loadGenres = async () => {
       try {
@@ -93,6 +85,76 @@ export default function AdminAddSeriesPage() {
 
     loadGenres();
   }, []);
+
+  return (
+    <div>
+      <div className="flex items-center mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/admin/series')}
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Retour
+        </Button>
+        <h1 className="text-3xl font-bold">Ajouter une série</h1>
+      </div>
+
+      {/* TMDB Search (à implémenter étape 2) */}
+      <div className="mb-6" role="search" aria-label="Recherche TMDB">
+        {/* Sera complété à l'étape suivante */}
+      </div>
+
+      {/* Formulaire principal */}
+      <form>
+        <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
+          <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
+            <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">
+              <Info className="h-4 w-4 mr-2" />
+              Informations générales
+            </TabsTrigger>
+            <TabsTrigger value="media" className="rounded-none px-5 py-3">
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Médias
+            </TabsTrigger>
+            <TabsTrigger value="details" className="rounded-tr-lg rounded-bl-none rounded-tl-none px-5 py-3">
+              <Tv className="h-4 w-4 mr-2" />
+              Détails supplémentaires
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="rounded-tr-lg rounded-bl-none rounded-tl-none px-5 py-3">
+              <Info className="h-4 w-4 mr-2" />
+              Catégories d’accueil
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Tab Informations générales */}
+          <TabsContent value="general" className="p-6">
+            {/* ...à compléter à l'étape suivante... */}
+            <div className="space-y-6">
+              {/* Champs titre, originalTitle, description, startYear, endYear, creator, duration, genres, VIP, published */}
+            </div>
+          </TabsContent>
+
+          {/* Tab Médias */}
+          <TabsContent value="media" className="p-6">
+            {/* ...à compléter à l'étape suivante... */}
+          </TabsContent>
+
+          {/* Tab Détails supplémentaires */}
+          <TabsContent value="details" className="p-6">
+            {/* ...à compléter à l'étape suivante (casting enrichi)... */}
+          </TabsContent>
+
+          {/* Tab Catégories d’accueil */}
+          <TabsContent value="categories" className="p-6">
+            {/* ...à compléter à l'étape suivante... */}
+          </TabsContent>
+        </Tabs>
+      </form>
+    </div>
+  );
+}
 
   // TMDB: Lancer la recherche
   const handleTmdbSearch = async (e?: React.FormEvent) => {
