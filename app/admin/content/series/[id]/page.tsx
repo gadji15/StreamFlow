@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Upload, X, Plus, Trash2, Save, Eye, Film, Calendar, Star, Users, ListPlus } from "lucide-react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { mockSeries } from "@/lib/mock-data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -334,7 +333,6 @@ export default function SeriesEditPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title={isNewSeries ? "Ajouter une série" : `Modifier: ${formData.title}`} />
         <main className="flex-1 p-6">
