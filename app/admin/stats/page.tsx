@@ -62,62 +62,88 @@ export default function StatsPage() {
   
   let content = null;
 
+  import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BarChart3 } from "lucide-react"
+import AdminHeader from "@/components/admin/admin-header"
+import firebase from "@/lib/admin/firebase"
+
+export default function StatsPage() {
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await firebase.getStatistics()
+        setStats(data)
+      } catch (error) {
+        console.error("Erreur lors de la récupération des statistiques:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
   if (loading) {
-    content = (
+    return (
       <>
         <AdminHeader title="Statistiques" />
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-gray-400">Chargement des statistiques...</div>
         </main>
       </>
-    );
-  } else if (!stats) {
-    content = (
+    )
+  }
+
+  if (!stats) {
+    return (
       <>
         <AdminHeader title="Statistiques" />
         <main className="flex-1 p-6 flex items-center justify-center">
           <div className="text-gray-400">Impossible de charger les statistiques</div>
         </main>
       </>
-    );
-  } else {
-    content = (
-      <>
-        <AdminHeader title="Statistiques et Analyses" />
-        <main className="flex-1 p-6">
-          <div className="space-y-6">
-            {/* Utilisateurs */}
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Utilisateurs</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard 
-                  title="Total utilisateurs" 
-                  value={stats.users.total.toLocaleString()} 
-                  icon={<Users className="h-5 w-5" />}
-                  description="Nombre total d'utilisateurs inscrits"
-                />
-                <StatCard 
-                  title="Utilisateurs actifs" 
-                  value={stats.users.active.toLocaleString()} 
-                  icon={<UserCheck className="h-5 w-5" />}
-                  description={`${Math.round((stats.users.active / stats.users.total) * 100)}% du total des utilisateurs`}
-                />
-                <StatCard 
-                  title="Abonnés VIP" 
-                  value={stats.users.vip.toLocaleString()} 
-                  icon={<CreditCard className="h-5 w-5" />}
-                  description={`${Math.round((stats.users.vip / stats.users.total) * 100)}% du total des utilisateurs`}
-                />
-              </div>
-            </div>
-            
-            {/* Contenu */}
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Contenu</h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard 
-                  title="Films" 
-                  value={stats.content.totalMovies} 
+    )
+  }
+
+  return (
+    <>
+      <AdminHeader title="Statistiques et Analyses" />
+      <main className="flex-1 p-6">
+        <div className="space-y-6">
+          {/* Utilisateurs */}
+          {/* Section graphiques (placeholder) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Évolution des vues (30 derniers jours)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-12 w-12 text-gray-600" />
+                  <span className="ml-2 text-gray-400">Graphique de visualisation</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Répartition des genres</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-[16/9] bg-gray-800 rounded-md flex items-center justify-center">
+                  <BarChart3 className="h-12 w-12 text-gray-600" />
+                  <span className="ml-2 text-gray-400">Graphique de visualisation</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </>
+  )
+} 
                   icon={<Film className="h-5 w-5" />}
                   description={`${stats.content.publishedMovies} films publiés`}
                 />
