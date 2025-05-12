@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import AdminHeaderClient from '@/components/admin/admin-header-client';
-import AdminSidebarClient from '@/components/admin/admin-sidebar-client';
+import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
@@ -13,17 +13,17 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     return <>{children}</>;
   }
 
-  const content = (
-    <div className="min-h-screen bg-gray-900">
-      <AdminHeaderClient />
-      <div className="flex">
-        <AdminSidebarClient />
-        <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
-          {children}
-        </main>
+  return (
+    <AdminAuthGuard>
+      <div className="min-h-screen bg-gray-900">
+        <AdminHeaderClient />
+        <div className="flex">
+          <AdminSidebar />
+          <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminAuthGuard>
   );
-
-  return <AdminAuthGuard>{content}</AdminAuthGuard>;
 }

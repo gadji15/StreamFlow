@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -245,7 +244,6 @@ export default function AdminsPage() {
   
   return (
     <div className="min-h-screen bg-gray-950 flex">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title="Gestion des administrateurs" />
         <main className="flex-1 p-6">
