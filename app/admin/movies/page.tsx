@@ -11,7 +11,6 @@ export default function MoviesPage() {
   
   return (
     <div className="flex min-h-screen bg-gray-950">
-      <AdminSidebar />
       <div className="flex-1">
         <AdminHeader title="Gestion des films" />
         <main className="pt-20 p-6">
