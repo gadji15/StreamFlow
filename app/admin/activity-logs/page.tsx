@@ -1,17 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  Search, 
-  Filter, 
-  Film, 
-  Tv, 
-  Play, 
-  Heart, 
-  Eye, 
-  Trash, 
+import { useState, useEffect } from 'react';
+import {
+  Calendar,
+  Search,
+  Filter,
+  User,
+  Trash,
   Pencil,
+  Plus,
+  KeyRound,
   RefreshCcw
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -28,104 +27,150 @@ import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent } from '@/components/ui/card';
 import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminHeader from '@/components/admin/admin-header';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Interface pour le type d'activité (Supabase)
-interface Activity {
-  id: string;
-  user_id: string;
+// Structure du log d’admin réel
+interface AdminLog {
+  id: number;
+  admin_id: string | null;
   action: string;
-  content_type: 'movie' | 'series' | 'episode';
-  content_id: string;
   details: Record<string, any> | null;
-  timestamp: string; // ISO string
+  created_at: string;
+  profiles?: {
+    full_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 export default function ActivityLogsPage() {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [logs, setLogs] = useState<AdminLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [filterAction, setFilterAction] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [superAdminRoleId, setSuperAdminRoleId] = useState<number | null>(null);
+
+  // Vérification du rôle super_admin pour l’accès
   useEffect(() => {
-    fetchActivities();
+    async function fetchCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        const { data: rolesList } = await supabase.from("roles").select("*");
+        const superAdminRole = rolesList?.find((r: any) => r.name === "super_admin");
+        setSuperAdminRoleId(superAdminRole?.id ?? null);
+
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("role_id")
+          .eq("user_id", user.id);
+
+        setCurrentUser({
+          ...profile,
+          user_id: user.id,
+          roles: userRoles?.map(ur => ur.role_id) || [],
+        });
+      }
+    }
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
     // eslint-disable-next-line
   }, []);
-  
-  const fetchActivities = async () => {
+
+  const fetchLogs = async () => {
     setLoading(true);
+    setError(null);
     try {
+      // Jointure sur profiles pour afficher l’admin
       const { data, error } = await supabase
-        .from('activities')
-        .select('*')
-        .order('timestamp', { ascending: false })
+        .from('admin_logs')
+        .select(`
+          *,
+          profiles:admin_id (full_name, email, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
-      setActivities(data || []);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des activités:', error);
+      setLogs(data || []);
+    } catch (error: any) {
+      setError(error.message || "Erreur lors de la récupération des logs.");
     } finally {
       setLoading(false);
     }
   };
-  
-  // Filtrer les activités
-  const filteredActivities = activities.filter(activity => {
-    // Filtrer par type de contenu
-    if (filter !== 'all' && activity.content_type !== filter) {
-      return false;
-    }
 
-    // Filtrer par terme de recherche
+  // Liste des actions pour le filtrage (extraites dynamiquement)
+  const actionOptions = Array.from(new Set(logs.map(log => log.action)));
+
+  // Filtrer les logs
+  const filteredLogs = logs.filter(log => {
+    if (filterAction !== 'all' && log.action !== filterAction) return false;
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      const detailsString = JSON.stringify(activity.details || {}).toLowerCase();
+      const detailsString = JSON.stringify(log.details || {}).toLowerCase();
       return (
-        (activity.user_id || '').toLowerCase().includes(searchLower) ||
-        activity.action.toLowerCase().includes(searchLower) ||
-        (activity.content_id || '').toLowerCase().includes(searchLower) ||
+        (log.profiles?.full_name || '').toLowerCase().includes(searchLower) ||
+        (log.profiles?.email || '').toLowerCase().includes(searchLower) ||
+        log.action.toLowerCase().includes(searchLower) ||
         detailsString.includes(searchLower)
       );
     }
     return true;
   });
-  
-  // Obtenir l'icône en fonction de l'action
+
+  // Affichage icône action
   const getActionIcon = (action: string) => {
-    switch (action) {
-      case 'movie_view':
-      case 'series_view':
-      case 'episode_view':
-        return <Eye className="h-4 w-4" />;
-      case 'movie_created':
-      case 'series_created':
-      case 'episode_created':
-        return <Play className="h-4 w-4" />;
-      case 'movie_updated':
-      case 'series_updated':
-      case 'episode_updated':
-        return <Pencil className="h-4 w-4" />;
-      case 'movie_deleted':
-      case 'series_deleted':
-      case 'episode_deleted':
-        return <Trash className="h-4 w-4" />;
-      case 'favorite_added':
-      case 'favorite_removed':
-        return <Heart className="h-4 w-4" />;
-      default:
-        return null;
-    }
+    if (action.includes("ADD_ADMIN")) return <Plus className="h-4 w-4" />;
+    if (action.includes("REMOVE_ADMIN")) return <Trash className="h-4 w-4" />;
+    if (action.includes("ROLE_CHANGE")) return <KeyRound className="h-4 w-4" />;
+    if (action.includes("UPDATE")) return <Pencil className="h-4 w-4" />;
+    return <User className="h-4 w-4" />;
   };
-  
-  // Formater l'action pour l'affichage
+
+  // Affichage du badge d’action
   const formatAction = (action: string) => {
-    return action.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
-  
+
+  // Si non super_admin, afficher accès refusé
+  if (
+    currentUser &&
+    superAdminRoleId !== null &&
+    !currentUser.roles?.includes(superAdminRoleId)
+  ) {
+    return (
+      <div className="min-h-screen flex bg-gray-950">
+        <AdminSidebar />
+        <div className="flex-1 flex flex-col">
+          <AdminHeader title="Journaux d'activité" />
+          <main className="flex-1 p-6 flex items-center justify-center">
+            <Alert className="max-w-xl bg-red-900/10 border-red-700 text-red-700">
+              <AlertDescription>
+                <b>Accès refusé</b> : Cette page est réservée aux super administrateurs.
+              </AlertDescription>
+            </Alert>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-gray-950">
       <AdminSidebar />
       <div className="flex-1 flex flex-col">
-        <AdminHeader title="Journaux d'activité" />
+        <AdminHeader title="Journaux d'activité (admin)" />
         <main className="flex-1 p-6">
           <div className="flex flex-col space-y-4 mb-6">
             <div className="flex flex-wrap gap-4 items-center">
@@ -133,83 +178,84 @@ export default function ActivityLogsPage() {
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Rechercher dans les journaux..."
+                    placeholder="Rechercher dans les logs..."
                     className="pl-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
-              
               <div className="flex gap-3 items-center">
-                <Select value={filter} onValueChange={setFilter}>
+                <Select value={filterAction} onValueChange={setFilterAction}>
                   <SelectTrigger className="w-[180px]">
                     <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Type de contenu" />
+                    <SelectValue placeholder="Type d'action" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les types</SelectItem>
-                    <SelectItem value="movie">Films</SelectItem>
-                    <SelectItem value="series">Séries</SelectItem>
-                    <SelectItem value="episode">Épisodes</SelectItem>
+                    <SelectItem value="all">Toutes les actions</SelectItem>
+                    {actionOptions.map((action) => (
+                      <SelectItem key={action} value={action}>
+                        {formatAction(action)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                
-                <Button variant="outline" onClick={fetchActivities}>
+                <Button variant="outline" onClick={fetchLogs}>
                   <RefreshCcw className="h-4 w-4 mr-2" />
                   Actualiser
                 </Button>
               </div>
             </div>
           </div>
-          
+          {error && (
+            <Alert className="mb-6 bg-red-900/10 border-red-700 text-red-700">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-          ) : filteredActivities.length === 0 ? (
+          ) : filteredLogs.length === 0 ? (
             <div className="text-center p-12 border border-dashed rounded-lg">
               <p className="text-gray-500">Aucune activité trouvée</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredActivities.map(activity => (
-                <Card key={activity.id} className="overflow-hidden">
+              {filteredLogs.map(log => (
+                <Card key={log.id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex items-start">
                       <div className="bg-gray-800 p-2 rounded-full mr-4">
-                        {activity.content_type === 'movie' ? (
-                          <Film className="h-6 w-6 text-primary" />
-                        ) : activity.content_type === 'series' ? (
-                          <Tv className="h-6 w-6 text-primary" />
-                        ) : (
-                          <Play className="h-6 w-6 text-primary" />
-                        )}
+                        <Avatar className="h-8 w-8">
+                          {log.profiles?.avatar_url ? (
+                            <AvatarImage src={log.profiles.avatar_url} alt={log.profiles.full_name || ""} />
+                          ) : (
+                            <AvatarFallback className="bg-purple-900 text-white">
+                              {(log.profiles?.full_name || log.profiles?.email || "?").substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
                       </div>
-                      
                       <div className="flex-1">
                         <div className="flex items-center mb-1">
-                          <h3 className="font-medium">
-                            {activity.details?.title || activity.content_id}
-                          </h3>
+                          <b className="text-white">{log.profiles?.full_name || log.profiles?.email || "?"}</b>
                           <Badge className="ml-2 flex items-center" variant="outline">
-                            {getActionIcon(activity.action)}
-                            <span className="ml-1">{formatAction(activity.action)}</span>
+                            {getActionIcon(log.action)}
+                            <span className="ml-1">{formatAction(log.action)}</span>
                           </Badge>
                         </div>
-                        
-                        <div className="text-sm text-gray-400 flex items-center mb-2">
-                          <span className="font-mono mr-2">ID: {activity.user_id?.substring(0, 8)}...</span>
+                        <div className="text-xs text-gray-400 flex items-center mb-2">
+                          <span className="font-mono mr-2">{log.profiles?.email}</span>
                           <span className="flex items-center ml-2">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(activity.timestamp).toLocaleString()}
+                            {new Date(log.created_at).toLocaleString()}
                           </span>
                         </div>
-                        
-                        {activity.details && Object.keys(activity.details).length > 0 && (
+                        {log.details && Object.keys(log.details).length > 0 && (
                           <div className="text-xs bg-gray-900 p-2 rounded mt-2 overflow-x-auto">
                             <pre className="whitespace-pre-wrap">
-                              {JSON.stringify(activity.details, null, 2)}
+                              {JSON.stringify(log.details, null, 2)}
                             </pre>
                           </div>
                         )}
