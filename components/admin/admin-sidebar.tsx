@@ -63,25 +63,23 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
   const [filmsOpen, setFilmsOpen] = useState(pathname?.startsWith('/admin/films'));
   const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
 
-  // Detect mobile (hydration-safe)
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
   return (
     <div
       className={cn(
-        "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto",
-        "hidden md:block md:sticky md:top-0 md:z-20", // Desktop
-        "block md:hidden fixed z-50 top-0 left-0 h-full", // Mobile
+        // Desktop : sticky sidebar
+        "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block md:sticky md:top-0 md:z-20",
+        // Mobile : fixed overlay sidebar, visible uniquement en mobile context (le parent contrôle l’affichage)
+        "md:hidden fixed z-50 top-0 left-0 h-full"
       )}
-      style={{ display: isMobile ? "block" : undefined }}
       tabIndex={-1}
-      aria-modal={isMobile ? "true" : undefined}
-      role={isMobile ? "dialog" : undefined}
+      aria-modal={onCloseMobile ? "true" : undefined}
+      role={onCloseMobile ? "dialog" : undefined}
     >
       <div className="p-6 flex items-center justify-between">
         <Link href="/admin" className="flex items-center">
           <h1 className="text-xl font-bold">StreamFlow Admin</h1>
         </Link>
+        {/* Bouton de fermeture uniquement en mobile/overlay */}
         {onCloseMobile && (
           <button
             className="md:hidden text-gray-400 hover:text-white ml-2"
