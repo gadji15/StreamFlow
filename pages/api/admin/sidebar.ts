@@ -82,9 +82,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: "Utilisateur non authentifié" });
   }
 
-  // TODO: Fetch user roles from your DB or Supabase metadata
-  // Demo: Hardcoded for now
-  const roles = ["admin"]; // Replace with your real roles
+  // Fetch user roles from Supabase profiles table (adapt to your schema)
+  let roles: string[] = [];
+  if (userId) {
+    // Example: get roles from "profiles" table (adapt field/table if needed)
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("roles")
+      .eq("id", userId)
+      .single();
+    if (data?.roles) {
+      // roles can be an array or a comma-separated string depending on your schema
+      if (Array.isArray(data.roles)) {
+        roles = data.roles;
+      } else if (typeof data.roles === "string") {
+        roles = data.roles.split(",").map((r: string) => r.trim());
+      }
+    }
+    // Optionally, fallback if no roles found
+    if (!roles.length) roles = ["user"];
+  }
 
   // Filter menu by permissions
   const sidebarItems = filterItemsByRole(allSidebarItems, roles);
