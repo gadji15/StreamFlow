@@ -56,16 +56,16 @@ export default function AdminSidebar() {
   // Responsive classes
   // w-16: compact (sm), w-64: expanded (lg+)
   const sidebarBaseClass =
-    "bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 z-40";
+    "bg-bg border-r border-border flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 z-40";
 
   // Hamburger button (mobile)
   const Hamburger = (
     <button
-      className="md:hidden absolute top-4 left-4 z-50 p-2 rounded bg-gray-900 border border-gray-700"
+      className="md:hidden absolute top-4 left-4 z-50 p-2 rounded bg-bg border border-border"
       onClick={() => setDrawerOpen((open) => !open)}
       aria-label="Ouvrir le menu"
     >
-      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
+      <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
@@ -87,14 +87,14 @@ export default function AdminSidebar() {
     <div
       className={cn(
         sidebarBaseClass,
-        "w-64 hidden md:block", // expanded sidebar for md+
-        "md:w-16 lg:w-64",      // compact for md, expanded for lg+
+        "w-64 hidden md:block",
+        "md:w-16 lg:w-64",
         "md:flex flex-col"
       )}
     >
       <div className="p-6">
         <Link href="/admin" className="flex items-center">
-          <h1 className="text-xl font-bold font-sans" style={{ color: "var(--primary, #4299e1)" }}>
+          <h1 className="text-xl font-bold font-sans text-primary">
             StreamFlow Admin
           </h1>
         </Link>
@@ -111,7 +111,7 @@ export default function AdminSidebar() {
       <div className="mt-auto px-3 pb-4">
         <Link
           href="/"
-          className="flex items-center text-sm text-gray-400 hover:text-white"
+          className="flex items-center text-sm text-text-muted hover:text-primary"
         >
           <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
             <path stroke="currentColor" strokeWidth="2" d="M18 13v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6m16-2V7a2 2 0 0 0-2-2h-4l-2-2-2 2H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z" />

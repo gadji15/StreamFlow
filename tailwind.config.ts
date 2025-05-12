@@ -10,12 +10,17 @@ const config: Config = {
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
+    extend: {
+      colors: {
+        primary: "var(--primary)",
+        bg: "var(--bg)",
+        "bg-alt": "var(--bg-alt)",
+        text: "var(--text)",
+        "text-muted": "var(--text-muted)",
+        border: "var(--border)",
       },
+    },
+  },
     },
     extend: {
       fontFamily: {
