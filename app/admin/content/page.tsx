@@ -31,7 +31,8 @@ import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { mockMovies, mockSeries } from "@/lib/mock-data"
+// import { mockMovies, mockSeries } from "@/lib/mock-data"
+import { supabase } from "@/lib/supabaseClient"
 import Image from "next/image"
 
 export default function ContentManagementPage() {

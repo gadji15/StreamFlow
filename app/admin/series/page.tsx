@@ -10,8 +10,6 @@ import {
   Search, 
   Eye, 
   Star,
-  Filter,
-  ArrowUpDown,
   MoreHorizontal,
   Calendar
 } from 'lucide-react';
@@ -23,15 +21,23 @@ import { supabase } from '@/lib/supabaseClient';
 type Series = {
   id: string;
   title: string;
-  posterUrl?: string;
-  genres?: string[];
-  rating?: number;
-  views?: number;
-  published?: boolean;
-  isVIP?: boolean;
-  startYear?: number;
-  endYear?: number;
-  seasons?: number;
+  original_title?: string;
+  description?: string;
+  poster?: string;
+  backdrop?: string;
+  startyear?: number;
+  endyear?: number;
+  language?: string;
+  genre?: string;
+  popularity?: number;
+  vote_average?: number;
+  vote_count?: number;
+  isvip?: boolean;
+  tmdb_id?: number;
+  imdb_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  published?: boolean; // Optionnel, à harmoniser si utilisé
 };
 import {
   DropdownMenu,
@@ -98,9 +104,59 @@ export default function AdminSeriesPage() {
     loadSeries();
   }, [searchTerm, statusFilter, toast]);
   
+  // Gestion droits admin/super_admin et user courant
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [adminRoleId, setAdminRoleId] = useState<number | null>(null);
+  const [superAdminRoleId, setSuperAdminRoleId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        const { data: rolesList } = await supabase.from("roles").select("*");
+        const adminRole = rolesList?.find((r: any) => r.name === "admin");
+        const superAdminRole = rolesList?.find((r: any) => r.name === "super_admin");
+        setAdminRoleId(adminRole?.id ?? null);
+        setSuperAdminRoleId(superAdminRole?.id ?? null);
+
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("role_id")
+          .eq("user_id", user.id);
+
+        setCurrentUser({
+          ...profile,
+          user_id: user.id,
+          roles: userRoles?.map(ur => ur.role_id) || [],
+        });
+      }
+    }
+    fetchCurrentUser();
+  }, []);
+
+  const isAdmin = () =>
+    currentUser &&
+    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
+      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+
   // Gérer la suppression d'une série
   const handleDeleteSeries = async () => {
     if (!seriesToDelete) return;
+    if (!isAdmin()) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits nécessaires pour supprimer une série.",
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -108,6 +164,13 @@ export default function AdminSeriesPage() {
       if (error) throw error;
 
       setSeriesList(seriesList.filter(series => series.id !== seriesToDelete.id));
+
+      // Log la suppression en admin_logs
+      await supabase.from('admin_logs').insert([{
+        admin_id: currentUser.user_id,
+        action: 'DELETE_SERIES',
+        details: { series_id: seriesToDelete.id, series_title: seriesToDelete.title },
+      }]);
 
       toast({
         title: 'Série supprimée',

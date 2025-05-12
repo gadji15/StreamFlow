@@ -10,26 +10,12 @@ import {
   Search, 
   Eye, 
   Star,
-  Filter,
-  ArrowUpDown,
   MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
-
-type Movie = {
-  id: string;
-  title: string;
-  year: number;
-  posterUrl?: string;
-  genres?: string[];
-  rating?: number;
-  views?: number;
-  isPublished?: boolean;
-  isVIP?: boolean;
-};
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,8 +31,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+
+type Movie = {
+  id: string;
+  title: string;
+  year: number;
+  posterUrl?: string;
+  genres?: string[];
+  rating?: number;
+  views?: number;
+  published?: boolean;
+  isVIP?: boolean;
+};
 
 export default function AdminFilmsPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -56,9 +53,46 @@ export default function AdminFilmsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
+  // Nouveaux états pour l'utilisateur courant et ses rôles
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [adminRoleId, setAdminRoleId] = useState<number | null>(null);
+  const [superAdminRoleId, setSuperAdminRoleId] = useState<number | null>(null);
+
   const { toast } = useToast();
-  
+
+  // Initialisation utilisateur courant et rôles
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        const { data: rolesList } = await supabase.from("roles").select("*");
+        const adminRole = rolesList?.find((r: any) => r.name === "admin");
+        const superAdminRole = rolesList?.find((r: any) => r.name === "super_admin");
+        setAdminRoleId(adminRole?.id ?? null);
+        setSuperAdminRoleId(superAdminRole?.id ?? null);
+
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("role_id")
+          .eq("user_id", user.id);
+
+        setCurrentUser({
+          ...profile,
+          user_id: user.id,
+          roles: userRoles?.map(ur => ur.role_id) || [],
+        });
+      }
+    }
+    fetchCurrentUser();
+  }, []);
+
   // Charger les films
   useEffect(() => {
     const loadMovies = async () => {
@@ -70,7 +104,6 @@ export default function AdminFilmsPage() {
           query = query.eq('published', true);
         }
         if (searchTerm) {
-          // Supabase ne supporte pas LIKE sur tous les champs, on filtre sur 'title'
           query = query.ilike('title', `%${searchTerm}%`);
         }
         const { data, error } = await query;
@@ -97,10 +130,27 @@ export default function AdminFilmsPage() {
 
     loadMovies();
   }, [searchTerm, statusFilter, toast]);
-  
+
+  // Vérifie si le user est admin ou super_admin
+  const isAdmin = () =>
+    currentUser &&
+    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
+      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+
   // Gérer la suppression d'un film
   const handleDeleteMovie = async () => {
     if (!movieToDelete) return;
+
+    // Sécurité : seul admin/super_admin peut supprimer
+    if (!isAdmin()) {
+      toast({
+        title: 'Accès refusé',
+        description: 'Vous n\'avez pas les droits nécessaires pour supprimer un film.',
+        variant: 'destructive',
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -108,6 +158,13 @@ export default function AdminFilmsPage() {
       if (error) throw error;
 
       setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
+
+      // Log l’action dans admin_logs
+      await supabase.from('admin_logs').insert([{
+        admin_id: currentUser.user_id,
+        action: 'DELETE_FILM',
+        details: { film_id: movieToDelete.id, film_title: movieToDelete.title },
+      }]);
 
       toast({
         title: 'Film supprimé',
@@ -127,26 +184,26 @@ export default function AdminFilmsPage() {
       setIsDeleting(false);
     }
   };
-  
+
   // Ouvrir le dialogue de confirmation de suppression
   const openDeleteDialog = (movie: Movie) => {
     setMovieToDelete(movie);
     setDeleteDialogOpen(true);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Films</h1>
-        
-        <Link href="/admin/films/add">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un film
-          </Button>
-        </Link>
+        {isAdmin() && (
+          <Link href="/admin/films/add">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un film
+            </Button>
+          </Link>
+        )}
       </div>
-      
       <div className="bg-gray-800 rounded-lg p-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -159,7 +216,6 @@ export default function AdminFilmsPage() {
               className="pl-10"
             />
           </div>
-          
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -170,7 +226,6 @@ export default function AdminFilmsPage() {
             <option value="draft">Brouillons</option>
           </select>
         </div>
-        
         {loading ? (
           <div className="py-12 flex justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -187,12 +242,14 @@ export default function AdminFilmsPage() {
                   : "Commencez par ajouter votre premier film"
               }
             </p>
-            <Link href="/admin/films/add">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un film
-              </Button>
-            </Link>
+            {isAdmin() && (
+              <Link href="/admin/films/add">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un film
+                </Button>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -254,11 +311,11 @@ export default function AdminFilmsPage() {
                     </td>
                     <td className="py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        movie.isPublished
+                        movie.published
                           ? 'bg-green-500/20 text-green-500'
                           : 'bg-gray-500/20 text-gray-400'
                       }`}>
-                        {movie.isPublished ? 'Publié' : 'Brouillon'}
+                        {movie.published ? 'Publié' : 'Brouillon'}
                       </span>
                     </td>
                     <td className="py-4 text-center">
@@ -286,20 +343,24 @@ export default function AdminFilmsPage() {
                                 Voir
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/films/${movie.id}/edit`}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-500 focus:text-red-500"
-                              onClick={() => openDeleteDialog(movie)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
+                            {isAdmin() && (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/admin/films/${movie.id}/edit`}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-red-500 focus:text-red-500"
+                                  onClick={() => openDeleteDialog(movie)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -311,7 +372,6 @@ export default function AdminFilmsPage() {
           </div>
         )}
       </div>
-      
       {/* Dialogue de confirmation de suppression */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>

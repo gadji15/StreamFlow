@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,14 @@ import { useEffect } from 'react';
 export default function AdminAddSeriesPage() {
   const router = useRouter();
   const { toast } = useToast();
-  
+
+  // TMDB Search State
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [tmdbError, setTmdbError] = useState<string | null>(null);
+  const tmdbInputRef = useRef<HTMLInputElement>(null);
+
   // États pour le formulaire
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
@@ -47,14 +54,16 @@ export default function AdminAddSeriesPage() {
   const [cast, setCast] = useState<{name: string, role: string}[]>([
     { name: '', role: '' }
   ]);
-  
+
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
-  
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Charger les genres disponibles
   useEffect(() => {
     const loadGenres = async () => {
@@ -69,6 +78,73 @@ export default function AdminAddSeriesPage() {
 
     loadGenres();
   }, []);
+
+  // TMDB: Lancer la recherche
+  const handleTmdbSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tmdbQuery.trim()) return;
+    setTmdbLoading(true);
+    setTmdbError(null);
+    setTmdbResults([]);
+    try {
+      // Utilise l’endpoint /api/tmdb/tv-search pour la recherche de séries
+      const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbQuery)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTmdbResults(data.results || []);
+    } catch (err: any) {
+      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+    } finally {
+      setTmdbLoading(false);
+    }
+  };
+
+  // TMDB: Sélectionner une série et remplir le formulaire
+  const handleSelectTmdbSeries = async (serie: any) => {
+    setTitle(serie.title || serie.name || '');
+    setOriginalTitle(serie.original_title || serie.original_name || '');
+    setDescription(serie.overview || '');
+    setStartYear(serie.first_air_date ? parseInt(serie.first_air_date.split('-')[0]) : new Date().getFullYear());
+    setEndYear(serie.last_air_date ? parseInt(serie.last_air_date.split('-')[0]) : null);
+    setPosterPreview(
+      serie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
+        : null
+    );
+    setBackdropPreview(
+      serie.backdrop_path
+        ? `https://image.tmdb.org/t/p/w780${serie.backdrop_path}`
+        : null
+    );
+    // Genres TMDB → genres du projet
+    if (Array.isArray(serie.genre_ids) && availableGenres.length > 0) {
+      setSelectedGenres([]);
+      try {
+        if (serie.id) {
+          // Appel API TMDB pour plus de détails sur la série
+          const res = await fetch(`https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+          const details = await res.json();
+          // Mappe genres TMDB → genres locaux si même nom
+          if (Array.isArray(details.genres)) {
+            const genreNames = details.genres.map((g: any) => g.name);
+            const localGenreIds = availableGenres
+              .filter(g => genreNames.includes(g.name))
+              .map(g => g.id);
+            setSelectedGenres(localGenreIds);
+          }
+        }
+      } catch {}
+    }
+    setTmdbResults([]);
+    setTmdbQuery('');
+    setTimeout(() => {
+      tmdbInputRef.current?.focus();
+    }, 100);
+    toast({
+      title: "Champs remplis automatiquement",
+      description: "Tous les champs peuvent être édités avant l’enregistrement.",
+    });
+  };
   
   // Gérer les genres
   const handleGenreChange = (genreId: string, checked: boolean) => {
@@ -172,16 +248,18 @@ export default function AdminAddSeriesPage() {
           title,
           original_title: originalTitle || null,
           description,
-          start_year: startYear,
-          end_year: endYear || null,
+          startyear: startYear,
+          endyear: endYear || null,
           creator: creator || null,
-          genres: selectedGenres,
-          cast: cast.filter(member => member.name.trim() !== ''),
+          genre: selectedGenres.map(
+            id => availableGenres.find(g => g.id === id)?.name
+          ).filter(Boolean).join(',') || null,
+          // genre (string, virgule), ou à adapter si table pivot
           trailer_url: trailerUrl || null,
-          is_vip: isVIP,
+          isvip: isVIP,
           published: isPublished,
-          poster_url: posterUrl || null,
-          backdrop_url: backdropUrl || null,
+          poster: posterUrl || null,
+          backdrop: backdropUrl || null,
         }])
         .select()
         .single();
@@ -189,6 +267,18 @@ export default function AdminAddSeriesPage() {
       if (insertError || !insertData) {
         throw insertError || new Error("Impossible d'ajouter la série.");
       }
+
+      // Log admin_logs
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('admin_logs').insert([{
+            admin_id: user.id,
+            action: 'ADD_SERIES',
+            details: { series_id: insertData.id, series_title: title },
+          }]);
+        }
+      } catch {}
 
       toast({
         title: 'Série ajoutée',
@@ -223,6 +313,71 @@ export default function AdminAddSeriesPage() {
         <h1 className="text-3xl font-bold">Ajouter une série</h1>
       </div>
       
+      {/* TMDB Search */}
+      <form className="mb-6" onSubmit={handleTmdbSearch} role="search" aria-label="Recherche TMDB">
+        <div className="flex flex-col sm:flex-row gap-2 items-center">
+          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+          <Input
+            id="tmdb-search"
+            ref={tmdbInputRef}
+            type="text"
+            autoComplete="off"
+            placeholder="Titre de la série (TMDB)"
+            value={tmdbQuery}
+            onChange={e => setTmdbQuery(e.target.value)}
+            className="sm:w-80"
+            aria-label="Titre de la série à rechercher sur TMDB"
+          />
+          <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
+            {tmdbLoading ? "Recherche..." : "Rechercher"}
+          </Button>
+        </div>
+        {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
+        {tmdbResults.length > 0 && (
+          <ul
+            className="mt-4 bg-gray-800 rounded shadow max-h-80 overflow-y-auto ring-1 ring-gray-700"
+            tabIndex={0}
+            aria-label="Résultats TMDB"
+          >
+            {tmdbResults.map((serie, idx) => (
+              <li
+                key={serie.id}
+                tabIndex={0}
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-purple-900/20 focus:bg-purple-900/30 outline-none"
+                onClick={() => handleSelectTmdbSeries(serie)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSelectTmdbSeries(serie);
+                  }
+                }}
+                aria-label={`Sélectionner ${serie.title || serie.name} (${serie.release_date ? serie.release_date.slice(0, 4) : ''})`}
+              >
+                {serie.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w92${serie.poster_path}`}
+                    alt={serie.title || serie.name}
+                    className="h-12 w-8 object-cover rounded"
+                  />
+                ) : (
+                  <div className="h-12 w-8 bg-gray-700 rounded flex items-center justify-center">
+                    <Tv className="h-5 w-5 text-gray-500" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-white">{serie.title || serie.name}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {serie.first_air_date ? `(${serie.first_air_date.slice(0, 4)})` : ''}
+                  </span>
+                </div>
+                {serie.original_name && serie.original_name !== serie.name && (
+                  <span className="ml-2 text-xs text-gray-400 italic">{serie.original_name}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </form>
+
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
@@ -376,11 +531,38 @@ export default function AdminAddSeriesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="poster">Affiche de la série</Label>
+                  <div className="mb-2">
+                    {posterPreview && (
+                      <img
+                        src={posterPreview}
+                        alt="Affiche de la série sélectionnée"
+                        className="rounded shadow h-40 object-cover mb-2"
+                        aria-label="Affiche sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setPosterFile(file)}
+                    onImageSelected={(file) => {
+                      setPosterFile(file);
+                      setPosterPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="2:3"
-                    label="Ajouter une affiche"
+                    label={posterPreview ? "Remplacer l'affiche" : "Ajouter une affiche"}
                   />
+                  {posterPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPosterFile(null);
+                        setPosterPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’affiche
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
                   </p>
@@ -388,11 +570,38 @@ export default function AdminAddSeriesPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="backdrop">Image de fond</Label>
+                  <div className="mb-2">
+                    {backdropPreview && (
+                      <img
+                        src={backdropPreview}
+                        alt="Image de fond sélectionnée"
+                        className="rounded shadow h-32 object-cover mb-2"
+                        aria-label="Image de fond sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setBackdropFile(file)}
+                    onImageSelected={(file) => {
+                      setBackdropFile(file);
+                      setBackdropPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="16:9"
-                    label="Ajouter une image de fond"
+                    label={backdropPreview ? "Remplacer l'image de fond" : "Ajouter une image de fond"}
                   />
+                  {backdropPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBackdropFile(null);
+                        setBackdropPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’image de fond
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
                   </p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,12 +50,19 @@ export default function AdminEditFilmPage() {
   const params = useParams();
   const { toast } = useToast();
   const id = params?.id as string;
-  
+
+  // TMDB Search State
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [tmdbError, setTmdbError] = useState<string | null>(null);
+  const tmdbInputRef = useRef<HTMLInputElement>(null);
+
   // États pour le film
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // États pour le formulaire
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
@@ -69,14 +76,16 @@ export default function AdminEditFilmPage() {
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
   const [cast, setCast] = useState<{name: string, role: string}[]>([]);
-  
+
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
-  
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Charger le film
   useEffect(() => {
     const loadMovie = async () => {
@@ -109,6 +118,8 @@ export default function AdminEditFilmPage() {
         setIsPublished(movieData.published || false);
         setTrailerUrl(movieData.trailer_url || '');
         setCast(movieData.cast || [{ name: '', role: '' }]);
+        setPosterPreview(movieData.poster_url || null);
+        setBackdropPreview(movieData.backdrop_url || null);
       } catch (error) {
         console.error('Erreur lors du chargement du film:', error);
         setError('Impossible de charger les données du film');
@@ -131,6 +142,71 @@ export default function AdminEditFilmPage() {
     loadMovie();
     loadGenres();
   }, [id]);
+
+  // TMDB: Lancer la recherche
+  const handleTmdbSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tmdbQuery.trim()) return;
+    setTmdbLoading(true);
+    setTmdbError(null);
+    setTmdbResults([]);
+    try {
+      const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTmdbResults(data.results || []);
+    } catch (err: any) {
+      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+    } finally {
+      setTmdbLoading(false);
+    }
+  };
+
+  // TMDB: Sélectionner un film et remplir le formulaire
+  const handleSelectTmdbMovie = async (movie: any) => {
+    setTitle(movie.title || '');
+    setOriginalTitle(movie.original_title || '');
+    setDescription(movie.overview || '');
+    setYear(movie.release_date ? parseInt(movie.release_date.split('-')[0]) : new Date().getFullYear());
+    setPosterPreview(
+      movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : null
+    );
+    setBackdropPreview(
+      movie.backdrop_path
+        ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
+        : null
+    );
+    // Genres TMDB → genres du projet
+    if (Array.isArray(movie.genre_ids) && availableGenres.length > 0) {
+      setSelectedGenres([]);
+      try {
+        if (movie.id) {
+          const res = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+          const details = await res.json();
+          if (details.runtime) setDuration(details.runtime);
+          // Mappe genres TMDB → genres locaux si même nom
+          if (Array.isArray(details.genres)) {
+            const genreNames = details.genres.map((g: any) => g.name);
+            const localGenreIds = availableGenres
+              .filter(g => genreNames.includes(g.name))
+              .map(g => g.id);
+            setSelectedGenres(localGenreIds);
+          }
+        }
+      } catch {}
+    }
+    setTmdbResults([]);
+    setTmdbQuery('');
+    setTimeout(() => {
+      tmdbInputRef.current?.focus();
+    }, 100);
+    toast({
+      title: "Champs remplis automatiquement",
+      description: "Tous les champs peuvent être édités avant l’enregistrement.",
+    });
+  };
   
   // Gérer les genres
   const handleGenreChange = (genreId: string, checked: boolean) => {
@@ -297,7 +373,72 @@ export default function AdminEditFilmPage() {
         </Button>
         <h1 className="text-3xl font-bold">Modifier un film</h1>
       </div>
-      
+
+      {/* TMDB Search */}
+      <form className="mb-6" onSubmit={handleTmdbSearch} role="search" aria-label="Recherche TMDB">
+        <div className="flex flex-col sm:flex-row gap-2 items-center">
+          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+          <Input
+            id="tmdb-search"
+            ref={tmdbInputRef}
+            type="text"
+            autoComplete="off"
+            placeholder="Titre du film (TMDB)"
+            value={tmdbQuery}
+            onChange={e => setTmdbQuery(e.target.value)}
+            className="sm:w-80"
+            aria-label="Titre du film à rechercher sur TMDB"
+          />
+          <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
+            {tmdbLoading ? "Recherche..." : "Rechercher"}
+          </Button>
+        </div>
+        {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
+        {tmdbResults.length > 0 && (
+          <ul
+            className="mt-4 bg-gray-800 rounded shadow max-h-80 overflow-y-auto ring-1 ring-gray-700"
+            tabIndex={0}
+            aria-label="Résultats TMDB"
+          >
+            {tmdbResults.map((movie, idx) => (
+              <li
+                key={movie.id}
+                tabIndex={0}
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-purple-900/20 focus:bg-purple-900/30 outline-none"
+                onClick={() => handleSelectTmdbMovie(movie)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSelectTmdbMovie(movie);
+                  }
+                }}
+                aria-label={`Sélectionner ${movie.title} (${movie.release_date ? movie.release_date.slice(0, 4) : ''})`}
+              >
+                {movie.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-12 w-8 object-cover rounded"
+                  />
+                ) : (
+                  <div className="h-12 w-8 bg-gray-700 rounded flex items-center justify-center">
+                    <Film className="h-5 w-5 text-gray-500" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-white">{movie.title}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {movie.release_date ? `(${movie.release_date.slice(0, 4)})` : ''}
+                  </span>
+                </div>
+                {movie.original_title && movie.original_title !== movie.title && (
+                  <span className="ml-2 text-xs text-gray-400 italic">{movie.original_title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </form>
+
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
@@ -446,12 +587,38 @@ export default function AdminEditFilmPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="poster">Affiche du film</Label>
+                  <div className="mb-2">
+                    {posterPreview && (
+                      <img
+                        src={posterPreview}
+                        alt="Affiche du film sélectionnée"
+                        className="rounded shadow h-40 object-cover mb-2"
+                        aria-label="Affiche sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setPosterFile(file)}
-                    previewUrl={movie.posterUrl}
+                    onImageSelected={(file) => {
+                      setPosterFile(file);
+                      setPosterPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="2:3"
-                    label="Modifier l'affiche"
+                    label={posterPreview ? "Remplacer l'affiche" : "Ajouter une affiche"}
                   />
+                  {posterPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPosterFile(null);
+                        setPosterPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’affiche
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
                   </p>
@@ -459,12 +626,38 @@ export default function AdminEditFilmPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="backdrop">Image de fond</Label>
+                  <div className="mb-2">
+                    {backdropPreview && (
+                      <img
+                        src={backdropPreview}
+                        alt="Image de fond sélectionnée"
+                        className="rounded shadow h-32 object-cover mb-2"
+                        aria-label="Image de fond sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setBackdropFile(file)}
-                    previewUrl={movie.backdropUrl}
+                    onImageSelected={(file) => {
+                      setBackdropFile(file);
+                      setBackdropPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="16:9"
-                    label="Modifier l'image de fond"
+                    label={backdropPreview ? "Remplacer l'image de fond" : "Ajouter une image de fond"}
                   />
+                  {backdropPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBackdropFile(null);
+                        setBackdropPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’image de fond
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
                   </p>
