@@ -306,9 +306,126 @@ const handleSelectTmdbSerie = async (serie: any) => {
           
           {/* Tab Informations générales */}
           <TabsContent value="general" className="p-6">
-            {/* ...à compléter à l'étape suivante... */}
             <div className="space-y-6">
-              {/* Champs titre, originalTitle, description, startYear, endYear, creator, duration, genres, VIP, published */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Titre <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="originalTitle">Titre original</Label>
+                  <Input
+                    id="originalTitle"
+                    value={originalTitle}
+                    onChange={(e) => setOriginalTitle(e.target.value)}
+                    placeholder="Titre dans la langue d'origine"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="startYear">Année de début</Label>
+                  <Input
+                    id="startYear"
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear() + 5}
+                    value={startYear}
+                    onChange={(e) => setStartYear(parseInt(e.target.value) || new Date().getFullYear())}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endYear">Année de fin (optionnel)</Label>
+                  <Input
+                    id="endYear"
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear() + 5}
+                    value={endYear || ''}
+                    onChange={(e) => setEndYear(e.target.value ? parseInt(e.target.value) : null)}
+                    placeholder="En cours"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="creator">Créateur(s)</Label>
+                  <Input
+                    id="creator"
+                    value={creator}
+                    onChange={(e) => setCreator(e.target.value)}
+                    placeholder="Nom(s) du créateur"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Genres <span className="text-red-500">*</span></Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {availableGenres.map((genre) => (
+                    <div key={genre.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`genre-${genre.id}`}
+                        checked={selectedGenres.includes(genre.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) setSelectedGenres([...selectedGenres, genre.id]);
+                          else setSelectedGenres(selectedGenres.filter(id => id !== genre.id));
+                        }}
+                      />
+                      <Label
+                        htmlFor={`genre-${genre.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {genre.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Durée moyenne d’un épisode (minutes)</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="1"
+                    value={duration || ''}
+                    onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="flex items-center justify-between space-y-2">
+                  <div>
+                    <Label htmlFor="isVIP">Contenu VIP</Label>
+                    <Switch
+                      id="isVIP"
+                      checked={isVIP}
+                      onCheckedChange={setIsVIP}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="isPublished">Publier maintenant</Label>
+                    <Switch
+                      id="isPublished"
+                      checked={isPublished}
+                      onCheckedChange={setIsPublished}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </TabsContent>
 
