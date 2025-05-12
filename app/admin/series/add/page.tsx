@@ -582,7 +582,107 @@ const handleSelectTmdbSerie = async (serie: any) => {
 
           {/* Tab Détails supplémentaires */}
           <TabsContent value="details" className="p-6">
-            {/* ...à compléter à l'étape suivante (casting enrichi)... */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label>Casting</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCast([
+                        ...cast,
+                        { name: '', role: '', photo: null, file: null, preview: null },
+                      ])
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Ajouter
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {cast.map((member, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <div className="flex-1">
+                        <Input
+                          value={member.name}
+                          onChange={e => {
+                            const updated = [...cast];
+                            updated[index].name = e.target.value;
+                            setCast(updated);
+                          }}
+                          placeholder="Nom de l'acteur"
+                          className="mb-2"
+                        />
+                        <Input
+                          value={member.role}
+                          onChange={e => {
+                            const updated = [...cast];
+                            updated[index].role = e.target.value;
+                            setCast(updated);
+                          }}
+                          placeholder="Rôle (optionnel)"
+                        />
+                        <div className="flex items-center mt-2">
+                          {member.preview || member.photo ? (
+                            <img
+                              src={member.preview || member.photo}
+                              alt={member.name}
+                              className="h-14 w-10 object-cover rounded border mr-3"
+                            />
+                          ) : (
+                            <div className="h-14 w-10 bg-gray-800 rounded border mr-3 flex items-center justify-center">
+                              <Tv className="h-5 w-5 text-gray-500" />
+                            </div>
+                          )}
+                          <ImageUpload
+                            onImageSelected={file => {
+                              if (file) {
+                                const updated = [...cast];
+                                updated[index].file = file;
+                                updated[index].preview = URL.createObjectURL(file);
+                                updated[index].photo = null;
+                                setCast(updated);
+                              }
+                            }}
+                            aspectRatio="2:3"
+                            label={member.preview || member.photo ? "Remplacer la photo" : "Ajouter une photo"}
+                          />
+                          {(member.preview || member.photo) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const updated = [...cast];
+                                updated[index].file = null;
+                                updated[index].preview = null;
+                                updated[index].photo = null;
+                                setCast(updated);
+                              }}
+                              className="ml-2"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setCast(cast.filter((_, i) => i !== index))}
+                        className="mt-2"
+                        aria-label="Supprimer cet acteur"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Tab Catégories d’accueil */}
