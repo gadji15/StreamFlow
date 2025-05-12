@@ -133,6 +133,8 @@ export default function AdminAddFilmPage() {
   };
 
   // TMDB: Sélectionner un film et remplir le formulaire (auto-fill avancé)
+  const [videoUrl, setVideoUrl] = useState('');
+
   const handleSelectTmdbMovie = async (movie: any) => {
     setTitle(movie.title || '');
     setOriginalTitle(movie.original_title || '');
@@ -177,6 +179,11 @@ export default function AdminAddFilmPage() {
             (v: any) => v.type === "Trailer" && v.site === "YouTube"
           );
           setTrailerUrl(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '');
+          // Vidéo principale (type "Clip" ou "Featurette", ou la première non-trailer)
+          const mainVideo = details.videos.results.find(
+            (v: any) => v.type !== "Trailer" && v.site === "YouTube"
+          );
+          setVideoUrl(mainVideo ? `https://www.youtube.com/watch?v=${mainVideo.key}` : '');
         }
         // Casting (nom, rôle, photo)
         if (
@@ -389,6 +396,7 @@ export default function AdminAddFilmPage() {
             id => availableGenres.find(g => g.id === id)?.name
           ).filter(Boolean).join(',') || null,
           trailer_url: trailerUrl || null,
+          video_url: videoUrl || null,
           isvip: isVIP,
           published: isPublished,
           poster: posterUrl || null,
@@ -790,6 +798,19 @@ export default function AdminAddFilmPage() {
                 />
                 <p className="text-xs text-gray-400">
                   URL YouTube de la bande-annonce.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">Vidéo du film (URL)</Label>
+                <Input
+                  id="videoUrl"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://… (YouTube, mp4, etc.)"
+                />
+                <p className="text-xs text-gray-400">
+                  Collez ici l’URL complète de la vidéo principale du film (YouTube, mp4, etc.).<br />
+                  Si vous uploadez un fichier vidéo, stockez-le d’abord dans Supabase Storage ou CDN, puis collez son URL ici.
                 </p>
               </div>
             </div>
