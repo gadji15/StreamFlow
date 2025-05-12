@@ -101,9 +101,89 @@ export default function AdminAddSeriesPage() {
         <h1 className="text-3xl font-bold">Ajouter une série</h1>
       </div>
 
-      {/* TMDB Search (à implémenter étape 2) */}
+      {/* TMDB Search (recherche live + bouton) */}
       <div className="mb-6" role="search" aria-label="Recherche TMDB">
-        {/* Sera complété à l'étape suivante */}
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (tmdbQuery.trim()) {
+              setTmdbLoading(true);
+              setTmdbError(null);
+              try {
+                const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbQuery)}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                setTmdbResults(data.results || []);
+              } catch (err: any) {
+                setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+              } finally {
+                setTmdbLoading(false);
+              }
+            }
+          }}
+        >
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
+            <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+            <Input
+              id="tmdb-search"
+              ref={tmdbInputRef}
+              type="text"
+              autoComplete="off"
+              placeholder="Titre de la série (TMDB)"
+              value={tmdbQuery}
+              onChange={e => setTmdbQuery(e.target.value)}
+              className="sm:w-80"
+              aria-label="Titre de la série à rechercher sur TMDB"
+            />
+            <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
+              {tmdbLoading ? "Recherche..." : "Rechercher"}
+            </Button>
+          </div>
+        </form>
+        {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
+        {(tmdbResults.length > 0 && tmdbQuery.trim()) && (
+          <ul
+            className="mt-4 bg-gray-800 rounded shadow max-h-80 overflow-y-auto ring-1 ring-gray-700"
+            tabIndex={0}
+            aria-label="Résultats TMDB"
+          >
+            {tmdbResults.map((serie, idx) => (
+              <li
+                key={serie.id}
+                tabIndex={0}
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-purple-900/20 focus:bg-purple-900/30 outline-none"
+                onClick={() => {/* Sélection pour auto-fill à l’étape suivante */}}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    // Sélection pour auto-fill à l’étape suivante
+                  }
+                }}
+                aria-label={`Sélectionner ${serie.name} (${serie.first_air_date ? serie.first_air_date.slice(0, 4) : ''})`}
+              >
+                {serie.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w92${serie.poster_path}`}
+                    alt={serie.name}
+                    className="h-12 w-8 object-cover rounded"
+                  />
+                ) : (
+                  <div className="h-12 w-8 bg-gray-700 rounded flex items-center justify-center">
+                    <Tv className="h-5 w-5 text-gray-500" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-white">{serie.name}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {serie.first_air_date ? `(${serie.first_air_date.slice(0, 4)})` : ''}
+                  </span>
+                </div>
+                {serie.original_name && serie.original_name !== serie.name && (
+                  <span className="ml-2 text-xs text-gray-400 italic">{serie.original_name}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Formulaire principal */}
