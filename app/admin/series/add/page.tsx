@@ -31,7 +31,14 @@ import { useEffect } from 'react';
 export default function AdminAddSeriesPage() {
   const router = useRouter();
   const { toast } = useToast();
-  
+
+  // TMDB Search State
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [tmdbError, setTmdbError] = useState<string | null>(null);
+  const tmdbInputRef = useRef<HTMLInputElement>(null);
+
   // États pour le formulaire
   const [title, setTitle] = useState('');
   const [originalTitle, setOriginalTitle] = useState('');
@@ -47,14 +54,16 @@ export default function AdminAddSeriesPage() {
   const [cast, setCast] = useState<{name: string, role: string}[]>([
     { name: '', role: '' }
   ]);
-  
+
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
-  
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Charger les genres disponibles
   useEffect(() => {
     const loadGenres = async () => {
@@ -69,6 +78,73 @@ export default function AdminAddSeriesPage() {
 
     loadGenres();
   }, []);
+
+  // TMDB: Lancer la recherche
+  const handleTmdbSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tmdbQuery.trim()) return;
+    setTmdbLoading(true);
+    setTmdbError(null);
+    setTmdbResults([]);
+    try {
+      // Utilise l’endpoint /api/tmdb/movie-search pour la recherche de séries (à dupliquer si besoin)
+      const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTmdbResults(data.results || []);
+    } catch (err: any) {
+      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+    } finally {
+      setTmdbLoading(false);
+    }
+  };
+
+  // TMDB: Sélectionner une série et remplir le formulaire
+  const handleSelectTmdbSeries = async (serie: any) => {
+    setTitle(serie.title || serie.name || '');
+    setOriginalTitle(serie.original_title || serie.original_name || '');
+    setDescription(serie.overview || '');
+    setStartYear(serie.first_air_date ? parseInt(serie.first_air_date.split('-')[0]) : new Date().getFullYear());
+    setEndYear(serie.last_air_date ? parseInt(serie.last_air_date.split('-')[0]) : null);
+    setPosterPreview(
+      serie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
+        : null
+    );
+    setBackdropPreview(
+      serie.backdrop_path
+        ? `https://image.tmdb.org/t/p/w780${serie.backdrop_path}`
+        : null
+    );
+    // Genres TMDB → genres du projet
+    if (Array.isArray(serie.genre_ids) && availableGenres.length > 0) {
+      setSelectedGenres([]);
+      try {
+        if (serie.id) {
+          // Appel API TMDB pour plus de détails sur la série
+          const res = await fetch(`https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+          const details = await res.json();
+          // Mappe genres TMDB → genres locaux si même nom
+          if (Array.isArray(details.genres)) {
+            const genreNames = details.genres.map((g: any) => g.name);
+            const localGenreIds = availableGenres
+              .filter(g => genreNames.includes(g.name))
+              .map(g => g.id);
+            setSelectedGenres(localGenreIds);
+          }
+        }
+      } catch {}
+    }
+    setTmdbResults([]);
+    setTmdbQuery('');
+    setTimeout(() => {
+      tmdbInputRef.current?.focus();
+    }, 100);
+    toast({
+      title: "Champs remplis automatiquement",
+      description: "Tous les champs peuvent être édités avant l’enregistrement.",
+    });
+  };
   
   // Gérer les genres
   const handleGenreChange = (genreId: string, checked: boolean) => {
