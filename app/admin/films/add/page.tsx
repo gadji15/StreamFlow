@@ -246,7 +246,7 @@ export default function AdminAddFilmPage() {
   // Soumettre le formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation de base
     if (!title) {
       toast({
@@ -256,7 +256,7 @@ export default function AdminAddFilmPage() {
       });
       return;
     }
-    
+
     if (selectedGenres.length === 0) {
       toast({
         title: 'Erreur',
@@ -265,33 +265,36 @@ export default function AdminAddFilmPage() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Préparer les données du casting (ignorer les membres vides)
-      const formattedCast = cast
-        .filter(member => member.name.trim() !== '')
-        .map(member => ({
-          name: member.name,
-          role: member.role
-        }));
-      
-      // Préparer les données du film
-      const movieData = {
-        title,
-        originalTitle: originalTitle || undefined,
-        description,
-        year,
-        duration,
-        director: director || undefined,
-        genres: selectedGenres,
-        cast: formattedCast.length > 0 ? formattedCast : undefined,
-        trailerUrl: trailerUrl || undefined,
-        isVIP,
-        isPublished
-      };
-      
+      // Upload des photos du casting si besoin
+      const formattedCast = await Promise.all(
+        cast
+          .filter(member => member.name.trim() !== '')
+          .map(async (member, idx) => {
+            let photoUrl = member.photo || null;
+            if (member.file) {
+              const { data, error } = await supabase.storage
+                .from('actor-photos')
+                .upload(
+                  `actors/${Date.now()}_${idx}_${member.file.name}`,
+                  member.file,
+                  { cacheControl: '3600', upsert: false }
+                );
+              if (error) throw error;
+              const { data: urlData } = supabase.storage.from('actor-photos').getPublicUrl(data.path);
+              photoUrl = urlData?.publicUrl || null;
+            }
+            return {
+              name: member.name,
+              role: member.role,
+              photo: photoUrl,
+            };
+          })
+      );
+
       // Upload des images si présentes
       let posterUrl = '';
       let backdropUrl = '';
@@ -303,6 +306,8 @@ export default function AdminAddFilmPage() {
         if (error) throw error;
         const { data: urlData } = supabase.storage.from('film-posters').getPublicUrl(data.path);
         posterUrl = urlData?.publicUrl || '';
+      } else if (posterPreview) {
+        posterUrl = posterPreview;
       }
 
       if (backdropFile) {
@@ -312,6 +317,8 @@ export default function AdminAddFilmPage() {
         if (error) throw error;
         const { data: urlData } = supabase.storage.from('film-backdrops').getPublicUrl(data.path);
         backdropUrl = urlData?.publicUrl || '';
+      } else if (backdropPreview) {
+        backdropUrl = backdropPreview;
       }
 
       // Insertion du film dans la table 'films'
@@ -327,12 +334,13 @@ export default function AdminAddFilmPage() {
           genre: selectedGenres.map(
             id => availableGenres.find(g => g.id === id)?.name
           ).filter(Boolean).join(',') || null,
-          // genre (string, virgule), ou à adapter si pivot table
           trailer_url: trailerUrl || null,
           isvip: isVIP,
           published: isPublished,
           poster: posterUrl || null,
           backdrop: backdropUrl || null,
+          cast: formattedCast,
+          homepage_categories: selectedCategories, // à adapter selon la colonne/table pivot de ta base
         }])
         .select()
         .single();
