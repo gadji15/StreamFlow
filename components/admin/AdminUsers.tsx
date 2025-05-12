@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import LoadingSpinner from "../../ui/LoadingSpinner";
-import ErrorBanner from "../../ui/ErrorBanner";
+import LoadingSpinner from "../ui/LoadingSpinner";
+import ErrorBanner from "../ui/ErrorBanner";
 
 type User = {
   id: string;
