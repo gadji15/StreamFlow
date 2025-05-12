@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { Film, Search, Plus } from "lucide-react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
+
 import AdminHeader from "@/components/admin/admin-header"
 
 export default function MoviesPage() {
