@@ -7,14 +7,15 @@ import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 import { usePathname } from 'next/navigation';
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname ?? "";
 
-  // Ne protège pas et n'applique pas le layout aux pages d'accès refusé
+  // Cas spécial : pas de layout/admin sur la page d'accès refusé
   if (pathname === '/admin/access-denied') {
     return <>{children}</>;
   }
 
-  // Titre dynamique selon la page (simple heuristique)
+  // Détermination dynamique du titre pour le header admin
   let pageTitle = "StreamFlow Admin";
   if (pathname.startsWith("/admin/films")) pageTitle = "Gestion des films";
   else if (pathname.startsWith("/admin/series")) pageTitle = "Gestion des séries";
