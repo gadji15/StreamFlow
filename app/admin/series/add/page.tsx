@@ -687,7 +687,33 @@ const handleSelectTmdbSerie = async (serie: any) => {
 
           {/* Tab Catégories d’accueil */}
           <TabsContent value="categories" className="p-6">
-            {/* ...à compléter à l'étape suivante... */}
+            <div className="space-y-4">
+              <Label>Catégories d’accueil <span className="text-red-500">*</span></Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                {HOMEPAGE_CATEGORIES.map((category) => (
+                  <div key={category.key} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category.key}`}
+                      checked={selectedCategories.includes(category.key)}
+                      onCheckedChange={(checked) =>
+                        setSelectedCategories(checked
+                          ? [...selectedCategories, category.key]
+                          : selectedCategories.filter(k => k !== category.key)
+                        )
+                      }
+                      aria-checked={selectedCategories.includes(category.key)}
+                      aria-label={category.label}
+                    />
+                    <Label htmlFor={`category-${category.key}`} className="text-sm cursor-pointer">
+                      {category.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400">
+                Cochez au moins une catégorie où cette série apparaîtra sur la page d’accueil.
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
       </form>
