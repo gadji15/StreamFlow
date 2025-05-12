@@ -26,12 +26,24 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   else if (pathname.startsWith("/admin/settings")) pageTitle = "Paramètres";
   else if (pathname === "/admin") pageTitle = "Tableau de bord";
 
+  const SIDEBAR_WIDTH = 256; // 64 * 4 (taille w-64 en px)
+
   const content = (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 flex flex-col">
       <AdminHeader title={pageTitle} />
-      <div className="flex">
-        <AdminSidebar />
-        <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar fixe à gauche */}
+        <aside
+          className="hidden md:block fixed z-40 left-0 top-0 h-screen w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto"
+          style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH, maxWidth: SIDEBAR_WIDTH }}
+        >
+          <AdminSidebar />
+        </aside>
+        {/* Main content décalé */}
+        <main
+          className="flex-1 min-h-0 ml-0 md:ml-64 p-6 pt-24"
+          style={{ marginLeft: SIDEBAR_WIDTH }}
+        >
           {children}
         </main>
       </div>
