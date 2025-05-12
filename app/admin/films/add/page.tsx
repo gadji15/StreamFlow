@@ -109,7 +109,7 @@ export default function AdminAddFilmPage() {
     }
   };
 
-  // TMDB: Sélectionner un film et remplir le formulaire
+  // TMDB: Sélectionner un film et remplir le formulaire (auto-fill avancé)
   const handleSelectTmdbMovie = async (movie: any) => {
     setTitle(movie.title || '');
     setOriginalTitle(movie.original_title || '');
@@ -125,31 +125,74 @@ export default function AdminAddFilmPage() {
         ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
         : null
     );
-    // Genres TMDB → genres du projet
-    if (Array.isArray(movie.genre_ids) && availableGenres.length > 0) {
-      // Suppose que tu as un mapping genre TMDB ID → nom de genre local (ajuste si besoin)
-      // Ici, on ignore le mapping ID genre TMDB → genre local, mais tu peux ajouter une table de correspondance si besoin.
-      setSelectedGenres([]);
-      // Optionnel: fetch movie details pour plus d'info TMDB (genre, durée, etc.)
+
+    // Détail TMDB avancé
+    if (movie.id) {
       try {
-        if (movie.id) {
-          const res = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
-          const details = await res.json();
-          if (details.runtime) setDuration(details.runtime);
-          // Mappe genres TMDB → genres locaux si même nom
-          if (Array.isArray(details.genres)) {
-            const genreNames = details.genres.map((g: any) => g.name);
-            const localGenreIds = availableGenres
-              .filter(g => genreNames.includes(g.name))
-              .map(g => g.id);
-            setSelectedGenres(localGenreIds);
-          }
+        const res = await fetch(
+          `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR&append_to_response=credits,videos`
+        );
+        const details = await res.json();
+        // Durée
+        if (details.runtime) setDuration(details.runtime);
+        // Réalisateur
+        if (details.credits && Array.isArray(details.credits.crew)) {
+          const director = details.credits.crew.find((c: any) => c.job === "Director");
+          setDirector(director?.name || '');
         }
-      } catch {}
+        // Genres
+        if (Array.isArray(details.genres)) {
+          const genreNames = details.genres.map((g: any) => g.name);
+          const localGenreIds = availableGenres
+            .filter(g => genreNames.includes(g.name))
+            .map(g => g.id);
+          setSelectedGenres(localGenreIds);
+        }
+        // Bande-annonce (YouTube)
+        if (details.videos && Array.isArray(details.videos.results)) {
+          const trailer = details.videos.results.find(
+            (v: any) => v.type === "Trailer" && v.site === "YouTube"
+          );
+          setTrailerUrl(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '');
+        }
+        // Casting (nom, rôle, photo)
+        if (
+          details.credits &&
+          Array.isArray(details.credits.cast) &&
+          details.credits.cast.length > 0
+        ) {
+          const castArr = details.credits.cast.slice(0, 10).map((actor: any) => ({
+            name: actor.name,
+            role: actor.character || '',
+            photo: actor.profile_path
+              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+              : null,
+            file: null, // fichier image si uploadé manuellement
+            preview: actor.profile_path
+              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+              : null,
+          }));
+          setCast(castArr);
+        }
+        // Catégories accueil auto (modifiables)
+        const autoCategories: string[] = [];
+        // "Nouveautés" si année récente
+        const currentYear = new Date().getFullYear();
+        if (movie.release_date && parseInt(movie.release_date.slice(0, 4)) >= currentYear - 1) autoCategories.push("new");
+        // "Top" si populaire (>1000 votes ou popularité > 100)
+        if ((movie.vote_count && movie.vote_count > 1000) || (movie.popularity && movie.popularity > 100)) autoCategories.push("top");
+        // "VIP" si flag TMDB ou genre spécifique (à adapter selon ta logique)
+        if (details.adult) autoCategories.push("vip");
+        // "À la une" si poster et backdrop présents
+        if (movie.poster_path && movie.backdrop_path) autoCategories.push("featured");
+        setSelectedCategories(autoCategories);
+      } catch (err) {
+        // fallback : pas de détail
+      }
     }
+
     setTmdbResults([]);
     setTmdbQuery('');
-    // Focus sur le champ titre pour continuer l'édition
     setTimeout(() => {
       tmdbInputRef.current?.focus();
     }, 100);
@@ -168,18 +211,35 @@ export default function AdminAddFilmPage() {
     }
   };
   
-  // Gérer le casting
+  // Gérer le casting avec photo
   const addCastMember = () => {
-    setCast([...cast, { name: '', role: '' }]);
+    setCast([...cast, { name: '', role: '', photo: null, file: null, preview: null }]);
   };
-  
+
   const removeCastMember = (index: number) => {
     setCast(cast.filter((_, i) => i !== index));
   };
-  
+
   const updateCastMember = (index: number, field: 'name' | 'role', value: string) => {
     const updatedCast = [...cast];
     updatedCast[index][field] = value;
+    setCast(updatedCast);
+  };
+
+  const updateCastPhoto = (index: number, file: File | null, preview: string | null) => {
+    const updatedCast = [...cast];
+    updatedCast[index].file = file;
+    updatedCast[index].preview = preview;
+    // On efface l'URL TMDB si upload local
+    if (file) updatedCast[index].photo = null;
+    setCast(updatedCast);
+  };
+
+  const removeCastPhoto = (index: number) => {
+    const updatedCast = [...cast];
+    updatedCast[index].file = null;
+    updatedCast[index].preview = null;
+    updatedCast[index].photo = null;
     setCast(updatedCast);
   };
   
@@ -679,7 +739,6 @@ export default function AdminAddFilmPage() {
                     Ajouter
                   </Button>
                 </div>
-                
                 <div className="space-y-3">
                   {cast.map((member, index) => (
                     <div key={index} className="flex items-start space-x-2">
@@ -695,6 +754,39 @@ export default function AdminAddFilmPage() {
                           onChange={(e) => updateCastMember(index, 'role', e.target.value)}
                           placeholder="Rôle (optionnel)"
                         />
+                        <div className="flex items-center mt-2">
+                          {member.preview || member.photo ? (
+                            <img
+                              src={member.preview || member.photo}
+                              alt={member.name}
+                              className="h-14 w-10 object-cover rounded border mr-3"
+                            />
+                          ) : (
+                            <div className="h-14 w-10 bg-gray-800 rounded border mr-3 flex items-center justify-center">
+                              <Film className="h-5 w-5 text-gray-500" />
+                            </div>
+                          )}
+                          <ImageUpload
+                            onImageSelected={(file) => {
+                              if (file) {
+                                updateCastPhoto(index, file, URL.createObjectURL(file));
+                              }
+                            }}
+                            aspectRatio="2:3"
+                            label={member.preview || member.photo ? "Remplacer la photo" : "Ajouter une photo"}
+                          />
+                          {(member.preview || member.photo) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeCastPhoto(index)}
+                              className="ml-2"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <Button
                         type="button"
@@ -702,6 +794,7 @@ export default function AdminAddFilmPage() {
                         size="icon"
                         onClick={() => removeCastMember(index)}
                         className="mt-2"
+                        aria-label="Supprimer cet acteur"
                       >
                         <X className="h-4 w-4" />
                       </Button>
