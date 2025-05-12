@@ -194,6 +194,69 @@ export default function AdminFilmsPage() {
     setDeleteDialogOpen(true);
   };
 
+    loadMovies();
+  }, [searchTerm, statusFilter, toast]);
+
+  // Vérifie si le user est admin ou super_admin
+  const isAdmin = () =>
+    currentUser &&
+    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
+      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+
+  // Gérer la suppression d'un film
+  const handleDeleteMovie = async () => {
+    if (!movieToDelete) return;
+
+    // Sécurité : seul admin/super_admin peut supprimer
+    if (!isAdmin()) {
+      toast({
+        title: 'Accès refusé',
+        description: 'Vous n\'avez pas les droits nécessaires pour supprimer un film.',
+        variant: 'destructive',
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from('films').delete().eq('id', movieToDelete.id);
+      if (error) throw error;
+
+      setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
+
+      // Log l’action dans admin_logs
+      await supabase.from('admin_logs').insert([{
+        admin_id: currentUser.user_id,
+        action: 'DELETE_FILM',
+        details: { film_id: movieToDelete.id, film_title: movieToDelete.title },
+      }]);
+
+      toast({
+        title: 'Film supprimé',
+        description: `Le film "${movieToDelete.title}" a été supprimé avec succès.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setMovieToDelete(null);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du film:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le film.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Ouvrir le dialogue de confirmation de suppression
+  const openDeleteDialog = (movie: Movie) => {
+    setMovieToDelete(movie);
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
