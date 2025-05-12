@@ -86,7 +86,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-bg text-text`}>
         <AuthProvider>
           <ErrorBoundary>
             <GlobalErrorLogger />
