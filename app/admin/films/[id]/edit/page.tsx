@@ -373,7 +373,72 @@ export default function AdminEditFilmPage() {
         </Button>
         <h1 className="text-3xl font-bold">Modifier un film</h1>
       </div>
-      
+
+      {/* TMDB Search */}
+      <form className="mb-6" onSubmit={handleTmdbSearch} role="search" aria-label="Recherche TMDB">
+        <div className="flex flex-col sm:flex-row gap-2 items-center">
+          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+          <Input
+            id="tmdb-search"
+            ref={tmdbInputRef}
+            type="text"
+            autoComplete="off"
+            placeholder="Titre du film (TMDB)"
+            value={tmdbQuery}
+            onChange={e => setTmdbQuery(e.target.value)}
+            className="sm:w-80"
+            aria-label="Titre du film à rechercher sur TMDB"
+          />
+          <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
+            {tmdbLoading ? "Recherche..." : "Rechercher"}
+          </Button>
+        </div>
+        {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
+        {tmdbResults.length > 0 && (
+          <ul
+            className="mt-4 bg-gray-800 rounded shadow max-h-80 overflow-y-auto ring-1 ring-gray-700"
+            tabIndex={0}
+            aria-label="Résultats TMDB"
+          >
+            {tmdbResults.map((movie, idx) => (
+              <li
+                key={movie.id}
+                tabIndex={0}
+                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-purple-900/20 focus:bg-purple-900/30 outline-none"
+                onClick={() => handleSelectTmdbMovie(movie)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSelectTmdbMovie(movie);
+                  }
+                }}
+                aria-label={`Sélectionner ${movie.title} (${movie.release_date ? movie.release_date.slice(0, 4) : ''})`}
+              >
+                {movie.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+                    alt={movie.title}
+                    className="h-12 w-8 object-cover rounded"
+                  />
+                ) : (
+                  <div className="h-12 w-8 bg-gray-700 rounded flex items-center justify-center">
+                    <Film className="h-5 w-5 text-gray-500" />
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-white">{movie.title}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {movie.release_date ? `(${movie.release_date.slice(0, 4)})` : ''}
+                  </span>
+                </div>
+                {movie.original_title && movie.original_title !== movie.title && (
+                  <span className="ml-2 text-xs text-gray-400 italic">{movie.original_title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </form>
+
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
