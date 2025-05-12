@@ -1,198 +1,179 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Film,
-  Tv,
-  Users,
-  Settings,
-  Activity,
-  ChevronDown,
-  PlusSquare,
-  ListChecks,
-  ExternalLink,
-  HelpCircle,
-  Bell,
-  Tv2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { SidebarItem } from "./SidebarItem";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ErrorBanner from "@/components/ui/ErrorBanner";
+import { cn } from "@/lib/utils";
 
-interface NavItemProps {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  isActive: boolean;
-  hasDropdown?: boolean;
-  isOpen?: boolean;
-  onClick?: () => void;
-}
+// Hook to get userId from Supabase Auth
+import useSupabaseUser from "@/hooks/useSupabaseUser";
 
-function NavItem({ href, icon, title, isActive, hasDropdown, isOpen, onClick }: NavItemProps) {
-  return (
-    <Link 
-      href={href}
-      onClick={onClick}
-      className={cn(
-        "flex items-center py-2 px-3 rounded-md mb-1 transition-colors",
-        isActive 
-          ? "bg-primary/10 text-primary" 
-          : "text-gray-400 hover:text-white hover:bg-gray-800"
-      )}
-    >
-      {icon}
-      <span className="ml-3 flex-1">{title}</span>
-      {hasDropdown && (
-        <ChevronDown className={cn(
-          "h-4 w-4 transition-transform",
-          isOpen ? "transform rotate-180" : ""
-        )} />
-      )}
-    </Link>
-  );
-}
+
+type SidebarItemData = {
+  id: string;
+  label: string;
+  icon: string;
+  route: string;
+  permissions?: string[];
+  children?: SidebarItemData[];
+};
 
 export default function AdminSidebar() {
+  const user = useSupabaseUser();
+  const userId = user?.id ?? null;
   const pathname = usePathname();
-  const [filmsOpen, setFilmsOpen] = useState(pathname?.startsWith('/admin/films'));
-  const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
-  
-  return (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block">
+  const [sidebarItems, setSidebarItems] = useState<SidebarItemData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+  // Drawer state (mobile < 640px)
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoading(true);
+    setError(null);
+
+    fetch(`/api/admin/sidebar?userId=${userId}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Erreur lors du chargement de la sidebar.");
+        const data = await res.json();
+        setSidebarItems(data);
+      })
+      .catch((err) => setError(err.message || "Erreur inconnue."))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  // Responsive: close drawer on navigation
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [pathname]);
+
+  // Responsive classes
+  // w-16: compact (sm), w-64: expanded (lg+)
+  const sidebarBaseClass =
+    "bg-bg border-r border-border flex-shrink-0 h-screen sticky top-0 overflow-y-auto transition-all duration-200 z-40";
+
+  // Hamburger button (mobile)
+  const Hamburger = (
+    <button
+      className="md:hidden absolute top-4 left-4 z-50 p-2 rounded bg-bg border border-border"
+      onClick={() => setDrawerOpen((open) => !open)}
+      aria-label="Ouvrir le menu"
+    >
+      <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  );
+
+  // Overlay (mobile)
+  const Overlay = (
+    <div
+      className={cn(
+        "fixed inset-0 bg-black bg-opacity-40 z-30 transition-opacity",
+        drawerOpen ? "block" : "hidden"
+      )}
+      onClick={() => setDrawerOpen(false)}
+    />
+  );
+
+  // Sidebar content
+  const SidebarContent = (
+    <div
+      className={cn(
+        sidebarBaseClass,
+        "w-64 hidden md:block",
+        "md:w-16 lg:w-64",
+        "md:flex flex-col"
+      )}
+    >
       <div className="p-6">
         <Link href="/admin" className="flex items-center">
-          <h1 className="text-xl font-bold">StreamFlow Admin</h1>
+          <h1 className="text-xl font-bold font-sans text-primary">
+            StreamFlow Admin
+          </h1>
         </Link>
       </div>
-      
-      <nav className="px-3 py-2">
-        <div className="mb-6">
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">General</p>
-          
-          <NavItem
-            href="/admin"
-            icon={<LayoutDashboard className="h-5 w-5" />}
-            title="Tableau de bord"
-            isActive={pathname === '/admin'}
-          />
-          
-          <NavItem
-            href="/admin/activity-logs"
-            icon={<Activity className="h-5 w-5" />}
-            title="Journaux d'activité"
-            isActive={pathname === '/admin/activity-logs'}
-          />
-          
-          <NavItem
-            href="/admin/users"
-            icon={<Users className="h-5 w-5" />}
-            title="Utilisateurs"
-            isActive={pathname === '/admin/users'}
-          />
+      <nav className="px-3 py-2 flex-1 flex flex-col">
+        {loading && <LoadingSpinner className="mt-4" />}
+        {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}
+        <ul>
+          {sidebarItems?.map((item) => (
+            <SidebarItem {...item} key={item.id} />
+          ))}
+        </ul>
+      </nav>
+      <div className="mt-auto px-3 pb-4">
+        <Link
+          href="/"
+          className="flex items-center text-sm text-text-muted hover:text-primary"
+        >
+          <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" strokeWidth="2" d="M18 13v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6m16-2V7a2 2 0 0 0-2-2h-4l-2-2-2 2H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z" />
+          </svg>
+          <span className="hidden lg:inline">Voir le site</span>
+        </Link>
+      </div>
+    </div>
+  );
+
+  // Drawer sidebar (mobile)
+  const DrawerSidebar = (
+    <>
+      {Overlay}
+      <aside
+        className={cn(
+          sidebarBaseClass,
+          "fixed left-0 top-0 w-64 h-screen md:hidden transition-transform",
+          drawerOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        aria-label="Sidebar mobile"
+      >
+        <div className="p-6">
+          <Link href="/admin" className="flex items-center">
+            <h1 className="text-xl font-bold font-sans" style={{ color: "var(--primary, #4299e1)" }}>
+              StreamFlow Admin
+            </h1>
+          </Link>
         </div>
-        
-        <div className="mb-6">
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Contenu</p>
-          
-          <NavItem
-            href="#"
-            icon={<Film className="h-5 w-5" />}
-            title="Films"
-            isActive={pathname?.startsWith('/admin/films')}
-            hasDropdown={true}
-            isOpen={filmsOpen}
-            onClick={() => setFilmsOpen(!filmsOpen)}
-          />
-          
-          {filmsOpen && (
-            <div className="ml-4 pl-2 border-l border-gray-800">
-              <NavItem
-                href="/admin/films"
-                icon={<ListChecks className="h-4 w-4" />}
-                title="Liste des films"
-                isActive={pathname === '/admin/films'}
-              />
-              <NavItem
-                href="/admin/films/add"
-                icon={<PlusSquare className="h-4 w-4" />}
-                title="Ajouter un film"
-                isActive={pathname === '/admin/films/add'}
-              />
-            </div>
-          )}
-          
-          <NavItem
-            href="#"
-            icon={<Tv className="h-5 w-5" />}
-            title="Séries"
-            isActive={pathname?.startsWith('/admin/series')}
-            hasDropdown={true}
-            isOpen={seriesOpen}
-            onClick={() => setSeriesOpen(!seriesOpen)}
-          />
-          
-          {seriesOpen && (
-            <div className="ml-4 pl-2 border-l border-gray-800">
-              <NavItem
-                href="/admin/series"
-                icon={<ListChecks className="h-4 w-4" />}
-                title="Liste des séries"
-                isActive={pathname === '/admin/series'}
-              />
-              <NavItem
-                href="/admin/series/add"
-                icon={<PlusSquare className="h-4 w-4" />}
-                title="Ajouter une série"
-                isActive={pathname === '/admin/series/add'}
-              />
-            </div>
-          )}
-          
-          <NavItem
-            href="/admin/episodes"
-            icon={<Tv2 className="h-5 w-5" />}
-            title="Épisodes"
-            isActive={pathname === '/admin/episodes'}
-          />
-        </div>
-        
-        <div className="mb-6">
-          <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Système</p>
-          
-          <NavItem
-            href="/admin/settings"
-            icon={<Settings className="h-5 w-5" />}
-            title="Paramètres"
-            isActive={pathname === '/admin/settings'}
-          />
-          
-          <NavItem
-            href="/admin/notifications"
-            icon={<Bell className="h-5 w-5" />}
-            title="Notifications"
-            isActive={pathname === '/admin/notifications'}
-          />
-          
-          <NavItem
-            href="/admin/help"
-            icon={<HelpCircle className="h-5 w-5" />}
-            title="Aide & Support"
-            isActive={pathname === '/admin/help'}
-          />
-        </div>
-        
-        <div className="mt-8 px-3">
-          <Link 
+        <nav className="px-3 py-2 flex-1 flex flex-col">
+          {loading && <LoadingSpinner className="mt-4" />}
+          {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}
+          <ul>
+            {sidebarItems?.map((item) => (
+              <SidebarItem {...item} key={item.id} />
+            ))}
+          </ul>
+        </nav>
+        <div className="mt-auto px-3 pb-4">
+          <Link
             href="/"
             className="flex items-center text-sm text-gray-400 hover:text-white"
           >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Voir le site
+            <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <path stroke="currentColor" strokeWidth="2" d="M18 13v6a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-6m16-2V7a2 2 0 0 0-2-2h-4l-2-2-2 2H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z" />
+            </svg>
+            <span className="hidden lg:inline">Voir le site</span>
           </Link>
         </div>
-      </nav>
-    </div>
+      </aside>
+    </>
+  );
+
+  return (
+    <>
+      {Hamburger}
+      {/* Drawer for mobile */}
+      {DrawerSidebar}
+      {/* Sidebar for md+ (hidden on mobile) */}
+      <div className="hidden md:block">
+        {SidebarContent}
+      </div>
+    </>
   );
 }
