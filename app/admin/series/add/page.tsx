@@ -87,8 +87,8 @@ export default function AdminAddSeriesPage() {
     setTmdbError(null);
     setTmdbResults([]);
     try {
-      // Utilise l’endpoint /api/tmdb/movie-search pour la recherche de séries (à dupliquer si besoin)
-      const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
+      // Utilise l’endpoint /api/tmdb/tv-search pour la recherche de séries
+      const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbQuery)}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setTmdbResults(data.results || []);
