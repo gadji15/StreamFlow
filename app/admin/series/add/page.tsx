@@ -172,16 +172,18 @@ export default function AdminAddSeriesPage() {
           title,
           original_title: originalTitle || null,
           description,
-          start_year: startYear,
-          end_year: endYear || null,
+          startyear: startYear,
+          endyear: endYear || null,
           creator: creator || null,
-          genres: selectedGenres,
-          cast: cast.filter(member => member.name.trim() !== ''),
+          genre: selectedGenres.map(
+            id => availableGenres.find(g => g.id === id)?.name
+          ).filter(Boolean).join(',') || null,
+          // genre (string, virgule), ou à adapter si table pivot
           trailer_url: trailerUrl || null,
-          is_vip: isVIP,
+          isvip: isVIP,
           published: isPublished,
-          poster_url: posterUrl || null,
-          backdrop_url: backdropUrl || null,
+          poster: posterUrl || null,
+          backdrop: backdropUrl || null,
         }])
         .select()
         .single();
@@ -189,6 +191,18 @@ export default function AdminAddSeriesPage() {
       if (insertError || !insertData) {
         throw insertError || new Error("Impossible d'ajouter la série.");
       }
+
+      // Log admin_logs
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('admin_logs').insert([{
+            admin_id: user.id,
+            action: 'ADD_SERIES',
+            details: { series_id: insertData.id, series_title: title },
+          }]);
+        }
+      } catch {}
 
       toast({
         title: 'Série ajoutée',
