@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,15 +20,16 @@ export default function AdminAddEpisodePage() {
   
   const { toast } = useToast();
   
-  // États pour la série
+  // États pour la série et ses saisons
   const [seriesTitle, setSeriesTitle] = useState('');
   const [seasons, setSeasons] = useState<number>(0);
-  const [latestEpisodeNumbers, setLatestEpisodeNumbers] = useState<Record<number, number>>({});
+  const [seasonList, setSeasonList] = useState<{ id: string, number: number, title?: string | null }[]>([]);
+  const [latestEpisodeNumbers, setLatestEpisodeNumbers] = useState<Record<string, number>>({});
   
   // États pour le formulaire
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [season, setSeason] = useState<number>(1);
+  const [seasonId, setSeasonId] = useState<string>(''); // UUID de la saison sélectionnée
   const [episodeNumber, setEpisodeNumber] = useState<number>(1);
   const [duration, setDuration] = useState<number>(45);
   const [videoUrl, setVideoUrl] = useState('');
@@ -44,74 +46,81 @@ export default function AdminAddEpisodePage() {
   
   // Charger les informations de la série
   useEffect(() => {
-    const loadSeriesInfo = async () => {
+    const loadSeriesAndSeasons = async () => {
       if (!seriesId) return;
-      
+
       setLoading(true);
       try {
-        // Charger la série
+        // Charger la série (titre)
         const { data: seriesData, error: seriesError } = await supabase
           .from('series')
-          .select('title, seasons')
+          .select('title')
           .eq('id', seriesId)
           .single();
-
         if (seriesError || !seriesData) {
           setError('Série non trouvée');
           return;
         }
-
         setSeriesTitle(seriesData.title);
 
-        // Nombre de saisons
-        const currentSeasons = seriesData.seasons || 0;
-        setSeasons(currentSeasons);
-        setSeason(currentSeasons > 0 ? currentSeasons : 1);
+        // Charger les saisons de la série
+        const { data: seasonsData, error: seasonsError } = await supabase
+          .from('seasons')
+          .select('id, number, title')
+          .eq('series_id', seriesId)
+          .order('number', { ascending: true });
+        if (seasonsError || !seasonsData || seasonsData.length === 0) {
+          setError('Aucune saison trouvée pour cette série.');
+          setSeasonList([]);
+          return;
+        }
+        setSeasonList(seasonsData);
 
-        // Charger les épisodes pour déterminer le prochain numéro d'épisode
+        // Par défaut, sélectionner la dernière saison (ou la première)
+        const defaultSeason = seasonsData[seasonsData.length - 1]?.id || seasonsData[0].id;
+        setSeasonId(defaultSeason);
+
+        // Charger les épisodes pour déterminer le prochain numéro d'épisode par saison
         const { data: episodes } = await supabase
           .from('episodes')
-          .select('season, episode_number')
+          .select('season_id, episode_number')
           .eq('series_id', seriesId);
 
-        // Trouver le dernier numéro d'épisode pour chaque saison
-        const episodeNumbersBySeason: Record<number, number> = {};
+        const episodeNumbersBySeason: Record<string, number> = {};
         (episodes || []).forEach(episode => {
-          const s = episode.season;
+          const sId = episode.season_id;
           const num = episode.episode_number;
-          if (!episodeNumbersBySeason[s] || num > episodeNumbersBySeason[s]) {
-            episodeNumbersBySeason[s] = num;
+          if (!episodeNumbersBySeason[sId] || num > episodeNumbersBySeason[sId]) {
+            episodeNumbersBySeason[sId] = num;
           }
         });
-
         setLatestEpisodeNumbers(episodeNumbersBySeason);
 
-        // Définir le numéro d'épisode par défaut
-        if (currentSeasons > 0) {
-          const lastEpisodeNumber = episodeNumbersBySeason[currentSeasons] || 0;
-          setEpisodeNumber(lastEpisodeNumber + 1);
-        }
+        // Définir le numéro d'épisode par défaut (pour la saison sélectionnée)
+        const lastNum = episodeNumbersBySeason[defaultSeason] || 0;
+        setEpisodeNumber(lastNum + 1);
       } catch (error) {
-        console.error('Erreur lors du chargement des informations de la série:', error);
+        console.error('Erreur lors du chargement des infos de la série/saisons:', error);
         setError('Impossible de charger les informations de la série');
       } finally {
         setLoading(false);
       }
     };
-    
-    loadSeriesInfo();
+
+    loadSeriesAndSeasons();
   }, [seriesId]);
-  
-  // Mettre à jour le numéro d'épisode lorsque la saison change
+
+  // Mettre à jour le numéro d'épisode quand la saison change
   useEffect(() => {
-    const lastEpisodeNumber = latestEpisodeNumbers[season] || 0;
-    setEpisodeNumber(lastEpisodeNumber + 1);
-  }, [season, latestEpisodeNumbers]);
+    if (!seasonId) return;
+    const lastNum = latestEpisodeNumbers[seasonId] || 0;
+    setEpisodeNumber(lastNum + 1);
+  }, [seasonId, latestEpisodeNumbers]);
   
   // Gérer la soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation de base
     if (!title) {
       toast({
@@ -121,9 +130,17 @@ export default function AdminAddEpisodePage() {
       });
       return;
     }
-    
+    if (!seasonId) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner une saison.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
       // Upload de la miniature si présente
       let thumbnailUrl = '';
@@ -136,12 +153,17 @@ export default function AdminAddEpisodePage() {
         thumbnailUrl = urlData?.publicUrl || '';
       }
 
+      // Saison sélectionnée (pour numéro de saison aussi)
+      const selectedSeason = seasonList.find(s => s.id === seasonId);
+      const seasonNumber = selectedSeason?.number || 1;
+
       // Préparer les données de l'épisode
       const episodeData = {
         series_id: seriesId,
         title,
         description,
-        season,
+        season: seasonNumber,
+        season_id: seasonId,
         episode_number: episodeNumber,
         duration,
         video_url: videoUrl || null,
@@ -245,16 +267,23 @@ export default function AdminAddEpisodePage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="season">Saison</Label>
-                <Input
+                <Label htmlFor="season">Saison <span className="text-red-500">*</span></Label>
+                <select
                   id="season"
-                  type="number"
-                  min="1"
-                  value={season}
-                  onChange={(e) => setSeason(parseInt(e.target.value) || 1)}
-                />
+                  value={seasonId}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setSeasonId(e.target.value)}
+                  className="bg-gray-900 border-gray-700 rounded px-2 py-2 w-full text-white"
+                  required
+                  aria-label="Saison"
+                >
+                  <option value="" disabled>Choisir une saison</option>
+                  {seasonList.map(season => (
+                    <option key={season.id} value={season.id}>
+                      Saison {season.number}{season.title ? ` - ${season.title}` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="episodeNumber">Numéro d'épisode</Label>
                 <Input
