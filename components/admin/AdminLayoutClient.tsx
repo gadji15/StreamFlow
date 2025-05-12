@@ -22,7 +22,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           {children}
         </main>
       </div>
-    </div>
   );
 
   return <AdminAuthGuard>{content}</AdminAuthGuard>;
