@@ -38,108 +38,128 @@ export default function AdminAddSeriesPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Etats pour TMDB
-const [tmdbQuery, setTmdbQuery] = useState('');
-const [tmdbResults, setTmdbResults] = useState<any[]>([]);
-const [tmdbLoading, setTmdbLoading] = useState(false);
-const [tmdbError, setTmdbError] = useState<string | null>(null);
-const tmdbInputRef = useRef<HTMLInputElement>(null);
+  // États TMDB - centralisés
+  const [tmdbQuery, setTmdbQuery] = useState('');
+  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [tmdbError, setTmdbError] = useState<string | null>(null);
+  const tmdbInputRef = useRef<HTMLInputElement>(null);
 
-const handleSelectTmdbSerie = async (serie: any) => {
-  setTitle(serie.name || '');
-  setOriginalTitle(serie.original_name || '');
-  setDescription(serie.overview || '');
-  setStartYear(serie.first_air_date ? parseInt(serie.first_air_date.split('-')[0]) : new Date().getFullYear());
-  setEndYear(serie.last_air_date ? parseInt(serie.last_air_date.split('-')[0]) : null);
-  setPosterPreview(
-    serie.poster_path
-      ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
-      : null
-  );
-  setBackdropPreview(
-    serie.backdrop_path
-      ? `https://image.tmdb.org/t/p/w780${serie.backdrop_path}`
-      : null
-  );
+  // Recherche TMDB (live ou bouton)
+  const handleTmdbSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!tmdbQuery.trim()) return;
+    setTmdbLoading(true);
+    setTmdbError(null);
+    setTmdbResults([]);
+    try {
+      const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbQuery)}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setTmdbResults(data.results || []);
+    } catch (err: any) {
+      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+    } finally {
+      setTmdbLoading(false);
+    }
+  };
 
-  try {
-    // On va chercher les détails avancés de la série sur TMDB (avec crédits, vidéos…)
-    const res = await fetch(
-      `https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR&append_to_response=videos,credits`
+  // Sélection et auto-remplissage TMDB
+  const handleSelectTmdbSerie = async (serie: any) => {
+    setTitle(serie.name || '');
+    setOriginalTitle(serie.original_name || '');
+    setDescription(serie.overview || '');
+    setStartYear(serie.first_air_date ? parseInt(serie.first_air_date.split('-')[0]) : new Date().getFullYear());
+    setEndYear(serie.last_air_date ? parseInt(serie.last_air_date.split('-')[0]) : null);
+    setPosterPreview(
+      serie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
+        : null
     );
-    const details = await res.json();
+    setBackdropPreview(
+      serie.backdrop_path
+        ? `https://image.tmdb.org/t/p/w780${serie.backdrop_path}`
+        : null
+    );
 
-    // Créateurs
-    if (Array.isArray(details.created_by) && details.created_by.length > 0) {
-      setCreator(details.created_by.map((c: any) => c.name).join(', '));
-    }
-
-    // Genres (mapping local)
-    if (Array.isArray(details.genres)) {
-      const genreNames = details.genres.map((g: any) => g.name);
-      const localGenreIds = availableGenres
-        .filter(g => genreNames.includes(g.name))
-        .map(g => g.id);
-      setSelectedGenres(localGenreIds);
-    }
-
-    // Bande-annonce (YouTube)
-    if (details.videos && Array.isArray(details.videos.results)) {
-      const trailer = details.videos.results.find(
-        (v: any) => v.type === "Trailer" && v.site === "YouTube"
+    try {
+      // Détails avancés (genres, trailer, cast, créateur…)
+      const res = await fetch(
+        `https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR&append_to_response=videos,credits`
       );
-      setTrailerUrl(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '');
-      // Vidéo principale (autre type, ou la première)
-      const mainVideo = details.videos.results.find(
-        (v: any) => v.type !== "Trailer" && v.site === "YouTube"
-      );
-      setVideoUrl(mainVideo ? `https://www.youtube.com/watch?v=${mainVideo.key}` : '');
+      const details = await res.json();
+
+      // Créateur(s)
+      if (Array.isArray(details.created_by) && details.created_by.length > 0) {
+        setCreator(details.created_by.map((c: any) => c.name).join(', '));
+      }
+
+      // Genres (mapping local)
+      if (Array.isArray(details.genres)) {
+        const genreNames = details.genres.map((g: any) => g.name);
+        const localGenreIds = availableGenres
+          .filter(g => genreNames.includes(g.name))
+          .map(g => g.id);
+        setSelectedGenres(localGenreIds);
+      }
+
+      // Bande-annonce (YouTube)
+      if (details.videos && Array.isArray(details.videos.results)) {
+        const trailer = details.videos.results.find(
+          (v: any) => v.type === "Trailer" && v.site === "YouTube"
+        );
+        setTrailerUrl(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '');
+        // Vidéo principale (autre type)
+        const mainVideo = details.videos.results.find(
+          (v: any) => v.type !== "Trailer" && v.site === "YouTube"
+        );
+        setVideoUrl(mainVideo ? `https://www.youtube.com/watch?v=${mainVideo.key}` : '');
+      }
+
+      // Casting
+      if (
+        details.credits &&
+        Array.isArray(details.credits.cast) &&
+        details.credits.cast.length > 0
+      ) {
+        const castArr = details.credits.cast.slice(0, 10).map((actor: any) => ({
+          name: actor.name,
+          role: actor.character || '',
+          photo: actor.profile_path
+            ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+            : null,
+          file: null,
+          preview: actor.profile_path
+            ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+            : null,
+        }));
+        setCast(castArr);
+      }
+
+      // Catégories d’accueil auto
+      const autoCategories: string[] = [];
+      const currentYear = new Date().getFullYear();
+      if (serie.first_air_date && parseInt(serie.first_air_date.slice(0, 4)) >= currentYear - 1) autoCategories.push("new");
+      if ((serie.vote_count && serie.vote_count > 1000) || (serie.popularity && serie.popularity > 100)) autoCategories.push("top");
+      if (details.adult) autoCategories.push("vip");
+      if (serie.poster_path && serie.backdrop_path) autoCategories.push("featured");
+      setSelectedCategories(autoCategories);
+
+    } catch (err) {
+      // fallback
     }
 
-    // Casting (nom, rôle, photo)
-    if (
-      details.credits &&
-      Array.isArray(details.credits.cast) &&
-      details.credits.cast.length > 0
-    ) {
-      const castArr = details.credits.cast.slice(0, 10).map((actor: any) => ({
-        name: actor.name,
-        role: actor.character || '',
-        photo: actor.profile_path
-          ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-          : null,
-        file: null,
-        preview: actor.profile_path
-          ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-          : null,
-      }));
-      setCast(castArr);
-    }
+    setTmdbResults([]);
+    setTmdbQuery('');
+    setTimeout(() => {
+      tmdbInputRef.current?.focus();
+    }, 100);
 
-    // Catégories accueil auto (modifiables)
-    const autoCategories: string[] = [];
-    const currentYear = new Date().getFullYear();
-    if (serie.first_air_date && parseInt(serie.first_air_date.slice(0, 4)) >= currentYear - 1) autoCategories.push("new");
-    if ((serie.vote_count && serie.vote_count > 1000) || (serie.popularity && serie.popularity > 100)) autoCategories.push("top");
-    if (details.adult) autoCategories.push("vip");
-    if (serie.poster_path && serie.backdrop_path) autoCategories.push("featured");
-    setSelectedCategories(autoCategories);
-
-  } catch (err) {
-    // fallback : pas de détail
-  }
-
-  setTmdbResults([]);
-  setTmdbQuery('');
-  setTimeout(() => {
-    tmdbInputRef.current?.focus();
-  }, 100);
-
-  toast({
-    title: "Champs remplis automatiquement",
-    description: "Tous les champs peuvent être édités avant l’enregistrement.",
-  });
-};
+    toast({
+      title: "Champs remplis automatiquement",
+      description: "Tous les champs peuvent être édités avant l’enregistrement.",
+    });
+  };
 
   // Etats principaux du formulaire
   const [title, setTitle] = useState('');
