@@ -90,24 +90,30 @@ export default function AdminAddFilmPage() {
     loadGenres();
   }, []);
 
-  // TMDB: Lancer la recherche
-  const handleTmdbSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!tmdbQuery.trim()) return;
+  // TMDB: Recherche live avec debounce
+  useEffect(() => {
+    if (!tmdbQuery.trim()) {
+      setTmdbResults([]);
+      setTmdbError(null);
+      setTmdbLoading(false);
+      return;
+    }
     setTmdbLoading(true);
     setTmdbError(null);
-    setTmdbResults([]);
-    try {
-      const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setTmdbResults(data.results || []);
-    } catch (err: any) {
-      setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
-    } finally {
-      setTmdbLoading(false);
-    }
-  };
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbQuery)}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setTmdbResults(data.results || []);
+      } catch (err: any) {
+        setTmdbError(err.message || "Erreur lors de la recherche TMDB.");
+      } finally {
+        setTmdbLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [tmdbQuery]);
 
   // TMDB: Sélectionner un film et remplir le formulaire (auto-fill avancé)
   const handleSelectTmdbMovie = async (movie: any) => {
@@ -435,9 +441,10 @@ export default function AdminAddFilmPage() {
       </div>
 
       {/* TMDB Search */}
-      <form className="mb-6" onSubmit={handleTmdbSearch} role="search" aria-label="Recherche TMDB">
+      {/* TMDB Live Search */}
+      <div className="mb-6" role="search" aria-label="Recherche TMDB">
         <div className="flex flex-col sm:flex-row gap-2 items-center">
-          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
           <Input
             id="tmdb-search"
             ref={tmdbInputRef}
@@ -449,12 +456,14 @@ export default function AdminAddFilmPage() {
             className="sm:w-80"
             aria-label="Titre du film à rechercher sur TMDB"
           />
-          <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
-            {tmdbLoading ? "Recherche..." : "Rechercher"}
-          </Button>
+          {tmdbLoading && (
+            <div className="ml-3 animate-spin text-indigo-400">
+              <Film className="h-5 w-5" />
+            </div>
+          )}
         </div>
         {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
-        {tmdbResults.length > 0 && (
+        {(tmdbResults.length > 0 && tmdbQuery.trim()) && (
           <ul
             className="mt-4 bg-gray-800 rounded shadow max-h-80 overflow-y-auto ring-1 ring-gray-700"
             tabIndex={0}
@@ -497,7 +506,7 @@ export default function AdminAddFilmPage() {
             ))}
           </ul>
         )}
-      </form>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
