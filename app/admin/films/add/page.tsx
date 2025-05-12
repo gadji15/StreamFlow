@@ -500,24 +500,26 @@ export default function AdminAddFilmPage() {
 
       {/* TMDB Search */}
       {/* TMDB Live Search + bouton */}
-      <form className="mb-6" onSubmit={handleTmdbSearch} role="search" aria-label="Recherche TMDB">
-        <div className="flex flex-col sm:flex-row gap-2 items-center">
-          <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
-          <Input
-            id="tmdb-search"
-            ref={tmdbInputRef}
-            type="text"
-            autoComplete="off"
-            placeholder="Titre du film (TMDB)"
-            value={tmdbQuery}
-            onChange={e => setTmdbQuery(e.target.value)}
-            className="sm:w-80"
-            aria-label="Titre du film à rechercher sur TMDB"
-          />
-          <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
-            {tmdbLoading ? "Recherche..." : "Rechercher"}
-          </Button>
-        </div>
+      <div className="mb-6" role="search" aria-label="Recherche TMDB">
+        <form onSubmit={handleTmdbSearch}>
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
+            <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
+            <Input
+              id="tmdb-search"
+              ref={tmdbInputRef}
+              type="text"
+              autoComplete="off"
+              placeholder="Titre du film (TMDB)"
+              value={tmdbQuery}
+              onChange={e => setTmdbQuery(e.target.value)}
+              className="sm:w-80"
+              aria-label="Titre du film à rechercher sur TMDB"
+            />
+            <Button type="submit" disabled={tmdbLoading || !tmdbQuery.trim()}>
+              {tmdbLoading ? "Recherche..." : "Rechercher"}
+            </Button>
+          </div>
+        </form>
         {tmdbError && <div className="mt-2 text-sm text-red-500">{tmdbError}</div>}
         {(tmdbResults.length > 0 && tmdbQuery.trim()) && (
           <ul
@@ -562,8 +564,9 @@ export default function AdminAddFilmPage() {
             ))}
           </ul>
         )}
-      </form>
+      </div>
 
+      {/* Formulaire principal d'ajout */}
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
