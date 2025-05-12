@@ -276,6 +276,7 @@ export default function AdminAddFilmPage() {
           .map(async (member, idx) => {
             let photoUrl = member.photo || null;
             if (member.file) {
+              console.log(`[UPLOAD] Photo acteur ${member.name}...`);
               const { data, error } = await supabase.storage
                 .from('actor-photos')
                 .upload(
@@ -283,9 +284,18 @@ export default function AdminAddFilmPage() {
                   member.file,
                   { cacheControl: '3600', upsert: false }
                 );
-              if (error) throw error;
+              if (error) {
+                console.error(`[ERREUR UPLOAD acteur]`, error);
+                toast({
+                  title: 'Erreur upload photo acteur',
+                  description: error.message || String(error),
+                  variant: 'destructive',
+                });
+                throw error;
+              }
               const { data: urlData } = supabase.storage.from('actor-photos').getPublicUrl(data.path);
               photoUrl = urlData?.publicUrl || null;
+              console.log(`[SUCCESS] URL photo acteur:`, photoUrl);
             }
             return {
               name: member.name,
@@ -300,28 +310,49 @@ export default function AdminAddFilmPage() {
       let backdropUrl = '';
 
       if (posterFile) {
+        console.log("[UPLOAD] Poster...");
         const { data, error } = await supabase.storage
           .from('film-posters')
           .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
-        if (error) throw error;
+        if (error) {
+          console.error("[ERREUR UPLOAD poster]", error);
+          toast({
+            title: "Erreur upload affiche",
+            description: error.message || String(error),
+            variant: "destructive",
+          });
+          throw error;
+        }
         const { data: urlData } = supabase.storage.from('film-posters').getPublicUrl(data.path);
         posterUrl = urlData?.publicUrl || '';
+        console.log("[SUCCESS] URL poster:", posterUrl);
       } else if (posterPreview) {
         posterUrl = posterPreview;
       }
 
       if (backdropFile) {
+        console.log("[UPLOAD] Backdrop...");
         const { data, error } = await supabase.storage
           .from('film-backdrops')
           .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
-        if (error) throw error;
+        if (error) {
+          console.error("[ERREUR UPLOAD backdrop]", error);
+          toast({
+            title: "Erreur upload image de fond",
+            description: error.message || String(error),
+            variant: "destructive",
+          });
+          throw error;
+        }
         const { data: urlData } = supabase.storage.from('film-backdrops').getPublicUrl(data.path);
         backdropUrl = urlData?.publicUrl || '';
+        console.log("[SUCCESS] URL backdrop:", backdropUrl);
       } else if (backdropPreview) {
         backdropUrl = backdropPreview;
       }
 
       // Insertion du film dans la table 'films'
+      console.log("[INSERT] Enregistrement du film dans la table films...");
       const { data: insertData, error: insertError } = await supabase
         .from('films')
         .insert([{
@@ -346,8 +377,15 @@ export default function AdminAddFilmPage() {
         .single();
 
       if (insertError || !insertData) {
+        console.error("[ERREUR INSERT films]", insertError);
+        toast({
+          title: "Erreur",
+          description: insertError.message || "Impossible d'ajouter le film.",
+          variant: "destructive",
+        });
         throw insertError || new Error("Impossible d'ajouter le film.");
       }
+      console.log("[SUCCESS] Film inséré:", insertData);
 
       // Log admin_logs
       try {
@@ -359,7 +397,9 @@ export default function AdminAddFilmPage() {
             details: { film_id: insertData.id, film_title: title },
           }]);
         }
-      } catch {}
+      } catch (logErr) {
+        console.warn("[LOG WARNING] admin_logs:", logErr);
+      }
 
       toast({
         title: 'Film ajouté',
@@ -371,7 +411,7 @@ export default function AdminAddFilmPage() {
       console.error('Erreur lors de l\'ajout du film:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'ajouter le film. Veuillez réessayer.',
+        description: error?.message || String(error) || 'Impossible d\'ajouter le film.',
         variant: 'destructive',
       });
     } finally {
