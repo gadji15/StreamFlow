@@ -65,11 +65,14 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
 
   // Desktop : sticky sidebar
   // Mobile : fixed overlay sidebar, visible uniquement en mobile context (le parent contrôle l’affichage)
+  // L'affichage responsive (desktop/mobile) est géré par le parent.
+  // Desktop : sticky sidebar ; Mobile : fixed overlay (appelée par AdminLayoutClient uniquement sur mobile)
   return (
     <div
       className={cn(
-        "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block md:sticky md:top-0 md:z-20",
-        "md:hidden fixed z-50 top-0 left-0 h-full"
+        onCloseMobile
+          ? "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-full fixed z-50 top-0 left-0"
+          : "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto"
       )}
       tabIndex={-1}
       aria-modal={onCloseMobile ? "true" : undefined}
