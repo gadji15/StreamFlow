@@ -431,7 +431,153 @@ const handleSelectTmdbSerie = async (serie: any) => {
 
           {/* Tab Médias */}
           <TabsContent value="media" className="p-6">
-            {/* ...à compléter à l'étape suivante... */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="poster">Affiche de la série</Label>
+                  <div className="mb-2">
+                    {posterPreview && (
+                      <img
+                        src={posterPreview}
+                        alt="Affiche sélectionnée"
+                        className="rounded shadow h-40 object-cover mb-2"
+                        aria-label="Affiche sélectionnée"
+                      />
+                    )}
+                  </div>
+                  <ImageUpload
+                    onImageSelected={(file) => {
+                      setPosterFile(file);
+                      setPosterPreview(URL.createObjectURL(file));
+                    }}
+                    aspectRatio="2:3"
+                    label={posterPreview ? "Remplacer l'affiche" : "Ajouter une affiche"}
+                  />
+                  {posterPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPosterFile(null);
+                        setPosterPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’affiche
+                    </Button>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="backdrop">Image de fond</Label>
+                  <div className="mb-2">
+                    {backdropPreview && (
+                      <img
+                        src={backdropPreview}
+                        alt="Image de fond sélectionnée"
+                        className="rounded shadow h-32 object-cover mb-2"
+                        aria-label="Image de fond sélectionnée"
+                      />
+                    )}
+                  </div>
+                  <ImageUpload
+                    onImageSelected={(file) => {
+                      setBackdropFile(file);
+                      setBackdropPreview(URL.createObjectURL(file));
+                    }}
+                    aspectRatio="16:9"
+                    label={backdropPreview ? "Remplacer l'image de fond" : "Ajouter une image de fond"}
+                  />
+                  {backdropPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBackdropFile(null);
+                        setBackdropPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’image de fond
+                    </Button>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">Vidéo principale (optionnel)</Label>
+                <Input
+                  id="videoUrl"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="URL vidéo externe (YouTube, mp4, etc.)"
+                  disabled={!!videoFile}
+                />
+                <div className="flex flex-col sm:flex-row gap-2 items-center mt-2">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-matroska,video/x-msvideo,video/x-ms-wmv"
+                    id="video-upload"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files && e.target.files[0];
+                      if (file) {
+                        setVideoFile(file);
+                        setVideoUrl('');
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('video-upload')?.click()}
+                  >
+                    {videoFile ? "Remplacer la vidéo" : "Uploader une vidéo"}
+                  </Button>
+                  {videoFile && (
+                    <span className="text-sm text-gray-300 ml-2">{videoFile.name}</span>
+                  )}
+                  {videoFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setVideoFile(null)}
+                      className="ml-2"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Formats supportés : mp4, mkv, webm, mov, avi, wmv.
+                  <br />
+                  Si tu uploades une vidéo, l’URL publique sera utilisée dans la fiche de la série.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trailerUrl">URL de la bande-annonce</Label>
+                <Input
+                  id="trailerUrl"
+                  value={trailerUrl}
+                  onChange={(e) => setTrailerUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+                <p className="text-xs text-gray-400">
+                  URL YouTube de la bande-annonce.
+                </p>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Tab Détails supplémentaires */}
