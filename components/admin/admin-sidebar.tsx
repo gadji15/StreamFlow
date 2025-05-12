@@ -54,8 +54,6 @@ function NavItem({ href, icon, title, isActive, hasDropdown, isOpen, onClick }: 
   );
 }
 
-import { cn } from '@/lib/utils';
-
 interface AdminSidebarProps {
   onCloseMobile?: () => void;
 }
@@ -65,12 +63,12 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
   const [filmsOpen, setFilmsOpen] = useState(pathname?.startsWith('/admin/films'));
   const [seriesOpen, setSeriesOpen] = useState(pathname?.startsWith('/admin/series'));
 
+  // Desktop : sticky sidebar
+  // Mobile : fixed overlay sidebar, visible uniquement en mobile context (le parent contrôle l’affichage)
   return (
     <div
       className={cn(
-        // Desktop : sticky sidebar
         "w-64 bg-gray-900 border-r border-gray-800 flex-shrink-0 h-screen sticky top-0 overflow-y-auto hidden md:block md:sticky md:top-0 md:z-20",
-        // Mobile : fixed overlay sidebar, visible uniquement en mobile context (le parent contrôle l’affichage)
         "md:hidden fixed z-50 top-0 left-0 h-full"
       )}
       tabIndex={-1}
