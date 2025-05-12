@@ -283,7 +283,201 @@ const handleSelectTmdbSerie = async (serie: any) => {
       </div>
 
       {/* Formulaire principal */}
-      <form>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+
+          // VALIDATIONS
+          if (!title) {
+            toast({
+              title: 'Erreur',
+              description: 'Le titre de la série est requis.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          if (selectedGenres.length === 0) {
+            toast({
+              title: 'Erreur',
+              description: 'Veuillez sélectionner au moins un genre.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          if (selectedCategories.length === 0) {
+            toast({
+              title: 'Erreur',
+              description: 'Veuillez sélectionner au moins une catégorie d’accueil.',
+              variant: 'destructive',
+            });
+            return;
+          }
+
+          setIsSubmitting(true);
+
+          try {
+            // Upload des photos du casting si besoin
+            const formattedCast = await Promise.all(
+              cast
+                .filter(member => member.name.trim() !== '')
+                .map(async (member, idx) => {
+                  let photoUrl = member.photo || null;
+                  if (member.file) {
+                    const { data, error } = await supabase.storage
+                      .from('actor-photos')
+                      .upload(
+                        `series-actors/${Date.now()}_${idx}_${member.file.name}`,
+                        member.file,
+                        { cacheControl: '3600', upsert: false }
+                      );
+                    if (error) {
+                      toast({
+                        title: 'Erreur upload photo acteur',
+                        description: error.message || String(error),
+                        variant: 'destructive',
+                      });
+                      throw error;
+                    }
+                    const { data: urlData } = supabase.storage.from('actor-photos').getPublicUrl(data.path);
+                    photoUrl = urlData?.publicUrl || null;
+                  }
+                  return {
+                    name: member.name,
+                    role: member.role,
+                    photo: photoUrl,
+                  };
+                })
+            );
+
+            // Upload des images si présentes
+            let posterUrl = '';
+            let backdropUrl = '';
+
+            if (posterFile) {
+              const { data, error } = await supabase.storage
+                .from('series-posters')
+                .upload(`posters/${Date.now()}-${posterFile.name}`, posterFile, { cacheControl: '3600', upsert: false });
+              if (error) {
+                toast({
+                  title: "Erreur upload affiche",
+                  description: error.message || String(error),
+                  variant: "destructive",
+                });
+                throw error;
+              }
+              const { data: urlData } = supabase.storage.from('series-posters').getPublicUrl(data.path);
+              posterUrl = urlData?.publicUrl || '';
+            } else if (posterPreview) {
+              posterUrl = posterPreview;
+            }
+
+            if (backdropFile) {
+              const { data, error } = await supabase.storage
+                .from('series-backdrops')
+                .upload(`backdrops/${Date.now()}-${backdropFile.name}`, backdropFile, { cacheControl: '3600', upsert: false });
+              if (error) {
+                toast({
+                  title: "Erreur upload image de fond",
+                  description: error.message || String(error),
+                  variant: "destructive",
+                });
+                throw error;
+              }
+              const { data: urlData } = supabase.storage.from('series-backdrops').getPublicUrl(data.path);
+              backdropUrl = urlData?.publicUrl || '';
+            } else if (backdropPreview) {
+              backdropUrl = backdropPreview;
+            }
+
+            // Upload vidéo si nécessaire
+            let finalVideoUrl = videoUrl;
+            if (videoFile) {
+              const { data, error } = await supabase.storage
+                .from('series-videos')
+                .upload(
+                  `videos/${Date.now()}-${videoFile.name}`,
+                  videoFile,
+                  { cacheControl: '3600', upsert: false }
+                );
+              if (error) {
+                toast({
+                  title: "Erreur upload vidéo",
+                  description: error.message || String(error),
+                  variant: "destructive",
+                });
+                throw error;
+              }
+              const { data: urlData } = supabase.storage.from('series-videos').getPublicUrl(data.path);
+              finalVideoUrl = urlData?.publicUrl || null;
+            }
+
+            // Insertion base
+            const { data: insertData, error: insertError } = await supabase
+              .from('series')
+              .insert([{
+                title,
+                original_title: originalTitle || null,
+                description,
+                start_year: startYear,
+                end_year: endYear || null,
+                creator: creator || null,
+                duration: duration || null,
+                genre: selectedGenres.map(
+                  id => availableGenres.find(g => g.id === id)?.name
+                ).filter(Boolean).join(',') || null,
+                trailer_url: trailerUrl || null,
+                video_url: finalVideoUrl || null,
+                isvip: isVIP,
+                published: isPublished,
+                poster: posterUrl || null,
+                backdrop: backdropUrl || null,
+                cast: formattedCast,
+                homepage_categories: selectedCategories,
+              }])
+              .select()
+              .single();
+
+            if (insertError || !insertData) {
+              toast({
+                title: "Erreur",
+                description: insertError.message || "Impossible d'ajouter la série.",
+                variant: "destructive",
+              });
+              throw insertError || new Error("Impossible d'ajouter la série.");
+            }
+
+            // Log admin_logs
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('admin_logs').insert([{
+                  admin_id: user.id,
+                  action: 'ADD_SERIES',
+                  details: { series_id: insertData.id, series_title: title },
+                }]);
+              }
+            } catch (logErr) {
+              // Non bloquant
+            }
+
+            toast({
+              title: 'Série ajoutée',
+              description: `La série "${title}" a été ajoutée avec succès.`,
+            });
+
+            // Redirection vers la gestion des saisons de la série créée
+            router.push(`/admin/series/${insertData.id}/seasons`);
+          } catch (error) {
+            toast({
+              title: 'Erreur',
+              description: error?.message || String(error) || 'Impossible d\'ajouter la série.',
+              variant: 'destructive',
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
+      >
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
             <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">
