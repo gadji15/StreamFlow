@@ -10,8 +10,6 @@ import {
   Search, 
   Eye, 
   Star,
-  Filter,
-  ArrowUpDown,
   MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +25,10 @@ type Movie = {
   genres?: string[];
   rating?: number;
   views?: number;
-  isPublished?: boolean;
+  published?: boolean;
   isVIP?: boolean;
 };
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +44,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 export default function AdminFilmsPage() {
