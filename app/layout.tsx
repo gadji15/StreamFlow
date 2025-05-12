@@ -12,6 +12,8 @@ import ConnectivityIndicator from "@/components/connectivity-indicator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GlobalErrorLogger from "@/components/GlobalErrorLogger";
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from "react";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -84,6 +86,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Ce hook ne fonctionne qu'en client, donc astuce pour SSR/CSR :
+  let pathname = "";
+  if (typeof window !== "undefined") {
+    pathname = window.location.pathname;
+  }
+
+  // Solution hybride pour Next.js app-router : fallback sur client
+  const [clientPath, setClientPath] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") setClientPath(window.location.pathname);
+  }, []);
+
+  const isAdmin = (clientPath ?? pathname).startsWith("/admin");
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
@@ -91,17 +107,17 @@ export default function RootLayout({
           <ErrorBoundary>
             <GlobalErrorLogger />
             <ThemeProvider>
-              {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
-              <Header />
+              {/* On masque le Header/Fooer si on est sous /admin */}
+              {!isAdmin && <Header />}
               <main style={{
                 maxWidth: 1440,
                 margin: '0 auto',
                 padding: '2.5rem 2rem',
-                minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
+                minHeight: 'calc(100vh - 160px)'
               }}>
                 {children}
               </main>
-              <Footer />
+              {!isAdmin && <Footer />}
             </ThemeProvider>
           </ErrorBoundary>
         </AuthProvider>
