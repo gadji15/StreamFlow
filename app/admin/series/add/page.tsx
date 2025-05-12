@@ -38,12 +38,108 @@ export default function AdminAddSeriesPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Etats pour TMDB (à implémenter à l'étape suivante)
-  const [tmdbQuery, setTmdbQuery] = useState('');
-  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
-  const [tmdbLoading, setTmdbLoading] = useState(false);
-  const [tmdbError, setTmdbError] = useState<string | null>(null);
-  const tmdbInputRef = useRef<HTMLInputElement>(null);
+  // Etats pour TMDB
+const [tmdbQuery, setTmdbQuery] = useState('');
+const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+const [tmdbLoading, setTmdbLoading] = useState(false);
+const [tmdbError, setTmdbError] = useState<string | null>(null);
+const tmdbInputRef = useRef<HTMLInputElement>(null);
+
+const handleSelectTmdbSerie = async (serie: any) => {
+  setTitle(serie.name || '');
+  setOriginalTitle(serie.original_name || '');
+  setDescription(serie.overview || '');
+  setStartYear(serie.first_air_date ? parseInt(serie.first_air_date.split('-')[0]) : new Date().getFullYear());
+  setEndYear(serie.last_air_date ? parseInt(serie.last_air_date.split('-')[0]) : null);
+  setPosterPreview(
+    serie.poster_path
+      ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
+      : null
+  );
+  setBackdropPreview(
+    serie.backdrop_path
+      ? `https://image.tmdb.org/t/p/w780${serie.backdrop_path}`
+      : null
+  );
+
+  try {
+    // On va chercher les détails avancés de la série sur TMDB (avec crédits, vidéos…)
+    const res = await fetch(
+      `https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR&append_to_response=videos,credits`
+    );
+    const details = await res.json();
+
+    // Créateurs
+    if (Array.isArray(details.created_by) && details.created_by.length > 0) {
+      setCreator(details.created_by.map((c: any) => c.name).join(', '));
+    }
+
+    // Genres (mapping local)
+    if (Array.isArray(details.genres)) {
+      const genreNames = details.genres.map((g: any) => g.name);
+      const localGenreIds = availableGenres
+        .filter(g => genreNames.includes(g.name))
+        .map(g => g.id);
+      setSelectedGenres(localGenreIds);
+    }
+
+    // Bande-annonce (YouTube)
+    if (details.videos && Array.isArray(details.videos.results)) {
+      const trailer = details.videos.results.find(
+        (v: any) => v.type === "Trailer" && v.site === "YouTube"
+      );
+      setTrailerUrl(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '');
+      // Vidéo principale (autre type, ou la première)
+      const mainVideo = details.videos.results.find(
+        (v: any) => v.type !== "Trailer" && v.site === "YouTube"
+      );
+      setVideoUrl(mainVideo ? `https://www.youtube.com/watch?v=${mainVideo.key}` : '');
+    }
+
+    // Casting (nom, rôle, photo)
+    if (
+      details.credits &&
+      Array.isArray(details.credits.cast) &&
+      details.credits.cast.length > 0
+    ) {
+      const castArr = details.credits.cast.slice(0, 10).map((actor: any) => ({
+        name: actor.name,
+        role: actor.character || '',
+        photo: actor.profile_path
+          ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+          : null,
+        file: null,
+        preview: actor.profile_path
+          ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+          : null,
+      }));
+      setCast(castArr);
+    }
+
+    // Catégories accueil auto (modifiables)
+    const autoCategories: string[] = [];
+    const currentYear = new Date().getFullYear();
+    if (serie.first_air_date && parseInt(serie.first_air_date.slice(0, 4)) >= currentYear - 1) autoCategories.push("new");
+    if ((serie.vote_count && serie.vote_count > 1000) || (serie.popularity && serie.popularity > 100)) autoCategories.push("top");
+    if (details.adult) autoCategories.push("vip");
+    if (serie.poster_path && serie.backdrop_path) autoCategories.push("featured");
+    setSelectedCategories(autoCategories);
+
+  } catch (err) {
+    // fallback : pas de détail
+  }
+
+  setTmdbResults([]);
+  setTmdbQuery('');
+  setTimeout(() => {
+    tmdbInputRef.current?.focus();
+  }, 100);
+
+  toast({
+    title: "Champs remplis automatiquement",
+    description: "Tous les champs peuvent être édités avant l’enregistrement.",
+  });
+};
 
   // Etats principaux du formulaire
   const [title, setTitle] = useState('');
@@ -152,10 +248,10 @@ export default function AdminAddSeriesPage() {
                 key={serie.id}
                 tabIndex={0}
                 className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-purple-900/20 focus:bg-purple-900/30 outline-none"
-                onClick={() => {/* Sélection pour auto-fill à l’étape suivante */}}
+                onClick={() => handleSelectTmdbSerie(serie)}
                 onKeyDown={e => {
                   if (e.key === "Enter" || e.key === " ") {
-                    // Sélection pour auto-fill à l’étape suivante
+                    handleSelectTmdbSerie(serie);
                   }
                 }}
                 aria-label={`Sélectionner ${serie.name} (${serie.first_air_date ? serie.first_air_date.slice(0, 4) : ''})`}
