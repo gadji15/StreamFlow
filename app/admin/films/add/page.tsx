@@ -55,11 +55,22 @@ export default function AdminAddFilmPage() {
     { name: '', role: '' }
   ]);
 
+  // États pour les catégories d’accueil (sections homepage)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   // États pour les médias
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
+  // Gérer les catégories d’accueil
+  const handleCategoryChange = (categoryKey: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCategories([...selectedCategories, categoryKey]);
+    } else {
+      setSelectedCategories(selectedCategories.filter((key) => key !== categoryKey));
+    }
+  };
 
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
