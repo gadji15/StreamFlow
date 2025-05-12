@@ -54,6 +54,8 @@ function NavItem({ href, icon, title, isActive, hasDropdown, isOpen, onClick }: 
   );
 }
 
+import { cn } from '@/lib/utils';
+
 interface AdminSidebarProps {
   onCloseMobile?: () => void;
 }
