@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
@@ -63,39 +62,25 @@ export default function StatsPage() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col">
-          <AdminHeader title="Statistiques" />
-          <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-gray-400">Chargement des statistiques...</div>
-          </main>
-        </div>
-      </div>
+      <main className="flex-1 p-6 flex items-center justify-center bg-gray-950 min-h-screen">
+        <div className="text-gray-400">Chargement des statistiques...</div>
+      </main>
     )
   }
   
   if (!stats) {
     return (
-      <div className="min-h-screen bg-gray-950 flex">
-        <AdminSidebar />
-        <div className="flex-1 flex flex-col">
-          <AdminHeader title="Statistiques" />
-          <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-gray-400">Impossible de charger les statistiques</div>
-          </main>
-        </div>
-      </div>
+      <main className="flex-1 p-6 flex items-center justify-center bg-gray-950 min-h-screen">
+        <div className="text-gray-400">Impossible de charger les statistiques</div>
+      </main>
     )
   }
   
   return (
-    <div className="min-h-screen bg-gray-950 flex">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col">
-        <AdminHeader title="Statistiques et Analyses" />
-        <main className="flex-1 p-6">
-          <div className="space-y-6">
+    <>
+      <AdminHeader title="Statistiques et Analyses" />
+      <main className="flex-1 p-6 bg-gray-950 min-h-screen">
+        <div className="space-y-6">
             {/* Utilisateurs */}
             <div>
               <h2 className="text-xl font-semibold text-white mb-4">Utilisateurs</h2>
