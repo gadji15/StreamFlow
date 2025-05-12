@@ -10,8 +10,6 @@ import {
   Search, 
   Eye, 
   Star,
-  Filter,
-  ArrowUpDown,
   MoreHorizontal,
   Calendar
 } from 'lucide-react';
@@ -23,15 +21,23 @@ import { supabase } from '@/lib/supabaseClient';
 type Series = {
   id: string;
   title: string;
-  posterUrl?: string;
-  genres?: string[];
-  rating?: number;
-  views?: number;
-  published?: boolean;
-  isVIP?: boolean;
-  startYear?: number;
-  endYear?: number;
-  seasons?: number;
+  original_title?: string;
+  description?: string;
+  poster?: string;
+  backdrop?: string;
+  startyear?: number;
+  endyear?: number;
+  language?: string;
+  genre?: string;
+  popularity?: number;
+  vote_average?: number;
+  vote_count?: number;
+  isvip?: boolean;
+  tmdb_id?: number;
+  imdb_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  published?: boolean; // Optionnel, à harmoniser si utilisé
 };
 import {
   DropdownMenu,
