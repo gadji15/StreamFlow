@@ -13,16 +13,17 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     return <>{children}</>;
   }
 
-  const content = (
-    <div className="min-h-screen bg-gray-900">
-      <AdminHeaderClient />
-      <div className="flex">
-        <AdminSidebar />
-        <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
-          {children}
-        </main>
+  return (
+    <AdminAuthGuard>
+      <div className="min-h-screen bg-gray-900">
+        <AdminHeaderClient />
+        <div className="flex">
+          <AdminSidebar />
+          <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
+            {children}
+          </main>
+        </div>
       </div>
+    </AdminAuthGuard>
   );
-
-  return <AdminAuthGuard>{content}</AdminAuthGuard>;
 }
