@@ -26,7 +26,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent } from '@/components/ui/card';
-import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminHeader from '@/components/admin/admin-header';
 
 // Interface pour le type d'activité (Supabase)
@@ -123,7 +122,6 @@ export default function ActivityLogsPage() {
   
   return (
     <div className="min-h-screen flex bg-gray-950">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title="Journaux d'activité" />
         <main className="flex-1 p-6">

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { Film, Search, Plus } from "lucide-react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
+
 import AdminHeader from "@/components/admin/admin-header"
 
 export default function MoviesPage() {
@@ -11,7 +11,6 @@ export default function MoviesPage() {
   
   return (
     <div className="flex min-h-screen bg-gray-950">
-      <AdminSidebar />
       <div className="flex-1">
         <AdminHeader title="Gestion des films" />
         <main className="pt-20 p-6">

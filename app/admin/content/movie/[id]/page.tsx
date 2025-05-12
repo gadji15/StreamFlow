@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Upload, X, Plus, Save, Eye, Film, Clock, Calendar, Star, Users } from "lucide-react"
-import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { mockMovies } from "@/lib/mock-data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -215,7 +214,6 @@ export default function MovieEditPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title={isNewMovie ? "Ajouter un film" : `Modifier: ${formData.title}`} />
         <main className="flex-1 p-6">
