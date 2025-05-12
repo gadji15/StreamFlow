@@ -82,6 +82,24 @@ export async function getPopularSeries(limit = 6): Promise<Series[]> {
 }
 
 /**
+ * Récupère les séries par catégorie d'accueil (champ 'homepage_categories')
+ * @param category une des valeurs : 'featured', 'new', 'top', 'vip'
+ */
+export async function getSeriesByHomepageCategory(category: string, limit = 6): Promise<Series[]> {
+  const { data, error } = await supabase
+    .from('series')
+    .select('*')
+    .contains('homepage_categories', [category])
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error('Erreur getSeriesByHomepageCategory:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
  * Récupère les séries par genre (champ 'genre' requis)
  */
 export async function getSeriesByGenre(genreId: string, limit = 6): Promise<Series[]> {

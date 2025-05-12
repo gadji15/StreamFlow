@@ -12,48 +12,37 @@ import ConnectivityIndicator from "@/components/connectivity-indicator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GlobalErrorLogger from "@/components/GlobalErrorLogger";
-
 const inter = Inter({ subsets: ['latin'] });
 
 // Métadonnées pour le SEO et les partages sociaux
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
-  title: {
-    default: "StreamFlow - Plateforme de streaming Films et Séries",
-    template: "%s | StreamFlow",
-  },
-  description: "Découvrez et regardez des milliers de films et séries en streaming sur StreamFlow. Catalogue mis à jour régulièrement.",
-  manifest: "/manifest.json",
-  formatDetection: { telephone: false },
-  icons: {
-    icon: [
-      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" }],
-    other: [
-      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#7c3aed' },
-    ],
-  },
-  appleWebApp: {
-    capable: true,
-    title: "StreamFlow",
-    statusBarStyle: "default",
-  },
-  openGraph: {
-    title: "StreamFlow - Plateforme de streaming Films et Séries",
-    description: "Regardez des films et séries en ligne sur StreamFlow.",
-    url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    siteName: 'StreamFlow',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Logo StreamFlow',
-      },
+  // ...inchangé...
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
+        <AuthProvider>
+          <ErrorBoundary>
+            <GlobalErrorLogger />
+            <ThemeProvider>
+              <Header />
+              <main className="max-w-[1440px] mx-auto px-8 py-10 min-h-[calc(100vh-160px)] w-full flex-1">
+                {children}
+              </main>
+              <Footer />
+            </ThemeProvider>
+          </ErrorBoundary>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+},
     ],
     locale: 'fr_FR',
     type: 'website',
@@ -84,6 +73,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Ce hook ne fonctionne qu'en client, donc astuce pour SSR/CSR :
+  let pathname = "";
+  if (typeof window !== "undefined") {
+    pathname = window.location.pathname;
+  }
+
+  // Solution hybride pour Next.js app-router : fallback sur client
+  const [clientPath, setClientPath] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") setClientPath(window.location.pathname);
+  }, []);
+
+  const isAdmin = (clientPath ?? pathname).startsWith("/admin");
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
@@ -91,17 +94,17 @@ export default function RootLayout({
           <ErrorBoundary>
             <GlobalErrorLogger />
             <ThemeProvider>
-              {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
-              <Header />
+              {/* On masque le Header/Fooer si on est sous /admin */}
+              {!isAdmin && <Header />}
               <main style={{
                 maxWidth: 1440,
                 margin: '0 auto',
                 padding: '2.5rem 2rem',
-                minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
+                minHeight: 'calc(100vh - 160px)'
               }}>
                 {children}
               </main>
-              <Footer />
+              {!isAdmin && <Footer />}
             </ThemeProvider>
           </ErrorBoundary>
         </AuthProvider>
