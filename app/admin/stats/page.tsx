@@ -62,37 +62,32 @@ export default function StatsPage() {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex">
-        <div className="flex-1 flex flex-col">
-          <AdminHeader title="Statistiques" />
-          <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-gray-400">Chargement des statistiques...</div>
-          </main>
-        </div>
-      </div>
+      <>
+        <AdminHeader title="Statistiques" />
+        <main className="flex-1 p-6 flex items-center justify-center">
+          <div className="text-gray-400">Chargement des statistiques...</div>
+        </main>
+      </>
     )
   }
   
   if (!stats) {
     return (
-      <div className="min-h-screen bg-gray-950 flex">
-        <div className="flex-1 flex flex-col">
-          <AdminHeader title="Statistiques" />
-          <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-gray-400">Impossible de charger les statistiques</div>
-          </main>
-        </div>
-      </div>
+      <>
+        <AdminHeader title="Statistiques" />
+        <main className="flex-1 p-6 flex items-center justify-center">
+          <div className="text-gray-400">Impossible de charger les statistiques</div>
+        </main>
+      </>
     )
   }
   
   return (
-    <div className="min-h-screen bg-gray-950 flex">
-      <div className="flex-1 flex flex-col">
-        <AdminHeader title="Statistiques et Analyses" />
-        <main className="flex-1 p-6">
-          <div className="space-y-6">
-            {/* Utilisateurs */}
+    <>
+      <AdminHeader title="Statistiques et Analyses" />
+      <main className="flex-1 p-6">
+        <div className="space-y-6">
+          {/* Utilisateurs */}
             <div>
               <h2 className="text-xl font-semibold text-white mb-4">Utilisateurs</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
