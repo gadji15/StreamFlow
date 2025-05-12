@@ -134,6 +134,9 @@ export default function AdminAddFilmPage() {
 
   // TMDB: Sélectionner un film et remplir le formulaire (auto-fill avancé)
   const [videoUrl, setVideoUrl] = useState('');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoFileName, setVideoFileName] = useState<string | null>(null);
+  const [videoUploadLoading, setVideoUploadLoading] = useState(false);
 
   const handleSelectTmdbMovie = async (movie: any) => {
     setTitle(movie.title || '');
@@ -381,6 +384,36 @@ export default function AdminAddFilmPage() {
         backdropUrl = backdropPreview;
       }
 
+      // Upload vidéo si nécessaire
+      let finalVideoUrl = videoUrl;
+      if (videoFile) {
+        try {
+          setVideoUploadLoading(true);
+          const { data, error } = await supabase.storage
+            .from('film-videos')
+            .upload(
+              `videos/${Date.now()}-${videoFile.name}`,
+              videoFile,
+              { cacheControl: '3600', upsert: false }
+            );
+          if (error) {
+            console.error("[ERREUR UPLOAD vidéo]", error);
+            toast({
+              title: "Erreur upload vidéo",
+              description: error.message || String(error),
+              variant: "destructive",
+            });
+            throw error;
+          }
+          const { data: urlData } = supabase.storage.from('film-videos').getPublicUrl(data.path);
+          finalVideoUrl = urlData?.publicUrl || null;
+          setVideoUploadLoading(false);
+        } catch (videoErr) {
+          setVideoUploadLoading(false);
+          throw videoErr;
+        }
+      }
+
       // Insertion du film dans la table 'films'
       console.log("[INSERT] Enregistrement du film dans la table films...");
       const { data: insertData, error: insertError } = await supabase
@@ -396,7 +429,7 @@ export default function AdminAddFilmPage() {
             id => availableGenres.find(g => g.id === id)?.name
           ).filter(Boolean).join(',') || null,
           trailer_url: trailerUrl || null,
-          video_url: videoUrl || null,
+          video_url: finalVideoUrl || null,
           isvip: isVIP,
           published: isPublished,
           poster: posterUrl || null,
@@ -801,16 +834,69 @@ export default function AdminAddFilmPage() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="videoUrl">Vidéo du film (URL)</Label>
+                <Label htmlFor="videoUrl">Vidéo du film</Label>
                 <Input
                   id="videoUrl"
                   value={videoUrl}
                   onChange={e => setVideoUrl(e.target.value)}
                   placeholder="https://… (YouTube, mp4, etc.)"
+                  disabled={!!videoFile}
                 />
-                <p className="text-xs text-gray-400">
-                  Collez ici l’URL complète de la vidéo principale du film (YouTube, mp4, etc.).<br />
-                  Si vous uploadez un fichier vidéo, stockez-le d’abord dans Supabase Storage ou CDN, puis collez son URL ici.
+                <p className="text-xs text-gray-400 mb-2">
+                  Collez l’URL complète de la vidéo principale du film (YouTube, mp4, etc.), ou uploadez un fichier vidéo ci-dessous.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-matroska,video/x-msvideo,video/x-ms-wmv"
+                    id="video-upload"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files && e.target.files[0];
+                      if (file) {
+                        setVideoFile(file);
+                        setVideoFileName(file.name);
+                        // On désactive le champ URL
+                        setVideoUrl('');
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('video-upload')?.click()}
+                    disabled={videoUploadLoading}
+                  >
+                    {videoFileName ? "Remplacer la vidéo" : "Uploader une vidéo"}
+                  </Button>
+                  {videoFileName && (
+                    <span className="text-sm text-gray-300 ml-2">{videoFileName}</span>
+                  )}
+                  {videoFileName && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setVideoFile(null);
+                        setVideoFileName(null);
+                      }}
+                      className="ml-2"
+                      disabled={videoUploadLoading}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {videoUploadLoading && (
+                    <span className="ml-2 text-indigo-400 animate-spin">
+                      <Film className="h-5 w-5" />
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Formats supportés : mp4, mkv, webm, mov, avi, wmv.<br />
+                  Si tu uploades une vidéo, l’URL publique sera utilisée dans la fiche du film.
                 </p>
               </div>
             </div>
