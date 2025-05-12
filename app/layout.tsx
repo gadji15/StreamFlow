@@ -12,6 +12,7 @@ import ConnectivityIndicator from "@/components/connectivity-indicator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GlobalErrorLogger from "@/components/GlobalErrorLogger";
+import LayoutVisibility from "@/components/LayoutVisibility";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -91,17 +92,17 @@ export default function RootLayout({
           <ErrorBoundary>
             <GlobalErrorLogger />
             <ThemeProvider>
-              {/* Ajout du Header pour avoir la navbar sur toutes les pages */}
-              <Header />
+              {/* Header et Footer cachés dans l'admin */}
+              <LayoutVisibility><Header /></LayoutVisibility>
               <main style={{
                 maxWidth: 1440,
                 margin: '0 auto',
                 padding: '2.5rem 2rem',
-                minHeight: 'calc(100vh - 160px)' // adapte selon la hauteur du header/footer
+                minHeight: 'calc(100vh - 160px)',
               }}>
                 {children}
               </main>
-              <Footer />
+              <LayoutVisibility><Footer /></LayoutVisibility>
             </ThemeProvider>
           </ErrorBoundary>
         </AuthProvider>
