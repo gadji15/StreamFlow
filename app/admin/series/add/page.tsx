@@ -531,11 +531,38 @@ export default function AdminAddSeriesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="poster">Affiche de la série</Label>
+                  <div className="mb-2">
+                    {posterPreview && (
+                      <img
+                        src={posterPreview}
+                        alt="Affiche de la série sélectionnée"
+                        className="rounded shadow h-40 object-cover mb-2"
+                        aria-label="Affiche sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setPosterFile(file)}
+                    onImageSelected={(file) => {
+                      setPosterFile(file);
+                      setPosterPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="2:3"
-                    label="Ajouter une affiche"
+                    label={posterPreview ? "Remplacer l'affiche" : "Ajouter une affiche"}
                   />
+                  {posterPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPosterFile(null);
+                        setPosterPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’affiche
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
                   </p>
@@ -543,11 +570,38 @@ export default function AdminAddSeriesPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="backdrop">Image de fond</Label>
+                  <div className="mb-2">
+                    {backdropPreview && (
+                      <img
+                        src={backdropPreview}
+                        alt="Image de fond sélectionnée"
+                        className="rounded shadow h-32 object-cover mb-2"
+                        aria-label="Image de fond sélectionnée"
+                      />
+                    )}
+                  </div>
                   <ImageUpload
-                    onImageSelected={(file) => setBackdropFile(file)}
+                    onImageSelected={(file) => {
+                      setBackdropFile(file);
+                      setBackdropPreview(URL.createObjectURL(file));
+                    }}
                     aspectRatio="16:9"
-                    label="Ajouter une image de fond"
+                    label={backdropPreview ? "Remplacer l'image de fond" : "Ajouter une image de fond"}
                   />
+                  {backdropPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBackdropFile(null);
+                        setBackdropPreview(null);
+                      }}
+                      className="mt-2"
+                    >
+                      Supprimer l’image de fond
+                    </Button>
+                  )}
                   <p className="text-xs text-gray-400">
                     Format recommandé: 1920x1080 pixels (ratio 16:9), JPG ou PNG.
                   </p>
