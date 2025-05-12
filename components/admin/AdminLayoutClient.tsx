@@ -1,0 +1,29 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import AdminHeaderClient from '@/components/admin/admin-header-client';
+import AdminSidebarClient from '@/components/admin/admin-sidebar-client';
+import AdminAuthGuard from '@/components/admin/admin-auth-guard';
+
+export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  // Ne protège pas et n'applique pas le layout aux pages d'accès refusé
+  if (pathname === '/admin/access-denied') {
+    return <>{children}</>;
+  }
+
+  const content = (
+    <div className="min-h-screen bg-gray-900">
+      <AdminHeaderClient />
+      <div className="flex">
+        <AdminSidebarClient />
+        <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+
+  return <AdminAuthGuard>{content}</AdminAuthGuard>;
+}

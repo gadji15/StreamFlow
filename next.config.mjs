@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: [
-      
+
       'image.tmdb.org',
       'lh3.googleusercontent.com',
     ],
@@ -19,6 +19,7 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development', // Désactive le PWA en dev
 });
 
 // Exporter la configuration combinée

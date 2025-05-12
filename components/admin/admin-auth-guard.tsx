@@ -1,43 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import LoadingScreen from '@/components/loading-screen';
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 
-export default function AdminAuthGuard({
-  children,
-  requiredRole = 'admin'
-}: {
+type AdminAuthGuardProps = {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'super_admin';
-}) {
-  // Une seule source d'état utilisateur/chargement
-  const { userData, isAdmin, isLoading } = useSupabaseAuth();
+};
+
+export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const router = useRouter();
-  const [checked, setChecked] = useState(false);
+  const { isAdmin, isLoading, userData } = useSupabaseAuth();
 
   useEffect(() => {
-    if (isLoading || checked) return;
+    // Tant que le chargement n'est pas fini, ne rien faire
+    if (isLoading) return;
 
-    // Si utilisateur non connecté
+    // Si l'utilisateur N'EST PAS CONNECTÉ (userData === null)
     if (!userData) {
-      router.replace('/admin/auth/login');
+      router.replace("/login");
       return;
     }
 
-    // Si admin requis et non admin
-    if (!isAdmin || (requiredRole === 'super_admin' && userData?.role !== 'super_admin')) {
-      router.replace('/admin/auth/unauthorized');
+    // Si l'utilisateur est connecté mais PAS admin
+    if (!isAdmin) {
+      router.replace("/admin/access-denied");
       return;
     }
+    // Sinon, il est admin : on laisse passer
+  }, [isAdmin, isLoading, userData, router]);
 
-    setChecked(true);
-  }, [userData, isAdmin, isLoading, requiredRole, router, checked]);
-
-  if (isLoading || !checked) {
-    return <LoadingScreen />;
+  // Afficher un écran de chargement tant que l'état d'auth n'est pas déterminé
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span>Chargement...</span>
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  // Si admin, afficher la zone admin
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
+  // Par sécurité, n'affiche rien si on redirige (les redirects s'activent via useEffect)
+  return null;
 }
