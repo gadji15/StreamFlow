@@ -175,13 +175,15 @@ export default function AdminAddFilmPage() {
           year,
           duration,
           director: director || null,
-          genres: selectedGenres,
-          cast,
+          genre: selectedGenres.map(
+            id => availableGenres.find(g => g.id === id)?.name
+          ).filter(Boolean).join(',') || null,
+          // genre (string, virgule), ou à adapter si pivot table
           trailer_url: trailerUrl || null,
-          is_vip: isVIP,
+          isvip: isVIP,
           published: isPublished,
-          poster_url: posterUrl || null,
-          backdrop_url: backdropUrl || null,
+          poster: posterUrl || null,
+          backdrop: backdropUrl || null,
         }])
         .select()
         .single();
@@ -189,6 +191,18 @@ export default function AdminAddFilmPage() {
       if (insertError || !insertData) {
         throw insertError || new Error("Impossible d'ajouter le film.");
       }
+
+      // Log admin_logs
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('admin_logs').insert([{
+            admin_id: user.id,
+            action: 'ADD_FILM',
+            details: { film_id: insertData.id, film_title: title },
+          }]);
+        }
+      } catch {}
 
       toast({
         title: 'Film ajouté',
