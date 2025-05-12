@@ -8,11 +8,9 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import { cn } from "@/lib/utils";
 
-// Hook to get userId (replace this with your actual user logic)
-function useCurrentUserId(): string | null {
-  // TODO: Plug in your auth system
-  return "demo-user";
-}
+// Hook to get userId from Supabase Auth
+import useSupabaseUser from "@/hooks/useSupabaseUser";
+
 
 type SidebarItemData = {
   id: string;
@@ -24,11 +22,13 @@ type SidebarItemData = {
 };
 
 export default function AdminSidebar() {
-  const userId = useCurrentUserId();
+  const user = useSupabaseUser();
+  const userId = user?.id ?? null;
   const pathname = usePathname();
   const [sidebarItems, setSidebarItems] = useState<SidebarItemData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
 
   // Drawer state (mobile < 640px)
   const [drawerOpen, setDrawerOpen] = useState(false);
