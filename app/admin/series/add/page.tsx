@@ -23,10 +23,18 @@ import {
   Save, 
   ArrowLeft,
   Plus,
-  X
+  X,
+  Video
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect } from 'react';
+
+const HOMEPAGE_CATEGORIES = [
+  { key: "featured", label: "À la une" },
+  { key: "new", label: "Nouveautés" },
+  { key: "top", label: "Top" },
+  { key: "vip", label: "VIP" },
+];
 
 export default function AdminAddSeriesPage() {
   const router = useRouter();
@@ -51,8 +59,8 @@ export default function AdminAddSeriesPage() {
   const [isVIP, setIsVIP] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
-  const [cast, setCast] = useState<{name: string, role: string}[]>([
-    { name: '', role: '' }
+  const [cast, setCast] = useState<{name: string, role: string, photo?: File | string | null}[]>([
+    { name: '', role: '', photo: null }
   ]);
 
   // États pour les médias
@@ -60,6 +68,13 @@ export default function AdminAddSeriesPage() {
   const [backdropFile, setBackdropFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [backdropPreview, setBackdropPreview] = useState<string | null>(null);
+
+  // Vidéo (upload ou URL)
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState('');
+
+  // Catégories d’accueil
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // État de soumission
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,7 +137,7 @@ export default function AdminAddSeriesPage() {
       try {
         if (serie.id) {
           // Appel API TMDB pour plus de détails sur la série
-          const res = await fetch(`https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`);
+          const res = await fetch(`https://api.themoviedb.org/3/tv/${serie.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR&append_to_response=videos,credits`);
           const details = await res.json();
           // Mappe genres TMDB → genres locaux si même nom
           if (Array.isArray(details.genres)) {
@@ -132,6 +147,35 @@ export default function AdminAddSeriesPage() {
               .map(g => g.id);
             setSelectedGenres(localGenreIds);
           }
+          // Trailer
+          if (details.videos && Array.isArray(details.videos.results)) {
+            const trailer = details.videos.results.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
+            if (trailer) setTrailerUrl(`https://www.youtube.com/watch?v=${trailer.key}`);
+          }
+          // Créateur
+          if (Array.isArray(details.created_by) && details.created_by.length > 0) {
+            setCreator(details.created_by.map((c: any) => c.name).join(', '));
+          }
+          // Casting enrichi avec photo
+          if (details.credits && Array.isArray(details.credits.cast)) {
+            setCast(
+              details.credits.cast.slice(0, 6).map((actor: any) => ({
+                name: actor.name || '',
+                role: actor.character || '',
+                photo: actor.profile_path
+                  ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                  : null
+              }))
+            );
+          }
+          // Catégories d'accueil auto-cochées
+          const categoriesAuto: string[] = [];
+          const thisYear = new Date().getFullYear();
+          if (details.popularity && details.popularity > 80) categoriesAuto.push("top");
+          if (details.first_air_date && parseInt(details.first_air_date.split('-')[0]) >= thisYear - 1) categoriesAuto.push("new");
+          if (details.vote_average && details.vote_average > 7.5) categoriesAuto.push("featured");
+          if (details.adult || details.tags?.includes('VIP') || details.isvip) categoriesAuto.push("vip");
+          setSelectedCategories([...new Set(categoriesAuto)]);
         }
       } catch {}
     }
@@ -157,23 +201,29 @@ export default function AdminAddSeriesPage() {
   
   // Gérer le casting
   const addCastMember = () => {
-    setCast([...cast, { name: '', role: '' }]);
+    setCast([...cast, { name: '', role: '', photo: null }]);
   };
-  
+
   const removeCastMember = (index: number) => {
     setCast(cast.filter((_, i) => i !== index));
   };
-  
+
   const updateCastMember = (index: number, field: 'name' | 'role', value: string) => {
     const updatedCast = [...cast];
     updatedCast[index][field] = value;
+    setCast(updatedCast);
+  };
+
+  const updateCastPhoto = (index: number, photo: File | null) => {
+    const updatedCast = [...cast];
+    updatedCast[index].photo = photo;
     setCast(updatedCast);
   };
   
   // Soumettre le formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation de base
     if (!title) {
       toast({
@@ -183,7 +233,7 @@ export default function AdminAddSeriesPage() {
       });
       return;
     }
-    
+
     if (selectedGenres.length === 0) {
       toast({
         title: 'Erreur',
@@ -192,36 +242,33 @@ export default function AdminAddSeriesPage() {
       });
       return;
     }
-    
+
+    if (selectedCategories.length === 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner au moins une catégorie d’accueil.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
-      // Préparer les données du casting (ignorer les membres vides)
-      const formattedCast = cast
-        .filter(member => member.name.trim() !== '')
-        .map(member => ({
-          name: member.name,
-          role: member.role
-        }));
-      
-      // Préparer les données de la série
-      const seriesData = {
-        title,
-        originalTitle: originalTitle || undefined,
-        description,
-        startYear,
-        endYear: endYear || undefined,
-        creator: creator || undefined,
-        genres: selectedGenres,
-        cast: formattedCast.length > 0 ? formattedCast : undefined,
-        trailerUrl: trailerUrl || undefined,
-        isVIP,
-        isPublished
-      };
-      
-      // Upload des images si présentes
-      let posterUrl = '';
-      let backdropUrl = '';
+      // -- Upload vidéo si présente
+      let uploadedVideoUrl = '';
+      if (videoFile) {
+        const { data, error } = await supabase.storage
+          .from('series-videos')
+          .upload(`videos/${Date.now()}-${videoFile.name}`, videoFile, { cacheControl: '3600', upsert: false });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('series-videos').getPublicUrl(data.path);
+        uploadedVideoUrl = urlData?.publicUrl || '';
+      }
+
+      // -- Upload des images
+      let posterUrl = posterPreview || '';
+      let backdropUrl = backdropPreview || '';
 
       if (posterFile) {
         const { data, error } = await supabase.storage
@@ -241,25 +288,47 @@ export default function AdminAddSeriesPage() {
         backdropUrl = urlData?.publicUrl || '';
       }
 
-      // Insertion de la série dans la table 'series'
+      // -- Upload photo acteurs si besoin
+      const formattedCast = [];
+      for (const member of cast.filter(a => a.name.trim() !== '')) {
+        let finalPhoto = typeof member.photo === "string" ? member.photo : null;
+        if (member.photo && member.photo instanceof File) {
+          // upload
+          const { data, error } = await supabase.storage
+            .from('series-actors')
+            .upload(`actors/${Date.now()}-${member.photo.name}`, member.photo, { cacheControl: '3600', upsert: false });
+          if (error) throw error;
+          const { data: urlData } = supabase.storage.from('series-actors').getPublicUrl(data.path);
+          finalPhoto = urlData?.publicUrl || '';
+        }
+        formattedCast.push({
+          name: member.name,
+          role: member.role,
+          photo: finalPhoto || null,
+        });
+      }
+
+      // -- Insertion de la série dans la table 'series'
       const { data: insertData, error: insertError } = await supabase
         .from('series')
         .insert([{
           title,
           original_title: originalTitle || null,
           description,
-          startyear: startYear,
-          endyear: endYear || null,
+          start_year: startYear,
+          end_year: endYear || null,
           creator: creator || null,
           genre: selectedGenres.map(
             id => availableGenres.find(g => g.id === id)?.name
           ).filter(Boolean).join(',') || null,
-          // genre (string, virgule), ou à adapter si table pivot
           trailer_url: trailerUrl || null,
           isvip: isVIP,
           published: isPublished,
+          homepage_categories: selectedCategories,
+          cast: formattedCast.length > 0 ? formattedCast : null,
           poster: posterUrl || null,
           backdrop: backdropUrl || null,
+          video_url: videoUrl ? videoUrl : (uploadedVideoUrl || null),
         }])
         .select()
         .single();
@@ -393,6 +462,10 @@ export default function AdminAddSeriesPage() {
               <Tv className="h-4 w-4 mr-2" />
               Détails supplémentaires
             </TabsTrigger>
+            <TabsTrigger value="categories" className="rounded-tr-lg rounded-bl-none rounded-tl-none px-5 py-3">
+              <Info className="h-4 w-4 mr-2" />
+              Catégories d’accueil
+            </TabsTrigger>
           </TabsList>
           
           {/* Informations générales */}
@@ -481,6 +554,8 @@ export default function AdminAddSeriesPage() {
                         onCheckedChange={(checked) => 
                           handleGenreChange(genre.id, checked === true)
                         }
+                        aria-checked={selectedGenres.includes(genre.id)}
+                        aria-label={genre.name}
                       />
                       <Label 
                         htmlFor={`genre-${genre.id}`}
@@ -607,7 +682,47 @@ export default function AdminAddSeriesPage() {
                   </p>
                 </div>
               </div>
-              
+
+              <div className="space-y-2">
+                <Label htmlFor="videoUpload">Vidéo de la série (optionnel)</Label>
+                <Input
+                  id="videoUpload"
+                  type="file"
+                  accept="video/*"
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) setVideoFile(e.target.files[0]);
+                  }}
+                  aria-label="Charger un fichier vidéo pour la série"
+                />
+                <p className="text-xs text-gray-400">
+                  Optionnel : upload d’un fichier vidéo (.mp4, .mov, etc.) pour la série.
+                </p>
+                {videoFile && (
+                  <div className="text-xs text-green-500 mt-1">
+                    Fichier sélectionné : {videoFile.name}
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="ghost"
+                      className="ml-2"
+                      onClick={() => setVideoFile(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">URL vidéo (optionnel)</Label>
+                <Input
+                  id="videoUrl"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="URL vidéo externe (YouTube, mp4, etc.)"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="trailerUrl">URL de la bande-annonce</Label>
                 <Input
@@ -639,7 +754,6 @@ export default function AdminAddSeriesPage() {
                     Ajouter
                   </Button>
                 </div>
-                
                 <div className="space-y-3">
                   {cast.map((member, index) => (
                     <div key={index} className="flex items-start space-x-2">
@@ -649,12 +763,41 @@ export default function AdminAddSeriesPage() {
                           onChange={(e) => updateCastMember(index, 'name', e.target.value)}
                           placeholder="Nom de l'acteur"
                           className="mb-2"
+                          aria-label="Nom de l'acteur"
                         />
                         <Input
                           value={member.role}
                           onChange={(e) => updateCastMember(index, 'role', e.target.value)}
                           placeholder="Rôle (optionnel)"
+                          aria-label="Rôle de l'acteur"
                         />
+                        <div className="mt-2 flex items-center space-x-2">
+                          {member.photo && typeof member.photo === "string" && (
+                            <img
+                              src={member.photo}
+                              alt={member.name}
+                              className="h-12 w-12 rounded object-cover mr-2"
+                            />
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                              if (e.target.files && e.target.files[0]) updateCastPhoto(index, e.target.files[0]);
+                            }}
+                            aria-label="Photo de l'acteur"
+                          />
+                          {member.photo && (
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => updateCastPhoto(index, null)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <Button
                         type="button"
@@ -662,6 +805,7 @@ export default function AdminAddSeriesPage() {
                         size="icon"
                         onClick={() => removeCastMember(index)}
                         className="mt-2"
+                        aria-label="Supprimer acteur"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -671,6 +815,36 @@ export default function AdminAddSeriesPage() {
               </div>
             </div>
           </TabsContent>
+        {/* Catégories d’accueil */}
+        <TabsContent value="categories" className="p-6">
+          <div className="space-y-4">
+            <Label>Catégories d’accueil <span className="text-red-500">*</span></Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {HOMEPAGE_CATEGORIES.map((category) => (
+                <div key={category.key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`category-${category.key}`}
+                    checked={selectedCategories.includes(category.key)}
+                    onCheckedChange={(checked) =>
+                      setSelectedCategories(checked
+                        ? [...selectedCategories, category.key]
+                        : selectedCategories.filter((k) => k !== category.key)
+                      )
+                    }
+                    aria-checked={selectedCategories.includes(category.key)}
+                    aria-label={category.label}
+                  />
+                  <Label htmlFor={`category-${category.key}`} className="text-sm cursor-pointer">
+                    {category.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400">
+              Sélectionnez au moins une catégorie pour la page d’accueil.
+            </p>
+          </div>
+        </TabsContent>
         </Tabs>
         
         <div className="flex justify-between mt-6">
