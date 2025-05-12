@@ -27,7 +27,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import AdminSidebar from "@/components/admin/admin-sidebar"
 import AdminHeader from "@/components/admin/admin-header"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -85,7 +84,6 @@ export default function ContentManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
         <AdminHeader title="Gestion du contenu" />
         <main className="flex-1 p-6 pt-24">
