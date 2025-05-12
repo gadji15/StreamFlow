@@ -910,6 +910,32 @@ const handleSelectTmdbSerie = async (serie: any) => {
             </div>
           </TabsContent>
         </Tabs>
+        <div className="flex justify-between mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push('/admin/series')}
+            disabled={isSubmitting}
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Enregistrer
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );
