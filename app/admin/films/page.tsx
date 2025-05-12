@@ -10,8 +10,6 @@ import {
   Search, 
   Eye, 
   Star,
-  Filter,
-  ArrowUpDown,
   MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +25,10 @@ type Movie = {
   genres?: string[];
   rating?: number;
   views?: number;
-  isPublished?: boolean;
+  published?: boolean;
   isVIP?: boolean;
 };
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +44,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 export default function AdminFilmsPage() {
@@ -56,9 +54,46 @@ export default function AdminFilmsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
+  // Nouveaux états pour l'utilisateur courant et ses rôles
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [adminRoleId, setAdminRoleId] = useState<number | null>(null);
+  const [superAdminRoleId, setSuperAdminRoleId] = useState<number | null>(null);
+
   const { toast } = useToast();
-  
+
+  // Initialisation utilisateur courant et rôles
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        const { data: rolesList } = await supabase.from("roles").select("*");
+        const adminRole = rolesList?.find((r: any) => r.name === "admin");
+        const superAdminRole = rolesList?.find((r: any) => r.name === "super_admin");
+        setAdminRoleId(adminRole?.id ?? null);
+        setSuperAdminRoleId(superAdminRole?.id ?? null);
+
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("role_id")
+          .eq("user_id", user.id);
+
+        setCurrentUser({
+          ...profile,
+          user_id: user.id,
+          roles: userRoles?.map(ur => ur.role_id) || [],
+        });
+      }
+    }
+    fetchCurrentUser();
+  }, []);
+
   // Charger les films
   useEffect(() => {
     const loadMovies = async () => {
@@ -70,7 +105,6 @@ export default function AdminFilmsPage() {
           query = query.eq('published', true);
         }
         if (searchTerm) {
-          // Supabase ne supporte pas LIKE sur tous les champs, on filtre sur 'title'
           query = query.ilike('title', `%${searchTerm}%`);
         }
         const { data, error } = await query;
@@ -97,10 +131,27 @@ export default function AdminFilmsPage() {
 
     loadMovies();
   }, [searchTerm, statusFilter, toast]);
-  
+
+  // Vérifie si le user est admin ou super_admin
+  const isAdmin = () =>
+    currentUser &&
+    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
+      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+
   // Gérer la suppression d'un film
   const handleDeleteMovie = async () => {
     if (!movieToDelete) return;
+
+    // Sécurité : seul admin/super_admin peut supprimer
+    if (!isAdmin()) {
+      toast({
+        title: 'Accès refusé',
+        description: 'Vous n\'avez pas les droits nécessaires pour supprimer un film.',
+        variant: 'destructive',
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
 
     setIsDeleting(true);
     try {
@@ -108,6 +159,13 @@ export default function AdminFilmsPage() {
       if (error) throw error;
 
       setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
+
+      // Log l’action dans admin_logs
+      await supabase.from('admin_logs').insert([{
+        admin_id: currentUser.user_id,
+        action: 'DELETE_FILM',
+        details: { film_id: movieToDelete.id, film_title: movieToDelete.title },
+      }]);
 
       toast({
         title: 'Film supprimé',
@@ -127,33 +185,91 @@ export default function AdminFilmsPage() {
       setIsDeleting(false);
     }
   };
-  
+
   // Ouvrir le dialogue de confirmation de suppression
   const openDeleteDialog = (movie: Movie) => {
     setMovieToDelete(movie);
     setDeleteDialogOpen(true);
   };
-  
+
+    loadMovies();
+  }, [searchTerm, statusFilter, toast]);
+
+  // Vérifie si le user est admin ou super_admin
+  const isAdmin = () =>
+    currentUser &&
+    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
+      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+
+  // Gérer la suppression d'un film
+  const handleDeleteMovie = async () => {
+    if (!movieToDelete) return;
+
+    // Sécurité : seul admin/super_admin peut supprimer
+    if (!isAdmin()) {
+      toast({
+        title: 'Accès refusé',
+        description: 'Vous n\'avez pas les droits nécessaires pour supprimer un film.',
+        variant: 'destructive',
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from('films').delete().eq('id', movieToDelete.id);
+      if (error) throw error;
+
+      setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
+
+      // Log l’action dans admin_logs
+      await supabase.from('admin_logs').insert([{
+        admin_id: currentUser.user_id,
+        action: 'DELETE_FILM',
+        details: { film_id: movieToDelete.id, film_title: movieToDelete.title },
+      }]);
+
+      toast({
+        title: 'Film supprimé',
+        description: `Le film "${movieToDelete.title}" a été supprimé avec succès.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setMovieToDelete(null);
+    } catch (error) {
+      console.error('Erreur lors de la suppression du film:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le film.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Ouvrir le dialogue de confirmation de suppression
+  const openDeleteDialog = (movie: Movie) => {
+    setMovieToDelete(movie);
+    setDeleteDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Films</h1>
-        
-        <Link href="/admin/films/add">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un film
-          </Button>
-        </Link>
+
+        {isAdmin() && (
+          <Link href="/admin/films/add">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un film
+            </Button>
+          </Link>
+        )}
       </div>
-      
-      <div className="bg-gray-800 rounded-lg p-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Rechercher un film..."
+      ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"

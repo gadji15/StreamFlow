@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
         const { data: popularMoviesData } = await supabase
           .from('films')
           .select('*')
-          .order('views', { ascending: false })
+          .order('popularity', { ascending: false })
           .limit(5);
 
         setStats({

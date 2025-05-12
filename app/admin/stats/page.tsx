@@ -15,7 +15,7 @@ import {
   Star, 
   TrendingUp 
 } from "lucide-react"
-import firebase from "@/lib/admin/firebase"
+import { supabase } from "@/lib/supabaseClient"
 import Image from "next/image"
 
 // Composant pour les cartes de statistiques
@@ -45,14 +45,86 @@ function StatCard({ title, value, icon, description, className }: {
 export default function StatsPage() {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true)
+      setError(null)
       try {
-        const data = await firebase.getStatistics()
-        setStats(data)
-      } catch (error) {
-        console.error("Erreur lors de la récupération des statistiques:", error)
+        // Utilisateurs
+        const { data: users, error: userError } = await supabase.from('profiles').select('*')
+        if (userError) throw userError
+        const totalUsers = users?.length ?? 0
+        const vipUsers = (users || []).filter((u: any) => u.is_vip === true).length
+        // Suppose un champ 'last_login' pour actifs (sinon à adapter)
+        const now = new Date()
+        const activeUsers = (users || []).filter((u: any) => {
+          if (!u.last_login) return false
+          const last = new Date(u.last_login)
+          const diffDays = (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
+          return diffDays < 30
+        }).length
+
+        // Films
+        const { data: films, error: filmsError } = await supabase.from('films').select('*')
+        if (filmsError) throw filmsError
+        const totalMovies = films?.length ?? 0
+        const publishedMovies = (films || []).filter((m: any) => m.published === true).length
+
+        // Séries
+        const { data: series, error: seriesError } = await supabase.from('series').select('*')
+        if (seriesError) throw seriesError
+        const totalSeries = series?.length ?? 0
+        const publishedSeries = (series || []).filter((s: any) => s.published === true).length
+
+        // Vues films
+        const { data: movieViews, error: mvError } = await supabase.from('view_history').select('film_id')
+        if (mvError) throw mvError
+        const totalMovieViews = movieViews?.length ?? 0
+
+        // Vues séries
+        const { data: seriesViews, error: svError } = await supabase.from('view_history').select('series_id')
+        if (svError) throw svError
+        const totalSeriesViews = (seriesViews || []).filter((v: any) => !!v.series_id).length
+
+        // Films populaires (par popularité ou vote_average)
+        const { data: popularMovies } = await supabase
+          .from('films')
+          .select('*')
+          .order('popularity', { ascending: false })
+          .limit(5)
+
+        // Séries populaires (par popularité ou vote_average)
+        const { data: popularSeries } = await supabase
+          .from('series')
+          .select('*')
+          .order('popularity', { ascending: false })
+          .limit(5)
+
+        setStats({
+          users: {
+            total: totalUsers,
+            active: activeUsers,
+            vip: vipUsers,
+          },
+          content: {
+            totalMovies,
+            publishedMovies,
+            totalSeries,
+            publishedSeries
+          },
+          views: {
+            totalMovieViews,
+            totalSeriesViews
+          },
+          popular: {
+            movies: popularMovies || [],
+            series: popularSeries || []
+          }
+        })
+      } catch (error: any) {
+        setError(error.message || "Erreur lors de la récupération des statistiques.")
       } finally {
         setLoading(false)
       }
@@ -60,7 +132,7 @@ export default function StatsPage() {
     
     fetchStats()
   }, [])
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex">
@@ -75,14 +147,14 @@ export default function StatsPage() {
     )
   }
   
-  if (!stats) {
+  if (error || !stats) {
     return (
       <div className="min-h-screen bg-gray-950 flex">
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
           <AdminHeader title="Statistiques" />
           <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-gray-400">Impossible de charger les statistiques</div>
+            <div className="text-red-400">Impossible de charger les statistiques : {error}</div>
           </main>
         </div>
       </div>
@@ -110,13 +182,13 @@ export default function StatsPage() {
                   title="Utilisateurs actifs" 
                   value={stats.users.active.toLocaleString()} 
                   icon={<UserCheck className="h-5 w-5" />}
-                  description={`${Math.round((stats.users.active / stats.users.total) * 100)}% du total des utilisateurs`}
+                  description={`${stats.users.total ? Math.round((stats.users.active / stats.users.total) * 100) : 0}% du total des utilisateurs`}
                 />
                 <StatCard 
                   title="Abonnés VIP" 
                   value={stats.users.vip.toLocaleString()} 
                   icon={<CreditCard className="h-5 w-5" />}
-                  description={`${Math.round((stats.users.vip / stats.users.total) * 100)}% du total des utilisateurs`}
+                  description={`${stats.users.total ? Math.round((stats.users.vip / stats.users.total) * 100) : 0}% du total des utilisateurs`}
                 />
               </div>
             </div>
@@ -141,13 +213,13 @@ export default function StatsPage() {
                   title="Vues totales (films)" 
                   value={stats.views.totalMovieViews.toLocaleString()} 
                   icon={<Eye className="h-5 w-5" />}
-                  description={`${Math.round(stats.views.totalMovieViews / stats.content.totalMovies).toLocaleString()} vues par film en moyenne`}
+                  description={`${stats.content.totalMovies ? Math.round(stats.views.totalMovieViews / stats.content.totalMovies).toLocaleString() : 0} vues par film en moyenne`}
                 />
                 <StatCard 
                   title="Vues totales (séries)" 
                   value={stats.views.totalSeriesViews.toLocaleString()} 
                   icon={<Eye className="h-5 w-5" />}
-                  description={`${Math.round(stats.views.totalSeriesViews / stats.content.totalSeries).toLocaleString()} vues par série en moyenne`}
+                  description={`${stats.content.totalSeries ? Math.round(stats.views.totalSeriesViews / stats.content.totalSeries).toLocaleString() : 0} vues par série en moyenne`}
                 />
               </div>
             </div>
@@ -182,13 +254,13 @@ export default function StatsPage() {
                             <span className="mx-1">•</span>
                             <span className="flex items-center">
                               <Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />
-                              {movie.rating}
+                              {movie.vote_average || 0}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-medium">{movie.views.toLocaleString()}</div>
-                          <div className="text-xs text-gray-400">vues</div>
+                          <div className="text-white font-medium">{(movie.popularity || 0).toLocaleString()}</div>
+                          <div className="text-xs text-gray-400">pop.</div>
                         </div>
                       </div>
                     ))}
@@ -220,17 +292,17 @@ export default function StatsPage() {
                         <div className="flex-1">
                           <h3 className="text-white font-medium">{series.title}</h3>
                           <div className="flex items-center text-sm text-gray-400">
-                            <span>{series.year}</span>
+                            <span>{series.startyear}</span>
                             <span className="mx-1">•</span>
                             <span className="flex items-center">
                               <Star className="h-3 w-3 mr-1 text-yellow-500 fill-yellow-500" />
-                              {series.rating}
+                              {series.vote_average || 0}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-medium">{series.views.toLocaleString()}</div>
-                          <div className="text-xs text-gray-400">vues</div>
+                          <div className="text-white font-medium">{(series.popularity || 0).toLocaleString()}</div>
+                          <div className="text-xs text-gray-400">pop.</div>
                         </div>
                       </div>
                     ))}
