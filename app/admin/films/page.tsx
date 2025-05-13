@@ -12,6 +12,8 @@ import {
   Star,
   MoreHorizontal,
   RefreshCw,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +63,14 @@ export default function AdminFilmsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
+  // Tri dynamique
+  const [sortField, setSortField] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Sélection groupée
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allSelected = paginatedMovies => paginatedMovies.every(m => selectedIds.includes(m.id));
+
   const { toast } = useToast();
 
   // Charger genres pour filtre (au montage)
@@ -72,12 +82,16 @@ export default function AdminFilmsPage() {
     fetchGenres();
   }, []);
 
-  // Charger les films
+  // Charger les films avec tri dynamique
   useEffect(() => {
     const loadMovies = async () => {
       setLoading(true);
       try {
-        let query = supabase.from('films').select('*').order('created_at', { ascending: false }).limit(1000);
+        let query = supabase.from('films').select('*').limit(1000);
+
+        // Tri dynamique
+        query = query.order(sortField, { ascending: sortOrder === 'asc' });
+
         if (statusFilter === 'published') query = query.eq('published', true);
         if (statusFilter === 'draft') query = query.eq('published', false);
         if (searchTerm) query = query.ilike('title', `%${searchTerm}%`);
@@ -106,11 +120,24 @@ export default function AdminFilmsPage() {
     };
 
     loadMovies();
-  }, [searchTerm, statusFilter, genreFilter, toast]);
+    // Ajout dépendance tri
+  }, [searchTerm, statusFilter, genreFilter, sortField, sortOrder, toast]);
 
   // Pagination
   const paginatedMovies = movies.slice((page-1)*pageSize, page*pageSize);
   const totalPages = Math.ceil(movies.length / pageSize);
+
+  // Sélection groupée
+  const isChecked = (id: string) => selectedIds.includes(id);
+  const toggleSelect = (id: string) => setSelectedIds(ids => isChecked(id) ? ids.filter(_id => _id !== id) : [...ids, id]);
+  const toggleSelectAll = () => {
+    const ids = paginatedMovies.map(m => m.id);
+    if (allSelected(paginatedMovies)) {
+      setSelectedIds(selectedIds.filter(id => !ids.includes(id)));
+    } else {
+      setSelectedIds([...selectedIds, ...ids.filter(id => !selectedIds.includes(id))]);
+    }
+  };
 
   // Suppression
   const handleDeleteMovie = async () => {
@@ -126,6 +153,7 @@ export default function AdminFilmsPage() {
       });
       setDeleteDialogOpen(false);
       setMovieToDelete(null);
+      setSelectedIds(selectedIds.filter(id => id !== movieToDelete.id));
     } catch (error) {
       toast({
         title: 'Erreur',
@@ -134,6 +162,73 @@ export default function AdminFilmsPage() {
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Suppression groupée
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase.from('films').delete().in('id', selectedIds);
+      if (error) throw error;
+      setMovies(movies.filter(movie => !selectedIds.includes(movie.id)));
+      toast({
+        title: 'Films supprimés',
+        description: `${selectedIds.length} film(s) ont été supprimés.`,
+      });
+      setSelectedIds([]);
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer les films sélectionnés.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Publication rapide (toggle)
+  const handleTogglePublished = async (id: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase.from('films').update({ published: !currentValue }).eq('id', id);
+      if (error) throw error;
+      setMovies(movies.map(movie =>
+        movie.id === id ? { ...movie, published: !currentValue } : movie
+      ));
+      toast({
+        title: !currentValue ? 'Film publié' : 'Film dépublié',
+        description: `Le film a été mis à jour.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: "Impossible de mettre à jour le statut du film.",
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Publication groupée
+  const handleBulkPublish = async (value: boolean) => {
+    if (selectedIds.length === 0) return;
+    try {
+      const { error } = await supabase.from('films').update({ published: value }).in('id', selectedIds);
+      if (error) throw error;
+      setMovies(movies.map(movie =>
+        selectedIds.includes(movie.id) ? { ...movie, published: value } : movie
+      ));
+      toast({
+        title: value ? 'Films publiés' : 'Films dépubliés',
+        description: `${selectedIds.length} film(s) mis à jour.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: "Impossible de mettre à jour le statut des films sélectionnés.",
+        variant: 'destructive',
+      });
     }
   };
 
@@ -230,9 +325,47 @@ export default function AdminFilmsPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-700">
-                  <th className="pb-3 font-medium">Film</th>
-                  <th className="pb-3 font-medium">Année</th>
-                  <th className="pb-3 font-medium text-center">Note</th>
+                  <th className="pb-3 font-medium w-5">
+                    <button
+                      type="button"
+                      aria-label="Tout sélectionner"
+                      onClick={toggleSelectAll}
+                      className="bg-transparent border-none focus:outline-none"
+                    >
+                      {allSelected(paginatedMovies) ? (
+                        <CheckSquare className="h-5 w-5 text-indigo-500" />
+                      ) : (
+                        <Square className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
+                  </th>
+                  <th
+                    className="pb-3 font-medium cursor-pointer select-none"
+                    onClick={() => {
+                      setSortField('title');
+                      setSortOrder(o => (sortField === 'title' && o === 'asc') ? 'desc' : 'asc');
+                    }}
+                  >
+                    Film {sortField === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th
+                    className="pb-3 font-medium cursor-pointer select-none"
+                    onClick={() => {
+                      setSortField('year');
+                      setSortOrder(o => (sortField === 'year' && o === 'asc') ? 'desc' : 'asc');
+                    }}
+                  >
+                    Année {sortField === 'year' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th
+                    className="pb-3 font-medium text-center cursor-pointer select-none"
+                    onClick={() => {
+                      setSortField('vote_average');
+                      setSortOrder(o => (sortField === 'vote_average' && o === 'asc') ? 'desc' : 'asc');
+                    }}
+                  >
+                    Note {sortField === 'vote_average' && (sortOrder === 'asc' ? '▲' : '▼')}
+                  </th>
                   <th className="pb-3 font-medium text-center">Votes</th>
                   <th className="pb-3 font-medium text-center">Statut</th>
                   <th className="pb-3 font-medium text-center">VIP</th>
@@ -245,6 +378,20 @@ export default function AdminFilmsPage() {
                   const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
                   return (
                   <tr key={movie.id} className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
+                    <td className="py-4 px-2 align-middle">
+                      <button
+                        type="button"
+                        aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
+                        onClick={() => toggleSelect(movie.id)}
+                        className="bg-transparent border-none focus:outline-none"
+                      >
+                        {isChecked(movie.id) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-500" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </td>
                     <td className="py-4 min-w-[210px]">
                       <div className="flex items-center">
                         <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0 border border-gray-600 bg-gray-800">
@@ -281,14 +428,20 @@ export default function AdminFilmsPage() {
                       {movie.vote_count ?? <span className="text-gray-500">-</span>}
                     </td>
                     <td className="py-4 text-center">
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-xs font-semibold",
-                        movie.published
-                          ? "bg-green-500/20 text-green-500"
-                          : "bg-gray-500/20 text-gray-400"
-                      )}>
+                      <Button
+                        type="button"
+                        variant={movie.published ? "success" : "ghost"}
+                        aria-label={movie.published ? "Dépublier" : "Publier"}
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-semibold",
+                          movie.published
+                            ? "bg-green-500/20 text-green-500"
+                            : "bg-gray-500/20 text-gray-400"
+                        )}
+                        onClick={() => handleTogglePublished(movie.id, !!movie.published)}
+                      >
                         {movie.published ? 'Publié' : 'Brouillon'}
-                      </span>
+                      </Button>
                     </td>
                     <td className="py-4 text-center">
                       <span className={cn(
@@ -338,6 +491,38 @@ export default function AdminFilmsPage() {
                 )})}
               </tbody>
             </table>
+            {/* Actions groupées */}
+            {selectedIds.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center my-2 p-2 bg-gray-900 border border-gray-700 rounded justify-center">
+                <span className="text-xs text-gray-400">{selectedIds.length} sélectionné(s)</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkPublish(true)}
+                  disabled={isDeleting}
+                >
+                  Publier
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkPublish(false)}
+                  disabled={isDeleting}
+                >
+                  Dépublier
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Supprimer
+                </Button>
+              </div>
+            )}
+
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 mt-6">
