@@ -5,6 +5,14 @@ import AdminHeader from '@/components/admin/admin-header';
 import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 
+'use client';
+
+import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import AdminHeader from '@/components/admin/admin-header';
+import AdminSidebar from '@/components/admin/admin-sidebar';
+import AdminAuthGuard from '@/components/admin/admin-auth-guard';
+
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const rawPathname = usePathname();
   const pathname = rawPathname ?? "";
@@ -25,14 +33,53 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   else if (pathname.startsWith("/admin/settings")) pageTitle = "Paramètres";
   else if (pathname === "/admin") pageTitle = "Tableau de bord";
 
+  // Hauteur du header en pixels (correspond à h-16 = 64px)
+  const HEADER_HEIGHT = 64;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const content = (
-    <div className="min-h-screen bg-gray-900">
-      <AdminHeader title={pageTitle} />
-      <div className="flex">
+    <div className="min-h-screen flex bg-gray-900">
+      {/* Sidebar desktop */}
+      <div className="hidden md:block">
         <AdminSidebar />
-        <main className="flex-1 p-6 ml-0 md:ml-64 pt-24">
-          {children}
-        </main>
+      </div>
+
+      {/* Sidebar mobile */}
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        } md:hidden`}
+        aria-hidden={!sidebarOpen}
+      >
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 bg-black/60"
+          onClick={() => setSidebarOpen(false)}
+        />
+        {/* Sidebar */}
+        <div className="absolute left-0 top-0 h-full w-64">
+          <AdminSidebar onCloseMobile={() => setSidebarOpen(false)} />
+        </div>
+      </div>
+
+      {/* Main layout (header + main) */}
+      <div className="flex-1 relative flex flex-col min-h-screen">
+        {/* Header fixé en haut, toujours visible, largeur full */}
+        <div className="fixed top-0 left-0 right-0 z-30 w-full" style={{ height: HEADER_HEIGHT }}>
+          <AdminHeader
+            title={pageTitle}
+            onMenuToggle={() => setSidebarOpen((o) => !o)}
+          />
+        </div>
+        {/* décalage sous le header fixe */}
+        <div
+          className="flex-1 flex flex-col"
+          style={{ paddingTop: HEADER_HEIGHT }}
+        >
+          <main className="flex-1 bg-gray-900 px-4 py-6 md:px-8 md:py-10 min-h-0 w-full max-w-full overflow-x-hidden transition-all duration-200 flex flex-col gap-6">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

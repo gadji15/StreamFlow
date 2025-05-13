@@ -21,28 +21,28 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
   const { userData, logout } = useSupabaseAuth();
-  
+
   return (
-    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-10">
-      <div className="flex justify-between items-center h-16 px-6">
+    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-30">
+      <div className="flex justify-between items-center h-16 px-4 md:px-8">
         <div className="flex items-center">
+          {/* Hamburger for mobile */}
           <Button 
             variant="ghost" 
             size="icon" 
             className="mr-4 md:hidden" 
             onClick={onMenuToggle}
+            aria-label="Ouvrir le menu admin"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-lg font-semibold">{title}</h1>
+          <h1 className="text-lg font-semibold text-white">{title}</h1>
         </div>
-        
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
           </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative rounded-full h-8 w-8 p-0">
