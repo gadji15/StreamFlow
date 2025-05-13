@@ -64,6 +64,7 @@ type SeriesDB = {
 export default function AdminSeriesPage() {
   const [series, setSeries] = useState<SeriesDB[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [genreFilter, setGenreFilter] = useState<string>('all');
@@ -122,6 +123,29 @@ export default function AdminSeriesPage() {
         }
 
         setSeries(filteredSeries);
+
+        // Charger le nombre de saisons pour chaque série
+        if (filteredSeries.length > 0) {
+          const serieIds = filteredSeries.map(s => s.id);
+          // On fait une requête groupée pour compter les saisons par serie_id
+          const { data: seasonData, error: seasonError } = await supabase
+            .from('seasons')
+            .select('series_id, count:id')
+            .in('series_id', serieIds)
+            .group('series_id');
+          if (!seasonError && Array.isArray(seasonData)) {
+            const counts: { [seriesId: string]: number } = {};
+            for (const row of seasonData) {
+              counts[row.series_id] = Number(row.count) || 0;
+            }
+            setSeasonCounts(counts);
+          } else {
+            setSeasonCounts({});
+          }
+        } else {
+          setSeasonCounts({});
+        }
+
       } catch (error) {
         toast({
           title: 'Erreur',
@@ -363,6 +387,7 @@ export default function AdminSeriesPage() {
                   </th>
                   <th className="pb-3 font-medium text-center">Début</th>
                   <th className="pb-3 font-medium text-center">Fin</th>
+                  <th className="pb-3 font-medium text-center">Saisons</th>
                   <th className="pb-3 font-medium text-center">Créateur</th>
                   <th
                     className="pb-3 font-medium text-center cursor-pointer select-none"
@@ -419,8 +444,18 @@ export default function AdminSeriesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 text-center">{serie.start_year ?? "-"}</td>
+                    <td className="py-4 text-center">
+                      {serie.start_year ?? "-"}
+                      {(!serie.end_year || serie.end_year === 0) && (
+                        <span className="ml-2 inline-block bg-cyan-700/30 text-cyan-400 px-2 py-0.5 rounded-full text-xs font-semibold align-middle">En cours</span>
+                      )}
+                    </td>
                     <td className="py-4 text-center">{serie.end_year ?? "-"}</td>
+                    <td className="py-4 text-center">
+                      <span className="inline-block bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
+                        {seasonCounts[serie.id] ?? "-"}
+                      </span>
+                    </td>
                     <td className="py-4 text-center">{serie.creator ?? "-"}</td>
                     <td className="py-4 text-center">
                       {serie.vote_average ? (
