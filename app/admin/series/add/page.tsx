@@ -355,6 +355,24 @@ export default function AdminAddSeriesPage() {
         const { data: urlData } = supabase.storage.from('series-videos').getPublicUrl(data.path);
         finalVideoUrl = urlData?.publicUrl || null;
       }
+      // Vérification préalable pour éviter les doublons (titre + année de début)
+      const { data: existingSeries, error: checkErr } = await supabase
+        .from('series')
+        .select('id')
+        .eq('title', title)
+        .eq('start_year', startYear)
+        .maybeSingle();
+
+      if (existingSeries) {
+        toast({
+          title: "Doublon détecté",
+          description: "Une série avec ce titre et cette année de début existe déjà.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Insert series
       const { data: insertData, error: insertError } = await supabase
         .from('series')
@@ -381,12 +399,25 @@ export default function AdminAddSeriesPage() {
         .select()
         .single();
       if (insertError || !insertData) {
-        toast({
-          title: 'Erreur',
-          description: insertError.message || "Impossible d'ajouter la série.",
-          variant: 'destructive',
-        });
-        throw insertError || new Error("Impossible d'ajouter la série.");
+        // Gestion des erreurs d'unicité SQL
+        if (
+          insertError?.code === "23505" ||
+          (typeof insertError?.message === "string" && insertError.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une série avec ce titre et cette année de début existe déjà.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: 'Erreur',
+            description: insertError.message || "Impossible d'ajouter la série.",
+            variant: 'destructive',
+          });
+        }
+        setIsSubmitting(false);
+        return;
       }
       // Log admin_logs
       try {
