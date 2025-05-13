@@ -9,11 +9,13 @@ import { useToast } from "@/components/ui/use-toast";
 type Season = {
   id: string;
   series_id: string;
-  number: number;
-  name: string | null;
-  year: number | null;
+  season_number: number;
+  title: string | null;
   description: string | null;
   poster: string | null;
+  air_date: string | null;
+  tmdb_id: number | null;
+  episode_count: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -27,11 +29,13 @@ export default function AdminSeriesSeasonsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Season | null>(null);
   const [form, setForm] = useState({
-    number: "",
-    name: "",
-    year: "",
+    season_number: "",
+    title: "",
     description: "",
     poster: "",
+    air_date: "",
+    tmdb_id: "",
+    episode_count: "",
   });
   const { toast } = useToast();
 
@@ -43,7 +47,7 @@ export default function AdminSeriesSeasonsPage() {
       .from("seasons")
       .select("*")
       .eq("series_id", seriesId)
-      .order("number", { ascending: true });
+      .order("season_number", { ascending: true });
     if (error) {
       setError("Erreur lors du chargement des saisons.");
     } else {
@@ -63,11 +67,13 @@ export default function AdminSeriesSeasonsPage() {
 
   const resetForm = () => {
     setForm({
-      number: "",
-      name: "",
-      year: "",
+      season_number: "",
+      title: "",
       description: "",
       poster: "",
+      air_date: "",
+      tmdb_id: "",
+      episode_count: "",
     });
     setEditing(null);
     setShowForm(false);
@@ -78,12 +84,19 @@ export default function AdminSeriesSeasonsPage() {
 
     const payload = {
       series_id: seriesId,
-      number: Number(form.number),
-      name: form.name || null,
-      year: form.year ? Number(form.year) : null,
+      season_number: form.season_number ? Number(form.season_number) : undefined,
+      title: form.title || null,
       description: form.description || null,
       poster: form.poster || null,
+      air_date: form.air_date || null,
+      tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
+      episode_count: form.episode_count ? Number(form.episode_count) : null,
     };
+
+    if (!payload.season_number || !seriesId) {
+      toast({ title: "Numéro de saison et série requis", variant: "destructive" });
+      return;
+    }
 
     if (editing) {
       // Update
@@ -123,11 +136,13 @@ export default function AdminSeriesSeasonsPage() {
     setEditing(season);
     setShowForm(true);
     setForm({
-      number: season.number.toString(),
-      name: season.name || "",
-      year: season.year?.toString() || "",
+      season_number: season.season_number.toString(),
+      title: season.title || "",
       description: season.description || "",
       poster: season.poster || "",
+      air_date: season.air_date || "",
+      tmdb_id: season.tmdb_id?.toString() || "",
+      episode_count: season.episode_count?.toString() || "",
     });
   };
 
@@ -169,35 +184,54 @@ export default function AdminSeriesSeasonsPage() {
                 <label className="block text-sm">Numéro de saison *</label>
                 <input
                   type="number"
-                  name="number"
+                  name="season_number"
                   required
-                  value={form.number}
+                  value={form.season_number}
                   onChange={handleChange}
                   className="input input-bordered w-full"
                   min={1}
                 />
               </div>
               <div>
-                <label className="block text-sm">Nom</label>
+                <label className="block text-sm">Titre</label>
                 <input
                   type="text"
-                  name="name"
-                  value={form.name}
+                  name="title"
+                  value={form.title}
                   onChange={handleChange}
                   className="input input-bordered w-full"
-                  placeholder="Saison 1, Première partie, etc."
+                  placeholder="Ex: Saison 1, Première partie..."
                 />
               </div>
               <div>
-                <label className="block text-sm">Année</label>
+                <label className="block text-sm">Date de diffusion (AAAA-MM-JJ)</label>
                 <input
-                  type="number"
-                  name="year"
-                  value={form.year}
+                  type="date"
+                  name="air_date"
+                  value={form.air_date}
                   onChange={handleChange}
                   className="input input-bordered w-full"
-                  min={1900}
-                  max={2100}
+                />
+              </div>
+              <div>
+                <label className="block text-sm">Nombre d'épisodes</label>
+                <input
+                  type="number"
+                  name="episode_count"
+                  value={form.episode_count}
+                  onChange={handleChange}
+                  className="input input-bordered w-full"
+                  min={0}
+                />
+              </div>
+              <div>
+                <label className="block text-sm">TMDB ID</label>
+                <input
+                  type="number"
+                  name="tmdb_id"
+                  value={form.tmdb_id}
+                  onChange={handleChange}
+                  className="input input-bordered w-full"
                 />
               </div>
               <div>
@@ -236,8 +270,10 @@ export default function AdminSeriesSeasonsPage() {
                 <thead>
                   <tr>
                     <th className="py-2 px-3 text-left">#</th>
-                    <th className="py-2 px-3 text-left">Nom</th>
-                    <th className="py-2 px-3 text-left">Année</th>
+                    <th className="py-2 px-3 text-left">Titre</th>
+                    <th className="py-2 px-3 text-left">Date</th>
+                    <th className="py-2 px-3 text-left">Épisodes</th>
+                    <th className="py-2 px-3 text-left">TMDB ID</th>
                     <th className="py-2 px-3 text-left">Description</th>
                     <th className="py-2 px-3 text-left">Poster</th>
                     <th className="py-2 px-3 text-left">Actions</th>
@@ -246,9 +282,11 @@ export default function AdminSeriesSeasonsPage() {
                 <tbody>
                   {seasons.map((season) => (
                     <tr key={season.id}>
-                      <td className="py-2 px-3">{season.number}</td>
-                      <td className="py-2 px-3">{season.name}</td>
-                      <td className="py-2 px-3">{season.year}</td>
+                      <td className="py-2 px-3">{season.season_number}</td>
+                      <td className="py-2 px-3">{season.title}</td>
+                      <td className="py-2 px-3">{season.air_date}</td>
+                      <td className="py-2 px-3">{season.episode_count}</td>
+                      <td className="py-2 px-3">{season.tmdb_id}</td>
                       <td className="py-2 px-3 max-w-xs truncate">{season.description}</td>
                       <td className="py-2 px-3">
                         {season.poster ? (
