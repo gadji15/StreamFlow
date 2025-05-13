@@ -507,11 +507,23 @@ export default function AdminFilmsPage() {
                                   Voir la fiche
                                 </Link>
                               </Button>
-                              <Button asChild variant="outline" className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150">
-                                <Link href={`/admin/films/${movie.id}/edit`}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
-                                </Link>
+                              <Button
+                                variant="outline"
+                                className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150"
+                                onClick={() => {
+                                  setMovieToDelete(null);
+                                  // On utilise le router client de Next.js, importé avec useRouter()
+                                  // Le hook doit être appelé dans le composant parent
+                                  // On simule ici son usage par window.location si pas accessible
+                                  if (typeof window !== "undefined" && window.__NEXT_ROUTER__) {
+                                    window.__NEXT_ROUTER__.push(`/admin/films/${movie.id}/edit`);
+                                  } else if (typeof window !== "undefined") {
+                                    window.location.href = `/admin/films/${movie.id}/edit`;
+                                  }
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
                               </Button>
                               <Button
                                 variant="destructive"
