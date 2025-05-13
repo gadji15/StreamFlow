@@ -84,6 +84,8 @@ export default function AdminSeriesPage() {
   const [selectedSeries, setSelectedSeries] = useState<SeriesDB | null>(null); // Pour aperçu rapide
   const [page, setPage] = useState(1);
   const pageSize = 20;
+  // Ajout pour le nombre de saisons par série
+  const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
 
   // Tri dynamique
   const [sortField, setSortField] = useState('created_at');
