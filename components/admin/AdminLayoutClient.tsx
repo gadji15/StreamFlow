@@ -6,6 +6,7 @@ import AdminHeader from '@/components/admin/admin-header';
 import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 import { ToastProvider } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const rawPathname = usePathname();
@@ -80,9 +81,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   return (
     <AdminAuthGuard>
-      <ToastProvider>
-        {content}
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          {content}
+        </ToastProvider>
+      </ThemeProvider>
     </AdminAuthGuard>
   );
 }
