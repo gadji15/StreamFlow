@@ -179,14 +179,43 @@ export default function AdminSeriesSeasonsPage() {
         resetForm();
       }
     } else {
+      // Pré-vérification côté front (évite les requêtes inutiles)
+      const { data: existing, error: checkError } = await supabase
+        .from("seasons")
+        .select("id")
+        .eq("series_id", seriesId)
+        .eq("season_number", payload.season_number)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Doublon détecté",
+          description: "Une saison avec ce numéro existe déjà pour cette série.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Insert
       const { error } = await supabase.from("seasons").insert([payload]);
       if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'ajouter la saison.",
-          variant: "destructive",
-        });
+        // Gestion erreur unicité SQL
+        if (
+          error.code === "23505" ||
+          (typeof error.message === "string" && error.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une saison avec ce numéro existe déjà pour cette série.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erreur",
+            description: "Impossible d'ajouter la saison.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({ title: "Saison ajoutée avec succès." });
         fetchSeasons();
