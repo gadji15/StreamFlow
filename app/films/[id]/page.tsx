@@ -217,9 +217,9 @@ export default function FilmDetailPage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {movie.genres.map((genre) => (
-                  <span key={genre} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
-                    {genre}
+                {movie.genre?.split(',').map((genre) => (
+                  <span key={genre.trim()} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
+                    {genre.trim()}
                   </span>
                 ))}
               </div>
@@ -267,9 +267,9 @@ export default function FilmDetailPage() {
               </div>
               
               <div className="flex flex-wrap gap-2 mb-6">
-                {movie.genres.map((genre) => (
-                  <span key={genre} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
-                    {genre}
+                {movie.genre?.split(',').map((genre) => (
+                  <span key={genre.trim()} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
+                    {genre.trim()}
                   </span>
                 ))}
               </div>
