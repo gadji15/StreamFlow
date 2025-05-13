@@ -312,6 +312,7 @@ const handleRefresh = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setGenreFilter('all');
+    setAdvancedSearch({ title: '', director: '', year: '', tmdb: '' });
   };
 
   return (
