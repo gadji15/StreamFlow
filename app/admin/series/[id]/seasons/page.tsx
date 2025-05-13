@@ -36,7 +36,10 @@ export default function AdminSeriesSeasonsPage() {
     air_date: "",
     tmdb_id: "",
     episode_count: "",
+    tmdb_series_id: "", // Pour la recherche TMDB
   });
+  const [tmdbPreview, setTmdbPreview] = useState<any>(null);
+  const [isTmdbLoading, setIsTmdbLoading] = useState(false);
   const { toast } = useToast();
 
   // Charger les saisons de la série
@@ -63,6 +66,61 @@ export default function AdminSeriesSeasonsPage() {
   // Gestion du formulaire
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    // Recherche TMDB temps réel si tmdb_series_id ET season_number
+    if (
+      (e.target.name === "season_number" || e.target.name === "tmdb_series_id") &&
+      (e.target.value || form.season_number || form.tmdb_series_id)
+    ) {
+      const seriesId = e.target.name === "tmdb_series_id" ? e.target.value : form.tmdb_series_id;
+      const seasonNum = e.target.name === "season_number" ? e.target.value : form.season_number;
+      if (seriesId && seasonNum) {
+        fetchSeasonFromTMDB(seriesId, seasonNum);
+      } else {
+        setTmdbPreview(null);
+      }
+    }
+  };
+
+  // Recherche TMDB temps réel
+  const fetchSeasonFromTMDB = async (seriesTmdbId: string, seasonNum: string) => {
+    if (!seriesTmdbId || !seasonNum) {
+      setTmdbPreview(null);
+      return;
+    }
+    setIsTmdbLoading(true);
+    setTmdbPreview(null);
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/tv/${seriesTmdbId}/season/${seasonNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+      );
+      if (!res.ok) {
+        setTmdbPreview(null);
+        setIsTmdbLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setTmdbPreview(data);
+    } catch (err) {
+      setTmdbPreview(null);
+    }
+    setIsTmdbLoading(false);
+  };
+
+  // Importation TMDB → formulaire
+  const importFromTMDB = () => {
+    if (!tmdbPreview) return;
+    setForm((prev) => ({
+      ...prev,
+      title: tmdbPreview.name || "",
+      description: tmdbPreview.overview || "",
+      poster: tmdbPreview.poster_path
+        ? `https://image.tmdb.org/t/p/w500${tmdbPreview.poster_path}`
+        : "",
+      air_date: tmdbPreview.air_date || "",
+      tmdb_id: tmdbPreview.id ? String(tmdbPreview.id) : "",
+      episode_count: tmdbPreview.episodes ? String(tmdbPreview.episodes.length) : (tmdbPreview.episode_count ? String(tmdbPreview.episode_count) : ""),
+    }));
+    toast({ title: "Champs pré-remplis depuis TMDB !" });
   };
 
   const resetForm = () => {
@@ -181,6 +239,17 @@ export default function AdminSeriesSeasonsPage() {
           {showForm && (
             <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-900 space-y-3">
               <div>
+                <label className="block text-sm">ID TMDB de la série (obligatoire pour recherche)</label>
+                <input
+                  type="text"
+                  name="tmdb_series_id"
+                  value={form.tmdb_series_id}
+                  onChange={handleChange}
+                  className="input input-bordered w-full"
+                  placeholder="ex: 1399 (Game of Thrones)"
+                />
+              </div>
+              <div>
                 <label className="block text-sm">Numéro de saison *</label>
                 <input
                   type="number"
@@ -192,6 +261,41 @@ export default function AdminSeriesSeasonsPage() {
                   min={1}
                 />
               </div>
+              {/* Recherche TMDB en temps réel */}
+              {(form.tmdb_series_id && form.season_number) && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fetchSeasonFromTMDB(form.tmdb_series_id, form.season_number)}
+                    disabled={isTmdbLoading}
+                  >
+                    {isTmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
+                  </Button>
+                  {tmdbPreview && (
+                    <Button type="button" size="sm" onClick={importFromTMDB}>
+                      Importer les infos
+                    </Button>
+                  )}
+                </div>
+              )}
+              {tmdbPreview && (
+                <div className="flex gap-4 items-center mt-2 p-2 border bg-gray-800 rounded">
+                  {tmdbPreview.poster_path && (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w92${tmdbPreview.poster_path}`}
+                      alt=""
+                      className="h-20 rounded"
+                    />
+                  )}
+                  <div>
+                    <div className="text-sm font-bold">{tmdbPreview.name} (Saison {tmdbPreview.season_number})</div>
+                    <div className="text-xs text-gray-400">{tmdbPreview.air_date}</div>
+                    <div className="text-xs">{tmdbPreview.overview?.slice(0, 100)}{tmdbPreview.overview?.length > 100 ? "…" : ""}</div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm">Titre</label>
                 <input
@@ -225,7 +329,7 @@ export default function AdminSeriesSeasonsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm">TMDB ID</label>
+                <label className="block text-sm">TMDB ID (saison)</label>
                 <input
                   type="number"
                   name="tmdb_id"
