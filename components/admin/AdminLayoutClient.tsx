@@ -70,8 +70,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           className="flex-1 flex flex-col"
           style={{ paddingTop: HEADER_HEIGHT }}
         >
-          <main className="flex-1 bg-gray-900 px-2 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10 min-h-0 transition-all duration-200">
-            <div className="w-full max-w-full sm:max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-6">
+          <main className="flex-1 bg-gray-900 px-4 py-6 md:px-8 md:py-10 min-h-0 w-full max-w-full overflow-x-hidden transition-all duration-200">
+            <div className="w-full max-w-full md:max-w-3xl mx-auto flex flex-col gap-6">
               {children}
             </div>
           </main>
