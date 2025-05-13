@@ -14,6 +14,7 @@ export default function AdminSeriesSeasonsPage() {
   const {
     seasons,
     loading,
+    error,
     addSeason,
     updateSeason,
     deleteSeason,
@@ -175,12 +176,12 @@ export default function AdminSeriesSeasonsPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Gestion des saisons</h1>
 
-      {isLoading ? (
+      {loading ? (
         <div>Chargement…</div>
       ) : error ? (
         <div className="text-red-500 mb-4">{error}</div>
       ) : (
-        <>
+        </>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Saisons de la série</h2>
             <Button
@@ -455,7 +456,7 @@ export default function AdminSeriesSeasonsPage() {
                 <Button
                   type="submit"
                   className="rounded bg-green-600/90 hover:bg-green-700 text-white px-6 py-2 font-semibold"
-                  disabled={isLoading}
+                  disabled={loading}
                   aria-label={editing ? "Enregistrer les modifications" : "Ajouter cette saison"}
                 >
                   {editing ? "Enregistrer" : "Ajouter"}
