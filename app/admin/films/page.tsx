@@ -286,6 +286,59 @@ const handleRefresh = () => {
           <Button variant="ghost" aria-label="Rafraîchir" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
+          {/* Export CSV */}
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Exporter CSV"
+            onClick={() => {
+              // Générer le CSV à partir des films filtrés/affichés
+              const csvRows = [
+                [
+                  'Titre',
+                  'Année',
+                  'Genres',
+                  'Réalisateur',
+                  'Durée',
+                  'Note',
+                  'Votes',
+                  'Statut',
+                  'VIP',
+                  'TMDB ID',
+                  'Publié le',
+                  'MAJ le'
+                ].join(';')
+              ];
+              for (const m of movies) {
+                csvRows.push([
+                  `"${m.title.replace(/"/g, '""')}"`,
+                  m.year ?? '',
+                  (m.genre || '').replace(/;/g, '|'),
+                  m.director ?? '',
+                  m.duration ?? '',
+                  m.vote_average ?? '',
+                  m.vote_count ?? '',
+                  m.published ? 'Publié' : 'Brouillon',
+                  m.isvip ? 'Oui' : 'Non',
+                  m.tmdb_id ?? '',
+                  m.created_at ?? '',
+                  m.updated_at ?? ''
+                ].join(';'));
+              }
+              const csvContent = csvRows.join('\n');
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', 'films_export.csv');
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export CSV
+          </Button>
           <Link href="/admin/films/add">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
