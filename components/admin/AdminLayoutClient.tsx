@@ -27,7 +27,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   else if (pathname.startsWith("/admin/settings")) pageTitle = "Paramètres";
   else if (pathname === "/admin") pageTitle = "Tableau de bord";
 
-  // État pour la sidebar mobile
+  // Hauteur du header en pixels (correspond à h-16 = 64px)
+  const HEADER_HEIGHT = 64;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const content = (
@@ -50,21 +51,29 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           onClick={() => setSidebarOpen(false)}
         />
         {/* Sidebar */}
-        <div className="absolute left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 shadow-xl">
+        <div className="absolute left-0 top-0 h-full w-64">
           <AdminSidebar onCloseMobile={() => setSidebarOpen(false)} />
         </div>
       </div>
 
       {/* Main layout (header + main) */}
-      <div className="flex-1 flex flex-col min-h-screen relative">
-        {/* Header (sticky, z-30 pour passer devant sidebar mobile) */}
-        <AdminHeader
-          title={pageTitle}
-          onMenuToggle={() => setSidebarOpen((o) => !o)}
-        />
-        <main className="flex-1 p-4 md:p-8 bg-gray-900 min-h-[calc(100vh-4rem)] overflow-auto transition-all duration-200">
-          {children}
-        </main>
+      <div className="flex-1 relative flex flex-col min-h-screen">
+        {/* Header fixé en haut, toujours visible, largeur full */}
+        <div className="fixed top-0 left-0 right-0 z-30 w-full" style={{ height: HEADER_HEIGHT }}>
+          <AdminHeader
+            title={pageTitle}
+            onMenuToggle={() => setSidebarOpen((o) => !o)}
+          />
+        </div>
+        {/* décalage sous le header fixe */}
+        <div
+          className="flex-1 flex flex-col"
+          style={{ paddingTop: HEADER_HEIGHT }}
+        >
+          <main className="flex-1 bg-gray-900 p-4 md:p-8 min-h-0 transition-all duration-200">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );
