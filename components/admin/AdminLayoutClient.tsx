@@ -71,7 +71,14 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           className="flex-1 flex flex-col"
           style={{ paddingTop: HEADER_HEIGHT }}
         >
-          <main className="flex-1 bg-gray-900 px-4 py-6 md:px-8 md:py-10 min-h-0 w-full max-w-full overflow-x-hidden transition-all duration-200 flex flex-col gap-6">
+          <main className="flex-1 bg-gray-900 px-4 py-6 md:px-8 md:py-10 min-h-0 w-full max-w-full transition-all duration-200 flex flex-col gap-6"
+            style={{
+              // On enlève overflow-x-hidden pour éviter de couper les popovers/menus
+              position: 'relative',
+              zIndex: 0, // Permet aux Portals de popover d'être au-dessus
+              overflow: 'visible'
+            }}
+          >
             {children}
           </main>
         </div>
