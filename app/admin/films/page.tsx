@@ -239,42 +239,44 @@ export default function AdminFilmsPage() {
     }
   };
 
-  // Publication groupée
-  const handleBulkPublish = async (value: boolean) => {
-    if (selectedIds.length === 0) return;
-    try {
-      const { error } = await supabase.from('films').update({ published: value }).in('id', selectedIds);
-      if (error) throw error;
-      setMovies(movies.map(movie =>
-        selectedIds.includes(movie.id) ? { ...movie, published: value } : movie
-      ));
-      toast({
-        title: value ? 'Films publiés' : 'Films dépubliés',
-        description: `${selectedIds.length} film(s) mis à jour.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description: "Impossible de mettre à jour le statut des films sélectionnés.",
-        variant: 'destructive',
-      });
-    }
-  };
+  // (Gardez uniquement une seule version de chaque fonction comme ci-dessous, supprimez tous les doublons !)
 
-  // Ouvrir le dialogue de confirmation de suppression
-  const openDeleteDialog = (movie: MovieDB) => {
-    setMovieToDelete(movie);
-    setDeleteDialogOpen(true);
-  };
+// Publication groupée
+const handleBulkPublish = async (value: boolean) => {
+  if (selectedIds.length === 0) return;
+  try {
+    const { error } = await supabase.from('films').update({ published: value }).in('id', selectedIds);
+    if (error) throw error;
+    setMovies(movies.map(movie =>
+      selectedIds.includes(movie.id) ? { ...movie, published: value } : movie
+    ));
+    toast({
+      title: value ? 'Films publiés' : 'Films dépubliés',
+      description: `${selectedIds.length} film(s) mis à jour.`,
+    });
+  } catch (error) {
+    toast({
+      title: 'Erreur',
+      description: "Impossible de mettre à jour le statut des films sélectionnés.",
+      variant: 'destructive',
+    });
+  }
+};
 
-  // Rafraîchir la liste
-  const handleRefresh = () => {
-    setPage(1);
-    setSearchTerm('');
-    setStatusFilter('all');
-    setGenreFilter('all');
-    setAdvancedSearch({ title: '', director: '', year: '', tmdb: '' });
-  };
+// Ouvrir le dialogue de confirmation de suppression
+const openDeleteDialog = (movie: MovieDB) => {
+  setMovieToDelete(movie);
+  setDeleteDialogOpen(true);
+};
+
+// Rafraîchir la liste
+const handleRefresh = () => {
+  setPage(1);
+  setSearchTerm('');
+  setStatusFilter('all');
+  setGenreFilter('all');
+  setAdvancedSearch({ title: '', director: '', year: '', tmdb: '' });
+};
 
   // Publication groupée
   const handleBulkPublish = async (value: boolean) => {
