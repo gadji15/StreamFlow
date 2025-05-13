@@ -38,6 +38,24 @@ export default function AddEpisodePage() {
     setIsSubmitting(true);
 
     try {
+      // Vérification anti-doublon (season_id + episode_number)
+      const { data: existing, error: checkError } = await supabase
+        .from('episodes')
+        .select('id')
+        .eq('season_id', seasonId)
+        .eq('episode_number', episodeNumber)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Doublon détecté",
+          description: "Un épisode avec ce numéro existe déjà pour cette saison.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data, error } = await supabase.from('episodes').insert([{
         series_id: id,
         season_id: seasonId,
@@ -51,7 +69,22 @@ export default function AddEpisodePage() {
         vote_average: voteAverage || null,
         vote_count: voteCount || null,
       }]);
-      if (error) throw error;
+      if (error) {
+        if (
+          error.code === "23505" ||
+          (typeof error.message === "string" && error.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Un épisode avec ce numéro existe déjà pour cette saison.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: 'Erreur', description: "Impossible d'ajouter l'épisode.", variant: 'destructive' });
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
       toast({ title: 'Épisode ajouté', description: `Épisode ${episodeNumber} créé avec succès.` });
       router.push(`/admin/series/${id}/seasons/${seasonId}`);
