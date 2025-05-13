@@ -437,6 +437,67 @@ const handleRefresh = () => {
         >
           <Input
             type="text"
+            placeholder="Titre…"
+            value={advancedSearch.title}
+            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par titre"
+          />
+          <Input
+            type="text"
+            placeholder="Réalisateur…"
+            value={advancedSearch.director}
+            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par réalisateur"
+          />
+          <Input
+            type="number"
+            placeholder="Année…"
+            value={advancedSearch.year}
+            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par année"
+          />
+          <Input
+            type="number"
+            placeholder="TMDB ID…"
+            value={advancedSearch.tmdb}
+            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par TMDB ID"
+          />
+        </form>
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <select
+            value={genreFilter}
+            onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
+            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            aria-label="Filtrer par genre"
+          >
+            <option value="all">Tous les genres</option>
+            {genres.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            aria-label="Filtrer par statut"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="published">Publiés</option>
+            <option value="draft">Brouillons</option>
+          </select>
+        </div>
+        {/* Formulaire recherche avancée */}
+        <form
+          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
+          onSubmit={e => { e.preventDefault(); setPage(1); }}
+        >
+          <Input
+            type="text"
             placeholder="Titre..."
             value={advancedSearch.title}
             onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
