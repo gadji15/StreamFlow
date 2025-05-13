@@ -20,13 +20,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Dialog,
   DialogContent,
@@ -455,36 +455,52 @@ export default function AdminFilmsPage() {
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end items-center space-x-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Actions">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/films/${movie.id}`} target="_blank">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Voir
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/films/${movie.id}/edit`}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modifier
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-500 focus:text-red-500"
-                              onClick={() => openDeleteDialog(movie)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Menu hamburger actions */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Actions"
+                          onClick={() => setMovieToDelete(movie)} // On réutilise movieToDelete pour ouvrir la modal d'actions
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        {/* Menu modal d'actions */}
+                        <Dialog open={movieToDelete?.id === movie.id} onOpenChange={open => { if (!open) setMovieToDelete(null); }}>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Actions sur le film</DialogTitle>
+                              <DialogDescription>
+                                Choisissez une action pour &laquo;{movie.title}&raquo;
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex flex-col gap-3 mt-4">
+                              <Button asChild variant="outline">
+                                <Link href={`/films/${movie.id}`} target="_blank">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Voir
+                                </Link>
+                              </Button>
+                              <Button asChild variant="outline">
+                                <Link href={`/admin/films/${movie.id}/edit`}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Modifier
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => { openDeleteDialog(movie); setMovieToDelete(null); }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
+                              </Button>
+                            </div>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setMovieToDelete(null)}>
+                                Annuler
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </td>
                   </tr>
