@@ -117,9 +117,12 @@ export default function AdminSeriesSeasonsPage() {
       air_date: "",
       tmdb_id: "",
       episode_count: "",
+      tmdb_series_id: "",
+      series_autocomplete: "",
     });
     setEditing(null);
     setShowForm(false);
+    setTmdbPreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,12 +184,12 @@ export default function AdminSeriesSeasonsPage() {
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Saisons de la série</h2>
             <Button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
                 if (showForm) {
-                  // On ferme et on reset
                   resetForm();
                 } else {
-                  // On ouvre et on reset le state du form seulement (sans refermer)
                   setShowForm(true);
                   setForm({
                     season_number: "",
@@ -197,11 +200,14 @@ export default function AdminSeriesSeasonsPage() {
                     tmdb_id: "",
                     episode_count: "",
                     tmdb_series_id: "",
+                    series_autocomplete: "",
                   });
                   setEditing(null);
                   setTmdbPreview(null);
                 }
               }}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded transition"
+              aria-label={showForm ? "Annuler" : "Ajouter une saison"}
             >
               {showForm ? "Annuler" : "Ajouter une saison"}
             </Button>
