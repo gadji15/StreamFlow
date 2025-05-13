@@ -81,7 +81,7 @@ export default function AdminSeriesSeasonsPage() {
     }
   };
 
-  // Recherche TMDB temps réel
+  // Recherche TMDB temps réel via API route Next.js
   const fetchSeasonFromTMDB = async (seriesTmdbId: string, seasonNum: string) => {
     if (!seriesTmdbId || !seasonNum) {
       setTmdbPreview(null);
@@ -91,7 +91,7 @@ export default function AdminSeriesSeasonsPage() {
     setTmdbPreview(null);
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/tv/${seriesTmdbId}/season/${seasonNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+        `/api/tmdb/season/${encodeURIComponent(seriesTmdbId)}/${encodeURIComponent(seasonNum)}`
       );
       if (!res.ok) {
         setTmdbPreview(null);
