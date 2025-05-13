@@ -1,33 +1,30 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-
-type Season = {
-  id: string;
-  series_id: string;
-  season_number: number;
-  title: string | null;
-  description: string | null;
-  poster: string | null;
-  air_date: string | null;
-  tmdb_id: number | null;
-  episode_count: number | null;
-  created_at: string;
-  updated_at: string;
-};
+import { useSeasons } from "@/hooks/useSeasons";
 
 export default function AdminSeriesSeasonsPage() {
   const params = useParams();
   const seriesId = params?.id as string;
-  const [seasons, setSeasons] = useState<Season[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const {
+    seasons,
+    loading,
+    addSeason,
+    updateSeason,
+    deleteSeason,
+    fetchSeasons,
+  } = useSeasons(seriesId, {
+    onError: msg => toast({ title: "Erreur", description: msg, variant: "destructive" }),
+    onSuccess: msg => toast({ title: msg }),
+  });
+
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Season | null>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
     season_number: "",
     title: "",
@@ -45,28 +42,11 @@ export default function AdminSeriesSeasonsPage() {
   const [seriesLoading, setSeriesLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
-  const { toast } = useToast();
 
-  // Charger les saisons de la série
-  const fetchSeasons = async () => {
-    setIsLoading(true);
-    setError(null);
-    const { data, error } = await supabase
-      .from("seasons")
-      .select("*")
-      .eq("series_id", seriesId)
-      .order("season_number", { ascending: true });
-    if (error) {
-      setError("Erreur lors du chargement des saisons.");
-    } else {
-      setSeasons(data || []);
-    }
-    setIsLoading(false);
-  };
-
+  // Synchronisation initiale si besoin (optionnel car le hook est auto)
   useEffect(() => {
     if (seriesId) fetchSeasons();
-  }, [seriesId]);
+  }, [seriesId, fetchSeasons]);
 
   // Gestion du formulaire
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -146,7 +126,6 @@ export default function AdminSeriesSeasonsPage() {
     e.preventDefault();
 
     const payload = {
-      series_id: seriesId,
       season_number: form.season_number ? Number(form.season_number) : undefined,
       title: form.title || null,
       description: form.description || null,
@@ -161,67 +140,13 @@ export default function AdminSeriesSeasonsPage() {
       return;
     }
 
+    let result = false;
     if (editing) {
-      // Update
-      const { error } = await supabase
-        .from("seasons")
-        .update(payload)
-        .eq("id", editing.id);
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de modifier la saison.",
-          variant: "destructive",
-        });
-      } else {
-        toast({ title: "Saison modifiée avec succès." });
-        fetchSeasons();
-        resetForm();
-      }
+      result = await updateSeason(editing.id, payload);
     } else {
-      // Pré-vérification côté front (évite les requêtes inutiles)
-      const { data: existing, error: checkError } = await supabase
-        .from("seasons")
-        .select("id")
-        .eq("series_id", seriesId)
-        .eq("season_number", payload.season_number)
-        .maybeSingle();
-
-      if (existing) {
-        toast({
-          title: "Doublon détecté",
-          description: "Une saison avec ce numéro existe déjà pour cette série.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Insert
-      const { error } = await supabase.from("seasons").insert([payload]);
-      if (error) {
-        // Gestion erreur unicité SQL
-        if (
-          error.code === "23505" ||
-          (typeof error.message === "string" && error.message.toLowerCase().includes("unique"))
-        ) {
-          toast({
-            title: "Doublon détecté",
-            description: "Une saison avec ce numéro existe déjà pour cette série.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erreur",
-            description: "Impossible d'ajouter la saison.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({ title: "Saison ajoutée avec succès." });
-        fetchSeasons();
-        resetForm();
-      }
+      result = await addSeason(payload as any);
     }
+    if (result) resetForm();
   };
 
   const handleEdit = (season: Season) => {
@@ -240,17 +165,7 @@ export default function AdminSeriesSeasonsPage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer définitivement cette saison ?")) return;
-    const { error } = await supabase.from("seasons").delete().eq("id", id);
-    if (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la saison.",
-        variant: "destructive",
-      });
-    } else {
-      toast({ title: "Saison supprimée." });
-      fetchSeasons();
-    }
+    await deleteSeason(id);
   };
 
   return (
