@@ -175,10 +175,8 @@ export default function AdminSeriesSeasonsPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Gestion des saisons</h1>
 
-      {isLoading ? (
+      {loading ? (
         <div>Chargement…</div>
-      ) : error ? (
-        <div className="text-red-500 mb-4">{error}</div>
       ) : (
         <>
           <div className="mb-6 flex items-center justify-between">
