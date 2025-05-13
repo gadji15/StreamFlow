@@ -511,10 +511,12 @@ const handleRefresh = () => {
                   return (
                   <tr key={movie.id} className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
                     <td className="py-4 px-2 align-middle">
-                      <button
-                        type="button"
-                        aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
-                        onClick={() => toggleSelect(movie.id)}
+                      {/* ... */}
+                    </td>
+                    {/* ...autres cellules... */}
+                  </tr>
+                  );
+                })}
                         className="bg-transparent border-none focus:outline-none"
                       >
                         {isChecked(movie.id) ? (
