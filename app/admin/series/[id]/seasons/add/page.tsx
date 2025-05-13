@@ -36,6 +36,24 @@ export default function AddSeasonPage() {
     setIsSubmitting(true);
 
     try {
+      // Vérification préalable pour éviter les doublons (series_id + season_number)
+      const { data: existing, error: checkError } = await supabase
+        .from('seasons')
+        .select('id')
+        .eq('series_id', seriesId)
+        .eq('season_number', seasonNumber)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Doublon détecté",
+          description: "Une saison avec ce numéro existe déjà pour cette série.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data, error } = await supabase.from('seasons').insert([{
         series_id: seriesId,
         season_number: seasonNumber,
@@ -46,7 +64,22 @@ export default function AddSeasonPage() {
         tmdb_id: tmdbId || null,
         episode_count: episodeCount || null,
       }]);
-      if (error) throw error;
+      if (error) {
+        if (
+          error.code === "23505" ||
+          (typeof error.message === "string" && error.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une saison avec ce numéro existe déjà pour cette série.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: 'Erreur', description: "Impossible d'ajouter la saison.", variant: 'destructive' });
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
       toast({ title: 'Saison ajoutée', description: `Saison ${seasonNumber} créée avec succès.` });
       router.push(`/admin/series/${seriesId}`);
