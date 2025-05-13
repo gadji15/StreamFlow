@@ -64,8 +64,16 @@ type SeriesDB = {
 export default function AdminSeriesPage() {
   const [series, setSeries] = useState<SeriesDB[]>([]);
   const [loading, setLoading] = useState(true);
-  const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
+
+  // Recherche avancée
   const [searchTerm, setSearchTerm] = useState('');
+  const [advancedSearch, setAdvancedSearch] = useState({
+    title: '',
+    creator: '',
+    year: '',
+    tmdb: '',
+  });
+
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [genres, setGenres] = useState<string[]>([]);
@@ -73,10 +81,9 @@ export default function AdminSeriesPage() {
   const [seriesToDelete, setSeriesToDelete] = useState<SeriesDB | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionMenuSeries, setActionMenuSeries] = useState<SeriesDB | null>(null);
+  const [selectedSeries, setSelectedSeries] = useState<SeriesDB | null>(null); // Pour aperçu rapide
   const [page, setPage] = useState(1);
   const pageSize = 20;
-
-  const router = useRouter();
 
   // Tri dynamique
   const [sortField, setSortField] = useState('created_at');
@@ -109,7 +116,16 @@ export default function AdminSeriesPage() {
 
         if (statusFilter === 'published') query = query.eq('published', true);
         if (statusFilter === 'draft') query = query.eq('published', false);
-        if (searchTerm) query = query.ilike('title', `%${searchTerm}%`);
+
+        // Recherche avancée multi-champ
+        if (advancedSearch.title.trim()) query = query.ilike('title', `%${advancedSearch.title.trim()}%`);
+        if (advancedSearch.creator.trim()) query = query.ilike('creator', `%${advancedSearch.creator.trim()}%`);
+        if (advancedSearch.year.trim()) query = query.eq('start_year', Number(advancedSearch.year));
+        if (advancedSearch.tmdb.trim()) query = query.eq('tmdb_id', Number(advancedSearch.tmdb));
+        // Recherche simple (fallback)
+        if (searchTerm && !advancedSearch.title && !advancedSearch.creator && !advancedSearch.year && !advancedSearch.tmdb)
+          query = query.ilike('title', `%${searchTerm}%`);
+
         const { data, error } = await query;
         if (error) throw error;
 
@@ -158,7 +174,7 @@ export default function AdminSeriesPage() {
     };
 
     loadSeries();
-  }, [searchTerm, statusFilter, genreFilter, sortField, sortOrder, toast]);
+  }, [searchTerm, advancedSearch, statusFilter, genreFilter, sortField, sortOrder, toast]);
 
   // Pagination
   const paginatedSeries = series.slice((page-1)*pageSize, page*pageSize);
@@ -305,13 +321,68 @@ export default function AdminSeriesPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Rechercher une série..."
+              placeholder="Recherche rapide (titre série)..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="pl-10"
               aria-label="Recherche de série"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setAdvancedSearch({
+                title: '',
+                creator: '',
+                year: '',
+                tmdb: '',
+              })
+            }
+            className="hidden sm:block"
+          >
+            Réinitialiser
+          </Button>
+        </div>
+        {/* Formulaire recherche avancée */}
+        <form
+          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
+          onSubmit={e => { e.preventDefault(); setPage(1); }}
+        >
+          <Input
+            type="text"
+            placeholder="Titre..."
+            value={advancedSearch.title}
+            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par titre"
+          />
+          <Input
+            type="text"
+            placeholder="Créateur..."
+            value={advancedSearch.creator}
+            onChange={e => setAdvancedSearch(a => ({ ...a, creator: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par créateur"
+          />
+          <Input
+            type="number"
+            placeholder="Année début..."
+            value={advancedSearch.year}
+            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par année"
+          />
+          <Input
+            type="number"
+            placeholder="TMDB ID..."
+            value={advancedSearch.tmdb}
+            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par TMDB ID"
+          />
+        </form>
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
@@ -495,6 +566,15 @@ export default function AdminSeriesPage() {
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end items-center space-x-2">
+                        {/* Aperçu rapide */}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Aperçu"
+                          onClick={() => setSelectedSeries(serie)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         {/* Accès rapide aux saisons */}
                         <Button
                           variant="outline"
@@ -668,6 +748,104 @@ export default function AdminSeriesPage() {
           </div>
         )}
       </div>
+      {/* Aperçu rapide */}
+      <Dialog open={!!selectedSeries} onOpenChange={open => { if (!open) setSelectedSeries(null); }}>
+        <DialogContent className="max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0">
+          {selectedSeries && (
+            <div className="p-5 space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 h-32 w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
+                  <img
+                    src={selectedSeries.poster || '/placeholder-backdrop.jpg'}
+                    alt={selectedSeries.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-2xl font-bold truncate">{selectedSeries.title}</div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    {selectedSeries.start_year ?? "-"}
+                    {(!selectedSeries.end_year || selectedSeries.end_year === 0) && (
+                      <span className="ml-2 inline-block bg-cyan-700/30 text-cyan-400 px-2 py-0.5 rounded-full text-xs font-semibold align-middle">En cours</span>
+                    )}
+                    {selectedSeries.end_year ? ` — ${selectedSeries.end_year}` : ""}
+                  </div>
+                  <div className="flex gap-2 flex-wrap mb-1">
+                    {(selectedSeries.genre || '').split(',').map(g =>
+                      <span key={g} className="inline-block bg-purple-800/20 text-purple-200 px-2 py-0.5 rounded-full text-xs">{g.trim()}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {selectedSeries.published
+                      ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publiée</span>
+                      : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
+                    }
+                    {selectedSeries.isvip &&
+                      <span className="bg-amber-600/20 text-amber-300 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
+                    }
+                  </div>
+                  <div className="mt-2 text-xs text-gray-400">
+                    TMDB ID: <span className="text-gray-300">{selectedSeries.tmdb_id ?? '-'}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-400">
+                    Créateur: <span className="text-gray-200">{selectedSeries.creator ?? '-'}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="font-semibold mb-1 text-sm text-gray-300">Description</div>
+                <div className="text-sm text-gray-200 leading-relaxed max-h-40 overflow-y-auto">{selectedSeries.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
+              </div>
+              {/* Trailer et vidéo */}
+              {(selectedSeries.trailer_url || selectedSeries.video_url) && (
+                <div className="flex flex-col gap-2">
+                  {selectedSeries.trailer_url && (
+                    <div>
+                      <div className="font-semibold text-xs text-gray-300">Bande-annonce :</div>
+                      <a href={selectedSeries.trailer_url} target="_blank" rel="noopener" className="text-indigo-400 underline break-all">{selectedSeries.trailer_url}</a>
+                    </div>
+                  )}
+                  {selectedSeries.video_url && (
+                    <div>
+                      <div className="font-semibold text-xs text-gray-300">Vidéo :</div>
+                      <a href={selectedSeries.video_url} target="_blank" rel="noopener" className="text-indigo-400 underline break-all">{selectedSeries.video_url}</a>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Cast */}
+              {selectedSeries.cast && Array.isArray(selectedSeries.cast) && selectedSeries.cast.length > 0 && (
+                <div>
+                  <div className="font-semibold text-sm text-gray-300 mb-1">Casting</div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {selectedSeries.cast.map((member: any, idx: number) => (
+                      <span key={idx} className="bg-gray-700/60 text-gray-100 rounded px-2 py-0.5">
+                        {member.name}{member.role ? ` (${member.role})` : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Backdrop */}
+              {selectedSeries.backdrop && (
+                <div className="mt-4">
+                  <img
+                    src={selectedSeries.backdrop}
+                    alt="Backdrop"
+                    className="w-full rounded-lg shadow border border-gray-800 object-cover"
+                    style={{ maxHeight: 200 }}
+                  />
+                </div>
+              )}
+              <div className="flex justify-end mt-2">
+                <Button variant="outline" onClick={() => setSelectedSeries(null)}>
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Dialogue de confirmation de suppression */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
