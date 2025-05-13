@@ -264,17 +264,26 @@ export default function AdminSeriesSeasonsPage() {
           </div>
 
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-900 space-y-3">
-              <div>
-                <label className="block text-sm font-medium" htmlFor="series-autocomplete">
-                  Série TMDB <span aria-hidden="true">*</span>
+            <form
+              onSubmit={handleSubmit}
+              className="mb-8 max-w-2xl mx-auto bg-white/5 border border-gray-800 shadow-xl rounded-xl px-8 py-6 space-y-6 relative"
+              autoComplete="off"
+              aria-label={editing ? "Modifier une saison" : "Ajouter une saison"}
+            >
+              <h3 className="text-xl font-bold mb-2 text-center">
+                {editing ? "Modifier la saison" : "Ajouter une nouvelle saison"}
+              </h3>
+              {/* Recherche série TMDB */}
+              <div className="relative">
+                <label className="block text-sm font-medium mb-1" htmlFor="series-autocomplete">
+                  Série TMDB <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="series-autocomplete"
                   name="series_autocomplete"
                   type="search"
                   autoComplete="off"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full text-base px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Rechercher une série TMDB…"
                   value={form.series_autocomplete || ""}
                   onChange={async (e) => {
@@ -300,12 +309,13 @@ export default function AdminSeriesSeasonsPage() {
                   aria-expanded={showSuggestions}
                   aria-activedescendant={activeSuggestionIndex >= 0 ? `series-suggestion-${activeSuggestionIndex}` : undefined}
                   role="combobox"
+                  required
                 />
                 {/* Suggestions dropdown */}
                 {showSuggestions && !!form.series_autocomplete && (
                   <ul
                     id="series-suggestions"
-                    className="absolute z-10 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow"
+                    className="absolute z-10 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-60 overflow-y-auto"
                     role="listbox"
                   >
                     {seriesLoading && (
@@ -315,7 +325,7 @@ export default function AdminSeriesSeasonsPage() {
                       <li
                         key={suggestion.id}
                         id={`series-suggestion-${idx}`}
-                        className={`p-2 cursor-pointer hover:bg-gray-800 ${activeSuggestionIndex === idx ? "bg-gray-800" : ""}`}
+                        className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSuggestionIndex === idx ? "bg-blue-600/80 text-white" : ""}`}
                         role="option"
                         aria-selected={activeSuggestionIndex === idx}
                         tabIndex={-1}
@@ -329,9 +339,16 @@ export default function AdminSeriesSeasonsPage() {
                           setShowSuggestions(false);
                         }}
                       >
-                        {suggestion.name}{" "}
+                        <span className="font-medium">{suggestion.name}</span>{" "}
                         {suggestion.first_air_date && (
-                          <span className="text-xs text-gray-400">({suggestion.first_air_date.slice(0, 4)})</span>
+                          <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                        )}
+                        {suggestion.poster_path && (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w45${suggestion.poster_path}`}
+                            alt=""
+                            className="inline-block ml-2 h-6 w-auto rounded"
+                          />
                         )}
                       </li>
                     ))}
@@ -342,8 +359,8 @@ export default function AdminSeriesSeasonsPage() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium" htmlFor="season_number">
-                  Numéro de saison <span aria-hidden="true">*</span>
+                <label className="block text-sm font-medium mb-1" htmlFor="season_number">
+                  Numéro de saison <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="season_number"
@@ -352,10 +369,11 @@ export default function AdminSeriesSeasonsPage() {
                   required
                   value={form.season_number}
                   onChange={handleChange}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full text-base px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                   min={1}
                   aria-required="true"
                   autoComplete="off"
+                  placeholder="1"
                 />
               </div>
               {/* Recherche TMDB améliorée */}
@@ -368,98 +386,139 @@ export default function AdminSeriesSeasonsPage() {
                     onClick={() => fetchSeasonFromTMDB(form.tmdb_series_id, form.season_number)}
                     disabled={isTmdbLoading}
                     aria-label="Rechercher la saison sur TMDB"
+                    className="rounded bg-blue-600/80 hover:bg-blue-700/90 text-white font-semibold"
                   >
                     {isTmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
                   </Button>
                   {tmdbPreview && (
-                    <Button type="button" size="sm" onClick={importFromTMDB} aria-label="Importer les infos de TMDB">
+                    <Button type="button" size="sm" onClick={importFromTMDB} aria-label="Importer les infos de TMDB"
+                      className="rounded bg-green-600/80 hover:bg-green-700/90 text-white font-semibold"
+                    >
                       Importer les infos
                     </Button>
                   )}
                 </div>
               )}
               {tmdbPreview && (
-                <div className="flex gap-4 items-center mt-2 p-2 border bg-gray-800 rounded">
+                <div className="flex gap-4 items-center mt-2 p-2 border bg-gray-800 rounded shadow">
                   {tmdbPreview.poster_path && (
                     <img
-                      src={`https://image.tmdb.org/t/p/w92${tmdbPreview.poster_path}`}
+                      src={`https://image.tmdb.org/t/p/w154${tmdbPreview.poster_path}`}
                       alt=""
-                      className="h-20 rounded"
+                      className="h-24 rounded shadow"
                     />
                   )}
                   <div>
-                    <div className="text-sm font-bold">{tmdbPreview.name} (Saison {tmdbPreview.season_number})</div>
+                    <div className="text-base font-bold">{tmdbPreview.name} (Saison {tmdbPreview.season_number})</div>
                     <div className="text-xs text-gray-400">{tmdbPreview.air_date}</div>
-                    <div className="text-xs">{tmdbPreview.overview?.slice(0, 100)}{tmdbPreview.overview?.length > 100 ? "…" : ""}</div>
+                    <div className="text-xs">{tmdbPreview.overview?.slice(0, 180)}{tmdbPreview.overview?.length > 180 ? "…" : ""}</div>
                   </div>
                 </div>
               )}
-              <div>
-                <label className="block text-sm">Titre</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  className="input input-bordered w-full"
-                  placeholder="Ex: Saison 1, Première partie..."
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1" htmlFor="title">
+                    Titre
+                  </label>
+                  <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value={form.title}
+                    onChange={handleChange}
+                    className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
+                    placeholder="Ex: Saison 1, Première partie..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" htmlFor="air_date">
+                    Date de diffusion (AAAA-MM-JJ)
+                  </label>
+                  <input
+                    id="air_date"
+                    type="date"
+                    name="air_date"
+                    value={form.air_date}
+                    onChange={handleChange}
+                    className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" htmlFor="episode_count">
+                    Nombre d'épisodes
+                  </label>
+                  <input
+                    id="episode_count"
+                    type="number"
+                    name="episode_count"
+                    value={form.episode_count}
+                    onChange={handleChange}
+                    className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" htmlFor="tmdb_id">
+                    TMDB ID (saison)
+                  </label>
+                  <input
+                    id="tmdb_id"
+                    type="number"
+                    name="tmdb_id"
+                    value={form.tmdb_id}
+                    onChange={handleChange}
+                    className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-sm">Date de diffusion (AAAA-MM-JJ)</label>
-                <input
-                  type="date"
-                  name="air_date"
-                  value={form.air_date}
-                  onChange={handleChange}
-                  className="input input-bordered w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm">Nombre d'épisodes</label>
-                <input
-                  type="number"
-                  name="episode_count"
-                  value={form.episode_count}
-                  onChange={handleChange}
-                  className="input input-bordered w-full"
-                  min={0}
-                />
-              </div>
-              <div>
-                <label className="block text-sm">TMDB ID (saison)</label>
-                <input
-                  type="number"
-                  name="tmdb_id"
-                  value={form.tmdb_id}
-                  onChange={handleChange}
-                  className="input input-bordered w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm">Description</label>
+                <label className="block text-sm font-medium mb-1" htmlFor="description">
+                  Description
+                </label>
                 <textarea
+                  id="description"
                   name="description"
                   value={form.description}
                   onChange={handleChange}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="block text-sm">Poster (URL)</label>
+                <label className="block text-sm font-medium mb-1" htmlFor="poster">
+                  Poster (URL)
+                </label>
                 <input
+                  id="poster"
                   type="text"
                   name="poster"
                   value={form.poster}
                   onChange={handleChange}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full text-base px-4 py-2 rounded-lg"
                   placeholder="https://..."
                 />
+                {form.poster && (
+                  <img alt="Poster preview" src={form.poster} className="mt-2 h-24 rounded shadow border border-gray-700" />
+                )}
               </div>
-              <div className="flex gap-2 mt-2">
-                <Button type="submit" className="bg-green-600">{editing ? "Modifier" : "Ajouter"}</Button>
-                <Button type="button" variant="outline" onClick={resetForm}>Annuler</Button>
+              <div className="flex gap-2 mt-4 justify-end">
+                <Button
+                  type="submit"
+                  className="rounded bg-green-600/90 hover:bg-green-700 text-white px-6 py-2 font-semibold"
+                  disabled={isLoading}
+                  aria-label={editing ? "Enregistrer les modifications" : "Ajouter cette saison"}
+                >
+                  {editing ? "Enregistrer" : "Ajouter"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="rounded px-6 py-2"
+                  aria-label="Annuler"
+                >
+                  Annuler
+                </Button>
               </div>
             </form>
           )}

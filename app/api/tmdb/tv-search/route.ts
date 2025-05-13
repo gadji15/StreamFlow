@@ -1,40 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const query = req.nextUrl.searchParams.get('query');
+  const apiKey = process.env.TMDB_API_KEY || process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get("query") || "";
+  const language = searchParams.get("language") || "fr-FR";
+
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "TMDB API Key missing" }), { status: 500 });
+  }
   if (!query) {
-    return NextResponse.json({ error: 'Missing query' }, { status: 400 });
+    return new Response(JSON.stringify({ results: [] }), { status: 200 });
   }
 
-  const tmdbApiKey = process.env.TMDB_API_KEY;
-  if (!tmdbApiKey) {
-    return NextResponse.json({ error: 'TMDB API key not set' }, { status: 500 });
+  try {
+    const url = `https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${encodeURIComponent(
+      query
+    )}&language=${language}`;
+    const resp = await fetch(url, { headers: { accept: "application/json" } });
+
+    if (!resp.ok) {
+      return new Response(JSON.stringify({ error: "TMDB fetch failed", status: resp.status }), { status: resp.status });
+    }
+
+    const data = await resp.json();
+    return new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: "Internal error", details: e?.message }), { status: 500 });
   }
-
-  // Recherche séries TMDB (langue française en priorité)
-  const url = `https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodeURIComponent(query)}&language=fr-FR&include_adult=false`;
-
-  const res = await fetch(url);
-  if (!res.ok) {
-    return NextResponse.json({ error: 'TMDB fetch error' }, { status: 500 });
-  }
-
-  const data = await res.json();
-  // On retourne les principaux champs utiles (id, titre, année, poster, overview, genres)
-  return NextResponse.json({
-    results: (data.results || []).map((serie: any) => ({
-      id: serie.id,
-      name: serie.name,
-      original_name: serie.original_name,
-      overview: serie.overview,
-      first_air_date: serie.first_air_date,
-      last_air_date: serie.last_air_date,
-      poster_path: serie.poster_path,
-      backdrop_path: serie.backdrop_path,
-      genre_ids: serie.genre_ids,
-      vote_average: serie.vote_average,
-      vote_count: serie.vote_count,
-      popularity: serie.popularity,
-    })),
-  });
 }
