@@ -40,7 +40,18 @@ export default function FilmDetailPage() {
           setError("Film non trouvé.");
           notFound();
         } else {
-          setMovie(fetchedMovie);
+          // Mapper snake_case vers camelCase pour l'affichage
+          const normalizedMovie = {
+            ...fetchedMovie,
+            posterUrl: fetchedMovie.poster || '/placeholder-poster.png',
+            backdropUrl: fetchedMovie.backdrop || '/placeholder-backdrop.jpg',
+            trailerUrl: fetchedMovie.trailer_url || "",
+            videoUrl: fetchedMovie.video_url || "",
+            // fallback duration for legacy
+            duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
+            rating: fetchedMovie.vote_average ?? null,
+          };
+          setMovie(normalizedMovie);
 
           // Incrémenter le nombre de vues (côté serveur)
           supabase
@@ -186,6 +197,7 @@ export default function FilmDetailPage() {
             src={movie.backdropUrl} 
             alt={`Backdrop de ${movie.title}`}
             className="w-full h-full object-cover"
+            onError={(e) => { e.currentTarget.src = '/placeholder-backdrop.jpg'; }}
           />
         </div>
       )}
@@ -198,6 +210,7 @@ export default function FilmDetailPage() {
               src={movie.posterUrl || '/placeholder-poster.png'} 
               alt={`Affiche de ${movie.title}`} 
               className="w-full rounded-lg shadow-lg"
+              onError={(e) => { e.currentTarget.src = '/placeholder-poster.png'; }}
             />
             
             {/* Infos sur mobile */}
@@ -217,9 +230,9 @@ export default function FilmDetailPage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {movie.genres.map((genre) => (
-                  <span key={genre} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
-                    {genre}
+                {movie.genre?.split(',').map((genre) => (
+                  <span key={genre.trim()} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
+                    {genre.trim()}
                   </span>
                 ))}
               </div>
@@ -267,9 +280,9 @@ export default function FilmDetailPage() {
               </div>
               
               <div className="flex flex-wrap gap-2 mb-6">
-                {movie.genres.map((genre) => (
-                  <span key={genre} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
-                    {genre}
+                {movie.genre?.split(',').map((genre) => (
+                  <span key={genre.trim()} className="px-3 py-1 bg-gray-700 text-xs rounded-full">
+                    {genre.trim()}
                   </span>
                 ))}
               </div>
@@ -319,14 +332,28 @@ export default function FilmDetailPage() {
             <div className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                disabled={!canWatch}
-                className={!canWatch ? "opacity-50 cursor-not-allowed" : ""}
+                disabled={!canWatch || !movie.videoUrl}
+                className={!canWatch || !movie.videoUrl ? "opacity-50 cursor-not-allowed" : ""}
+                onClick={() => {
+                  if (canWatch && movie.videoUrl) {
+                    window.open(movie.videoUrl, '_blank', 'noopener,noreferrer');
+                  }
+                }}
               >
                 <Play className="mr-2 h-5 w-5" /> Regarder
               </Button>
               
               {movie.trailerUrl && (
-                <Button variant="outline" size="lg">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    // Ouvre la bande-annonce dans un nouvel onglet si ce n'est pas un embed
+                    if (movie.trailerUrl.startsWith('http')) {
+                      window.open(movie.trailerUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                >
                   <Info className="mr-2 h-5 w-5" /> Bande-annonce
                 </Button>
               )}
@@ -369,7 +396,11 @@ export default function FilmDetailPage() {
                   <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
                     <iframe
-                      src={movie.trailerUrl.replace('watch?v=', 'embed/')}
+                      src={
+                        movie.trailerUrl.includes('youtube.com/watch')
+                          ? movie.trailerUrl.replace('watch?v=', 'embed/')
+                          : movie.trailerUrl
+                      }
                       title={`Bande-annonce de ${movie.title}`}
                       allowFullScreen
                       className="w-full h-full"

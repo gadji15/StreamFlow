@@ -414,6 +414,24 @@ export default function AdminAddFilmPage() {
         }
       }
 
+      // Vérification préalable pour éviter les doublons (titre + année)
+      const { data: existingFilm, error: checkErr } = await supabase
+        .from('films')
+        .select('id')
+        .eq('title', title)
+        .eq('year', year)
+        .maybeSingle();
+
+      if (existingFilm) {
+        toast({
+          title: "Doublon détecté",
+          description: "Un film avec ce titre et cette année existe déjà.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Insertion du film dans la table 'films'
       console.log("[INSERT] Enregistrement du film dans la table films...");
       const { data: insertData, error: insertError } = await supabase
@@ -441,13 +459,26 @@ export default function AdminAddFilmPage() {
         .single();
 
       if (insertError || !insertData) {
-        console.error("[ERREUR INSERT films]", insertError);
-        toast({
-          title: "Erreur",
-          description: insertError.message || "Impossible d'ajouter le film.",
-          variant: "destructive",
-        });
-        throw insertError || new Error("Impossible d'ajouter le film.");
+        // Gestion des erreurs d'unicité SQL
+        if (
+          insertError?.code === "23505" ||
+          (typeof insertError?.message === "string" && insertError.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Un film avec ce titre et cette année existe déjà.",
+            variant: "destructive",
+          });
+        } else {
+          console.error("[ERREUR INSERT films]", insertError);
+          toast({
+            title: "Erreur",
+            description: insertError.message || "Impossible d'ajouter le film.",
+            variant: "destructive",
+          });
+        }
+        setIsSubmitting(false);
+        return;
       }
       console.log("[SUCCESS] Film inséré:", insertData);
 
