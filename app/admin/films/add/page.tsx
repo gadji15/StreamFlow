@@ -501,7 +501,7 @@ export default function AdminAddFilmPage() {
       {/* TMDB Search */}
       {/* TMDB Live Search + bouton */}
       <div className="mb-6" role="search" aria-label="Recherche TMDB">
-        <form onSubmit={handleTmdbSearch}>
+        <form onSubmit={handleTmdbSearch} className="mb-6 w-full max-w-full">
           <div className="flex flex-col sm:flex-row gap-2 items-center">
             <label htmlFor="tmdb-search" className="font-medium text-gray-200 mr-2">Recherche TMDB :</label>
             <Input
@@ -567,7 +567,7 @@ export default function AdminAddFilmPage() {
       </div>
 
       {/* Formulaire principal d'ajout */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="w-full max-w-full">
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
             <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">

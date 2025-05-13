@@ -21,8 +21,8 @@ interface CastMemberInputProps {
 
 export function CastMemberInput({ castMember, onChange, onRemove, onUploadPhoto }: CastMemberInputProps) {
   return (
-    <div className="border border-gray-800 rounded-lg p-4 bg-gray-950/50">
-      <div className="flex justify-between items-start mb-4">
+    <div className="border border-gray-800 rounded-lg p-3 sm:p-4 bg-gray-950/50">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0 mb-4">
         <h4 className="text-white font-medium">Acteur</h4>
         <Button
           variant="ghost"
@@ -34,7 +34,7 @@ export function CastMemberInput({ castMember, onChange, onRemove, onUploadPhoto 
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex flex-col gap-4 md:grid md:grid-cols-3">
         <div>
           <Label htmlFor="cast-name" className="text-gray-300">
             Nom de l'acteur

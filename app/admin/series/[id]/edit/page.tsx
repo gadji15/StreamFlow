@@ -298,7 +298,7 @@ export default function AdminEditSeriesPage() {
         <h1 className="text-3xl font-bold">Modifier une série</h1>
       </div>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="w-full max-w-full">
         <Tabs defaultValue="general" className="bg-gray-800 rounded-lg shadow-lg">
           <TabsList className="bg-gray-700 rounded-t-lg p-0 border-b border-gray-600">
             <TabsTrigger value="general" className="rounded-tl-lg rounded-bl-none rounded-tr-none px-5 py-3">
