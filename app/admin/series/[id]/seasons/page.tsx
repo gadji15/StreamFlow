@@ -288,7 +288,7 @@ export default function AdminSeriesSeasonsPage() {
                     if (e.target.value.length > 2) {
                       setSeriesLoading(true);
                       try {
-                        const resp = await fetch(`/api/tmdb/search/tv?query=${encodeURIComponent(e.target.value)}`);
+                        const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(e.target.value)}`);
                         const data = await resp.json();
                         setSeriesSuggestions(data.results || []);
                       } catch { setSeriesSuggestions([]); }
