@@ -5,7 +5,13 @@ import AdminHeader from '@/components/admin/admin-header';
 import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 
+'use client';
+
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import AdminHeader from '@/components/admin/admin-header';
+import AdminSidebar from '@/components/admin/admin-sidebar';
+import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const rawPathname = usePathname();
