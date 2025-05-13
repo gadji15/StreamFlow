@@ -60,6 +60,8 @@ export default function AdminFilmsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [movieToDelete, setMovieToDelete] = useState<MovieDB | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Nouveau state pour le menu d'action (modale hamburger)
+  const [actionMenuMovie, setActionMenuMovie] = useState<MovieDB | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -460,12 +462,12 @@ export default function AdminFilmsPage() {
                           variant="ghost"
                           size="icon"
                           aria-label="Actions"
-                          onClick={() => setMovieToDelete(movie)}
+                          onClick={() => setActionMenuMovie(movie)}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                         {/* Menu modal d'actions amélioré */}
-                        <Dialog open={movieToDelete?.id === movie.id} onOpenChange={open => { if (!open) setMovieToDelete(null); }}>
+                        <Dialog open={actionMenuMovie?.id === movie.id} onOpenChange={open => { if (!open) setActionMenuMovie(null); }}>
                           <DialogContent
                             className="max-w-xs p-0 bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl border-0"
                             style={{
@@ -511,10 +513,7 @@ export default function AdminFilmsPage() {
                                 variant="outline"
                                 className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150"
                                 onClick={() => {
-                                  setMovieToDelete(null);
-                                  // On utilise le router client de Next.js, importé avec useRouter()
-                                  // Le hook doit être appelé dans le composant parent
-                                  // On simule ici son usage par window.location si pas accessible
+                                  setActionMenuMovie(null);
                                   if (typeof window !== "undefined" && window.__NEXT_ROUTER__) {
                                     window.__NEXT_ROUTER__.push(`/admin/films/${movie.id}/edit`);
                                   } else if (typeof window !== "undefined") {
@@ -528,7 +527,10 @@ export default function AdminFilmsPage() {
                               <Button
                                 variant="destructive"
                                 className="justify-start bg-white/5 hover:bg-red-600/80 hover:text-white transition duration-150"
-                                onClick={() => { openDeleteDialog(movie); setMovieToDelete(null); }}
+                                onClick={() => {
+                                  setActionMenuMovie(null);
+                                  openDeleteDialog(movie); // Ouvre la modale de confirmation
+                                }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Supprimer
