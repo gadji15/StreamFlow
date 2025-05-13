@@ -460,27 +460,54 @@ export default function AdminFilmsPage() {
                           variant="ghost"
                           size="icon"
                           aria-label="Actions"
-                          onClick={() => setMovieToDelete(movie)} // On réutilise movieToDelete pour ouvrir la modal d'actions
+                          onClick={() => setMovieToDelete(movie)}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                        {/* Menu modal d'actions */}
+                        {/* Menu modal d'actions amélioré */}
                         <Dialog open={movieToDelete?.id === movie.id} onOpenChange={open => { if (!open) setMovieToDelete(null); }}>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Actions sur le film</DialogTitle>
-                              <DialogDescription>
-                                Choisissez une action pour &laquo;{movie.title}&raquo;
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col gap-3 mt-4">
-                              <Button asChild variant="outline">
+                          <DialogContent
+                            className="max-w-xs p-0 bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl border-0"
+                            style={{
+                              minWidth: 0,
+                              width: "94vw",
+                              maxWidth: "340px",
+                              backgroundColor: "rgba(17,24,39,0.95)",
+                              boxShadow: "0 6px 32px 0 rgb(0 0 0 / 0.22)"
+                            }}
+                          >
+                            {/* Aperçu film */}
+                            <div className="flex items-center gap-3 px-4 pt-4 pb-2 border-b border-gray-800">
+                              <div className="h-16 w-11 flex-shrink-0 rounded-md overflow-hidden border border-gray-700 bg-gray-800 shadow-inner">
+                                <img
+                                  src={movie.poster || '/placeholder-backdrop.jpg'}
+                                  alt={movie.title}
+                                  className="w-full h-full object-cover"
+                                  style={{ background: "#222" }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate">{movie.title}</div>
+                                <div className="text-xs text-gray-400 truncate">{movie.year} &middot; {(movie.genre || '').split(',').map(g => g.trim()).filter(Boolean).slice(0,2).join(', ')}{movie.genre && movie.genre.split(',').length > 2 ? '…' : ''}</div>
+                                <div className="flex gap-1 mt-1">
+                                  {movie.published
+                                    ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publié</span>
+                                    : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
+                                  }
+                                  {movie.isvip &&
+                                    <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-2 px-4 py-4">
+                              <Button asChild variant="outline" className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150">
                                 <Link href={`/films/${movie.id}`} target="_blank">
                                   <Eye className="h-4 w-4 mr-2" />
-                                  Voir
+                                  Voir la fiche
                                 </Link>
                               </Button>
-                              <Button asChild variant="outline">
+                              <Button asChild variant="outline" className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150">
                                 <Link href={`/admin/films/${movie.id}/edit`}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Modifier
@@ -488,14 +515,15 @@ export default function AdminFilmsPage() {
                               </Button>
                               <Button
                                 variant="destructive"
+                                className="justify-start bg-white/5 hover:bg-red-600/80 hover:text-white transition duration-150"
                                 onClick={() => { openDeleteDialog(movie); setMovieToDelete(null); }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Supprimer
                               </Button>
                             </div>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setMovieToDelete(null)}>
+                            <DialogFooter className="px-4 pb-3 pt-0">
+                              <Button variant="outline" size="sm" onClick={() => setMovieToDelete(null)} className="w-full mt-2 bg-white/10 hover:bg-white/20 transition">
                                 Annuler
                               </Button>
                             </DialogFooter>
