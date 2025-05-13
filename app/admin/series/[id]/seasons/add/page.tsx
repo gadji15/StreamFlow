@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabaseClient';
 export default function AddSeasonPage() {
   const router = useRouter();
   // @ts-ignore
-  const { seriesId } = useParams(); // récupère l'id de la série depuis l'URL
+  const { id } = useParams(); // récupère l'id de la série depuis l'URL
   const { toast } = useToast();
 
   // États du formulaire
@@ -29,8 +29,8 @@ export default function AddSeasonPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!seriesId || !seasonNumber) {
-      toast({ title: 'Erreur', description: 'Série et numéro de saison obligatoires.', variant: 'destructive' });
+    if (!id || !seasonNumber) {
+      toast({ title: 'Erreur', description: 'Série et numéro de saison obligatoires (id manquant).', variant: 'destructive' });
       return;
     }
     setIsSubmitting(true);
@@ -40,7 +40,7 @@ export default function AddSeasonPage() {
       const { data: existing, error: checkError } = await supabase
         .from('seasons')
         .select('id')
-        .eq('series_id', seriesId)
+        .eq('series_id', id)
         .eq('season_number', seasonNumber)
         .maybeSingle();
 
@@ -55,7 +55,7 @@ export default function AddSeasonPage() {
       }
 
       const { data, error } = await supabase.from('seasons').insert([{
-        series_id: seriesId,
+        series_id: id,
         season_number: seasonNumber,
         title: title || null,
         description: description || null,
@@ -82,7 +82,7 @@ export default function AddSeasonPage() {
       }
 
       toast({ title: 'Saison ajoutée', description: `Saison ${seasonNumber} créée avec succès.` });
-      router.push(`/admin/series/${seriesId}`);
+      router.push(`/admin/series/${id}`);
     } catch (error) {
       toast({ title: 'Erreur', description: "Impossible d'ajouter la saison.", variant: 'destructive' });
     } finally {
