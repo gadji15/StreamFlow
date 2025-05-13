@@ -1,0 +1,136 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabaseClient';
+
+export default function AddEpisodePage() {
+  const router = useRouter();
+  // @ts-ignore
+  const { seriesId, seasonId } = useParams(); // récupère les ids depuis l'URL
+  const { toast } = useToast();
+
+  // États du formulaire
+  const [episodeNumber, setEpisodeNumber] = useState<number>(1);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [airDate, setAirDate] = useState('');
+  const [duration, setDuration] = useState<number | ''>('');
+  const [tmdbId, setTmdbId] = useState<number | ''>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Soumission du formulaire
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!seasonId || !episodeNumber) {
+      toast({ title: 'Erreur', description: 'Saison et numéro d\'épisode obligatoires.', variant: 'destructive' });
+      return;
+    }
+    setIsSubmitting(true);
+
+    try {
+      // Vérification anti-doublon
+      const { data: existing, error: checkError } = await supabase
+        .from('episodes')
+        .select('id')
+        .eq('season_id', seasonId)
+        .eq('episode_number', episodeNumber)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Doublon détecté",
+          description: "Un épisode avec ce numéro existe déjà pour cette saison.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Insertion
+      const { data, error } = await supabase.from('episodes').insert([{
+        season_id: seasonId,
+        episode_number: episodeNumber,
+        title: title || null,
+        description: description || null,
+        air_date: airDate || null,
+        duration: duration || null,
+        tmdb_id: tmdbId || null,
+      }]);
+      if (error) {
+        if (
+          error.code === "23505" ||
+          (typeof error.message === "string" && error.message.toLowerCase().includes("unique"))
+        ) {
+          toast({
+            title: "Doublon détecté",
+            description: "Un épisode avec ce numéro existe déjà pour cette saison.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: 'Erreur', description: "Impossible d'ajouter l'épisode.", variant: 'destructive' });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      toast({ title: 'Épisode ajouté', description: `Épisode ${episodeNumber} créé avec succès.` });
+      router.push(`/admin/series/${seriesId}/seasons/${seasonId}`);
+    } catch (error) {
+      toast({ title: 'Erreur', description: "Impossible d'ajouter l'épisode.", variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto bg-gray-800 p-6 rounded-lg shadow">
+      <h1 className="text-2xl font-bold mb-4">Ajouter un épisode</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="episodeNumber">Numéro d'épisode *</Label>
+          <Input
+            id="episodeNumber"
+            type="number"
+            min={1}
+            value={episodeNumber}
+            onChange={e => setEpisodeNumber(Number(e.target.value))}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="title">Titre</Label>
+          <Input id="title" value={title} onChange={e => setTitle(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="description">Description</Label>
+          <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
+        </div>
+        <div>
+          <Label htmlFor="airDate">Date de diffusion</Label>
+          <Input id="airDate" type="date" value={airDate} onChange={e => setAirDate(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="duration">Durée (minutes)</Label>
+          <Input id="duration" type="number" value={duration} onChange={e => setDuration(e.target.value ? Number(e.target.value) : '')} />
+        </div>
+        <div>
+          <Label htmlFor="tmdbId">TMDB ID</Label>
+          <Input id="tmdbId" type="number" value={tmdbId} onChange={e => setTmdbId(e.target.value ? Number(e.target.value) : '')} />
+        </div>
+        <div className="flex gap-3 justify-end mt-6">
+          <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Annuler</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Ajout en cours..." : "Ajouter l'épisode"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
