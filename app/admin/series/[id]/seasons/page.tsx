@@ -231,7 +231,29 @@ export default function AdminSeriesSeasonsPage() {
         <>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Saisons de la série</h2>
-            <Button onClick={() => { setShowForm(!showForm); resetForm(); }}>
+            <Button
+              onClick={() => {
+                if (showForm) {
+                  // On ferme et on reset
+                  resetForm();
+                } else {
+                  // On ouvre et on reset le state du form seulement (sans refermer)
+                  setShowForm(true);
+                  setForm({
+                    season_number: "",
+                    title: "",
+                    description: "",
+                    poster: "",
+                    air_date: "",
+                    tmdb_id: "",
+                    episode_count: "",
+                    tmdb_series_id: "",
+                  });
+                  setEditing(null);
+                  setTmdbPreview(null);
+                }
+              }}
+            >
               {showForm ? "Annuler" : "Ajouter une saison"}
             </Button>
           </div>
