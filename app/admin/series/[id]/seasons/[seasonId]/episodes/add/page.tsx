@@ -27,6 +27,52 @@ export default function AddEpisodePage() {
   const [voteCount, setVoteCount] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Recherche TMDB
+  const [tmdbSeriesId, setTmdbSeriesId] = useState('');
+  const [tmdbSeasonNumber, setTmdbSeasonNumber] = useState('');
+  const [tmdbEpisodeNumber, setTmdbEpisodeNumber] = useState('');
+  const [tmdbPreview, setTmdbPreview] = useState<any>(null);
+  const [isTmdbLoading, setIsTmdbLoading] = useState(false);
+
+  // Import TMDB
+  const fetchEpisodeFromTMDB = async () => {
+    if (!tmdbSeriesId || !tmdbSeasonNumber || !tmdbEpisodeNumber) {
+      toast({ title: "Champs TMDB manquants", description: "Remplis tous les champs pour la recherche TMDB.", variant: "destructive" });
+      return;
+    }
+    setIsTmdbLoading(true);
+    setTmdbPreview(null);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+      const res = await fetch(
+        `https://api.themoviedb.org/3/tv/${tmdbSeriesId}/season/${tmdbSeasonNumber}/episode/${tmdbEpisodeNumber}?api_key=${apiKey}&language=fr-FR`
+      );
+      if (!res.ok) {
+        setIsTmdbLoading(false);
+        toast({ title: "Non trouvé", description: "Aucun épisode trouvé sur TMDB.", variant: "destructive" });
+        return;
+      }
+      const data = await res.json();
+      setTmdbPreview(data);
+    } catch {
+      toast({ title: "Erreur TMDB", description: "Impossible de récupérer les infos TMDB.", variant: "destructive" });
+    }
+    setIsTmdbLoading(false);
+  };
+
+  const importFromTMDB = () => {
+    if (!tmdbPreview) return;
+    setTitle(tmdbPreview.name || "");
+    setDescription(tmdbPreview.overview || "");
+    setAirDate(tmdbPreview.air_date || "");
+    setPoster(tmdbPreview.still_path ? `https://image.tmdb.org/t/p/w500${tmdbPreview.still_path}` : "");
+    setRuntime(tmdbPreview.runtime || "");
+    setTmdbId(tmdbPreview.id || "");
+    setVoteAverage(tmdbPreview.vote_average || "");
+    setVoteCount(tmdbPreview.vote_count || "");
+    toast({ title: "Champs pré-remplis depuis TMDB !" });
+  };
+
   // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +144,56 @@ export default function AddEpisodePage() {
   return (
     <div className="max-w-xl mx-auto bg-gray-800 p-6 rounded-lg shadow">
       <h1 className="text-2xl font-bold mb-4">Ajouter un épisode</h1>
+      {/* Recherche TMDB */}
+      <div className="mb-6 border border-gray-700 rounded-lg p-4 bg-gray-900">
+        <h2 className="text-lg font-semibold mb-2">Recherche TMDB (remplissage automatique)</h2>
+        <div className="flex flex-col md:flex-row gap-2">
+          <Input
+            placeholder="ID TMDB série"
+            value={tmdbSeriesId}
+            onChange={e => setTmdbSeriesId(e.target.value)}
+            className="w-full"
+          />
+          <Input
+            placeholder="Numéro de saison"
+            value={tmdbSeasonNumber}
+            onChange={e => setTmdbSeasonNumber(e.target.value)}
+            type="number"
+            min={1}
+            className="w-full"
+          />
+          <Input
+            placeholder="Numéro d'épisode"
+            value={tmdbEpisodeNumber}
+            onChange={e => setTmdbEpisodeNumber(e.target.value)}
+            type="number"
+            min={1}
+            className="w-full"
+          />
+          <Button type="button" onClick={fetchEpisodeFromTMDB} disabled={isTmdbLoading}>
+            {isTmdbLoading ? "Recherche..." : "Rechercher"}
+          </Button>
+        </div>
+        {tmdbPreview && (
+          <div className="mt-3 flex gap-4 items-center p-2 border bg-gray-800 rounded">
+            {tmdbPreview.still_path && (
+              <img
+                src={`https://image.tmdb.org/t/p/w154${tmdbPreview.still_path}`}
+                alt=""
+                className="h-20 rounded"
+              />
+            )}
+            <div>
+              <div className="text-base font-bold">{tmdbPreview.name} (Épisode {tmdbPreview.episode_number})</div>
+              <div className="text-xs text-gray-400">{tmdbPreview.air_date}</div>
+              <div className="text-xs">{tmdbPreview.overview?.slice(0, 180)}{tmdbPreview.overview?.length > 180 ? "…" : ""}</div>
+            </div>
+            <Button type="button" size="sm" className="ml-auto" onClick={importFromTMDB}>
+              Importer les infos
+            </Button>
+          </div>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="episodeNumber">Numéro d'épisode *</Label>
@@ -121,6 +217,9 @@ export default function AddEpisodePage() {
         <div>
           <Label htmlFor="poster">Poster (URL)</Label>
           <Input id="poster" value={poster} onChange={e => setPoster(e.target.value)} />
+          {poster && (
+            <img alt="Aperçu Poster" src={poster} className="mt-2 h-20 rounded shadow border border-gray-700" />
+          )}
         </div>
         <div>
           <Label htmlFor="airDate">Date de diffusion</Label>
