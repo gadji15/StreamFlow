@@ -36,10 +36,15 @@ export default function AdminSeriesSeasonsPage() {
     air_date: "",
     tmdb_id: "",
     episode_count: "",
-    tmdb_series_id: "", // Pour la recherche TMDB
+    tmdb_series_id: "",
+    series_autocomplete: "",
   });
   const [tmdbPreview, setTmdbPreview] = useState<any>(null);
   const [isTmdbLoading, setIsTmdbLoading] = useState(false);
+  const [seriesSuggestions, setSeriesSuggestions] = useState<any[]>([]);
+  const [seriesLoading, setSeriesLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const { toast } = useToast();
 
   // Charger les saisons de la série
@@ -261,19 +266,87 @@ export default function AdminSeriesSeasonsPage() {
           {showForm && (
             <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded-lg bg-gray-900 space-y-3">
               <div>
-                <label className="block text-sm">ID TMDB de la série (obligatoire pour recherche)</label>
+                <label className="block text-sm font-medium" htmlFor="series-autocomplete">
+                  Série TMDB <span aria-hidden="true">*</span>
+                </label>
                 <input
-                  type="text"
-                  name="tmdb_series_id"
-                  value={form.tmdb_series_id}
-                  onChange={handleChange}
+                  id="series-autocomplete"
+                  name="series_autocomplete"
+                  type="search"
+                  autoComplete="off"
                   className="input input-bordered w-full"
-                  placeholder="ex: 1399 (Game of Thrones)"
+                  placeholder="Rechercher une série TMDB…"
+                  value={form.series_autocomplete || ""}
+                  onChange={async (e) => {
+                    setForm(f => ({
+                      ...f,
+                      series_autocomplete: e.target.value,
+                      tmdb_series_id: ""
+                    }));
+                    setSeriesSuggestions([]);
+                    setShowSuggestions(true);
+                    if (e.target.value.length > 2) {
+                      setSeriesLoading(true);
+                      try {
+                        const resp = await fetch(`/api/tmdb/search/tv?query=${encodeURIComponent(e.target.value)}`);
+                        const data = await resp.json();
+                        setSeriesSuggestions(data.results || []);
+                      } catch { setSeriesSuggestions([]); }
+                      setSeriesLoading(false);
+                    }
+                  }}
+                  aria-autocomplete="list"
+                  aria-controls="series-suggestions"
+                  aria-expanded={showSuggestions}
+                  aria-activedescendant={activeSuggestionIndex >= 0 ? `series-suggestion-${activeSuggestionIndex}` : undefined}
+                  role="combobox"
                 />
+                {/* Suggestions dropdown */}
+                {showSuggestions && !!form.series_autocomplete && (
+                  <ul
+                    id="series-suggestions"
+                    className="absolute z-10 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow"
+                    role="listbox"
+                  >
+                    {seriesLoading && (
+                      <li className="p-2 text-sm text-gray-400">Chargement…</li>
+                    )}
+                    {seriesSuggestions.map((suggestion, idx) => (
+                      <li
+                        key={suggestion.id}
+                        id={`series-suggestion-${idx}`}
+                        className={`p-2 cursor-pointer hover:bg-gray-800 ${activeSuggestionIndex === idx ? "bg-gray-800" : ""}`}
+                        role="option"
+                        aria-selected={activeSuggestionIndex === idx}
+                        tabIndex={-1}
+                        onClick={() => {
+                          setForm(f => ({
+                            ...f,
+                            series_autocomplete: suggestion.name + (suggestion.first_air_date ? " (" + suggestion.first_air_date.slice(0, 4) + ")" : ""),
+                            tmdb_series_id: suggestion.id.toString()
+                          }));
+                          setSeriesSuggestions([]);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        {suggestion.name}{" "}
+                        {suggestion.first_air_date && (
+                          <span className="text-xs text-gray-400">({suggestion.first_air_date.slice(0, 4)})</span>
+                        )}
+                      </li>
+                    ))}
+                    {!seriesLoading && seriesSuggestions.length === 0 && (
+                      <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                    )}
+                  </ul>
+                )}
               </div>
               <div>
-                <label className="block text-sm">Numéro de saison *</label>
+                <label className="block text-sm font-medium" htmlFor="season_number">
+                  Numéro de saison <span aria-hidden="true">*</span>
+                </label>
                 <input
+                  id="season_number"
                   type="number"
                   name="season_number"
                   required
@@ -281,22 +354,25 @@ export default function AdminSeriesSeasonsPage() {
                   onChange={handleChange}
                   className="input input-bordered w-full"
                   min={1}
+                  aria-required="true"
+                  autoComplete="off"
                 />
               </div>
-              {/* Recherche TMDB en temps réel */}
+              {/* Recherche TMDB améliorée */}
               {(form.tmdb_series_id && form.season_number) && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-1">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={() => fetchSeasonFromTMDB(form.tmdb_series_id, form.season_number)}
                     disabled={isTmdbLoading}
+                    aria-label="Rechercher la saison sur TMDB"
                   >
                     {isTmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
                   </Button>
                   {tmdbPreview && (
-                    <Button type="button" size="sm" onClick={importFromTMDB}>
+                    <Button type="button" size="sm" onClick={importFromTMDB} aria-label="Importer les infos de TMDB">
                       Importer les infos
                     </Button>
                   )}
