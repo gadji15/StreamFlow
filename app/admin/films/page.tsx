@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  Film, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Search, 
-  Eye, 
+import {
+  Film,
+  Edit,
+  Trash2,
+  Plus,
+  Search,
+  Eye,
   Star,
-  MoreHorizontal
+  MoreHorizontal,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,65 +33,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
-type Movie = {
+type MovieDB = {
   id: string;
   title: string;
   year: number;
-  posterUrl?: string;
-  genres?: string[];
-  rating?: number;
-  views?: number;
+  poster: string|null;
+  genre: string|null;
+  vote_average?: number|null;
+  vote_count?: number|null;
+  views?: number|null;
   published?: boolean;
-  isVIP?: boolean;
+  isvip?: boolean;
 };
 
 export default function AdminFilmsPage() {
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [movies, setMovies] = useState<MovieDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [genres, setGenres] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
+  const [movieToDelete, setMovieToDelete] = useState<MovieDB | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  // Nouveaux états pour l'utilisateur courant et ses rôles
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [adminRoleId, setAdminRoleId] = useState<number | null>(null);
-  const [superAdminRoleId, setSuperAdminRoleId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const { toast } = useToast();
 
-  // Initialisation utilisateur courant et rôles
+  // Charger genres pour filtre (au montage)
   useEffect(() => {
-    async function fetchCurrentUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        const { data: rolesList } = await supabase.from("roles").select("*");
-        const adminRole = rolesList?.find((r: any) => r.name === "admin");
-        const superAdminRole = rolesList?.find((r: any) => r.name === "super_admin");
-        setAdminRoleId(adminRole?.id ?? null);
-        setSuperAdminRoleId(superAdminRole?.id ?? null);
-
-        const { data: userRoles } = await supabase
-          .from("user_roles")
-          .select("role_id")
-          .eq("user_id", user.id);
-
-        setCurrentUser({
-          ...profile,
-          user_id: user.id,
-          roles: userRoles?.map(ur => ur.role_id) || [],
-        });
-      }
+    async function fetchGenres() {
+      const { data, error } = await supabase.from('genres').select('name');
+      if (data) setGenres(data.map(g => g.name));
     }
-    fetchCurrentUser();
+    fetchGenres();
   }, []);
 
   // Charger les films
@@ -98,26 +77,24 @@ export default function AdminFilmsPage() {
     const loadMovies = async () => {
       setLoading(true);
       try {
-        let query = supabase.from('films').select('*').limit(100);
-
-        if (statusFilter === 'published') {
-          query = query.eq('published', true);
-        }
-        if (searchTerm) {
-          query = query.ilike('title', `%${searchTerm}%`);
-        }
+        let query = supabase.from('films').select('*').order('created_at', { ascending: false }).limit(1000);
+        if (statusFilter === 'published') query = query.eq('published', true);
+        if (statusFilter === 'draft') query = query.eq('published', false);
+        if (searchTerm) query = query.ilike('title', `%${searchTerm}%`);
         const { data, error } = await query;
         if (error) throw error;
 
-        let filteredMovies = data || [];
+        let filteredMovies: MovieDB[] = data || [];
 
-        if (statusFilter === 'draft') {
-          filteredMovies = filteredMovies.filter((movie: Movie) => !movie.published);
+        // Filtrer par genre (front car genre est une chaîne)
+        if (genreFilter !== 'all') {
+          filteredMovies = filteredMovies.filter((movie: MovieDB) =>
+            movie.genre?.split(',').map(g => g.trim().toLowerCase()).includes(genreFilter.toLowerCase())
+          );
         }
 
         setMovies(filteredMovies);
       } catch (error) {
-        console.error('Erreur lors du chargement des films:', error);
         toast({
           title: 'Erreur',
           description: 'Impossible de charger la liste des films.',
@@ -129,52 +106,27 @@ export default function AdminFilmsPage() {
     };
 
     loadMovies();
-  }, [searchTerm, statusFilter, toast]);
+  }, [searchTerm, statusFilter, genreFilter, toast]);
 
-  // Vérifie si le user est admin ou super_admin
-  const isAdmin = () =>
-    currentUser &&
-    ((adminRoleId && currentUser.roles?.includes(adminRoleId)) ||
-      (superAdminRoleId && currentUser.roles?.includes(superAdminRoleId)));
+  // Pagination
+  const paginatedMovies = movies.slice((page-1)*pageSize, page*pageSize);
+  const totalPages = Math.ceil(movies.length / pageSize);
 
-  // Gérer la suppression d'un film
+  // Suppression
   const handleDeleteMovie = async () => {
     if (!movieToDelete) return;
-
-    // Sécurité : seul admin/super_admin peut supprimer
-    if (!isAdmin()) {
-      toast({
-        title: 'Accès refusé',
-        description: 'Vous n\'avez pas les droits nécessaires pour supprimer un film.',
-        variant: 'destructive',
-      });
-      setDeleteDialogOpen(false);
-      return;
-    }
-
     setIsDeleting(true);
     try {
       const { error } = await supabase.from('films').delete().eq('id', movieToDelete.id);
       if (error) throw error;
-
       setMovies(movies.filter(movie => movie.id !== movieToDelete.id));
-
-      // Log l’action dans admin_logs
-      await supabase.from('admin_logs').insert([{
-        admin_id: currentUser.user_id,
-        action: 'DELETE_FILM',
-        details: { film_id: movieToDelete.id, film_title: movieToDelete.title },
-      }]);
-
       toast({
         title: 'Film supprimé',
-        description: `Le film "${movieToDelete.title}" a été supprimé avec succès.`,
+        description: `Le film "${movieToDelete.title}" a été supprimé.`,
       });
-
       setDeleteDialogOpen(false);
       setMovieToDelete(null);
     } catch (error) {
-      console.error('Erreur lors de la suppression du film:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le film.',
@@ -186,23 +138,34 @@ export default function AdminFilmsPage() {
   };
 
   // Ouvrir le dialogue de confirmation de suppression
-  const openDeleteDialog = (movie: Movie) => {
+  const openDeleteDialog = (movie: MovieDB) => {
     setMovieToDelete(movie);
     setDeleteDialogOpen(true);
+  };
+
+  // Rafraîchir la liste
+  const handleRefresh = () => {
+    setPage(1);
+    setSearchTerm('');
+    setStatusFilter('all');
+    setGenreFilter('all');
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold">Films</h1>
-        {isAdmin() && (
+        <div className="flex gap-2">
+          <Button variant="ghost" aria-label="Rafraîchir" onClick={handleRefresh}>
+            <RefreshCw className="h-5 w-5" />
+          </Button>
           <Link href="/admin/films/add">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Ajouter un film
             </Button>
           </Link>
-        )}
+        </div>
       </div>
       <div className="bg-gray-800 rounded-lg p-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -212,14 +175,27 @@ export default function AdminFilmsPage() {
               type="search"
               placeholder="Rechercher un film..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="pl-10"
+              aria-label="Recherche de film"
             />
           </div>
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={genreFilter}
+            onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
             className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            aria-label="Filtrer par genre"
+          >
+            <option value="all">Tous les genres</option>
+            {genres.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
             <option value="published">Publiés</option>
@@ -242,14 +218,12 @@ export default function AdminFilmsPage() {
                   : "Commencez par ajouter votre premier film"
               }
             </p>
-            {isAdmin() && (
-              <Link href="/admin/films/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un film
-                </Button>
-              </Link>
-            )}
+            <Link href="/admin/films/add">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un film
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -259,79 +233,78 @@ export default function AdminFilmsPage() {
                   <th className="pb-3 font-medium">Film</th>
                   <th className="pb-3 font-medium">Année</th>
                   <th className="pb-3 font-medium text-center">Note</th>
-                  <th className="pb-3 font-medium text-center">Vues</th>
+                  <th className="pb-3 font-medium text-center">Votes</th>
                   <th className="pb-3 font-medium text-center">Statut</th>
                   <th className="pb-3 font-medium text-center">VIP</th>
                   <th className="pb-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {movies.map((movie) => (
-                  <tr key={movie.id} className="border-b border-gray-700">
-                    <td className="py-4">
+                {paginatedMovies.map((movie) => {
+                  const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
+                  const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
+                  return (
+                  <tr key={movie.id} className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
+                    <td className="py-4 min-w-[210px]">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0">
-                          {movie.posterUrl ? (
-                            <img 
-                              src={movie.posterUrl} 
-                              alt={movie.title}
-                              className="h-full w-full object-cover" 
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-gray-700 flex items-center justify-center">
-                              <Film className="h-5 w-5 text-gray-500" />
-                            </div>
-                          )}
+                        <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0 border border-gray-600 bg-gray-800">
+                          <img 
+                            src={posterUrl}
+                            alt={movie.title}
+                            className="h-full w-full object-cover"
+                            onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
+                          />
                         </div>
                         <div>
                           <div className="font-medium">{movie.title}</div>
-                          <div className="text-xs text-gray-400 mt-0.5">
-                            {movie.genres && movie.genres.slice(0, 2).join(', ')}
-                            {movie.genres && movie.genres.length > 2 && '...'}
+                          <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+                            {genres.slice(0, 2).map(g => (
+                              <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
+                            ))}
+                            {genres.length > 2 && <span>…</span>}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4">{movie.year}</td>
                     <td className="py-4 text-center">
-                      {movie.rating ? (
+                      {movie.vote_average ? (
                         <div className="flex items-center justify-center">
                           <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
-                          <span>{movie.rating.toFixed(1)}</span>
+                          <span>{Number(movie.vote_average).toFixed(1)}</span>
                         </div>
                       ) : (
                         <span className="text-gray-500">-</span>
                       )}
                     </td>
                     <td className="py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <Eye className="h-4 w-4 text-gray-400 mr-1" />
-                        <span>{movie.views}</span>
-                      </div>
+                      {movie.vote_count ?? <span className="text-gray-500">-</span>}
                     </td>
                     <td className="py-4 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-xs font-semibold",
                         movie.published
-                          ? 'bg-green-500/20 text-green-500'
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
+                          ? "bg-green-500/20 text-green-500"
+                          : "bg-gray-500/20 text-gray-400"
+                      )}>
                         {movie.published ? 'Publié' : 'Brouillon'}
                       </span>
                     </td>
                     <td className="py-4 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        movie.isVIP
-                          ? 'bg-amber-500/20 text-amber-500'
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {movie.isVIP ? 'VIP' : 'Non'}
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-xs font-semibold",
+                        movie.isvip
+                          ? "bg-amber-500/20 text-amber-500"
+                          : "bg-gray-500/20 text-gray-400"
+                      )}>
+                        {movie.isvip ? 'VIP' : 'Non'}
                       </span>
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end items-center space-x-2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Actions">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -343,32 +316,54 @@ export default function AdminFilmsPage() {
                                 Voir
                               </Link>
                             </DropdownMenuItem>
-                            {isAdmin() && (
-                              <>
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/admin/films/${movie.id}/edit`}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Modifier
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-red-500 focus:text-red-500"
-                                  onClick={() => openDeleteDialog(movie)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </>
-                            )}
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/films/${movie.id}/edit`}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Modifier
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-500 focus:text-red-500"
+                              onClick={() => openDeleteDialog(movie)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p-1))}
+                  disabled={page === 1}
+                  aria-label="Page précédente"
+                >
+                  &larr;
+                </Button>
+                <span className="text-xs text-gray-400 mx-2">
+                  Page {page} sur {totalPages}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages, p+1))}
+                  disabled={page === totalPages}
+                  aria-label="Page suivante"
+                >
+                  &rarr;
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -378,19 +373,19 @@ export default function AdminFilmsPage() {
           <DialogHeader>
             <DialogTitle>Confirmer la suppression</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer le film "{movieToDelete?.title}"? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer le film "{movieToDelete?.title}" ? Cette action est irréversible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
               Annuler
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteMovie}
               disabled={isDeleting}
             >
