@@ -307,6 +307,63 @@ export default function AdminSeriesPage() {
           <Button variant="ghost" aria-label="Rafraîchir" onClick={handleRefresh}>
             <RefreshCw className="h-5 w-5" />
           </Button>
+          {/* Export CSV */}
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Exporter CSV"
+            onClick={() => {
+              // Génération CSV à partir des séries filtrées
+              const csvRows = [
+                [
+                  'Titre',
+                  'Année début',
+                  'Année fin',
+                  'Nb saisons',
+                  'Genres',
+                  'Statut',
+                  'VIP',
+                  'Créateur',
+                  'TMDB ID',
+                  'Publié le',
+                  'MAJ le'
+                ].join(';')
+              ];
+              for (const s of series) {
+                csvRows.push([
+                  `"${s.title.replace(/"/g, '""')}"`,
+                  s.start_year ?? '',
+                  s.end_year ?? '',
+                  seasonCounts[s.id] ?? '',
+                  (s.genre || '').replace(/;/g, '|'),
+                  s.published ? 'Publiée' : 'Brouillon',
+                  s.isvip ? 'Oui' : 'Non',
+                  s.creator ?? '',
+                  s.tmdb_id ?? '',
+                  s.created_at ?? '',
+                  s.updated_at ?? ''
+                ].join(';'));
+              }
+              const csvContent = csvRows.join('\n');
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', 'series_export.csv');
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export CSV
+          </Button>
+          {/* Accès aux logs d'administration */}
+          <Link href="/admin/activity-logs">
+            <Button variant="outline" size="sm" aria-label="Logs admin">
+              Voir les logs admin
+            </Button>
+          </Link>
           <Link href="/admin/series/add">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
