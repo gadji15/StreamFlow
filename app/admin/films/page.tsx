@@ -353,13 +353,60 @@ const handleRefresh = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Rechercher un film..."
+              placeholder="Recherche rapide (titre film)..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="pl-10"
               aria-label="Recherche de film"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRefresh()}
+            className="hidden sm:block"
+          >
+            Réinitialiser
+          </Button>
+        </div>
+        {/* Formulaire recherche avancée */}
+        <form
+          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
+          onSubmit={e => { e.preventDefault(); setPage(1); }}
+        >
+          <Input
+            type="text"
+            placeholder="Titre..."
+            value={advancedSearch.title}
+            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par titre"
+          />
+          <Input
+            type="text"
+            placeholder="Réalisateur..."
+            value={advancedSearch.director}
+            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par réalisateur"
+          />
+          <Input
+            type="number"
+            placeholder="Année..."
+            value={advancedSearch.year}
+            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par année"
+          />
+          <Input
+            type="number"
+            placeholder="TMDB ID..."
+            value={advancedSearch.tmdb}
+            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
+            className="w-full"
+            aria-label="Recherche par TMDB ID"
+          />
+        </form>
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
