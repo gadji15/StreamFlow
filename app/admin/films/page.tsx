@@ -540,6 +540,15 @@ const handleRefresh = () => {
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end items-center space-x-2">
+                        {/* Aperçu rapide */}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Aperçu"
+                          onClick={() => setSelectedMovie(movie)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         {/* Menu hamburger actions */}
                         <Button
                           variant="ghost"
@@ -693,6 +702,90 @@ const handleRefresh = () => {
           </div>
         )}
       </div>
+      {/* Aperçu rapide */}
+      <Dialog open={!!selectedMovie} onOpenChange={open => { if (!open) setSelectedMovie(null); }}>
+        <DialogContent className="max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0">
+          {selectedMovie && (
+            <div className="p-5 space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 h-32 w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
+                  <img
+                    src={selectedMovie.poster || '/placeholder-backdrop.jpg'}
+                    alt={selectedMovie.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-2xl font-bold truncate">{selectedMovie.title}</div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    {selectedMovie.year ?? "-"}
+                  </div>
+                  <div className="flex gap-2 flex-wrap mb-1">
+                    {(selectedMovie.genre || '').split(',').map(g =>
+                      <span key={g} className="inline-block bg-purple-800/20 text-purple-200 px-2 py-0.5 rounded-full text-xs">{g.trim()}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {selectedMovie.published
+                      ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publié</span>
+                      : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
+                    }
+                    {selectedMovie.isvip &&
+                      <span className="bg-amber-600/20 text-amber-300 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
+                    }
+                  </div>
+                  <div className="mt-2 text-xs text-gray-400">
+                    TMDB ID: <span className="text-gray-300">{selectedMovie.tmdb_id ?? '-'}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-400">
+                    Réalisateur: <span className="text-gray-200">{selectedMovie.director ?? '-'}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-400">
+                    Durée: <span className="text-gray-300">{selectedMovie.duration ? `${selectedMovie.duration} min` : '-'}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="font-semibold mb-1 text-sm text-gray-300">Description</div>
+                <div className="text-sm text-gray-200 leading-relaxed max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
+              </div>
+              {/* Trailer et vidéo */}
+              {(selectedMovie.trailer_url || selectedMovie.video_url) && (
+                <div className="flex flex-col gap-2">
+                  {selectedMovie.trailer_url && (
+                    <div>
+                      <div className="font-semibold text-xs text-gray-300">Bande-annonce :</div>
+                      <a href={selectedMovie.trailer_url} target="_blank" rel="noopener" className="text-indigo-400 underline break-all">{selectedMovie.trailer_url}</a>
+                    </div>
+                  )}
+                  {selectedMovie.video_url && (
+                    <div>
+                      <div className="font-semibold text-xs text-gray-300">Vidéo :</div>
+                      <a href={selectedMovie.video_url} target="_blank" rel="noopener" className="text-indigo-400 underline break-all">{selectedMovie.video_url}</a>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Backdrop */}
+              {selectedMovie.backdrop && (
+                <div className="mt-4">
+                  <img
+                    src={selectedMovie.backdrop}
+                    alt="Backdrop"
+                    className="w-full rounded-lg shadow border border-gray-800 object-cover"
+                    style={{ maxHeight: 200 }}
+                  />
+                </div>
+              )}
+              <div className="flex justify-end mt-2">
+                <Button variant="outline" onClick={() => setSelectedMovie(null)}>
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Dialogue de confirmation de suppression */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
