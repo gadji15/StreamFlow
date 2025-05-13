@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Film,
   Edit,
@@ -14,6 +15,11 @@ import {
   RefreshCw,
   CheckSquare,
   Square,
+  User,
+  Calendar,
+  Clock,
+  Video,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,41 +33,53 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type MovieDB = {
   id: string;
   title: string;
+  original_title?: string | null;
   year: number;
   poster: string|null;
+  backdrop?: string|null;
   genre: string|null;
   vote_average?: number|null;
   vote_count?: number|null;
   views?: number|null;
   published?: boolean;
   isvip?: boolean;
+  director?: string|null;
+  duration?: number|null;
+  tmdb_id?: number|null;
+  imdb_id?: string|null;
+  created_at?: string|null;
+  updated_at?: string|null;
+  description?: string|null;
+  trailer_url?: string|null;
+  video_url?: string|null;
 };
 
 export default function AdminFilmsPage() {
   const [movies, setMovies] = useState<MovieDB[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Recherche avancée
   const [searchTerm, setSearchTerm] = useState('');
+  const [advancedSearch, setAdvancedSearch] = useState({
+    title: '',
+    director: '',
+    year: '',
+    tmdb: '',
+  });
+
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [genres, setGenres] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [movieToDelete, setMovieToDelete] = useState<MovieDB | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  // Nouveau state pour le menu d'action (modale hamburger)
   const [actionMenuMovie, setActionMenuMovie] = useState<MovieDB | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<MovieDB | null>(null); // Pour aperçu rapide
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -74,6 +92,7 @@ export default function AdminFilmsPage() {
   const allSelected = paginatedMovies => paginatedMovies.every(m => selectedIds.includes(m.id));
 
   const { toast } = useToast();
+  const router = useRouter();
 
   // Charger genres pour filtre (au montage)
   useEffect(() => {
@@ -84,7 +103,7 @@ export default function AdminFilmsPage() {
     fetchGenres();
   }, []);
 
-  // Charger les films avec tri dynamique
+  // Charger les films avec tri dynamique et recherche avancée
   useEffect(() => {
     const loadMovies = async () => {
       setLoading(true);
@@ -96,7 +115,16 @@ export default function AdminFilmsPage() {
 
         if (statusFilter === 'published') query = query.eq('published', true);
         if (statusFilter === 'draft') query = query.eq('published', false);
-        if (searchTerm) query = query.ilike('title', `%${searchTerm}%`);
+
+        // Recherche avancée multi-champ
+        if (advancedSearch.title.trim()) query = query.ilike('title', `%${advancedSearch.title.trim()}%`);
+        if (advancedSearch.director.trim()) query = query.ilike('director', `%${advancedSearch.director.trim()}%`);
+        if (advancedSearch.year.trim()) query = query.eq('year', Number(advancedSearch.year));
+        if (advancedSearch.tmdb.trim()) query = query.eq('tmdb_id', Number(advancedSearch.tmdb));
+        // Recherche simple (fallback)
+        if (searchTerm && !advancedSearch.title && !advancedSearch.director && !advancedSearch.year && !advancedSearch.tmdb)
+          query = query.ilike('title', `%${searchTerm}%`);
+
         const { data, error } = await query;
         if (error) throw error;
 
@@ -122,8 +150,7 @@ export default function AdminFilmsPage() {
     };
 
     loadMovies();
-    // Ajout dépendance tri
-  }, [searchTerm, statusFilter, genreFilter, sortField, sortOrder, toast]);
+  }, [searchTerm, advancedSearch, statusFilter, genreFilter, sortField, sortOrder, toast]);
 
   // Pagination
   const paginatedMovies = movies.slice((page-1)*pageSize, page*pageSize);
@@ -238,6 +265,14 @@ export default function AdminFilmsPage() {
   const openDeleteDialog = (movie: MovieDB) => {
     setMovieToDelete(movie);
     setDeleteDialogOpen(true);
+  };
+
+  // Rafraîchir la liste
+  const handleRefresh = () => {
+    setPage(1);
+    setSearchTerm('');
+    setStatusFilter('all');
+    setGenreFilter('all');
   };
 
   // Rafraîchir la liste
