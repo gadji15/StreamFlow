@@ -15,11 +15,6 @@ import {
   RefreshCw,
   CheckSquare,
   Square,
-  User,
-  Calendar,
-  Clock,
-  Video,
-  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,23 +35,23 @@ type MovieDB = {
   title: string;
   original_title?: string | null;
   year: number;
-  poster: string|null;
-  backdrop?: string|null;
-  genre: string|null;
-  vote_average?: number|null;
-  vote_count?: number|null;
-  views?: number|null;
+  poster: string | null;
+  backdrop?: string | null;
+  genre: string | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
+  views?: number | null;
   published?: boolean;
   isvip?: boolean;
-  director?: string|null;
-  duration?: number|null;
-  tmdb_id?: number|null;
-  imdb_id?: string|null;
-  created_at?: string|null;
-  updated_at?: string|null;
-  description?: string|null;
-  trailer_url?: string|null;
-  video_url?: string|null;
+  director?: string | null;
+  duration?: number | null;
+  tmdb_id?: number | null;
+  imdb_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  description?: string | null;
+  trailer_url?: string | null;
+  video_url?: string | null;
 };
 
 export default function AdminFilmsPage() {
@@ -97,7 +92,7 @@ export default function AdminFilmsPage() {
   // Charger genres pour filtre (au montage)
   useEffect(() => {
     async function fetchGenres() {
-      const { data, error } = await supabase.from('genres').select('name');
+      const { data } = await supabase.from('genres').select('name');
       if (data) setGenres(data.map(g => g.name));
     }
     fetchGenres();
@@ -122,7 +117,13 @@ export default function AdminFilmsPage() {
         if (advancedSearch.year.trim()) query = query.eq('year', Number(advancedSearch.year));
         if (advancedSearch.tmdb.trim()) query = query.eq('tmdb_id', Number(advancedSearch.tmdb));
         // Recherche simple (fallback)
-        if (searchTerm && !advancedSearch.title && !advancedSearch.director && !advancedSearch.year && !advancedSearch.tmdb)
+        if (
+          searchTerm &&
+          !advancedSearch.title &&
+          !advancedSearch.director &&
+          !advancedSearch.year &&
+          !advancedSearch.tmdb
+        )
           query = query.ilike('title', `%${searchTerm}%`);
 
         const { data, error } = await query;
@@ -153,7 +154,7 @@ export default function AdminFilmsPage() {
   }, [searchTerm, advancedSearch, statusFilter, genreFilter, sortField, sortOrder, toast]);
 
   // Pagination
-  const paginatedMovies = movies.slice((page-1)*pageSize, page*pageSize);
+  const paginatedMovies = movies.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(movies.length / pageSize);
 
   // Sélection groupée
@@ -239,44 +240,42 @@ export default function AdminFilmsPage() {
     }
   };
 
-  // (Gardez uniquement une seule version de chaque fonction comme ci-dessous, supprimez tous les doublons !)
+  // Publication groupée
+  const handleBulkPublish = async (value: boolean) => {
+    if (selectedIds.length === 0) return;
+    try {
+      const { error } = await supabase.from('films').update({ published: value }).in('id', selectedIds);
+      if (error) throw error;
+      setMovies(movies.map(movie =>
+        selectedIds.includes(movie.id) ? { ...movie, published: value } : movie
+      ));
+      toast({
+        title: value ? 'Films publiés' : 'Films dépubliés',
+        description: `${selectedIds.length} film(s) mis à jour.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: "Impossible de mettre à jour le statut des films sélectionnés.",
+        variant: 'destructive',
+      });
+    }
+  };
 
-// Publication groupée
-const handleBulkPublish = async (value: boolean) => {
-  if (selectedIds.length === 0) return;
-  try {
-    const { error } = await supabase.from('films').update({ published: value }).in('id', selectedIds);
-    if (error) throw error;
-    setMovies(movies.map(movie =>
-      selectedIds.includes(movie.id) ? { ...movie, published: value } : movie
-    ));
-    toast({
-      title: value ? 'Films publiés' : 'Films dépubliés',
-      description: `${selectedIds.length} film(s) mis à jour.`,
-    });
-  } catch (error) {
-    toast({
-      title: 'Erreur',
-      description: "Impossible de mettre à jour le statut des films sélectionnés.",
-      variant: 'destructive',
-    });
-  }
-};
+  // Ouvrir le dialogue de confirmation de suppression
+  const openDeleteDialog = (movie: MovieDB) => {
+    setMovieToDelete(movie);
+    setDeleteDialogOpen(true);
+  };
 
-// Ouvrir le dialogue de confirmation de suppression
-const openDeleteDialog = (movie: MovieDB) => {
-  setMovieToDelete(movie);
-  setDeleteDialogOpen(true);
-};
-
-// Rafraîchir la liste
-const handleRefresh = () => {
-  setPage(1);
-  setSearchTerm('');
-  setStatusFilter('all');
-  setGenreFilter('all');
-  setAdvancedSearch({ title: '', director: '', year: '', tmdb: '' });
-};
+  // Rafraîchir la liste
+  const handleRefresh = () => {
+    setPage(1);
+    setSearchTerm('');
+    setStatusFilter('all');
+    setGenreFilter('all');
+    setAdvancedSearch({ title: '', director: '', year: '', tmdb: '' });
+  };
 
   return (
     <div className="space-y-6">
@@ -348,6 +347,7 @@ const handleRefresh = () => {
         </div>
       </div>
       <div className="bg-gray-800 rounded-lg p-6">
+        {/* Recherche rapide et avancée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -369,7 +369,6 @@ const handleRefresh = () => {
             Réinitialiser
           </Button>
         </div>
-        {/* Formulaire recherche avancée */}
         <form
           className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
           onSubmit={e => { e.preventDefault(); setPage(1); }}
@@ -408,127 +407,6 @@ const handleRefresh = () => {
           />
         </form>
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <select
-            value={genreFilter}
-            onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
-            aria-label="Filtrer par genre"
-          >
-            <option value="all">Tous les genres</option>
-            {genres.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
-            aria-label="Filtrer par statut"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="published">Publiés</option>
-            <option value="draft">Brouillons</option>
-          </select>
-        </div>
-        {/* Formulaire recherche avancée */}
-        <form
-          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}
-        >
-          <Input
-            type="text"
-            placeholder="Titre…"
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Réalisateur…"
-            value={advancedSearch.director}
-            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par réalisateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année…"
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID…"
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <select
-            value={genreFilter}
-            onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
-            aria-label="Filtrer par genre"
-          >
-            <option value="all">Tous les genres</option>
-            {genres.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
-            aria-label="Filtrer par statut"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="published">Publiés</option>
-            <option value="draft">Brouillons</option>
-          </select>
-        </div>
-        {/* Formulaire recherche avancée */}
-        <form
-          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}
-        >
-          <Input
-            type="text"
-            placeholder="Titre..."
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Réalisateur..."
-            value={advancedSearch.director}
-            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par réalisateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année..."
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID..."
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
@@ -918,7 +796,6 @@ const handleRefresh = () => {
                 <div className="font-semibold mb-1 text-sm text-gray-300">Description</div>
                 <div className="text-sm text-gray-200 leading-relaxed max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
               </div>
-              {/* Trailer et vidéo */}
               {(selectedMovie.trailer_url || selectedMovie.video_url) && (
                 <div className="flex flex-col gap-2">
                   {selectedMovie.trailer_url && (
@@ -935,7 +812,6 @@ const handleRefresh = () => {
                   )}
                 </div>
               )}
-              {/* Backdrop */}
               {selectedMovie.backdrop && (
                 <div className="mt-4">
                   <img
