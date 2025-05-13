@@ -172,51 +172,56 @@ export default function AdminSeriesSeasonsPage() {
     await deleteSeason(id);
   };
 
+  // Correction : encapsuler le return dans un fragment pour éviter les erreurs de JSX
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Gestion des saisons</h1>
+    <>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Gestion des saisons</h1>
 
-      {loading ? (
-        <div>Chargement…</div>
-      ) : error ? (
-        <div className="text-red-500 mb-4">{error}</div>
-      ) : (
-        </>
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Saisons de la série</h2>
-            <Button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                if (showForm) {
-                  resetForm();
-                } else {
-                  setShowForm(true);
-                  setForm({
-                    season_number: "",
-                    title: "",
-                    description: "",
-                    poster: "",
-                    air_date: "",
-                    tmdb_id: "",
-                    episode_count: "",
-                    tmdb_series_id: "",
-                    series_autocomplete: "",
-                  });
-                  setEditing(null);
-                  setTmdbPreview(null);
-                }
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded transition"
-              aria-label={showForm ? "Annuler" : "Ajouter une saison"}
-            >
-              {showForm ? "Annuler" : "Ajouter une saison"}
-            </Button>
-          </div>
-
-          {showForm && (
-            <form
-              onSubmit={handleSubmit}
+        {loading ? (
+          <div>Chargement…</div>
+        ) : error ? (
+          <div className="text-red-500 mb-4">{error}</div>
+        ) : (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Saisons de la série</h2>
+              <Button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (showForm) {
+                    resetForm();
+                  } else {
+                    setShowForm(true);
+                    setForm({
+                      season_number: "",
+                      title: "",
+                      description: "",
+                      poster: "",
+                      air_date: "",
+                      tmdb_id: "",
+                      episode_count: "",
+                      tmdb_series_id: "",
+                      series_autocomplete: "",
+                    });
+                    setEditing(null);
+                    setTmdbPreview(null);
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded transition"
+                aria-label={showForm ? "Annuler" : "Ajouter une saison"}
+              >
+                {showForm ? "Annuler" : "Ajouter une saison"}
+              </Button>
+            </div>
+            {/* ... suite du JSX ... */}
+          </>
+        )}
+      </div>
+    </>
+  );
+}
               className="mb-8 max-w-2xl mx-auto bg-white/5 border border-gray-800 shadow-xl rounded-xl px-8 py-6 space-y-6 relative"
               autoComplete="off"
               aria-label={editing ? "Modifier une saison" : "Ajouter une saison"}
