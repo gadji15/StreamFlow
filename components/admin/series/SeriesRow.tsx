@@ -92,7 +92,7 @@ export default function SeriesRow({
         <div className="flex justify-end items-center space-x-2 relative">
           <button
             type="button"
-            aria-label="Aperçu"
+            aria-label={`Aperçu de la série "${serie.title}"`}
             className="bg-gray-700 text-white px-2 rounded"
             onClick={() => onAction && onAction("preview", serie)}
           >
@@ -100,7 +100,7 @@ export default function SeriesRow({
           </button>
           <button
             type="button"
-            aria-label="Afficher saisons/épisodes"
+            aria-label={`Afficher saisons et épisodes pour "${serie.title}"`}
             className="bg-gray-700 text-white px-2 rounded"
             onClick={() => onAction && onAction("expand", serie)}
           >
@@ -108,9 +108,10 @@ export default function SeriesRow({
           </button>
           <button
             type="button"
-            aria-label="Actions"
+            aria-label={`Ouvrir le menu d'actions pour "${serie.title}" (éditer, supprimer, gérer les saisons)`}
             className="bg-gray-700 text-white px-2 rounded"
             onClick={() => setMenuOpen(o => !o)}
+            tabIndex={0}
           >
             ⋮
           </button>
@@ -120,6 +121,7 @@ export default function SeriesRow({
                 onEdit={() => { setMenuOpen(false); onAction && onAction("edit", serie); }}
                 onDelete={() => { setMenuOpen(false); onAction && onAction("delete", serie); }}
                 onSeasons={() => { setMenuOpen(false); onAction && onAction("seasons", serie); }}
+                serieTitle={serie.title}
               />
             </div>
           )}
