@@ -154,10 +154,13 @@ export default function SeasonModal({
   };
 
   // Import TMDB intelligent pour une saison
+  // Correction : gestion claire du TMDB ID (depuis prop ou form), feedback loader, activation bouton, toast erreur.
   const handleTMDBImport = async () => {
-    if (!tmdbSeriesId || !form.season_number) {
+    const tmdbIdToUse = tmdbSeriesId || form.tmdb_id;
+    if (!tmdbIdToUse || !form.season_number) {
       toast({
-        title: "Renseignez le numéro de saison et l'ID TMDB de la série",
+        title: "Import impossible",
+        description: "Renseignez l'ID TMDB de la série ET le numéro de saison.",
         variant: "destructive",
       });
       return;
@@ -165,7 +168,7 @@ export default function SeasonModal({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(form.season_number)}`
+        `/api/tmdb/season/${encodeURIComponent(tmdbIdToUse)}/${encodeURIComponent(form.season_number)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
@@ -261,7 +264,7 @@ export default function SeasonModal({
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
                 onClick={handleTMDBImport}
-                disabled={loading || !tmdbSeriesId || !form.season_number}
+                disabled={loading || !(tmdbSeriesId || form.tmdb_id) || !form.season_number}
                 aria-label="Importer cette saison depuis TMDB"
               >
                 {loading ? (
