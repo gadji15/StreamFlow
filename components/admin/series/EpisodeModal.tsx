@@ -78,8 +78,18 @@ export default function EpisodeModal({
     toast({ title: "Champs pré-remplis depuis TMDB !" });
   };
 
+  const [duplicate, setDuplicate] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setDuplicate(false);
+    // Vérification doublon côté client
+    const { data: existing, error } = await fetch(`/api/admin/check-episode-duplicate?season_id=${encodeURIComponent(seasonId)}&episode_number=${encodeURIComponent(form.episode_number)}`).then(res=>res.json());
+    if (existing && existing.length > 0) {
+      setDuplicate(true);
+      toast({ title: "Doublon", description: "Un épisode avec ce numéro existe déjà pour cette saison.", variant: "destructive" });
+      return;
+    }
     await onSubmit({
       ...form,
       episode_number: form.episode_number ? Number(form.episode_number) : undefined,

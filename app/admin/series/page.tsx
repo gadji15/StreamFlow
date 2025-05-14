@@ -823,18 +823,29 @@ export default function AdminSeriesPage() {
                                                 return;
                                               }
                                               // Insérer en masse dans Supabase
-                                              const episodesToInsert = data.episodes.map((ep: any) => ({
-                                                season_id: season.id,
-                                                episode_number: ep.episode_number,
-                                                title: ep.name,
-                                                description: ep.overview ?? "",
-                                                duration: ep.runtime ?? null,
-                                                tmdb_id: ep.id,
-                                                air_date: ep.air_date ?? null,
-                                                thumbnail_url: ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : null,
-                                                is_vip: false,
-                                                published: false,
-                                              }));
+                                              // Vérifier les épisodes déjà existants pour ce numéro
+                                              const { data: existingEpisodes } = await supabase
+                                                .from('episodes')
+                                                .select('episode_number')
+                                                .eq('season_id', season.id);
+                                              const existingNumbers = (existingEpisodes || []).map(e => e.episode_number);
+                                              const episodesToInsert = data.episodes.filter((ep: any) => !existingNumbers.includes(ep.episode_number))
+                                                .map((ep: any) => ({
+                                                  season_id: season.id,
+                                                  episode_number: ep.episode_number,
+                                                  title: ep.name,
+                                                  description: ep.overview ?? "",
+                                                  duration: ep.runtime ?? null,
+                                                  tmdb_id: ep.id,
+                                                  air_date: ep.air_date ?? null,
+                                                  thumbnail_url: ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : null,
+                                                  is_vip: false,
+                                                  published: false,
+                                                }));
+                                              if (episodesToInsert.length === 0) {
+                                                toast({title: "Aucun épisode ajouté", description: "Tous les épisodes existent déjà.", variant: "destructive"});
+                                                return;
+                                              }
                                               const { error } = await supabase.from("episodes").insert(episodesToInsert);
                                               if (error) {
                                                 toast({title: "Erreur import", description: error.message, variant: "destructive"});
