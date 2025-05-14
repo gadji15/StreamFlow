@@ -203,31 +203,24 @@ export default function SeasonModal({
   const handleFindSeasonTmdbId = async () => {
     setSeasonSearchError(null);
     setSeasonSearchLoading(true);
-    if (!tmdbSeriesId || !form.season_number) {
-      setSeasonSearchError("ID TMDB série et numéro de saison requis.");
-      setSeasonSearchLoading(false);
-      return;
-    }
     try {
+      if (!tmdbSeriesId || !form.season_number) {
+        setSeasonSearchError("ID TMDB série et numéro de saison requis.");
+        return;
+      }
       // Appel à l'API proxy locale
       const res = await fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`);
       if (!res.ok) {
         setSeasonSearchError("Erreur de connexion à l'API TMDB.");
-        setSeasonSearchLoading(false);
         return;
       }
       const data = await res.json();
-      // Debug log si besoin
-      // console.log("TMDB series seasons response:", data);
       const num = Number(form.season_number);
-      // Certains cas TMDB renvoient 'seasons' comme undefined/null
       if (!data || !Array.isArray(data.seasons)) {
         setSeasonSearchError("Impossible d'obtenir la liste des saisons TMDB (structure inattendue).");
         setForm(f => ({ ...f, tmdb_id: "" }));
-        setSeasonSearchLoading(false);
         return;
       }
-      // Certains objets seasons peuvent avoir un season_number string ou number, on normalise
       const found = data.seasons.find((s) =>
         Number(s.season_number) === num
       );
@@ -240,8 +233,9 @@ export default function SeasonModal({
       }
     } catch (e: any) {
       setSeasonSearchError("Erreur TMDB ou connexion.");
+    } finally {
+      setSeasonSearchLoading(false);
     }
-    setSeasonSearchLoading(false);
   };
 
   // Import TMDB complet et anti-doublon
