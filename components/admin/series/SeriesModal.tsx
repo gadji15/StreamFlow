@@ -9,14 +9,17 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     start_year: initialData.start_year || "",
     end_year: initialData.end_year || "",
     genres: initialData.genres || [],
+    genresInput: "",
     vote_average: initialData.vote_average || "",
     published: !!initialData.published,
     isvip: !!initialData.isvip,
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
+    description: initialData.description || "",
   });
+  const [errors, setErrors] = useState<{[key:string]:string}>({});
   const [loading, setLoading] = useState(false);
-  const [tmdbQuery, setTmdbQuery] = useState("");
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
 
@@ -24,9 +27,27 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
+    setErrors({});
   }, [open]);
 
-  const handleChange = (field, value) => setForm(f => ({ ...f, [field]: value }));
+  const handleChange = (field, value) => {
+    setForm(f => ({ ...f, [field]: value }));
+    setErrors(e => ({ ...e, [field]: undefined }));
+  };
+
+  // Validation avancée
+  const validate = () => {
+    const err: { [k: string]: string } = {};
+    if (!form.title || !form.title.trim()) err.title = "Le titre est requis";
+    if (form.vote_average && (isNaN(Number(form.vote_average)) || Number(form.vote_average) < 0 || Number(form.vote_average) > 10))
+      err.vote_average = "La note doit être comprise entre 0 et 10";
+    if (form.start_year && (isNaN(Number(form.start_year)) || Number(form.start_year) < 1900 || Number(form.start_year) > 2100))
+      err.start_year = "Année invalide";
+    if (form.end_year && (isNaN(Number(form.end_year)) || Number(form.end_year) < 1900 || Number(form.end_year) > 2100))
+      err.end_year = "Année invalide";
+    if (form.tmdb_id && isNaN(Number(form.tmdb_id))) err.tmdb_id = "ID TMDB invalide";
+    return err;
+  };
 
   const handleTMDB = async () => {
     if (!tmdbQuery) return;
@@ -55,8 +76,10 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) {
-      toast({ title: "Titre requis", variant: "destructive" });
+    const err = validate();
+    setErrors(err);
+    if (Object.keys(err).length > 0) {
+      toast({ title: "Erreur de validation", description: Object.values(err)[0], variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -69,6 +92,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     }
     setLoading(false);
   };
+
 
   if (!open) return null;
 
@@ -105,11 +129,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               id="title"
               value={form.title}
               onChange={e => handleChange("title", e.target.value)}
-              className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+              className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.title ? "border-red-500" : ""}`}
               required
               aria-required="true"
             />
+            {errors.title && <div className="text-xs text-red-400 mt-0.5">{errors.title}</div>}
+          </div>}
           </div>
+
           <div>
             <label htmlFor="creator" className="block text-sm font-medium">
               Créateur
@@ -199,10 +226,13 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               step="0.1"
               value={form.vote_average}
               onChange={e => handleChange("vote_average", e.target.value)}
-              className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+              className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.vote_average ? "border-red-500" : ""}`}
               min="0"
               max="10"
             />
+            {errors.vote_average && <div className="text-xs text-red-400 mt-0.5">{errors.vote_average}</div>}
+          </div>}
+
           </div>
           <div>
             <label htmlFor="poster" className="block text-sm font-medium">
@@ -264,11 +294,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
                   id="tmdb_id"
                   value={form.tmdb_id}
                   onChange={e => handleChange("tmdb_id", e.target.value)}
-                  className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+                  className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.tmdb_id ? "border-red-500" : ""}`}
                   placeholder="Ex: 1396"
                   type="number"
                   min={1}
                 />
+                {errors.tmdb_id && <div className="text-xs text-red-400 mt-0.5">{errors.tmdb_id}</div>}
+                {errors.tmdb_id && <div className="text-xs text-red-400 mt-1">{errors.tmdb_id}</div>}
+
                 {form.tmdb_id && (
                   <a
                     href={`https://www.themoviedb.org/tv/${form.tmdb_id}`}

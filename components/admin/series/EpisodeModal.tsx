@@ -142,11 +142,33 @@ export default function EpisodeModal({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => fetchEpisodeFromTMDB(form.episode_number)}
+                onClick={async () => {
+                  setTmdbLoading(true);
+                  try {
+                    const res = await fetch(`/api/tmdb/episode/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(seasonNumber)}/${encodeURIComponent(form.episode_number)}`);
+                    if (!res.ok) throw new Error("Erreur réseau TMDB");
+                    const tmdbPreview = await res.json();
+                    setForm((prev) => ({
+                      ...prev,
+                      title: tmdbPreview.name || prev.title,
+                      description: tmdbPreview.overview || prev.description,
+                      air_date: tmdbPreview.air_date || prev.air_date,
+                      tmdb_id: tmdbPreview.id ? String(tmdbPreview.id) : prev.tmdb_id,
+                      episode_number: tmdbPreview.episode_number ? String(tmdbPreview.episode_number) : prev.episode_number,
+                      thumbnail_url: tmdbPreview.still_path
+                        ? `https://image.tmdb.org/t/p/w500${tmdbPreview.still_path}`
+                        : prev.thumbnail_url,
+                    }));
+                    toast({ title: "Import TMDB réussi", description: "Champs pré-remplis depuis TMDB !" });
+                  } catch (e) {
+                    toast({ title: "Erreur TMDB", description: String(e), variant: "destructive" });
+                  }
+                  setTmdbLoading(false);
+                }}
                 disabled={tmdbLoading}
                 className="mt-2"
               >
-                {tmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
+                {tmdbLoading ? "Chargement..." : "Importer TMDB"}
               </Button>
             )}
             {tmdbPreview && (
