@@ -29,8 +29,7 @@ export default function AddSeasonPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Notif toast
-  const notify = useNotification();
+  // (notif supprimé : tout passe par useToast)
 
   // Season form state
   const [number, setNumber] = useState<number>(1);
