@@ -581,8 +581,6 @@ export default function SeasonModal({
               placeholder="Ex: 1234"
               type="number"
               min={1}
-              readOnly={true}
-              tabIndex={-1}
             />
           </div>
           </div>
