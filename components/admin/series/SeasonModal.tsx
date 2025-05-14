@@ -17,9 +17,9 @@ export default function SeasonModal({
   tmdbSeriesId = "",
   seriesId, // Ajouté pour la vérification dupliqué
 }) {
+  // Le champ genres est retiré du form state (non exposé dans l'UI, à réintégrer si besoin)
   const [form, setForm] = useState({
     title: initialData.title || "",
-    // Toujours string pour les inputs contrôlés
     season_number:
       initialData.season_number !== undefined && initialData.season_number !== null
         ? String(initialData.season_number)
@@ -32,12 +32,6 @@ export default function SeasonModal({
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
-    genres: Array.isArray(initialData.genres)
-      ? initialData.genres
-      : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g) => g.trim())
-        : []),
-    genresInput: "",
   });
 
   // Pour feedback recherche TMDB saison par numéro
@@ -73,8 +67,6 @@ export default function SeasonModal({
     if (open && (!wasOpen.current || initialData?.id !== form?.id)) {
       setErrors({});
       setForm({
-        ...form,
-        // Pour édition, garder l'id caché dans le form si présent
         id: initialData.id,
         title: initialData.title || "",
         season_number:
@@ -89,12 +81,6 @@ export default function SeasonModal({
         poster: initialData.poster || "",
         tmdb_id: initialData.tmdb_id || "",
         description: initialData.description || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g) => g.trim())
-            : []),
-        genresInput: "",
       });
       setTmdbSearch(
         (seriesTitle ? seriesTitle + " " : "") +
@@ -121,6 +107,27 @@ export default function SeasonModal({
             setTmdbSeasonError("Erreur lors de la récupération TMDB.");
           });
       }
+    }
+    // Reset complet du formulaire lors de la fermeture
+    if (!open && wasOpen.current) {
+      setForm({
+        title: "",
+        season_number: "",
+        air_date: "",
+        episode_count: "",
+        poster: "",
+        tmdb_id: "",
+        description: "",
+      });
+      setErrors({});
+      setTmdbSearch("");
+      setSeasonSearchError(null);
+      setSeasonSearchLoading(false);
+      setSerieSearch("");
+      setSerieSuggestions([]);
+      setActiveSerieSuggestion(-1);
+      setTmdbSeasonCount(null);
+      setTmdbSeasonError(null);
     }
     wasOpen.current = open;
     // eslint-disable-next-line
@@ -191,11 +198,6 @@ export default function SeasonModal({
           form.episode_count === "" || form.episode_count === undefined
             ? ""
             : Number(form.episode_count),
-        genres: Array.isArray(form.genres)
-          ? form.genres
-          : typeof form.genres === "string"
-            ? form.genres.split(",").map((g) => g.trim())
-            : [],
       };
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
@@ -427,7 +429,11 @@ export default function SeasonModal({
                   autoComplete="off"
                 />
                 {showSerieSuggestions && !!serieSearch && (
-                  <ul className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto">
+                  <ul
+                    className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto"
+                    role="listbox"
+                    aria-label="Suggestions de séries"
+                  >
                     {serieLoading && (
                       <li className="p-2 text-sm text-gray-400">Chargement…</li>
                     )}
@@ -435,11 +441,22 @@ export default function SeasonModal({
                       <li
                         key={suggestion.id}
                         className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                        role="option"
+                        aria-selected={activeSerieSuggestion === idx}
+                        tabIndex={0}
                         onClick={() => {
                           setSerieTmdbIdInput(String(suggestion.id));
                           setSerieSearch(suggestion.name);
                           setSerieSuggestions([]);
                           setShowSerieSuggestions(false);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setSerieTmdbIdInput(String(suggestion.id));
+                            setSerieSearch(suggestion.name);
+                            setSerieSuggestions([]);
+                            setShowSerieSuggestions(false);
+                          }
                         }}
                       >
                         <span className="font-medium">{suggestion.name}</span>
@@ -538,9 +555,11 @@ export default function SeasonModal({
         )}
         {/* Content scrollable */}
         <form
+          id="season-form"
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
+          autoComplete="off"
         >
           <div>
             <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
@@ -664,12 +683,15 @@ export default function SeasonModal({
             <input
               id="tmdb_id"
               value={form.tmdb_id}
-              onChange={(e) => handleChange("tmdb_id", e.target.value)}
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs"
+              readOnly
+              tabIndex={-1}
+              aria-readonly="true"
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs bg-gray-700/40 cursor-not-allowed"
               placeholder="Ex: 1234"
               type="number"
               min={1}
             />
+            <span className="text-[10px] text-gray-400">Ce champ est rempli automatiquement via TMDB</span>
           </div>
           </div>
         </form>
