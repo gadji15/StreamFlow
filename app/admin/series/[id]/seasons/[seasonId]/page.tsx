@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Edit, ChevronRight, Loader2, Download, Save, ListVideo } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ChevronRight, Loader2, Download, Save, ListVideo, CheckCircle2, XCircle } from 'lucide-react';
 
 type Series = { id: string; title: string; tmdb_id?: number | null };
 type Season = {
@@ -54,6 +54,16 @@ export default function SeasonDetailPage() {
   const [epFormError, setEpFormError] = useState<string | null>(null);
   const [epFormSuccess, setEpFormSuccess] = useState<string | null>(null);
   const epImportRef = useRef(false);
+
+  // Bulk import modal
+  const [showBulkEpModal, setShowBulkEpModal] = useState(false);
+  const [bulkEpLoading, setBulkEpLoading] = useState(false);
+  const [bulkEpError, setBulkEpError] = useState<string | null>(null);
+  const [bulkEpSuccess, setBulkEpSuccess] = useState<string | null>(null);
+  const [tmdbEpisodes, setTmdbEpisodes] = useState<any[]>([]);
+  const [selectedBulkEps, setSelectedBulkEps] = useState<number[]>([]);
+  const [bulkEpMap, setBulkEpMap] = useState<{ [ep_number: number]: boolean }>({});
+  const [bulkEpInserting, setBulkEpInserting] = useState(false);
 
   // Fetch season, series, and episodes
   useEffect(() => {
@@ -233,9 +243,21 @@ export default function SeasonDetailPage() {
               {season.description && (
                 <div className="text-gray-200 text-base mb-2">{season.description}</div>
               )}
-              <Button size="sm" variant="default" onClick={() => setShowAdd(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Ajouter un épisode
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="default" onClick={() => setShowAdd(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Ajouter un épisode
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkEpModal()}
+                  disabled={!series?.tmdb_id}
+                  title={series?.tmdb_id ? "Importer les épisodes TMDb manquants" : "Aucun tmdb_id renseigné"}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Importer épisodes TMDb
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -357,6 +379,91 @@ export default function SeasonDetailPage() {
             </form>
           )}
 
+          {/* Modal import bulk épisodes */}
+          {showBulkEpModal && (
+            <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
+                <button
+                  onClick={() => setShowBulkEpModal(false)}
+                  className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+                  aria-label="Fermer"
+                >✕</button>
+                <h2 className="text-xl font-bold mb-3 flex items-center">
+                  <Download className="h-5 w-5 mr-2" />
+                  Importer épisodes TMDb
+                </h2>
+                {bulkEpLoading ? (
+                  <div className="flex items-center justify-center my-12">
+                    <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
+                  </div>
+                ) : bulkEpError ? (
+                  <div className="text-red-500 mb-2">{bulkEpError}</div>
+                ) : tmdbEpisodes.length === 0 ? (
+                  <div className="text-gray-400 my-8">
+                    Tous les épisodes TMDb existants sont déjà présents dans la base.
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-2 text-sm text-gray-300">
+                      Cochez les épisodes à importer :
+                    </div>
+                    <ul className="max-h-64 overflow-y-auto mb-4 divide-y divide-gray-800">
+                      {tmdbEpisodes.map(ep => (
+                        <li key={ep.episode_number} className="flex items-center py-2">
+                          <input
+                            type="checkbox"
+                            className="mr-3"
+                            checked={!!bulkEpMap[ep.episode_number]}
+                            onChange={e => handleBulkEpCheckbox(ep.episode_number, e.target.checked)}
+                            id={`bulk-ep-${ep.episode_number}`}
+                          />
+                          <label htmlFor={`bulk-ep-${ep.episode_number}`} className="flex-1 cursor-pointer select-none">
+                            {ep.name || "Épisode"} #{ep.episode_number}
+                          </label>
+                          {ep.still_path && (
+                            <img src={`https://image.tmdb.org/t/p/w92${ep.still_path}`} alt="Still" className="ml-2 w-14 h-8 object-cover rounded" />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {bulkEpSuccess && (
+                      <div className="flex items-center text-green-500 mb-2">
+                        <CheckCircle2 className="h-5 w-5 mr-2" /> {bulkEpSuccess}
+                      </div>
+                    )}
+                    {bulkEpError && (
+                      <div className="flex items-center text-red-500 mb-2">
+                        <XCircle className="h-5 w-5 mr-2" /> {bulkEpError}
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button variant="outline" onClick={() => setShowBulkEpModal(false)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={handleBulkEpImport}
+                        disabled={bulkEpInserting || selectedBulkEps.length === 0}
+                      >
+                        {bulkEpInserting ? (
+                          <>
+                            <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                            Import...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            Importer {selectedBulkEps.length > 1 ? `${selectedBulkEps.length} épisodes` : `1 épisode`}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Liste des épisodes */}
           <div>
             <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
@@ -409,4 +516,96 @@ export default function SeasonDetailPage() {
       )}
     </div>
   );
+}
+
+// Bulk import logic
+function handleBulkEpModal() {
+  setShowBulkEpModal(true);
+  setBulkEpError(null);
+  setBulkEpSuccess(null);
+  setTmdbEpisodes([]);
+  setSelectedBulkEps([]);
+  setBulkEpMap({});
+  setBulkEpLoading(true);
+  fetchTmdbEpisodes();
+}
+
+// Fetch TMDb episodes for the season
+async function fetchTmdbEpisodes() {
+  setBulkEpLoading(true);
+  setBulkEpError(null);
+  setBulkEpSuccess(null);
+  try {
+    if (!series?.tmdb_id || !season?.number) {
+      setBulkEpError("Aucun tmdb_id ou numéro de saison.");
+      setBulkEpLoading(false);
+      return;
+    }
+    const res = await fetch(
+      `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${season.number}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+    );
+    const data = await res.json();
+    if (data.status_code) throw new Error(data.status_message || "Erreur TMDb.");
+    let episodesTmdb = Array.isArray(data.episodes) ? data.episodes : [];
+    // On retire les doublons déjà présents
+    const numsExistants = new Set(episodes.map(e => e.number));
+    const manquants = episodesTmdb.filter(e => !numsExistants.has(e.episode_number) && e.episode_number > 0);
+    setTmdbEpisodes(manquants);
+    setSelectedBulkEps(manquants.map(e => e.episode_number));
+    setBulkEpMap(Object.fromEntries(manquants.map(e => [e.episode_number, true])));
+  } catch (e) {
+    setBulkEpError(e?.message || "Erreur lors du fetch TMDb.");
+  } finally {
+    setBulkEpLoading(false);
+  }
+}
+
+// Handle checkbox ep
+function handleBulkEpCheckbox(ep_number, checked) {
+  setBulkEpMap(prev => ({ ...prev, [ep_number]: checked }));
+  setSelectedBulkEps(prev =>
+    checked
+      ? [...prev, ep_number]
+      : prev.filter(num => num !== ep_number)
+  );
+}
+
+// Handle bulk import action
+async function handleBulkEpImport() {
+  setBulkEpInserting(true);
+  setBulkEpError(null);
+  setBulkEpSuccess(null);
+  try {
+    if (!season) throw new Error("Saison introuvable.");
+    // Sélectionne les épisodes cochés
+    const toImport = tmdbEpisodes.filter(e => bulkEpMap[e.episode_number]);
+    if (toImport.length === 0) {
+      setBulkEpError("Aucun épisode sélectionné pour l'import.");
+      setBulkEpInserting(false);
+      return;
+    }
+    // Prépare et insère en batch
+    const inserts = toImport.map(e => ({
+      season_id: season.id,
+      number: e.episode_number,
+      title: e.name || '',
+      description: e.overview || '',
+      duration: typeof e.runtime === 'number' ? e.runtime : null,
+      poster: e.still_path ? `https://image.tmdb.org/t/p/w500${e.still_path}` : '',
+      video_url: '',
+    }));
+    const { data, error } = await supabase
+      .from('episodes')
+      .insert(inserts);
+    if (error) throw error;
+    setBulkEpSuccess(`Import de ${toImport.length} épisode(s) réussi !`);
+    // Refresh la liste
+    await new Promise((res) => setTimeout(res, 700));
+    setShowBulkEpModal(false);
+    window.location.reload();
+  } catch (e) {
+    setBulkEpError(e?.message || "Erreur lors de l'import.");
+  } finally {
+    setBulkEpInserting(false);
+  }
 }
