@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, Download, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Download, Loader2, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
 
 type Series = {
