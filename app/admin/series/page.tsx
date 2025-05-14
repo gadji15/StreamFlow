@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Layers, Edit, Trash } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import {
   Series,
   Edit,
@@ -62,6 +64,7 @@ type SeriesDB = {
 };
 
 export default function AdminSeriesPage() {
+  const router = useRouter();
   const [series, setSeries] = useState<SeriesDB[]>([]);
   const [loading, setLoading] = useState(true);
 
