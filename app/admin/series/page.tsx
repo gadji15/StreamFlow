@@ -25,6 +25,10 @@ export default function AdminSeriesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
 
+  // Loader suppression
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   // Filtres/recherche
   const [searchTerm, setSearchTerm] = useState('');
   const [advancedSearch, setAdvancedSearch] = useState({ title: '', creator: '', year: '', tmdb: '' });
@@ -119,11 +123,19 @@ export default function AdminSeriesPage() {
   // Action groupée
   const handleBulkDelete = async () => {
     if (!window.confirm(`Supprimer ${selectedIds.length} séries sélectionnées ?`)) return;
-    await supabase.from("series").delete().in("id", selectedIds);
-    toast({ title: "Séries supprimées" });
-    setSelectedIds([]);
-    setAllSelected(false);
-    fetchSeries();
+    setBulkDeleting(true);
+    try {
+      const { error } = await supabase.from("series").delete().in("id", selectedIds);
+      if (error) throw error;
+      toast({ title: "Séries supprimées" });
+      setSelectedIds([]);
+      setAllSelected(false);
+      fetchSeries();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
   };
 
   // --- Gestion modale d'ajout/édition série
@@ -314,13 +326,21 @@ export default function AdminSeriesPage() {
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
-            onAction={(action, serie) => {
+            onAction={async (action, serie) => {
               if (action === "edit") setSeriesModal({ open: true, serie });
               if (action === "delete") {
                 if (window.confirm(`Supprimer la série "${serie.title}" ?`)) {
-                  supabase.from("series").delete().eq("id", serie.id).then(() => {
-                    toast({ title: "Série supprimée" }); fetchSeries();
-                  });
+                  setDeletingId(serie.id);
+                  try {
+                    const { error } = await supabase.from("series").delete().eq("id", serie.id);
+                    if (error) throw error;
+                    toast({ title: "Série supprimée" });
+                    fetchSeries();
+                  } catch (e: any) {
+                    toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
+                  } finally {
+                    setDeletingId(null);
+                  }
                 }
               }
               if (action === "seasons") setShowTree(true);
@@ -331,6 +351,8 @@ export default function AdminSeriesPage() {
             loading={loading}
             seasonCounts={seasonCounts}
             genres={genres}
+            deletingId={deletingId}
+            bulkDeleting={bulkDeleting}
           />
         )}
 
