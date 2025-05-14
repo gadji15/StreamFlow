@@ -78,6 +78,11 @@ export default function AdminSeriesSeasonsPage() {
   const fetchSeasonFromTMDB = async (seriesTmdbId: string, seasonNum: string) => {
     if (!seriesTmdbId || !seasonNum) {
       setTmdbPreview(null);
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une série TMDB et indiquer un numéro de saison.",
+        variant: "destructive",
+      });
       return;
     }
     setIsTmdbLoading(true);
@@ -89,12 +94,32 @@ export default function AdminSeriesSeasonsPage() {
       if (!res.ok) {
         setTmdbPreview(null);
         setIsTmdbLoading(false);
+        toast({
+          title: "Erreur TMDB",
+          description: "Impossible de récupérer la saison depuis TMDB (réponse invalide).",
+          variant: "destructive",
+        });
         return;
       }
       const data = await res.json();
+      if (!data || Object.keys(data).length === 0 || data.success === false) {
+        setTmdbPreview(null);
+        toast({
+          title: "Erreur TMDB",
+          description: "Aucune saison trouvée pour ces paramètres.",
+          variant: "destructive",
+        });
+        setIsTmdbLoading(false);
+        return;
+      }
       setTmdbPreview(data);
-    } catch (err) {
+    } catch (err: any) {
       setTmdbPreview(null);
+      toast({
+        title: "Erreur TMDB",
+        description: "Erreur lors de la récupération de la saison : " + (err?.message || String(err)),
+        variant: "destructive",
+      });
     }
     setIsTmdbLoading(false);
   };
