@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useRef, FormEvent } from 'react';
 
-function AddSeasonSelector() {
+function AddSeasonRedirectBySeries() {
   const [show, setShow] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
