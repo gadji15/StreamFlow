@@ -23,7 +23,7 @@ type Series = {
 
 type Season = {
   id: string;
-  number: number;
+  season_number: number;
   title?: string;
   poster?: string | null;
   description?: string | null;
@@ -78,30 +78,30 @@ export default function SeriesDetailPage() {
         setSeries(seriesData);
 
         // Fetch seasons with episodes count
-        const { data: seasonsData, error: seasonsError } = await supabase
-          .from('seasons')
-          .select('id, number, title, poster, description, series_id')
-          .eq('series_id', id)
-          .order('number', { ascending: true });
+const { data: seasonsData, error: seasonsError } = await supabase
+  .from('seasons')
+  .select('id, season_number, title, poster, description, series_id')
+  .eq('series_id', id)
+  .order('season_number', { ascending: true });
 
-        if (seasonsError) throw seasonsError;
+if (seasonsError) throw seasonsError;
 
-        // For each season, fetch episodes count
-        const seasonsWithCount: Season[] = [];
-        if (seasonsData && seasonsData.length > 0) {
-          for (const season of seasonsData) {
-            const { count, error: epError } = await supabase
-              .from('episodes')
-              .select('id', { count: 'exact', head: true })
-              .eq('season_id', season.id);
-            if (epError) {
-              seasonsWithCount.push({ ...season, episodes_count: 0 });
-            } else {
-              seasonsWithCount.push({ ...season, episodes_count: count || 0 });
-            }
-          }
-        }
-        setSeasons(seasonsWithCount);
+// For each season, fetch episodes count
+const seasonsWithCount: Season[] = [];
+if (seasonsData && seasonsData.length > 0) {
+  for (const season of seasonsData) {
+    const { count, error: epError } = await supabase
+      .from('episodes')
+      .select('id', { count: 'exact', head: true })
+      .eq('season_id', season.id);
+    if (epError) {
+      seasonsWithCount.push({ ...season, episodes_count: 0 });
+    } else {
+      seasonsWithCount.push({ ...season, episodes_count: count || 0 });
+    }
+  }
+}
+setSeasons(seasonsWithCount);
       } catch (e: any) {
         setErr(e?.message || "Erreur inattendue.");
         setSeries(null);
@@ -188,7 +188,7 @@ export default function SeriesDetailPage() {
       // Prépare et insère en batch
       const inserts = toImport.map(s => ({
         series_id: series.id,
-        number: s.season_number,
+        season_number: s.season_number,
         title: s.name || '',
         description: s.overview || '',
         poster: s.poster_path ? `https://image.tmdb.org/t/p/w500${s.poster_path}` : '',
@@ -456,8 +456,8 @@ export default function SeriesDetailPage() {
                       )}
                       <div>
                         <div className="text-lg font-semibold text-white">
-                          Saison {season.number}{season.title ? ` — ${season.title}` : ""}
-                        </div>
+                        Saison {season.season_number}{season.title ? ` — ${season.title}` : ""}
+                      </div>
                         {season.description && (
                           <div className="text-gray-400 text-sm mt-1 line-clamp-3">{season.description}</div>
                         )}
@@ -471,14 +471,14 @@ export default function SeriesDetailPage() {
                         Voir détails
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => openEditModal(season)}>
-                        <Edit className="h-4 w-4 mr-1" /> Éditer
-                      </Button>
-                      <Button size="sm" variant="default" onClick={() => handleAddEpisode(season.id)}>
-                        <Plus className="h-4 w-4 mr-1" /> Ajouter épisode
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => openDeleteModal(season)}>
-                        <Trash2 className="h-4 w-4 mr-1" /> Supprimer
-                      </Button>
+                          <Edit className="h-4 w-4 mr-1" /> Éditer
+                        </Button>
+                        <Button size="sm" variant="default" onClick={() => handleAddEpisode(season.id)}>
+                          <Plus className="h-4 w-4 mr-1" /> Ajouter épisode
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => openDeleteModal(season)}>
+                          <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                        </Button>
                     </div>
                   </div>
                 ))}
@@ -497,8 +497,8 @@ export default function SeriesDetailPage() {
                 >✕</button>
                 <h2 className="text-xl font-bold mb-3 flex items-center">
                   <Edit className="h-5 w-5 mr-2" />
-                  Éditer la saison {editModalSeason.number}
-                </h2>
+          Éditer la saison {editModalSeason.season_number}
+        </h2>
                 <form onSubmit={handleEditSubmit}>
                   <div className="mb-4">
                     <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-title">Titre</label>
