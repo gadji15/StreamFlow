@@ -730,14 +730,17 @@ export default function AdminSeriesPage() {
                               <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-indigo-500"></div>
                             </div>
                           ) : (
-                            <table className="w-full text-xs bg-gray-800 rounded">
+                            <table className="w-full text-xs bg-gray-800 rounded"
+                              role="table"
+                              aria-label="Liste des saisons"
+                            >
                               <thead>
                                 <tr>
-                                  <th className="py-2">#</th>
-                                  <th className="py-2">Titre</th>
-                                  <th className="py-2">Date</th>
-                                  <th className="py-2">Épisodes</th>
-                                  <th className="py-2">Actions</th>
+                                  <th className="py-2" scope="col">#</th>
+                                  <th className="py-2" scope="col">Titre</th>
+                                  <th className="py-2" scope="col">Date</th>
+                                  <th className="py-2" scope="col">Épisodes</th>
+                                  <th className="py-2" scope="col">Actions</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -869,15 +872,18 @@ export default function AdminSeriesPage() {
                                               <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-500"></div>
                                             </div>
                                           ) : (
-                                            <table className="w-full text-xs bg-gray-950 rounded">
+                                            <table className="w-full text-xs bg-gray-950 rounded"
+                                              role="table"
+                                              aria-label="Liste des épisodes"
+                                            >
                                               <thead>
                                                 <tr>
-                                                  <th className="py-1">Numéro</th>
-                                                  <th className="py-1">Titre</th>
-                                                  <th className="py-1">Durée</th>
-                                                  <th className="py-1">Statut</th>
-                                                  <th className="py-1">VIP</th>
-                                                  <th className="py-1">Actions</th>
+                                                  <th className="py-1" scope="col">Numéro</th>
+                                                  <th className="py-1" scope="col">Titre</th>
+                                                  <th className="py-1" scope="col">Durée</th>
+                                                  <th className="py-1" scope="col">Statut</th>
+                                                  <th className="py-1" scope="col">VIP</th>
+                                                  <th className="py-1" scope="col">Actions</th>
                                                 </tr>
                                               </thead>
                                               <tbody>

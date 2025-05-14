@@ -103,16 +103,25 @@ export default function EpisodeModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 ${!open && "hidden"}`}>
-      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 ${!open && "hidden"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="episode-modal-title"
+      onKeyDown={e => { if (e.key === "Escape") onClose(); }}
+    >
+      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-lg p-6 relative outline-none"
+        tabIndex={-1}
+        style={{maxWidth: '95vw'}}
+      >
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-white"
-          aria-label="Fermer"
+          className="absolute top-2 right-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label="Fermer la fenêtre"
         >
           ×
         </button>
-        <h2 className="text-xl font-bold mb-4">{initial ? "Modifier l'épisode" : "Ajouter un épisode"}</h2>
+        <h2 className="text-xl font-bold mb-4" id="episode-modal-title">{initial ? "Modifier l'épisode" : "Ajouter un épisode"}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Numéro d'épisode *</label>
