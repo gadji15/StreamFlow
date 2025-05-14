@@ -229,12 +229,22 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               />
               <button
                 type="button"
-                className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white"
+                className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white flex items-center"
                 onClick={handleTMDB}
                 disabled={loading}
                 aria-label="Pré-remplir via TMDB"
               >
-                Importer TMDB
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : (
+                  "Importer TMDB"
+                )}
               </button>
               <span className="ml-1 text-xs" id="tmdb-search-tooltip" role="tooltip">
                 Cherchez par titre ou ID TMDB
