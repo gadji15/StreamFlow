@@ -124,13 +124,26 @@ export default function EpisodeModal({
         <h2 className="text-xl font-bold mb-4" id="episode-modal-title">{initial ? "Modifier l'épisode" : "Ajouter un épisode"}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Numéro d'épisode *</label>
+            <label className="block text-sm font-medium mb-1">
+              Numéro d'épisode *
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Le numéro d'épisode doit être unique dans la saison"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Un numéro unique pour chaque épisode dans la saison.
+                </span>
+              </span>
+            </label>
             <Input
               type="number"
               min={1}
               value={form.episode_number}
               onChange={e => setForm(f => ({...f, episode_number: e.target.value}))}
               required
+              aria-describedby="help-episode-number"
             />
             {(tmdbSeriesId && seasonNumber && form.episode_number) && (
               <Button
@@ -155,45 +168,136 @@ export default function EpisodeModal({
               </Button>
             )}
           </div>
-          <Input
-            placeholder="Titre"
-            value={form.title}
-            onChange={e => setForm(f => ({...f, title: e.target.value}))}
-          />
-          <Input
-            placeholder="Date de diffusion"
-            type="date"
-            value={form.air_date}
-            onChange={e => setForm(f => ({...f, air_date: e.target.value}))}
-          />
-          <Input
-            placeholder="Durée (en minutes)"
-            type="number"
-            min={0}
-            value={form.duration}
-            onChange={e => setForm(f => ({...f, duration: e.target.value}))}
-          />
-          <Input
-            placeholder="TMDB ID"
-            type="number"
-            value={form.tmdb_id}
-            onChange={e => setForm(f => ({...f, tmdb_id: e.target.value}))}
-          />
-          <textarea
-            placeholder="Description"
-            value={form.description}
-            onChange={e => setForm(f => ({...f, description: e.target.value}))}
-            className="w-full p-2 rounded bg-gray-800 text-gray-100 border border-gray-700"
-            rows={2}
-          />
-          <Input
-            placeholder="Vignette (URL)"
-            value={form.thumbnail_url}
-            onChange={e => setForm(f => ({...f, thumbnail_url: e.target.value}))}
-          />
-          {form.thumbnail_url && (
-            <img src={form.thumbnail_url} alt="Aperçu" className="h-20 mt-2 rounded" />
-          )}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Titre *
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Le titre est obligatoire"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Le titre de l'épisode est obligatoire.
+                </span>
+              </span>
+            </label>
+            <Input
+              placeholder="Titre"
+              value={form.title}
+              onChange={e => setForm(f => ({...f, title: e.target.value}))}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Date de diffusion
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Format AAAA-MM-JJ"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Format attendu : AAAA-MM-JJ.
+                </span>
+              </span>
+            </label>
+            <Input
+              placeholder="Date de diffusion"
+              type="date"
+              value={form.air_date}
+              onChange={e => setForm(f => ({...f, air_date: e.target.value}))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Durée (en minutes)
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Durée positive en minutes"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Saisir une durée positive.
+                </span>
+              </span>
+            </label>
+            <Input
+              placeholder="Durée (en minutes)"
+              type="number"
+              min={0}
+              value={form.duration}
+              onChange={e => setForm(f => ({...f, duration: e.target.value}))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              TMDB ID
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Identifiant TMDB"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Optionnel, pour automatiser le remplissage des champs.
+                </span>
+              </span>
+            </label>
+            <Input
+              placeholder="TMDB ID"
+              type="number"
+              value={form.tmdb_id}
+              onChange={e => setForm(f => ({...f, tmdb_id: e.target.value}))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Description
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Résumé libre"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Résumé ou synopsis de l'épisode.
+                </span>
+              </span>
+            </label>
+            <textarea
+              placeholder="Description"
+              value={form.description}
+              onChange={e => setForm(f => ({...f, description: e.target.value}))}
+              className="w-full p-2 rounded bg-gray-800 text-gray-100 border border-gray-700"
+              rows={2}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Vignette (URL)
+              <span
+                className="ml-1 text-gray-400 cursor-pointer"
+                tabIndex={0}
+                aria-label="Image d'illustration"
+                data-tooltip
+              >&#9432;
+                <span className="absolute z-50 bg-gray-900 text-gray-100 text-xs rounded px-2 py-1 shadow-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none transition-opacity">
+                  Lien direct vers l'image (jpg, png).
+                </span>
+              </span>
+            </label>
+            <Input
+              placeholder="Vignette (URL)"
+              value={form.thumbnail_url}
+              onChange={e => setForm(f => ({...f, thumbnail_url: e.target.value}))}
+            />
+            {form.thumbnail_url && (
+              <img src={form.thumbnail_url} alt="Aperçu" className="h-20 mt-2 rounded" />
+            )}
+          </div>
           <div className="flex space-x-2 items-center">
             <label>
               <input
