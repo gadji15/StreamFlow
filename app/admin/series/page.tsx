@@ -349,7 +349,41 @@ export default function AdminSeriesPage() {
         onClose={() => setSeriesModal({ open: false })}
         onSave={handleSeriesModalSave}
         initialData={seriesModal.serie}
-        tmdbSearch={async (query) => { /* Implémente ta recherche TMDB ici */ return null; }}
+        tmdbSearch={async (query) => {
+          if (!query) return null;
+          // Si query est numérique, on tente par ID, sinon par recherche texte
+          if (/^\d+$/.test(query.trim())) {
+            // Recherche par ID
+            const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(query.trim())}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+              title: data.name,
+              poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
+              start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : "",
+              end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : "",
+              genres: data.genres ? data.genres.map((g) => g.name) : [],
+              tmdb_id: data.id,
+            };
+          } else {
+            // Recherche par titre
+            const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(query.trim())}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              const serie = data.results[0];
+              return {
+                title: serie.name,
+                poster: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : "",
+                start_year: serie.first_air_date ? serie.first_air_date.slice(0, 4) : "",
+                end_year: serie.last_air_date ? serie.last_air_date.slice(0, 4) : "",
+                genres: serie.genre_ids || [],
+                tmdb_id: serie.id,
+              };
+            }
+            return null;
+          }
+        }}
       />
 
       {/* Modals saisons/épisodes */}
