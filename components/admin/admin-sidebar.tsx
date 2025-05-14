@@ -175,12 +175,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
                 title="Ajouter une série"
                 isActive={pathname === '/admin/series/add'}
               />
-              <NavItem
-                href="/admin/series/saisons"
-                icon={<ListChecks className="h-4 w-4" />}
-                title="Gestion des saisons"
-                isActive={pathname === '/admin/series/saisons'}
-              />
+              // L'entrée "Gestion des saisons" a été retirée pour forcer la gestion contextuelle via la fiche série.
             </div>
           )}
         </div>
