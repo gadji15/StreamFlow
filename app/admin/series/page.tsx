@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+// Importation du composant édition inline
+import InlineEdit from './InlineEdit'; // Adapter le chemin si nécessaire
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -744,18 +746,79 @@ export default function AdminSeriesPage() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {(seriesSeasons[serie.id] || []).map(season => (
+                                {(seriesSeasons[serie.id] || []).map(season => {
+                                  // Inline editing state for this season
+                                  const [edit, setEdit] = useState<{[key: string]: any}>({});
+                                  const [loadingEdit, setLoadingEdit] = useState(false);
+
+                                  const startEdit = (field: string) => setEdit(e => ({...e, [field]: true}));
+                                  const stopEdit = (field: string) => setEdit(e => ({...e, [field]: false}));
+
+                                  // Save inline edit
+                                  const saveEdit = async (field: string, value: any) => {
+                                    setLoadingEdit(true);
+                                    const patch: any = {};
+                                    patch[field] = value;
+                                    const { error } = await supabase.from("seasons").update(patch).eq('id', season.id);
+                                    if (!error) {
+                                      toast({ title: "Saison mise à jour" });
+                                      // Rafraîchir les saisons du parent
+                                      fetchSeasonsForSeries(serie.id);
+                                    } else {
+                                      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                    }
+                                    setLoadingEdit(false);
+                                    stopEdit(field);
+                                  };
+
+                                  return (
                                   <>
                                     <tr key={season.id} className="hover:bg-gray-900 transition">
-                                      <td className="py-2">{season.season_number}</td>
-                                      <td className="py-2">{season.title}</td>
+                                      <td className="py-2">
+                                        <InlineEdit
+                                          value={season.season_number}
+                                          type="number"
+                                          min={1}
+                                          onSave={async (newValue) => {
+                                            if (newValue === season.season_number) return false;
+                                            const { error } = await supabase.from("seasons")
+                                              .update({ season_number: newValue })
+                                              .eq('id', season.id);
+                                            if (!error) {
+                                              toast({ title: "Numéro de saison mis à jour" });
+                                              fetchSeasonsForSeries(serie.id);
+                                            } else {
+                                              toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                              return false;
+                                            }
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="py-2">
+                                        <InlineEdit
+                                          value={season.title || ""}
+                                          onSave={async (newValue) => {
+                                            if (newValue === (season.title || "")) return false;
+                                            const { error } = await supabase.from("seasons")
+                                              .update({ title: newValue })
+                                              .eq('id', season.id);
+                                            if (!error) {
+                                              toast({ title: "Titre de saison mis à jour" });
+                                              fetchSeasonsForSeries(serie.id);
+                                            } else {
+                                              toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                              return false;
+                                            }
+                                          }}
+                                        />
+                                      </td>
                                       <td className="py-2">{season.air_date}</td>
                                       <td className="py-2">
                                         <span className="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
                                           {season.episode_count ?? "-"}
                                         </span>
                                       </td>
-                                      <td className="py-2">
+                                      <td className="py-2 flex flex-wrap gap-1">
                                         <Button
                                           size="xs"
                                           variant={expandedSeason === season.id ? "success" : "outline"}
@@ -784,7 +847,6 @@ export default function AdminSeriesPage() {
                                           className="ml-1"
                                           onClick={async () => {
                                             if (window.confirm("Supprimer définitivement cette saison ?")) {
-                                              // Supprimer la saison
                                               await supabase.from('seasons').delete().eq('id', season.id);
                                               fetchSeasonsForSeries(serie.id);
                                               toast({title: "Saison supprimée"});
@@ -812,7 +874,6 @@ export default function AdminSeriesPage() {
                                             className="ml-1"
                                             onClick={async () => {
                                               if (!window.confirm("Importer tous les épisodes de cette saison via TMDB ?")) return;
-                                              // Import tous les épisodes via TMDB
                                               const res = await fetch(
                                                 `/api/tmdb/season/${encodeURIComponent(season.tmdb_series_id)}/${encodeURIComponent(season.season_number)}`
                                               );
@@ -825,8 +886,6 @@ export default function AdminSeriesPage() {
                                                 toast({title: "Erreur TMDB", description: "Aucun épisode trouvé pour cette saison.", variant: "destructive"});
                                                 return;
                                               }
-                                              // Insérer en masse dans Supabase
-                                              // Vérifier les épisodes déjà existants pour ce numéro
                                               const { data: existingEpisodes } = await supabase
                                                 .from('episodes')
                                                 .select('episode_number')
@@ -864,6 +923,9 @@ export default function AdminSeriesPage() {
                                       </td>
                                     </tr>
                                     {/* --- EPISODES: Accordéon --- */}
+                                  </>
+                                  );
+                                })}
                                     {expandedSeason === season.id && (
                                       <tr>
                                         <td colSpan={5} className="bg-gray-950 border-t border-b border-gray-800 px-2 py-2">
