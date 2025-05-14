@@ -40,6 +40,10 @@ export default function SeasonModal({
     genresInput: "",
   });
 
+  // Pour feedback recherche TMDB saison par numéro
+  const [seasonSearchLoading, setSeasonSearchLoading] = useState(false);
+  const [seasonSearchError, setSeasonSearchError] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearch, setTmdbSearch] = useState(
@@ -118,6 +122,11 @@ export default function SeasonModal({
   const handleChange = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
+    // Si l'admin change le numéro de saison, on vide l'ID TMDB et l'erreur associée (nouvelle recherche possible)
+    if (field === "season_number") {
+      setForm((f) => ({ ...f, tmdb_id: "" }));
+      setSeasonSearchError(null);
+    }
   };
 
   const validate = async () => {
@@ -190,8 +199,39 @@ export default function SeasonModal({
   };
 
   // Import TMDB intelligent pour une saison
+  // Recherche TMDB de l'id de saison à partir du numéro (pour lier automatiquement)
+  const handleFindSeasonTmdbId = async () => {
+    setSeasonSearchError(null);
+    setSeasonSearchLoading(true);
+    if (!tmdbSeriesId || !form.season_number) {
+      setSeasonSearchError("ID TMDB série et numéro de saison requis.");
+      setSeasonSearchLoading(false);
+      return;
+    }
+    try {
+      // On interroge l'API locale (proxy) pour avoir la liste des saisons
+      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`);
+      if (!res.ok) throw new Error("Erreur réseau TMDB");
+      const data = await res.json();
+      const num = Number(form.season_number);
+      if (!Array.isArray(data.seasons)) throw new Error("Réponse TMDB invalide");
+      const found = data.seasons.find((s) => s.season_number === num);
+      if (found) {
+        setForm((f) => ({ ...f, tmdb_id: found.id ? String(found.id) : "" }));
+        setSeasonSearchError(null);
+      } else {
+        setForm((f) => ({ ...f, tmdb_id: "" }));
+        setSeasonSearchError("Aucune saison TMDB trouvée pour ce numéro.");
+      }
+    } catch (e: any) {
+      setSeasonSearchError("Erreur TMDB ou connexion.");
+    }
+    setSeasonSearchLoading(false);
+  };
+
   // Import TMDB complet et anti-doublon
   const handleTMDBImport = async () => {
+    // On utilise le tmdb_id du form (renseigné par la recherche) en priorité
     const tmdbIdToUse = tmdbSeriesId || form.tmdb_id;
     if (!tmdbIdToUse || !form.season_number) {
       toast({
@@ -219,8 +259,9 @@ export default function SeasonModal({
     }
     setLoading(true);
     try {
+      // Utilisation de l'API backend qui prend le numéro, pas l'id de saison car c'est l'usage de l'endpoint
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(tmdbIdToUse)}/${encodeURIComponent(form.season_number)}`
+        `/api/tmdb/season/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(form.season_number)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
@@ -321,8 +362,23 @@ export default function SeasonModal({
                 min={1}
                 pattern="[0-9]*"
                 autoComplete="off"
-                disabled={loading || checkingDuplicate}
+                disabled={loading || checkingDuplicate || seasonSearchLoading}
               />
+              <Button
+                type="button"
+                className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
+                variant="outline"
+                onClick={handleFindSeasonTmdbId}
+                disabled={seasonSearchLoading || !tmdbSeriesId || !form.season_number}
+                aria-label="Rechercher la saison sur TMDB"
+              >
+                {seasonSearchLoading ? (
+                  <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                ) : "Rechercher"}
+              </Button>
               <Button
                 type="button"
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
@@ -341,6 +397,10 @@ export default function SeasonModal({
             </div>
           </div>
         </div>
+        {/* Feedback recherche TMDB saison */}
+        {seasonSearchError && (
+          <div className="px-3 pb-1 text-xs text-red-400">{seasonSearchError}</div>
+        )}
         {/* Content scrollable */}
         <form
           onSubmit={handleSubmit}
@@ -464,18 +524,20 @@ export default function SeasonModal({
           <div className="flex gap-1 items-end">
             <div className="flex-1">
               <label htmlFor="tmdb_id" className="block text-[11px] font-medium text-white/80">
-                TMDB ID
-              </label>
-              <input
-                id="tmdb_id"
-                value={form.tmdb_id}
-                onChange={(e) => handleChange("tmdb_id", e.target.value)}
-                className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs"
-                placeholder="Ex: 1234"
-                type="number"
-                min={1}
-              />
-            </div>
+              TMDB ID (rempli automatiquement après recherche)
+            </label>
+            <input
+              id="tmdb_id"
+              value={form.tmdb_id}
+              onChange={(e) => handleChange("tmdb_id", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs"
+              placeholder="Ex: 1234"
+              type="number"
+              min={1}
+              readOnly={true}
+              tabIndex={-1}
+            />
+          </div>
           </div>
         </form>
         {/* Actions sticky */}
