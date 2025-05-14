@@ -209,13 +209,28 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
           <div className="flex gap-2 items-end">
             <div>
               <label htmlFor="tmdb_id" className="block text-sm font-medium">TMDB ID</label>
-              <input
-                id="tmdb_id"
-                value={form.tmdb_id}
-                onChange={e => handleChange("tmdb_id", e.target.value)}
-                className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
-                placeholder="Ex: 1396"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="tmdb_id"
+                  value={form.tmdb_id}
+                  onChange={e => handleChange("tmdb_id", e.target.value)}
+                  className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+                  placeholder="Ex: 1396"
+                />
+                {form.tmdb_id && (
+                  <a
+                    href={`https://www.themoviedb.org/tv/${form.tmdb_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-1 text-indigo-400 hover:text-indigo-200 underline"
+                    title="Voir sur TMDB"
+                    tabIndex={0}
+                    aria-label="Ouvrir la fiche TMDB dans un nouvel onglet"
+                  >
+                    TMDB ↗
+                  </a>
+                )}
+              </div>
             </div>
             <div>
               <label htmlFor="tmdb_search" className="block text-xs mb-1">Recherche TMDB</label>
@@ -250,6 +265,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
                 Cherchez par titre ou ID TMDB
               </span>
             </div>
+          </div>
           </div>
           <div className="flex gap-2 mt-6 justify-end">
             <Button type="button" variant="outline" onClick={onClose} aria-label="Annuler">Annuler</Button>
