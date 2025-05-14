@@ -327,6 +327,16 @@ export default function AdminSeriesPage() {
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
             onAction={async (action, serie) => {
+              // Aperçu (œil) : redirige vers la fiche publique ou admin de la série
+              if (action === "preview") {
+                window.open(`/series/${serie.id}`, "_blank");
+                return;
+              }
+              // Arborescence (livres) : redirige vers la fiche admin série (liste saisons/épisodes)
+              if (action === "expand" || action === "seasons") {
+                window.location.href = `/admin/series/${serie.id}`;
+                return;
+              }
               if (action === "edit") setSeriesModal({ open: true, serie });
               if (action === "delete") {
                 if (window.confirm(`Supprimer la série "${serie.title}" ?`)) {
@@ -343,7 +353,6 @@ export default function AdminSeriesPage() {
                   }
                 }
               }
-              if (action === "seasons") setShowTree(true);
             }}
             page={page}
             totalPages={totalPages}
