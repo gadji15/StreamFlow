@@ -61,13 +61,11 @@ export default function AdminSeriesSeasonsPage() {
 
   // Charger les saisons au montage
   useEffect(() => {
-    const load = async () => {
-      setLoadingList(true);
-      await fetchSeasons();
-      setLoadingList(false);
-    };
-    if (seriesId) load();
-  }, [seriesId, fetchSeasons]);
+    // On n'utilise pas fetchSeasons comme dépendance pour éviter la boucle infinie !
+    setLoadingList(true);
+    fetchSeasons().then(() => setLoadingList(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesId]);
 
   // Fetch saison TMDb pour un numéro donné
   const fetchSeasonFromTMDB = async (seasonNum: string) => {
