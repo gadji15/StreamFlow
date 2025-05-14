@@ -214,9 +214,107 @@ export default function SeriesDetailPage() {
     router.push(`/admin/series/${id}/seasons/${seasonId}/add-episode`);
   };
 
-  // Handler for edit season (to contextualize later)
-  const handleEditSeason = (seasonId: string) => {
-    router.push(`/admin/series/${id}/seasons/${seasonId}/edit`);
+  // State for edit modal
+  const [editModalSeason, setEditModalSeason] = useState<Season | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '', poster: '' });
+  const [editFormLoading, setEditFormLoading] = useState(false);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
+  const [editFormSuccess, setEditFormSuccess] = useState<string | null>(null);
+
+  // State for delete modal
+  const [deleteModalSeason, setDeleteModalSeason] = useState<Season | null>(null);
+  const [deleteFormLoading, setDeleteFormLoading] = useState(false);
+  const [deleteFormError, setDeleteFormError] = useState<string | null>(null);
+  const [deleteFormSuccess, setDeleteFormSuccess] = useState<string | null>(null);
+
+  // Handler open/close edit modal
+  const openEditModal = (season: Season) => {
+    setEditModalSeason(season);
+    setEditForm({
+      title: season.title || '',
+      description: season.description || '',
+      poster: season.poster || '',
+    });
+    setEditFormError(null);
+    setEditFormSuccess(null);
+  };
+  const closeEditModal = () => {
+    setEditModalSeason(null);
+    setEditForm({ title: '', description: '', poster: '' });
+    setEditFormError(null);
+    setEditFormSuccess(null);
+  };
+
+  // Handler open/close delete modal
+  const openDeleteModal = (season: Season) => {
+    setDeleteModalSeason(season);
+    setDeleteFormError(null);
+    setDeleteFormSuccess(null);
+  };
+  const closeDeleteModal = () => {
+    setDeleteModalSeason(null);
+    setDeleteFormError(null);
+    setDeleteFormSuccess(null);
+  };
+
+  // Edit submit
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModalSeason) return;
+    setEditFormLoading(true);
+    setEditFormError(null);
+    setEditFormSuccess(null);
+    try {
+      const { error } = await supabase
+        .from('seasons')
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          poster: editForm.poster,
+        })
+        .eq('id', editModalSeason.id);
+      if (error) {
+        setEditFormError(error.message || "Erreur lors de l'édition.");
+        setEditFormLoading(false);
+        return;
+      }
+      setEditFormSuccess("Saison modifiée avec succès !");
+      setTimeout(() => {
+        closeEditModal();
+        window.location.reload();
+      }, 900);
+    } catch (e: any) {
+      setEditFormError(e?.message || "Erreur inattendue.");
+    } finally {
+      setEditFormLoading(false);
+    }
+  };
+
+  // Delete confirm
+  const handleDeleteConfirm = async () => {
+    if (!deleteModalSeason) return;
+    setDeleteFormLoading(true);
+    setDeleteFormError(null);
+    setDeleteFormSuccess(null);
+    try {
+      // Supprimer tous les épisodes liés
+      await supabase.from('episodes').delete().eq('season_id', deleteModalSeason.id);
+      // Supprimer la saison
+      const { error } = await supabase.from('seasons').delete().eq('id', deleteModalSeason.id);
+      if (error) {
+        setDeleteFormError(error.message || "Erreur lors de la suppression.");
+        setDeleteFormLoading(false);
+        return;
+      }
+      setDeleteFormSuccess("Saison supprimée avec succès !");
+      setTimeout(() => {
+        closeDeleteModal();
+        window.location.reload();
+      }, 900);
+    } catch (e: any) {
+      setDeleteFormError(e?.message || "Erreur inattendue.");
+      setDeleteFormLoading(false);
+    }
   };
 
   // Handler for view season (could be a detail page)
@@ -339,22 +437,132 @@ export default function SeriesDetailPage() {
                       <Button size="sm" variant="outline" onClick={() => handleViewSeason(season.id)}>
                         Voir détails
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleEditSeason(season.id)}>
+                      <Button size="sm" variant="outline" onClick={() => openEditModal(season)}>
                         <Edit className="h-4 w-4 mr-1" /> Éditer
                       </Button>
                       <Button size="sm" variant="default" onClick={() => handleAddEpisode(season.id)}>
                         <Plus className="h-4 w-4 mr-1" /> Ajouter épisode
                       </Button>
-                      {/* <Button size="sm" variant="destructive" onClick={() => handleDeleteSeason(season.id)}>
+                      <Button size="sm" variant="destructive" onClick={() => openDeleteModal(season)}>
                         <Trash2 className="h-4 w-4 mr-1" /> Supprimer
-                      </Button> */}
+                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        {/* Modal import bulk saisons */}
+
+          {/* Modale édition saison */}
+          {editModalSeason && (
+            <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
+                <button
+                  onClick={closeEditModal}
+                  className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+                  aria-label="Fermer"
+                >✕</button>
+                <h2 className="text-xl font-bold mb-3 flex items-center">
+                  <Edit className="h-5 w-5 mr-2" />
+                  Éditer la saison {editModalSeason.number}
+                </h2>
+                <form onSubmit={handleEditSubmit}>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-title">Titre</label>
+                    <input
+                      id="edit-title"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editForm.title}
+                      onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                      disabled={editFormLoading}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-description">Description</label>
+                    <textarea
+                      id="edit-description"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      rows={3}
+                      value={editForm.description}
+                      onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                      disabled={editFormLoading}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-poster">URL poster</label>
+                    <input
+                      id="edit-poster"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editForm.poster}
+                      onChange={e => setEditForm(f => ({ ...f, poster: e.target.value }))}
+                      disabled={editFormLoading}
+                    />
+                    {editForm.poster && (
+                      <img src={editForm.poster} alt="Poster" className="mt-2 w-20 h-28 object-cover rounded shadow" />
+                    )}
+                  </div>
+                  {editFormError && <div className="text-red-500 mb-2">{editFormError}</div>}
+                  {editFormSuccess && <div className="text-green-500 mb-2">{editFormSuccess}</div>}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" type="button" onClick={closeEditModal} disabled={editFormLoading}>Annuler</Button>
+                    <Button variant="default" type="submit" disabled={editFormLoading}>
+                      {editFormLoading ? (
+                        <>
+                          <Loader2 className="animate-spin h-4 w-4 mr-1" />
+                          Enregistrement...
+                        </>
+                      ) : (
+                        <>Enregistrer</>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modale suppression saison */}
+          {deleteModalSeason && (
+            <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
+                <button
+                  onClick={closeDeleteModal}
+                  className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+                  aria-label="Fermer"
+                >✕</button>
+                <h2 className="text-xl font-bold mb-3 flex items-center text-red-400">
+                  <Trash2 className="h-5 w-5 mr-2" />
+                  Supprimer la saison {deleteModalSeason.number}
+                </h2>
+                <div className="mb-4 text-gray-200">
+                  Es-tu sûr de vouloir supprimer cette saison ?<br />
+                  <span className="text-sm text-red-400">
+                    Cette action supprimera aussi tous les épisodes associés.
+                  </span>
+                </div>
+                {deleteFormError && <div className="text-red-500 mb-2">{deleteFormError}</div>}
+                {deleteFormSuccess && <div className="text-green-500 mb-2">{deleteFormSuccess}</div>}
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={closeDeleteModal} disabled={deleteFormLoading}>Annuler</Button>
+                  <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteFormLoading}>
+                    {deleteFormLoading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4 mr-1" />
+                        Suppression...
+                      </>
+                    ) : (
+                      <>Supprimer</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
         {showBulkModal && (
           <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
             <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
