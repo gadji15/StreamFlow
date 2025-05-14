@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Edit, Trash2, Tv, Layers, ChevronRight, Download, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 type Series = {
   id: string;
@@ -33,6 +34,7 @@ type Season = {
 export default function SeriesDetailPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
+  const { toast } = useToast();
 
   const [series, setSeries] = useState<Series | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -63,7 +65,11 @@ export default function SeriesDetailPage() {
           .eq('id', id)
           .single();
         if (seriesError || !seriesData) {
-          setErr("Série introuvable.");
+          toast({
+            title: "Erreur",
+            description: "Série introuvable.",
+            variant: "destructive"
+          });
           setSeries(null);
           setSeasons([]);
           setLoading(false);
@@ -192,13 +198,20 @@ export default function SeriesDetailPage() {
         .from('seasons')
         .insert(inserts);
       if (error) throw error;
-      setBulkSuccess(`Import de ${toImport.length} saison(s) réussi !`);
+      toast({
+        title: "Import réussi",
+        description: `Import de ${toImport.length} saison(s) réussi !`
+      });
       // Refresh la liste
       await new Promise((res) => setTimeout(res, 700));
       setShowBulkModal(false);
       window.location.reload();
     } catch (e: any) {
-      setBulkError(e?.message || "Erreur lors de l'import.");
+      toast({
+        title: "Erreur import TMDb",
+        description: e?.message || "Erreur lors de l'import.",
+        variant: "destructive"
+      });
     } finally {
       setBulkInserting(false);
     }
@@ -274,17 +287,28 @@ export default function SeriesDetailPage() {
         })
         .eq('id', editModalSeason.id);
       if (error) {
-        setEditFormError(error.message || "Erreur lors de l'édition.");
+        toast({
+          title: "Erreur",
+          description: error.message || "Erreur lors de l'édition.",
+          variant: "destructive"
+        });
         setEditFormLoading(false);
         return;
       }
-      setEditFormSuccess("Saison modifiée avec succès !");
+      toast({
+        title: "Saison modifiée",
+        description: "La saison a bien été enregistrée."
+      });
       setTimeout(() => {
         closeEditModal();
         window.location.reload();
       }, 900);
     } catch (e: any) {
-      setEditFormError(e?.message || "Erreur inattendue.");
+      toast({
+        title: "Erreur inattendue",
+        description: e?.message || "Erreur inattendue.",
+        variant: "destructive"
+      });
     } finally {
       setEditFormLoading(false);
     }
@@ -302,17 +326,28 @@ export default function SeriesDetailPage() {
       // Supprimer la saison
       const { error } = await supabase.from('seasons').delete().eq('id', deleteModalSeason.id);
       if (error) {
-        setDeleteFormError(error.message || "Erreur lors de la suppression.");
+        toast({
+          title: "Erreur",
+          description: error.message || "Erreur lors de la suppression.",
+          variant: "destructive"
+        });
         setDeleteFormLoading(false);
         return;
       }
-      setDeleteFormSuccess("Saison supprimée avec succès !");
+      toast({
+        title: "Saison supprimée",
+        description: "La saison et ses épisodes ont été supprimés."
+      });
       setTimeout(() => {
         closeDeleteModal();
         window.location.reload();
       }, 900);
     } catch (e: any) {
-      setDeleteFormError(e?.message || "Erreur inattendue.");
+      toast({
+        title: "Erreur inattendue",
+        description: e?.message || "Erreur inattendue.",
+        variant: "destructive"
+      });
       setDeleteFormLoading(false);
     }
   };
@@ -351,9 +386,7 @@ export default function SeriesDetailPage() {
         </div>
       )}
 
-      {err && (
-        <div className="text-red-500 text-center py-8">{err}</div>
-      )}
+      {/* Les feedbacks inline sont désormais gérés par toasts */}
 
       {!loading && series && (
         <>
