@@ -1,256 +1,401 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SeasonModal({
   open,
   onClose,
-  onSubmit,
-  initial,
-  seriesId,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
-  initial?: any;
-  seriesId: string;
+  onSave,
+  initialData = {},
+  seriesTitle = "",
+  tmdbSeriesId = "",
 }) {
   const [form, setForm] = useState({
-    season_number: initial?.season_number?.toString() || "",
-    title: initial?.title || "",
-    description: initial?.description || "",
-    poster: initial?.poster || "",
-    air_date: initial?.air_date || "",
-    tmdb_id: initial?.tmdb_id?.toString() || "",
-    episode_count: initial?.episode_count?.toString() || "",
-    tmdb_series_id: initial?.tmdb_series_id?.toString() || "",
-    series_autocomplete: "",
+    title: initialData.title || "",
+    season_number: initialData.season_number || "",
+    air_date: initialData.air_date || "",
+    episode_count: initialData.episode_count || "",
+    poster: initialData.poster || "",
+    tmdb_id: initialData.tmdb_id || "",
+    description: initialData.description || "",
+    genres: Array.isArray(initialData.genres)
+      ? initialData.genres
+      : (typeof initialData.genre === "string"
+        ? initialData.genre.split(",").map((g) => g.trim())
+        : []),
+    genresInput: "",
   });
-  const [tmdbPreview, setTmdbPreview] = useState<any>(null);
-  const [tmdbLoading, setTmdbLoading] = useState(false);
-  const [seriesSuggestions, setSeriesSuggestions] = useState<any[]>([]);
-  const [seriesLoading, setSeriesLoading] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
+  const [tmdbSearch, setTmdbSearch] = useState(
+    (seriesTitle ? seriesTitle + " " : "") +
+      (initialData.season_number ? `Saison ${initialData.season_number}` : "")
+  );
+  const firstInput = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Recherche série TMDB
-  const handleTMDBSeriesSearch = async (query: string) => {
-    setSeriesLoading(true);
-    setSeriesSuggestions([]);
-    try {
-      const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(query)}`);
-      const data = await resp.json();
-      setSeriesSuggestions(data.results || []);
-    } catch {
-      setSeriesSuggestions([]);
+  useEffect(() => {
+    if (open && firstInput.current) {
+      firstInput.current.focus();
     }
-    setSeriesLoading(false);
-  };
-
-  // Recherche saison TMDB
-  const fetchSeasonFromTMDB = async (seriesTmdbId: string, seasonNum: string) => {
-    if (!seriesTmdbId || !seasonNum) return;
-    setTmdbLoading(true);
-    setTmdbPreview(null);
-    try {
-      const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(seriesTmdbId)}/${encodeURIComponent(seasonNum)}`
-      );
-      if (!res.ok) {
-        setTmdbPreview(null);
-      } else {
-        const data = await res.json();
-        setTmdbPreview(data);
-      }
-    } catch {
-      setTmdbPreview(null);
-    }
-    setTmdbLoading(false);
-  };
-
-  // Importation TMDB → formulaire
-  const importFromTMDB = () => {
-    if (!tmdbPreview) return;
+    setErrors({});
     setForm((prev) => ({
       ...prev,
-      title: tmdbPreview.name || "",
-      description: tmdbPreview.overview || "",
-      poster: tmdbPreview.poster_path
-        ? `https://image.tmdb.org/t/p/w500${tmdbPreview.poster_path}`
-        : "",
-      air_date: tmdbPreview.air_date || "",
-      tmdb_id: tmdbPreview.id ? String(tmdbPreview.id) : "",
-      episode_count: tmdbPreview.episodes ? String(tmdbPreview.episodes.length) : (tmdbPreview.episode_count ? String(tmdbPreview.episode_count) : ""),
+      title: initialData.title || "",
+      season_number: initialData.season_number || "",
+      air_date: initialData.air_date || "",
+      episode_count: initialData.episode_count || "",
+      poster: initialData.poster || "",
+      tmdb_id: initialData.tmdb_id || "",
+      description: initialData.description || "",
+      genres: Array.isArray(initialData.genres)
+        ? initialData.genres
+        : (typeof initialData.genre === "string"
+          ? initialData.genre.split(",").map((g) => g.trim())
+          : []),
+      genresInput: "",
     }));
-    toast({ title: "Champs pré-remplis depuis TMDB !" });
+    setTmdbSearch(
+      (seriesTitle ? seriesTitle + " " : "") +
+        (initialData.season_number ? `Saison ${initialData.season_number}` : "")
+    );
+    // eslint-disable-next-line
+  }, [open, initialData, seriesTitle]);
+
+  const handleChange = (field, value) => {
+    setForm((f) => ({ ...f, [field]: value }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
-  const [duplicate, setDuplicate] = useState(false);
+  const validate = () => {
+    const err: { [k: string]: string } = {};
+    if (!form.title || !form.title.trim())
+      err.title = "Le titre est requis";
+    if (!form.season_number || isNaN(Number(form.season_number)))
+      err.season_number = "Numéro de saison requis";
+    if (
+      form.episode_count &&
+      (isNaN(Number(form.episode_count)) || Number(form.episode_count) < 0)
+    )
+      err.episode_count = "Nombre d'épisodes invalide";
+    return err;
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setDuplicate(false);
-    // Vérification doublon côté client
-    const { data: existing, error } = await fetch(`/api/admin/check-season-duplicate?series_id=${encodeURIComponent(seriesId)}&season_number=${encodeURIComponent(form.season_number)}`).then(res=>res.json());
-    if (existing && existing.length > 0) {
-      setDuplicate(true);
-      toast({ title: "Doublon", description: "Une saison avec ce numéro existe déjà pour cette série.", variant: "destructive" });
+    const err = validate();
+    setErrors(err);
+    if (Object.keys(err).length > 0) {
+      toast({
+        title: "Erreur de validation",
+        description: Object.values(err)[0],
+        variant: "destructive",
+      });
       return;
     }
-    await onSubmit({
-      ...form,
-      season_number: form.season_number ? Number(form.season_number) : undefined,
-      tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : undefined,
-      episode_count: form.episode_count ? Number(form.episode_count) : undefined,
-      tmdb_series_id: form.tmdb_series_id ? Number(form.tmdb_series_id) : undefined,
-      series_id: seriesId,
-    });
-    onClose();
+    setLoading(true);
+    try {
+      const submitData = {
+        ...form,
+        genres: Array.isArray(form.genres)
+          ? form.genres
+          : typeof form.genres === "string"
+            ? form.genres.split(",").map((g) => g.trim())
+            : [],
+      };
+      await onSave(submitData);
+      toast({ title: "Saison enregistrée" });
+      onClose();
+    } catch (e) {
+      toast({ title: "Erreur", description: String(e), variant: "destructive" });
+    }
+    setLoading(false);
   };
+
+  // Import TMDB intelligent pour une saison
+  const handleTMDBImport = async () => {
+    if (!tmdbSeriesId || !form.season_number) {
+      toast({
+        title: "Renseignez le numéro de saison et l'ID TMDB de la série",
+        variant: "destructive",
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/tmdb/season/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(form.season_number)}`
+      );
+      if (!res.ok) throw new Error("Erreur réseau TMDB");
+      const detail = await res.json();
+      if (detail && detail.id) {
+        setForm((f) => ({
+          ...f,
+          title: detail.name || f.title,
+          description: detail.overview || f.description,
+          poster: detail.poster_path
+            ? `https://image.tmdb.org/t/p/w500${detail.poster_path}`
+            : f.poster,
+          air_date: detail.air_date || f.air_date,
+          tmdb_id: detail.id,
+          episode_count: detail.episodes ? String(detail.episodes.length) : (detail.episode_count ? String(detail.episode_count) : f.episode_count),
+        }));
+        toast({
+          title: "Import TMDB réussi",
+          description: "Saison préremplie depuis TMDB !",
+        });
+      } else {
+        toast({
+          title: "Introuvable TMDB",
+          description: "Aucune saison trouvée pour ces paramètres.",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({
+        title: "Erreur TMDB",
+        description: String(e),
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
+
+  if (!open) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 ${!open && "hidden"}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="season-modal-title"
-      onKeyDown={e => { if (e.key === "Escape") onClose(); }}
+      tabIndex={-1}
+      onClick={onClose}
     >
-      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-lg p-6 relative outline-none"
-        tabIndex={-1}
-        style={{maxWidth: '95vw'}}
+      <div
+        className="animate-[fadeInScale_0.25s_ease] bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-800 rounded-2xl shadow-2xl border border-neutral-800 w-full max-w-xs sm:max-w-sm md:max-w-md relative flex flex-col"
+        style={{
+          maxHeight: "70vh",
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          aria-label="Fermer la fenêtre"
-        >
-          ×
-        </button>
-        <h2 className="text-xl font-bold mb-4" id="season-modal-title">{initial ? "Modifier la saison" : "Ajouter une saison"}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Recherche série TMDB */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Série TMDB *</label>
-            <Input
-              type="search"
-              placeholder="Rechercher une série sur TMDB…"
-              value={form.series_autocomplete}
-              onChange={async (e) => {
-                setForm(f => ({
-                  ...f,
-                  series_autocomplete: e.target.value,
-                  tmdb_series_id: ""
-                }));
-                if (e.target.value.length > 2) {
-                  await handleTMDBSeriesSearch(e.target.value);
-                } else {
-                  setSeriesSuggestions([]);
-                }
-              }}
-              autoComplete="off"
-              required
-              aria-autocomplete="list"
-            />
-            {seriesSuggestions.length > 0 && (
-              <ul className="bg-gray-800 rounded mt-1 max-h-40 overflow-y-auto">
-                {seriesSuggestions.map((s, idx) => (
-                  <li key={s.id}
-                    className="p-2 hover:bg-indigo-600 cursor-pointer"
-                    onClick={() => {
-                      setForm(f => ({
-                        ...f,
-                        series_autocomplete: `${s.name} (${s.first_air_date?.slice(0,4) || ""})`,
-                        tmdb_series_id: s.id.toString()
-                      }));
-                      setSeriesSuggestions([]);
-                    }}
-                  >
-                    <span className="font-semibold">{s.name}</span>
-                    {s.first_air_date && <span className="ml-2 text-xs text-gray-400">({s.first_air_date.slice(0,4)})</span>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Numéro de saison *</label>
-            <Input
-              type="number"
-              min={1}
-              value={form.season_number}
-              onChange={e => setForm(f => ({...f, season_number: e.target.value}))}
-              required
-            />
-            {(form.tmdb_series_id && form.season_number) && (
+        {/* Header sticky */}
+        <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
+          <h2 className="text-base font-bold tracking-tight text-white/90" id="season-modal-title">
+            {initialData.id ? "Modifier la saison" : "Ajouter une saison"}
+          </h2>
+          <button
+            aria-label="Fermer"
+            className="text-gray-400 hover:text-white text-base p-1 transition-colors"
+            tabIndex={0}
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+        {/* TMDB import zone */}
+        <div className="flex gap-1 items-end px-3 pt-1">
+          <div className="flex-1">
+            <label htmlFor="tmdb_import" className="block text-[11px] mb-1 text-white/70 font-medium">
+              Importer depuis TMDB (ID série requis)
+            </label>
+            <div className="flex gap-1">
+              <input
+                id="tmdb_import"
+                value={form.season_number}
+                onChange={e => handleChange("season_number", e.target.value)}
+                className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-16 text-xs transition-shadow"
+                placeholder="N°"
+                type="number"
+                min={1}
+              />
               <Button
                 type="button"
-                size="sm"
+                className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
-                onClick={() => fetchSeasonFromTMDB(form.tmdb_series_id, form.season_number)}
-                disabled={tmdbLoading}
-                className="mt-2"
+                onClick={handleTMDBImport}
+                disabled={loading || !tmdbSeriesId || !form.season_number}
+                aria-label="Importer cette saison depuis TMDB"
               >
-                {tmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
+                {loading ? (
+                  <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                ) : "Importer"}
               </Button>
-            )}
-            {tmdbPreview && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={importFromTMDB}
-                className="mt-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                Importer les infos TMDB
-              </Button>
+            </div>
+          </div>
+        </div>
+        {/* Content scrollable */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
+          style={{ minHeight: 0 }}
+        >
+          <div>
+            <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
+              Titre <span className="text-red-500">*</span>
+            </label>
+            <input
+              ref={firstInput}
+              id="title"
+              value={form.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                errors.title ? "border-red-500" : ""
+              }`}
+              required
+              aria-required="true"
+            />
+            {errors.title && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.title}</div>
             )}
           </div>
-          <Input
-            placeholder="Titre"
-            value={form.title}
-            onChange={e => setForm(f => ({...f, title: e.target.value}))}
-          />
-          <Input
-            placeholder="Date de diffusion"
-            type="date"
-            value={form.air_date}
-            onChange={e => setForm(f => ({...f, air_date: e.target.value}))}
-          />
-          <Input
-            placeholder="Nombre d'épisodes"
-            type="number"
-            min={0}
-            value={form.episode_count}
-            onChange={e => setForm(f => ({...f, episode_count: e.target.value}))}
-          />
-          <Input
-            placeholder="TMDB ID"
-            type="number"
-            value={form.tmdb_id}
-            onChange={e => setForm(f => ({...f, tmdb_id: e.target.value}))}
-          />
-          <textarea
-            placeholder="Description"
-            value={form.description}
-            onChange={e => setForm(f => ({...f, description: e.target.value}))}
-            className="w-full p-2 rounded bg-gray-800 text-gray-100 border border-gray-700"
-            rows={2}
-          />
-          <Input
-            placeholder="Poster (URL)"
-            value={form.poster}
-            onChange={e => setForm(f => ({...f, poster: e.target.value}))}
-          />
-          {form.poster && (
-            <img src={form.poster} alt="Aperçu" className="h-20 mt-2 rounded" />
-          )}
-          <div className="flex justify-end gap-2 mt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">{initial ? "Enregistrer" : "Ajouter"}</Button>
+          <div className="flex flex-col sm:flex-row gap-1">
+            <div className="flex-1">
+              <label htmlFor="season_number" className="block text-[11px] font-medium text-white/80">
+                Numéro de saison <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="season_number"
+                type="number"
+                value={form.season_number}
+                onChange={(e) => handleChange("season_number", e.target.value)}
+                className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                  errors.season_number ? "border-red-500" : ""
+                }`}
+                min="1"
+              />
+              {errors.season_number && (
+                <div className="text-xs text-red-400 mt-0.5">{errors.season_number}</div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label htmlFor="episode_count" className="block text-[11px] font-medium text-white/80">
+                Nb épisodes
+              </label>
+              <input
+                id="episode_count"
+                type="number"
+                value={form.episode_count}
+                onChange={(e) => handleChange("episode_count", e.target.value)}
+                className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                  errors.episode_count ? "border-red-500" : ""
+                }`}
+                min="0"
+              />
+              {errors.episode_count && (
+                <div className="text-xs text-red-400 mt-0.5">{errors.episode_count}</div>
+              )}
+            </div>
+          </div>
+          <div>
+            <label htmlFor="air_date" className="block text-[11px] font-medium text-white/80">
+              Date de diffusion
+            </label>
+            <input
+              id="air_date"
+              type="date"
+              value={form.air_date}
+              onChange={(e) => handleChange("air_date", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-[11px] font-medium text-white/80">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              rows={1}
+            />
+          </div>
+          <div>
+            <label htmlFor="poster" className="block text-[11px] font-medium text-white/80">
+              Affiche (URL)
+            </label>
+            <input
+              id="poster"
+              value={form.poster}
+              onChange={(e) => handleChange("poster", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              placeholder="https://..."
+            />
+            {form.poster && (
+              <div className="flex flex-col items-start mt-1">
+                <img
+                  src={form.poster}
+                  alt="Aperçu affiche"
+                  className="h-10 rounded shadow border border-gray-700"
+                  style={{ maxWidth: "100%" }}
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("poster", "")}
+                >
+                  Supprimer l'affiche
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-1 items-end">
+            <div className="flex-1">
+              <label htmlFor="tmdb_id" className="block text-[11px] font-medium text-white/80">
+                TMDB ID
+              </label>
+              <input
+                id="tmdb_id"
+                value={form.tmdb_id}
+                onChange={(e) => handleChange("tmdb_id", e.target.value)}
+                className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs"
+                placeholder="Ex: 1234"
+                type="number"
+                min={1}
+              />
+            </div>
           </div>
         </form>
+        {/* Actions sticky */}
+        <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            aria-label="Annuler"
+            className="text-xs py-1 px-2"
+          >
+            Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="season-form"
+            variant="success"
+            disabled={loading}
+            aria-label="Enregistrer la saison"
+            onClick={handleSubmit}
+            className="text-xs py-1 px-2"
+          >
+            {loading ? "..." : "Enregistrer"}
+          </Button>
+        </div>
       </div>
+      <style jsx global>{`
+        @keyframes fadeInScale {
+          0% { opacity: 0; transform: scale(.95);}
+          100% { opacity: 1; transform: scale(1);}
+        }
+        .animate-\[fadeInScale_0\.25s_ease\] {
+          animation: fadeInScale 0.25s ease;
+        }
+      `}</style>
     </div>
   );
 }
