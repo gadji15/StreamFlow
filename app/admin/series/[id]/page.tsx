@@ -1,11 +1,33 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import SeasonModal from "@/components/admin/series/SeasonModal";
 import EpisodeModal from "@/components/admin/series/EpisodeModal";
 import { useToast } from "@/components/ui/use-toast";
+
+// Petite utilité pour tooltips
+function Tooltip({ children, text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      tabIndex={0}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <span className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-black text-white text-xs rounded shadow">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 // Utilitaire pour normaliser les genres
 function getGenres(serie) {
@@ -72,20 +94,38 @@ export default function AdminSeriesDetailPage() {
     }
   };
 
-  // CRUD Saison
+  // Loader ciblé pour actions saisons
+  const [seasonActionLoading, setSeasonActionLoading] = useState<string | null>(null);
+
+  // CRUD Saison avec feedback dynamique
   const handleSaveSeason = async (data) => {
-    if (data.id) {
-      await supabase.from("seasons").update(data).eq("id", data.id);
-    } else {
-      await supabase.from("seasons").insert([data]);
+    setSeasonActionLoading(data.id ? `edit-${data.id}` : "add");
+    try {
+      if (data.id) {
+        await supabase.from("seasons").update(data).eq("id", data.id);
+        toast({ title: "Saison modifiée !" });
+      } else {
+        await supabase.from("seasons").insert([data]);
+        toast({ title: "Saison ajoutée !" });
+      }
+      fetchSeasons();
+    } catch (e) {
+      toast({ title: "Erreur", description: String(e), variant: "destructive" });
     }
-    fetchSeasons();
+    setSeasonActionLoading(null);
   };
 
   const handleDeleteSeason = async (seasonId) => {
     if (!window.confirm("Supprimer cette saison ?")) return;
-    await supabase.from("seasons").delete().eq("id", seasonId);
-    fetchSeasons();
+    setSeasonActionLoading(`delete-${seasonId}`);
+    try {
+      await supabase.from("seasons").delete().eq("id", seasonId);
+      toast({ title: "Saison supprimée !" });
+      fetchSeasons();
+    } catch (e) {
+      toast({ title: "Erreur", description: String(e), variant: "destructive" });
+    }
+    setSeasonActionLoading(null);
   };
 
   if (loading) {
@@ -98,11 +138,33 @@ export default function AdminSeriesDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto bg-gray-900 rounded-lg p-8 mt-6">
-      <Button onClick={() => router.back()} variant="outline" className="mb-4">
-        ← Retour
-      </Button>
+      {/* Breadcrumbs */}
+      <nav className="mb-4 flex items-center text-sm text-gray-400 gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <a href="/admin/series">Séries</a>
+        </Button>
+        <span className="mx-1">&rsaquo;</span>
+        <span className="font-semibold text-white">{serie.title}</span>
+      </nav>
       <div className="flex justify-between items-center mb-2">
-        <h1 className="text-3xl font-bold">{serie.title}</h1>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => router.back()} variant="outline" className="mr-2">
+            ← Retour
+          </Button>
+          <Tooltip text="Aperçu côté public">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              aria-label="Voir la fiche publique"
+              title="Voir la fiche publique"
+            >
+              <a href={`/series/${serie.id}`} target="_blank" rel="noopener noreferrer">
+                👁️
+              </a>
+            </Button>
+          </Tooltip>
+        </div>
         <Button onClick={() => setEditMode(m => !m)} variant="secondary">
           {editMode ? "Annuler édition" : "Éditer la série"}
         </Button>
@@ -179,9 +241,11 @@ export default function AdminSeriesDetailPage() {
       <div className="mt-8">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">Saisons</h2>
-          <Button onClick={() => setSeasonModal({ open: true })} variant="outline">
-            + Ajouter une saison
-          </Button>
+          <Tooltip text="Ajouter une nouvelle saison à cette série">
+            <Button onClick={() => setSeasonModal({ open: true })} variant="outline">
+              + Ajouter une saison
+            </Button>
+          </Tooltip>
         </div>
         {seasonLoading ? (
           <div className="py-4">Chargement des saisons...</div>
@@ -191,9 +255,40 @@ export default function AdminSeriesDetailPage() {
           <div className="divide-y divide-gray-800">
             {seasons.map((season) => (
               <div key={season.id} className="flex items-center gap-4 py-2">
-                <span className="font-semibold">Saison {season.season_number}: {season.title || <span className="text-gray-400">Sans titre</span>}</span>
-                <Button size="sm" variant="ghost" onClick={() => setSeasonModal({ open: true, initial: season })}>Éditer</Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDeleteSeason(season.id)}>Supprimer</Button>
+                {/* Inline edit du titre de saison */}
+                <span className="font-semibold">
+                  Saison {season.season_number}:{" "}
+                  <InlineEditSeasonTitle
+                    season={season}
+                    onSave={async (newTitle) => {
+                      setSeasonActionLoading(`inlineedit-${season.id}`);
+                      await handleSaveSeason({ ...season, title: newTitle });
+                      setSeasonActionLoading(null);
+                    }}
+                  />
+                </span>
+                <Tooltip text="Éditer la saison">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSeasonModal({ open: true, initial: season })}
+                  >
+                    ✏️
+                  </Button>
+                </Tooltip>
+                <Tooltip text="Supprimer la saison">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteSeason(season.id)}
+                    disabled={seasonActionLoading === `delete-${season.id}`}
+                  >
+                    {seasonActionLoading === `delete-${season.id}` ? "Suppression..." : "🗑️"}
+                  </Button>
+                </Tooltip>
+                {seasonActionLoading === `edit-${season.id}` && (
+                  <span className="text-xs text-blue-400 ml-2">Sauvegarde...</span>
+                )}
               </div>
             ))}
           </div>
@@ -208,6 +303,68 @@ export default function AdminSeriesDetailPage() {
         seriesId={id}
         refreshSeasons={fetchSeasons}
       />
+
+      {/* Inline edit composant en local */}
+      {/* Ajout du composant InlineEditSeasonTitle */}
+      <style jsx>{`
+        .inline-edit-input {
+          background: #222;
+          color: white;
+          border: 1px solid #444;
+          border-radius: 4px;
+          padding: 0 6px;
+          font-size: 1em;
+          margin-left: 2px;
+          width: 160px;
+        }
+      `}</style>
     </div>
+  );
+}
+
+// Édition inline du titre de saison
+function InlineEditSeasonTitle({ season, onSave }) {
+  const [edit, setEdit] = useState(false);
+  const [value, setValue] = useState(season.title || "");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (edit && inputRef.current) inputRef.current.focus();
+  }, [edit]);
+
+  useEffect(() => {
+    setValue(season.title || "");
+  }, [season.title]);
+
+  function handleBlurOrEnter() {
+    setEdit(false);
+    if (value.trim() !== season.title) {
+      onSave(value.trim());
+    }
+  }
+
+  return edit ? (
+    <input
+      className="inline-edit-input"
+      ref={inputRef}
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      onBlur={handleBlurOrEnter}
+      onKeyDown={e => {
+        if (e.key === "Enter") handleBlurOrEnter();
+        if (e.key === "Escape") setEdit(false);
+      }}
+      maxLength={80}
+    />
+  ) : (
+    <span
+      className="inline-block hover:bg-gray-700/40 px-1 rounded cursor-pointer"
+      title="Double-cliquez pour éditer"
+      tabIndex={0}
+      onDoubleClick={() => setEdit(true)}
+      onKeyDown={e => { if (e.key === "Enter") setEdit(true); }}
+    >
+      {season.title || <span className="text-gray-400">Sans titre</span>}
+    </span>
   );
 }
