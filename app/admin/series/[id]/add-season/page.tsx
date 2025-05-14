@@ -32,11 +32,11 @@ export default function AddSeasonPage() {
   // (notif supprimé : tout passe par useToast)
 
   // Season form state
-  const [number, setNumber] = useState<number>(1);
-  const [title, setTitle] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [poster, setPoster] = useState<string>('');
-  const [importing, setImporting] = useState<boolean>(false);
+const [season_number, setSeasonNumber] = useState<number>(1);
+const [title, setTitle] = useState<string>('');
+const [description, setDescription] = useState<string>('');
+const [poster, setPoster] = useState<string>('');
+const [importing, setImporting] = useState<boolean>(false);
 
   // Pour éviter l'import multiple rapide
   const importRef = useRef(false);
@@ -78,12 +78,12 @@ export default function AddSeasonPage() {
 
   // Importer depuis TMDb
   const handleImportTmdb = async () => {
-    if (!series?.tmdb_id || !number || importRef.current) return;
+    if (!series?.tmdb_id || !season_number || importRef.current) return;
     setImporting(true);
     importRef.current = true;
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${number}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${season_number}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
       );
       const tmdb = await res.json();
       if (tmdb.status_code) throw new Error(tmdb.status_message || "Erreur TMDb.");
@@ -117,7 +117,7 @@ export default function AddSeasonPage() {
         .from('seasons')
         .select('id')
         .eq('series_id', id)
-        .eq('number', number)
+        .eq('season_number', season_number)
         .maybeSingle();
       if (existing) {
         toast({
@@ -133,7 +133,7 @@ export default function AddSeasonPage() {
         .from('seasons')
         .insert([{
           series_id: id,
-          number,
+          season_number,
           title,
           description,
           poster,
@@ -191,13 +191,13 @@ export default function AddSeasonPage() {
       {!loading && series && (
         <form onSubmit={handleSubmit} className="space-y-6 bg-gray-800 p-6 rounded-lg shadow-lg">
           <div>
-            <Label htmlFor="number">Numéro de saison <span className="text-red-500">*</span></Label>
+            <Label htmlFor="season_number">Numéro de saison <span className="text-red-500">*</span></Label>
             <Input
-              id="number"
+              id="season_number"
               type="number"
               min={1}
-              value={number}
-              onChange={e => setNumber(parseInt(e.target.value) || 1)}
+              value={season_number}
+              onChange={e => setSeasonNumber(parseInt(e.target.value) || 1)}
               required
               className="mt-1"
               disabled={formLoading}
@@ -208,7 +208,7 @@ export default function AddSeasonPage() {
               type="button"
               variant="outline"
               onClick={handleImportTmdb}
-              disabled={importing || !series.tmdb_id || !number}
+              disabled={importing || !series.tmdb_id || !season_number}
               title={series.tmdb_id ? "Importer depuis TMDb" : "Aucun tmdb_id disponible"}
             >
               {importing ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Download className="h-4 w-4 mr-1" />}
