@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, Download, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 type Series = {
   id: string;
@@ -19,12 +20,17 @@ type Series = {
 export default function AddSeasonPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
+  const { toast } = useToast();
 
   const [series, setSeries] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
+  // On supprime setError/setSuccess (remplacés par toast)
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Notif toast
+  const notify = useNotification();
 
   // Season form state
   const [number, setNumber] = useState<number>(1);
@@ -48,18 +54,26 @@ export default function AddSeasonPage() {
           .eq('id', id)
           .single();
         if (error || !data) {
-          setError("Série introuvable.");
-          setSeries(null);
-        } else {
-          setSeries(data);
-        }
-      } catch (e: any) {
-        setError(e?.message || "Erreur inattendue.");
-        setSeries(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+          toast({
+        title: "Erreur",
+        description: "Série introuvable.",
+        variant: "destructive"
+      });
+      setSeries(null);
+    } else {
+      setSeries(data);
+    }
+  } catch (e: any) {
+    toast({
+      title: "Erreur",
+      description: e?.message || "Erreur inattendue.",
+      variant: "destructive"
+    });
+    setSeries(null);
+  } finally {
+    setLoading(false);
+  }
+};
     if (id) fetchSeries();
   }, [id]);
 
@@ -67,7 +81,6 @@ export default function AddSeasonPage() {
   const handleImportTmdb = async () => {
     if (!series?.tmdb_id || !number || importRef.current) return;
     setImporting(true);
-    setError(null);
     importRef.current = true;
     try {
       const res = await fetch(
@@ -78,9 +91,17 @@ export default function AddSeasonPage() {
       setTitle(tmdb.name || '');
       setDescription(tmdb.overview || '');
       setPoster(tmdb.poster_path ? `https://image.tmdb.org/t/p/w500${tmdb.poster_path}` : '');
-      setSuccess("Import TMDb réussi, veuillez vérifier les champs.");
+      toast({
+        title: "Import TMDb réussi",
+        description: "Vérifie et complète les champs si besoin.",
+        variant: "default"
+      });
     } catch (e: any) {
-      setError(e?.message || "Erreur lors de l'import TMDb.");
+      toast({
+        title: "Erreur import TMDb",
+        description: e?.message || "Erreur lors de l'import TMDb.",
+        variant: "destructive"
+      });
     } finally {
       setImporting(false);
       importRef.current = false;
@@ -91,8 +112,6 @@ export default function AddSeasonPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
-    setError(null);
-    setSuccess(null);
     try {
       // Vérifier doublon
       const { data: existing, error: checkErr } = await supabase
@@ -102,7 +121,11 @@ export default function AddSeasonPage() {
         .eq('number', number)
         .maybeSingle();
       if (existing) {
-        setError("Une saison avec ce numéro existe déjà pour cette série.");
+        toast({
+          title: "Erreur",
+          description: "Une saison avec ce numéro existe déjà pour cette série.",
+          variant: "destructive"
+        });
         setFormLoading(false);
         return;
       }
@@ -119,15 +142,26 @@ export default function AddSeasonPage() {
         .select()
         .single();
       if (insertErr || !data) {
-        setError(insertErr?.message || "Erreur lors de l'ajout.");
+        toast({
+          title: "Erreur",
+          description: insertErr?.message || "Erreur lors de l'ajout.",
+          variant: "destructive"
+        });
         setFormLoading(false);
         return;
       }
-      setSuccess("Saison ajoutée avec succès !");
-      // Redirige sur la fiche série après un court délai
-      setTimeout(() => router.push(`/admin/series/${id}`), 1200);
+      toast({
+        title: "Saison ajoutée",
+        description: "La saison a bien été ajoutée.",
+        variant: "default"
+      });
+      setTimeout(() => router.push(`/admin/series/${id}`), 900);
     } catch (e: any) {
-      setError(e?.message || "Erreur inattendue.");
+      toast({
+        title: "Erreur inattendue",
+        description: e?.message || "Erreur inconnue.",
+        variant: "destructive"
+      });
     } finally {
       setFormLoading(false);
     }
@@ -153,12 +187,7 @@ export default function AddSeasonPage() {
         </div>
       )}
 
-      {error && (
-        <div className="text-red-500 mb-4">{error}</div>
-      )}
-      {success && (
-        <div className="text-green-500 mb-4">{success}</div>
-      )}
+      {/* Les messages inline sont gérés via toast, donc on les retire */}
 
       {!loading && series && (
         <form onSubmit={handleSubmit} className="space-y-6 bg-gray-800 p-6 rounded-lg shadow-lg">
