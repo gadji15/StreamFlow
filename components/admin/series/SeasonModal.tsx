@@ -201,18 +201,30 @@ export default function SeasonModal({
   // Import TMDB intelligent pour une saison
   // Recherche TMDB de l'id de saison à partir du numéro (pour lier automatiquement)
   const handleFindSeasonTmdbId = async () => {
+    console.log("handleFindSeasonTmdbId called!", { tmdbSeriesId, sn: form.season_number });
     setSeasonSearchError(null);
     setSeasonSearchLoading(true);
+
+    if (!form.season_number || Number(form.season_number) < 1) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir un numéro de saison strictement positif.",
+        variant: "destructive",
+      });
+      setSeasonSearchLoading(false);
+      return;
+    }
+    if (!tmdbSeriesId) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de rechercher la saison : l'ID TMDB de la série est manquant.",
+        variant: "destructive",
+      });
+      setSeasonSearchLoading(false);
+      return;
+    }
+
     try {
-      if (!tmdbSeriesId || !form.season_number) {
-        toast({
-          title: "Erreur",
-          description: "Veuillez renseigner un numéro de saison et un ID TMDB série valide.",
-          variant: "destructive",
-        });
-        setSeasonSearchLoading(false);
-        return;
-      }
       const res = await fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`);
       if (!res.ok) {
         toast({
@@ -235,9 +247,7 @@ export default function SeasonModal({
         setSeasonSearchLoading(false);
         return;
       }
-      const found = data.seasons.find((s) =>
-        Number(s.season_number) === num
-      );
+      const found = data.seasons.find((s) => Number(s.season_number) === num);
       if (found && found.id) {
         setForm((f) => ({ ...f, tmdb_id: String(found.id) }));
         toast({
@@ -260,6 +270,7 @@ export default function SeasonModal({
       });
     } finally {
       setSeasonSearchLoading(false);
+      console.log("handleFindSeasonTmdbId finished");
     }
   };
 
