@@ -12,6 +12,7 @@ export default function EpisodeModal({
   tmdbSeriesId,
   seasonNumber,
   importAllEpisodes,
+  refreshEpisodes, // nouveau prop
 }: {
   open: boolean;
   onClose: () => void;
@@ -21,6 +22,7 @@ export default function EpisodeModal({
   tmdbSeriesId: string;
   seasonNumber: number;
   importAllEpisodes?: () => Promise<void>;
+  refreshEpisodes?: () => void; // callback optionnel
 }) {
   const [form, setForm] = useState({
     episode_number: initial?.episode_number?.toString() || "",
@@ -99,6 +101,9 @@ export default function EpisodeModal({
       is_vip: !!form.is_vip,
       published: !!form.published,
     });
+    if (refreshEpisodes) {
+      refreshEpisodes();
+    }
     onClose();
   };
 
