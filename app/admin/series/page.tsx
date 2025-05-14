@@ -949,8 +949,40 @@ export default function AdminSeriesPage() {
                                                 </tr>
                                               </thead>
                                               <tbody>
-                                                {(seasonEpisodes[season.id] || []).map(episode => (
-                                                  <tr key={episode.id} className="hover:bg-gray-900">
+                                                {/* DRAG & DROP REORDER for episodes */}
+                                                {(() => {
+                                                  // Simple implementation using HTML5 drag events
+                                                  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+                                                  const episodes = seasonEpisodes[season.id] || [];
+                                                  const moveEpisode = async (fromIdx: number, toIdx: number) => {
+                                                    if (fromIdx === toIdx) return;
+                                                    const reordered = [...episodes];
+                                                    const [removed] = reordered.splice(fromIdx, 1);
+                                                    reordered.splice(toIdx, 0, removed);
+                                                    // Update order field in DB (assume field: "order")
+                                                    await Promise.all(reordered.map((ep, idx) =>
+                                                      supabase.from("episodes").update({ order: idx }).eq('id', ep.id)
+                                                    ));
+                                                    fetchEpisodesForSeason(season.id);
+                                                    toast({ title: "Ordre des épisodes mis à jour" });
+                                                  };
+                                                  return episodes.map((episode, idx) => (
+                                                    <tr
+                                                      key={episode.id}
+                                                      className={`hover:bg-gray-900 ${draggedIndex === idx ? "bg-indigo-900/20" : ""}`}
+                                                      draggable
+                                                      onDragStart={() => setDraggedIndex(idx)}
+                                                      onDragOver={e => { e.preventDefault(); }}
+                                                      onDrop={() => {
+                                                        if (draggedIndex !== null && draggedIndex !== idx) {
+                                                          moveEpisode(draggedIndex, idx);
+                                                        }
+                                                        setDraggedIndex(null);
+                                                      }}
+                                                      onDragEnd={() => setDraggedIndex(null)}
+                                                      style={{ cursor: "grab" }}
+                                                    >
+                                                      {/* ... cells ... */}
                                                     <td className="py-1">
                                                       <InlineEdit
                                                         value={episode.episode_number}
@@ -1011,14 +1043,48 @@ export default function AdminSeriesPage() {
                                                       {episode.duration ? " min" : ""}
                                                     </td>
                                                     <td className="py-1">
-                                                      <span className={episode.published ? "text-green-400" : "text-gray-400"}>
+                                                      {/* Toggle inline pour le statut publié */}
+                                                      <button
+                                                        aria-label={episode.published ? "Dépublier" : "Publier"}
+                                                        className={`px-2 py-0.5 rounded-full text-xs font-semibold focus:outline-none focus:ring-2 ${episode.published ? "bg-green-500/20 text-green-500" : "bg-gray-500/20 text-gray-400"}`}
+                                                        onClick={async () => {
+                                                          const { error } = await supabase.from("episodes")
+                                                            .update({ published: !episode.published })
+                                                            .eq('id', episode.id);
+                                                          if (!error) {
+                                                            toast({ title: episode.published ? "Épisode dépublié" : "Épisode publié" });
+                                                            fetchEpisodesForSeason(season.id);
+                                                          } else {
+                                                            toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                                          }
+                                                        }}
+                                                        tabIndex={0}
+                                                        style={{ minWidth: 70 }}
+                                                      >
                                                         {episode.published ? "Publié" : "Brouillon"}
-                                                      </span>
+                                                      </button>
                                                     </td>
                                                     <td className="py-1">
-                                                      <span className={episode.is_vip ? "text-amber-400" : "text-gray-400"}>
+                                                      {/* Toggle inline pour VIP */}
+                                                      <button
+                                                        aria-label={episode.is_vip ? "Retirer VIP" : "Activer VIP"}
+                                                        className={`px-2 py-0.5 rounded-full text-xs font-semibold focus:outline-none focus:ring-2 ${episode.is_vip ? "bg-amber-500/20 text-amber-500" : "bg-gray-500/20 text-gray-400"}`}
+                                                        onClick={async () => {
+                                                          const { error } = await supabase.from("episodes")
+                                                            .update({ is_vip: !episode.is_vip })
+                                                            .eq('id', episode.id);
+                                                          if (!error) {
+                                                            toast({ title: episode.is_vip ? "Épisode retiré du VIP" : "Épisode VIP activé" });
+                                                            fetchEpisodesForSeason(season.id);
+                                                          } else {
+                                                            toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                                          }
+                                                        }}
+                                                        tabIndex={0}
+                                                        style={{ minWidth: 50 }}
+                                                      >
                                                         {episode.is_vip ? "VIP" : "Non"}
-                                                      </span>
+                                                      </button>
                                                     </td>
                                                     <td className="py-1">
                                                       <Button
