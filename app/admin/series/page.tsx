@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -62,6 +64,7 @@ type SeriesDB = {
 };
 
 export default function AdminSeriesPage() {
+  const router = useRouter(); // <-- S'assurer qu'on a UNE SEULE déclaration ici, et accessible partout
   const [series, setSeries] = useState<SeriesDB[]>([]);
   const [loading, setLoading] = useState(true);
 
