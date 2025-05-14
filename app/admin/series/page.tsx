@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Series,
+  ListVideo, // Remplace "Series" par une icône existante pour illustrer une série/playlist
   Edit,
   Trash2,
   Plus,
