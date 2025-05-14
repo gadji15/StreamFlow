@@ -81,7 +81,16 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
       tabIndex={-1}
       onClick={onClose}
     >
-      <div className="bg-gray-900 p-6 rounded shadow-lg max-w-lg w-full relative" onClick={e => e.stopPropagation()}>
+      <div
+        className="bg-gray-900 p-4 sm:p-6 rounded shadow-xl w-full max-w-md sm:max-w-lg md:max-w-xl relative"
+        style={{
+          minHeight: 'fit-content',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <h2 className="text-lg font-bold mb-4" id="series-modal-title">
           {initialData.id ? "Modifier la série" : "Ajouter une série"}
         </h2>
@@ -142,14 +151,41 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
           <div>
             <label htmlFor="genres" className="block text-sm font-medium">
               Genres
-              <span tabIndex={0} aria-label="Séparez les genres par des virgules ex: Drame,Comédie">ℹ️</span>
+              <span tabIndex={0} aria-label="Tapez puis appuyez sur Entrée ou virgule pour ajouter">ℹ️</span>
             </label>
+            <div className="flex flex-wrap gap-1 mb-1">
+              {(Array.isArray(form.genres) ? form.genres : []).map((g, idx) => (
+                <span key={g+idx} className="inline-flex items-center px-2 py-1 bg-indigo-700/30 text-indigo-200 rounded text-xs mr-1">
+                  {g}
+                  <button
+                    type="button"
+                    aria-label={`Supprimer le genre ${g}`}
+                    className="ml-1 text-indigo-300 hover:text-red-400 text-xs"
+                    onClick={() => handleChange("genres", form.genres.filter((x, i) => i !== idx))}
+                  >×</button>
+                </span>
+              ))}
+            </div>
             <input
               id="genres"
-              value={Array.isArray(form.genres) ? form.genres.join(", ") : form.genres}
-              onChange={e => handleChange("genres", e.target.value.split(",").map(g => g.trim()))}
+              value={form.genresInput || ""}
+              onChange={e => handleChange("genresInput", e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === "Enter" || e.key === ",") && form.genresInput?.trim()) {
+                  e.preventDefault();
+                  const genre = form.genresInput.trim();
+                  if (genre.length > 0 && !(form.genres || []).includes(genre)) {
+                    handleChange("genres", [...(form.genres || []), genre]);
+                  }
+                  handleChange("genresInput", "");
+                }
+                if (e.key === "Backspace" && !form.genresInput && Array.isArray(form.genres) && form.genres.length > 0) {
+                  handleChange("genres", form.genres.slice(0, -1));
+                }
+              }}
               className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
-              placeholder="Drame, Comédie"
+              placeholder="Ajoutez un genre puis Entrée ou ,"
+              autoComplete="off"
             />
           </div>
           <div>
@@ -181,7 +217,21 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               placeholder="https://..."
             />
             {form.poster && (
-              <img src={form.poster} alt="Poster" className="mt-2 h-24 rounded shadow" />
+              <div className="flex flex-col items-start mt-2">
+                <img
+                  src={form.poster}
+                  alt="Aperçu affiche"
+                  className="h-24 sm:h-32 rounded shadow border border-gray-700"
+                  style={{maxWidth:"100%"}}
+                />
+                <button
+                  type="button"
+                  className="text-xs text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("poster", "")}
+                >
+                  Supprimer l'affiche
+                </button>
+              </div>
             )}
           </div>
           <div className="flex gap-3 items-center">
@@ -267,7 +317,8 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
             </div>
           </div>
           </div>
-          <div className="flex gap-2 mt-6 justify-end">
+          {/* Actions sticky en bas */}
+          <div className="flex gap-2 mt-8 justify-end sticky bottom-0 bg-gray-900 py-3 z-10">
             <Button type="button" variant="outline" onClick={onClose} aria-label="Annuler">Annuler</Button>
             <Button type="submit" variant="success" disabled={loading} aria-label="Enregistrer la série">
               {loading ? "Chargement..." : "Enregistrer"}
