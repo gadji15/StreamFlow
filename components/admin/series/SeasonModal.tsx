@@ -198,14 +198,13 @@ export default function SeasonModal({
     setLoading(false);
   };
 
-  // Import TMDB intelligent pour une saison
-  // Recherche TMDB de l'id de saison à partir du numéro (pour lier automatiquement)
+  // Recherche TMDB robuste et fluide du TMDB ID de la saison à partir du numéro de saison et du contexte série
   const handleFindSeasonTmdbId = async () => {
-    console.log("handleFindSeasonTmdbId called!", { tmdbSeriesId, sn: form.season_number });
     setSeasonSearchError(null);
     setSeasonSearchLoading(true);
 
-    if (!form.season_number || Number(form.season_number) < 1) {
+    // Validation : numéro de saison positif
+    if (!form.season_number || isNaN(Number(form.season_number)) || Number(form.season_number) < 1) {
       toast({
         title: "Erreur",
         description: "Veuillez saisir un numéro de saison strictement positif.",
@@ -214,10 +213,13 @@ export default function SeasonModal({
       setSeasonSearchLoading(false);
       return;
     }
-    if (!tmdbSeriesId) {
+
+    // Récupération du TMDB ID de la série : priorité à la prop, fallback à initialData
+    const serieTmdbId = tmdbSeriesId || initialData.tmdb_series_id || initialData.tmdb_id || "";
+    if (!serieTmdbId) {
       toast({
         title: "Erreur",
-        description: "Impossible de rechercher la saison : l'ID TMDB de la série est manquant.",
+        description: "Impossible de rechercher la saison : la série n'a pas de TMDB ID associé. Veuillez vérifier les infos de la série.",
         variant: "destructive",
       });
       setSeasonSearchLoading(false);
@@ -225,7 +227,8 @@ export default function SeasonModal({
     }
 
     try {
-      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`);
+      // Va chercher toutes les saisons de la série sur TMDB
+      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(serieTmdbId)}`);
       if (!res.ok) {
         toast({
           title: "Erreur TMDB",
@@ -270,18 +273,17 @@ export default function SeasonModal({
       });
     } finally {
       setSeasonSearchLoading(false);
-      console.log("handleFindSeasonTmdbId finished");
     }
   };
 
-  // Import TMDB complet et anti-doublon
+  // Import TMDB complet et anti-doublon (champ tmdb_id modifiable manuellement ou automatiquement)
   const handleTMDBImport = async () => {
-    // On utilise le tmdb_id du form (renseigné par la recherche) en priorité
-    const tmdbIdToUse = tmdbSeriesId || form.tmdb_id;
-    if (!tmdbIdToUse || !form.season_number) {
+    const serieTmdbId = tmdbSeriesId || initialData.tmdb_series_id || initialData.tmdb_id || "";
+    const seasonTmdbId = form.tmdb_id;
+    if (!serieTmdbId || !form.season_number || !seasonTmdbId) {
       toast({
         title: "Import impossible",
-        description: "Renseignez l'ID TMDB de la série ET le numéro de saison.",
+        description: "Veuillez rechercher et remplir le TMDB ID de la saison avant d'importer.",
         variant: "destructive",
       });
       return;
@@ -304,9 +306,9 @@ export default function SeasonModal({
     }
     setLoading(true);
     try {
-      // Utilisation de l'API backend qui prend le numéro, pas l'id de saison car c'est l'usage de l'endpoint
+      // On va chercher les infos détaillées de la saison sur TMDB via son TMDB ID et le TMDB ID série
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(form.season_number)}`
+        `/api/tmdb/season/${encodeURIComponent(serieTmdbId)}/${encodeURIComponent(form.season_number)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
