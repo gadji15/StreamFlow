@@ -257,7 +257,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
             </label>
           </div>
           <div className="flex gap-2 items-end">
-            <div>
+            <div className="flex-1">
               <label htmlFor="tmdb_id" className="block text-sm font-medium">TMDB ID</label>
               <div className="flex items-center gap-2">
                 <input
@@ -266,6 +266,8 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
                   onChange={e => handleChange("tmdb_id", e.target.value)}
                   className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
                   placeholder="Ex: 1396"
+                  type="number"
+                  min={1}
                 />
                 {form.tmdb_id && (
                   <a
@@ -282,39 +284,54 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
                 )}
               </div>
             </div>
-            <div>
-              <label htmlFor="tmdb_search" className="block text-xs mb-1">Recherche TMDB</label>
-              <input
-                id="tmdb_search"
-                value={tmdbQuery}
-                onChange={e => setTmdbQuery(e.target.value)}
-                className="rounded border px-2 py-1 bg-gray-800 text-white"
-                placeholder="Nom série ou ID"
-                aria-describedby="tmdb-search-tooltip"
-              />
-              <button
-                type="button"
-                className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white flex items-center"
-                onClick={handleTMDB}
-                disabled={loading}
-                aria-label="Pré-remplir via TMDB"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                    </svg>
-                    Chargement...
-                  </>
-                ) : (
-                  "Importer TMDB"
-                )}
-              </button>
-              <span className="ml-1 text-xs" id="tmdb-search-tooltip" role="tooltip">
-                Cherchez par titre ou ID TMDB
-              </span>
-            </div>
+            {form.tmdb_id && (
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white flex items-center"
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(form.tmdb_id)}`);
+                      if (!res.ok) throw new Error("Erreur réseau TMDB");
+                      const data = await res.json();
+                      if (data && data.id) {
+                        setForm(f => ({
+                          ...f,
+                          title: data.name || f.title,
+                          poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : f.poster,
+                          start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : f.start_year,
+                          end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : f.end_year,
+                          genres: data.genres ? data.genres.map((g) => g.name) : f.genres,
+                          vote_average: data.vote_average ?? f.vote_average,
+                          description: data.overview ?? f.description,
+                        }));
+                        toast({ title: "Import TMDB réussi", description: "Champs pré-remplis depuis TMDB !" });
+                      } else {
+                        toast({ title: "Introuvable TMDB", description: "Aucune série trouvée pour cet ID.", variant: "destructive" });
+                      }
+                    } catch (e) {
+                      toast({ title: "Erreur TMDB", description: String(e), variant: "destructive" });
+                    }
+                    setLoading(false);
+                  }}
+                  disabled={loading}
+                  aria-label="Importer les infos TMDB"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                      </svg>
+                      Chargement...
+                    </>
+                  ) : (
+                    "Importer TMDB"
+                  )}
+                </button>
+              </div>
+            )}
           </div>
           </div>
           {/* Actions sticky en bas */}
