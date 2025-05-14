@@ -38,6 +38,7 @@ export default function SeriesHierarchyTree({
                 seasonEpisodesLoading={seasonEpisodesLoading}
                 expandedSeason={expandedSeason}
                 setExpandedSeason={setExpandedSeason}
+                refreshSeasons={() => fetchSeasonsForSeries(serie.id)}
               />
             </div>
           )}
