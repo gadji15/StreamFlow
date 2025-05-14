@@ -951,9 +951,65 @@ export default function AdminSeriesPage() {
                                               <tbody>
                                                 {(seasonEpisodes[season.id] || []).map(episode => (
                                                   <tr key={episode.id} className="hover:bg-gray-900">
-                                                    <td className="py-1">{episode.episode_number}</td>
-                                                    <td className="py-1">{episode.title}</td>
-                                                    <td className="py-1">{episode.duration ? `${episode.duration} min` : "-"}</td>
+                                                    <td className="py-1">
+                                                      <InlineEdit
+                                                        value={episode.episode_number}
+                                                        type="number"
+                                                        min={1}
+                                                        onSave={async (newValue) => {
+                                                          if (newValue === episode.episode_number) return false;
+                                                          const { error } = await supabase.from("episodes")
+                                                            .update({ episode_number: newValue })
+                                                            .eq('id', episode.id);
+                                                          if (!error) {
+                                                            toast({ title: "Numéro d'épisode mis à jour" });
+                                                            fetchEpisodesForSeason(season.id);
+                                                          } else {
+                                                            toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                                            return false;
+                                                          }
+                                                        }}
+                                                      />
+                                                    </td>
+                                                    <td className="py-1">
+                                                      <InlineEdit
+                                                        value={episode.title || ""}
+                                                        onSave={async (newValue) => {
+                                                          if (newValue === (episode.title || "")) return false;
+                                                          const { error } = await supabase.from("episodes")
+                                                            .update({ title: newValue })
+                                                            .eq('id', episode.id);
+                                                          if (!error) {
+                                                            toast({ title: "Titre d'épisode mis à jour" });
+                                                            fetchEpisodesForSeason(season.id);
+                                                          } else {
+                                                            toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                                            return false;
+                                                          }
+                                                        }}
+                                                      />
+                                                    </td>
+                                                    <td className="py-1">
+                                                      <InlineEdit
+                                                        value={episode.duration ?? ""}
+                                                        type="number"
+                                                        min={0}
+                                                        onSave={async (newValue) => {
+                                                          if (newValue === episode.duration) return false;
+                                                          const { error } = await supabase.from("episodes")
+                                                            .update({ duration: newValue })
+                                                            .eq('id', episode.id);
+                                                          if (!error) {
+                                                            toast({ title: "Durée mise à jour" });
+                                                            fetchEpisodesForSeason(season.id);
+                                                          } else {
+                                                            toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                                                            return false;
+                                                          }
+                                                        }}
+                                                      />
+                                                      {episode.duration ? " min" : ""}
+                                                    </td>
                                                     <td className="py-1">
                                                       <span className={episode.published ? "text-green-400" : "text-gray-400"}>
                                                         {episode.published ? "Publié" : "Brouillon"}
