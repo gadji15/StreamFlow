@@ -434,7 +434,8 @@ export default function AdminAddSeriesPage() {
         title: 'Série ajoutée',
         description: `La série "${title}" a été ajoutée avec succès.`,
       });
-      router.push(`/admin/series/${insertData.id}/seasons`);
+      // Redirige vers la gestion des séries pour cohérence UX
+      router.push(`/admin/series`);
     } catch (error) {
       toast({
         title: 'Erreur',

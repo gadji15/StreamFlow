@@ -13,15 +13,18 @@ export default function AdminSeriesSeasonsPage() {
 
   const {
     seasons,
-    loading,
+    fetchSeasons,
     addSeason,
     updateSeason,
     deleteSeason,
-    fetchSeasons,
   } = useSeasons(seriesId, {
     onError: msg => toast({ title: "Erreur", description: msg, variant: "destructive" }),
     onSuccess: msg => toast({ title: msg }),
   });
+
+  // Séparez l'état de chargement de la liste et du formulaire
+  const [loadingList, setLoadingList] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -45,7 +48,12 @@ export default function AdminSeriesSeasonsPage() {
 
   // Synchronisation initiale si besoin (optionnel car le hook est auto)
   useEffect(() => {
-    if (seriesId) fetchSeasons();
+    const load = async () => {
+      setLoadingList(true);
+      await fetchSeasons();
+      setLoadingList(false);
+    };
+    if (seriesId) load();
   }, [seriesId, fetchSeasons]);
 
   // Gestion du formulaire
@@ -143,12 +151,14 @@ export default function AdminSeriesSeasonsPage() {
       return;
     }
 
+    setLoadingForm(true);
     let result = false;
     if (editing) {
       result = await updateSeason(editing.id, payload);
     } else {
       result = await addSeason(payload as any);
     }
+    setLoadingForm(false);
     if (result) resetForm();
   };
 
@@ -175,10 +185,8 @@ export default function AdminSeriesSeasonsPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Gestion des saisons</h1>
 
-      {isLoading ? (
+      {loadingList ? (
         <div>Chargement…</div>
-      ) : error ? (
-        <div className="text-red-500 mb-4">{error}</div>
       ) : (
         <>
           <div className="mb-6 flex items-center justify-between">
@@ -455,10 +463,10 @@ export default function AdminSeriesSeasonsPage() {
                 <Button
                   type="submit"
                   className="rounded bg-green-600/90 hover:bg-green-700 text-white px-6 py-2 font-semibold"
-                  disabled={isLoading}
+                  disabled={loadingForm}
                   aria-label={editing ? "Enregistrer les modifications" : "Ajouter cette saison"}
                 >
-                  {editing ? "Enregistrer" : "Ajouter"}
+                  {loadingForm ? "Enregistrement..." : (editing ? "Enregistrer" : "Ajouter")}
                 </Button>
                 <Button
                   type="button"
