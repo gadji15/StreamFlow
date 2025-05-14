@@ -153,7 +153,7 @@ export default function AdminSeasonsPage() {
           </h1>
         </div>
         {/* Nouveau bouton : ouvre le sélecteur de série */}
-        <AddSeasonSelector />
+        <AddSeasonRedirectBySeries />
       </div>
 
       {loading ? (
