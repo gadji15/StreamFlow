@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
+/**
+ * Amélioration : robustesse du champ numéro de saison (number >= 1)
+ */
+
 export default function SeasonModal({
   open,
   onClose,
@@ -12,7 +16,13 @@ export default function SeasonModal({
 }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
-    season_number: initialData.season_number || "",
+    // Force le champ à number >= 1 ou ""
+    season_number:
+      typeof initialData.season_number === "number"
+        ? Math.max(1, initialData.season_number)
+        : initialData.season_number
+        ? Math.max(1, parseInt(initialData.season_number) || 1)
+        : "",
     air_date: initialData.air_date || "",
     episode_count: initialData.episode_count || "",
     poster: initialData.poster || "",
@@ -63,17 +73,28 @@ export default function SeasonModal({
     // eslint-disable-next-line
   }, [open, initialData, seriesTitle]);
 
+  // Gère le changement de champs, force le numéro de saison à un entier >= 1
   const handleChange = (field, value) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    if (field === "season_number") {
+      let val = value === "" ? "" : Math.max(1, parseInt(value.replace(/\D/g, ""), 10) || 1);
+      setForm((f) => ({ ...f, season_number: val }));
+      setErrors((e) => ({ ...e, [field]: undefined }));
+    } else {
+      setForm((f) => ({ ...f, [field]: value }));
+      setErrors((e) => ({ ...e, [field]: undefined }));
+    }
   };
 
   const validate = () => {
     const err: { [k: string]: string } = {};
     if (!form.title || !form.title.trim())
       err.title = "Le titre est requis";
-    if (!form.season_number || isNaN(Number(form.season_number)))
-      err.season_number = "Numéro de saison requis";
+    if (
+      form.season_number === "" ||
+      isNaN(Number(form.season_number)) ||
+      Number(form.season_number) < 1
+    )
+      err.season_number = "Numéro de saison requis (entier positif)";
     if (
       form.episode_count &&
       (isNaN(Number(form.episode_count)) || Number(form.episode_count) < 0)
@@ -98,6 +119,7 @@ export default function SeasonModal({
     try {
       const submitData = {
         ...form,
+        season_number: form.season_number === "" ? "" : Number(form.season_number),
         genres: Array.isArray(form.genres)
           ? form.genres
           : typeof form.genres === "string"
@@ -210,7 +232,11 @@ export default function SeasonModal({
                 className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-16 text-xs transition-shadow"
                 placeholder="N°"
                 type="number"
+                inputMode="numeric"
+                step="1"
                 min={1}
+                pattern="[0-9]*"
+                autoComplete="off"
               />
               <Button
                 type="button"
@@ -263,12 +289,16 @@ export default function SeasonModal({
               <input
                 id="season_number"
                 type="number"
+                inputMode="numeric"
+                step="1"
+                min="1"
+                pattern="[0-9]*"
+                autoComplete="off"
                 value={form.season_number}
                 onChange={(e) => handleChange("season_number", e.target.value)}
                 className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
                   errors.season_number ? "border-red-500" : ""
                 }`}
-                min="1"
               />
               {errors.season_number && (
                 <div className="text-xs text-red-400 mt-0.5">{errors.season_number}</div>
