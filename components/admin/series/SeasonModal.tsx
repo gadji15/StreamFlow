@@ -46,43 +46,48 @@ export default function SeasonModal({
   const firstInput = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Ce useEffect reset le form à chaque render => bloque toute saisie !
-  // Correction : ne reset que lors de l'ouverture initiale OU changement d'ID de saison (édition)
+  // Reset le formulaire UNIQUEMENT à l'ouverture ou quand on change de saison à éditer
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (!open) return;
-    setErrors({});
-    setForm({
-      title: initialData.title || "",
-      season_number:
-        initialData.season_number !== undefined && initialData.season_number !== null
-          ? String(initialData.season_number)
-          : "",
-      air_date: initialData.air_date || "",
-      episode_count:
-        initialData.episode_count !== undefined && initialData.episode_count !== null
-          ? String(initialData.episode_count)
-          : "",
-      poster: initialData.poster || "",
-      tmdb_id: initialData.tmdb_id || "",
-      description: initialData.description || "",
-      genres: Array.isArray(initialData.genres)
-        ? initialData.genres
-        : (typeof initialData.genre === "string"
-          ? initialData.genre.split(",").map((g) => g.trim())
-          : []),
-      genresInput: "",
-    });
-    setTmdbSearch(
-      (seriesTitle ? seriesTitle + " " : "") +
-        (initialData.season_number ? `Saison ${initialData.season_number}` : "")
-    );
-    // Focus input à l'ouverture
-    if (firstInput.current) {
-      setTimeout(() => firstInput.current && firstInput.current.focus(), 0);
+    // Si on vient d'ouvrir la modale, ou si on change de saison à éditer
+    if (open && (!wasOpen.current || initialData?.id !== form?.id)) {
+      setErrors({});
+      setForm({
+        ...form,
+        // Pour édition, garder l'id caché dans le form si présent
+        id: initialData.id,
+        title: initialData.title || "",
+        season_number:
+          initialData.season_number !== undefined && initialData.season_number !== null
+            ? String(initialData.season_number)
+            : "",
+        air_date: initialData.air_date || "",
+        episode_count:
+          initialData.episode_count !== undefined && initialData.episode_count !== null
+            ? String(initialData.episode_count)
+            : "",
+        poster: initialData.poster || "",
+        tmdb_id: initialData.tmdb_id || "",
+        description: initialData.description || "",
+        genres: Array.isArray(initialData.genres)
+          ? initialData.genres
+          : (typeof initialData.genre === "string"
+            ? initialData.genre.split(",").map((g) => g.trim())
+            : []),
+        genresInput: "",
+      });
+      setTmdbSearch(
+        (seriesTitle ? seriesTitle + " " : "") +
+          (initialData.season_number ? `Saison ${initialData.season_number}` : "")
+      );
+      // Focus input à l'ouverture
+      if (firstInput.current) {
+        setTimeout(() => firstInput.current && firstInput.current.focus(), 0);
+      }
     }
-    // On ne dépend que de open (ou de initialData.id pour edit)
+    wasOpen.current = open;
     // eslint-disable-next-line
-  }, [open, initialData?.id, seriesTitle]);
+  }, [open, initialData?.id]);
 
   // Gère le changement de champs : laisse l'utilisateur saisir librement, contrôle à la validation
   const handleChange = (field, value) => {
