@@ -2,9 +2,122 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Tv, ArrowLeft } from 'lucide-react';
+import { Plus, Edit, Tv, ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { useRef, FormEvent } from 'react';
+
+function AddSeasonSelector() {
+  const [show, setShow] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Recherche sur Supabase en temps réel
+  useEffect(() => {
+    if (!show) return;
+    if (query.trim().length < 2) {
+      setResults([]);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const fetchSeries = async () => {
+      const { data, error } = await supabase
+        .from('series')
+        .select('id, title')
+        .ilike('title', `%${query.trim()}%`)
+        .order('title', { ascending: true })
+        .limit(10);
+      if (error) setError("Erreur lors de la recherche.");
+      setResults(data || []);
+      setLoading(false);
+    };
+    const delay = setTimeout(fetchSeries, 300);
+    return () => clearTimeout(delay);
+  }, [query, show]);
+
+  const handleSelect = (serieId: string) => {
+    setShow(false);
+    setQuery('');
+    setResults([]);
+    router.push(`/admin/series/${serieId}/seasons`);
+  };
+
+  return (
+    <>
+      <Button
+        variant="default"
+        onClick={() => setShow(true)}
+        className="flex items-center"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Ajouter une saison
+      </Button>
+      {show && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-900 rounded-lg shadow-2xl p-6 max-w-md w-full relative">
+            <button
+              className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+              onClick={() => setShow(false)}
+              aria-label="Fermer"
+              tabIndex={0}
+            >✕</button>
+            <h2 className="text-lg font-bold mb-4 flex items-center">
+              <Search className="h-5 w-5 mr-2" /> Sélectionner une série
+            </h2>
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                if (results.length === 1) handleSelect(results[0].id);
+              }}
+            >
+              <input
+                ref={inputRef}
+                autoFocus
+                type="text"
+                className="input input-bordered w-full mb-3 px-4 py-2 rounded"
+                placeholder="Rechercher une série (min. 2 lettres)"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+              />
+            </form>
+            {loading && <div className="text-xs text-gray-400 my-2">Recherche...</div>}
+            {error && <div className="text-xs text-red-400 my-2">{error}</div>}
+            {!loading && results.length > 0 && (
+              <ul className="max-h-60 overflow-y-auto">
+                {results.map(serie => (
+                  <li
+                    key={serie.id}
+                    className="p-2 hover:bg-blue-800/60 rounded cursor-pointer transition"
+                    onClick={() => handleSelect(serie.id)}
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSelect(serie.id); }}
+                  >
+                    {serie.title}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!loading && query.trim().length >= 2 && results.length === 0 && (
+              <div className="text-xs text-gray-400">Aucune série trouvée.</div>
+            )}
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={() => setShow(false)}>
+                Annuler
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function AdminSeasonsPage() {
   const [seasons, setSeasons] = useState<any[]>([]);
@@ -39,12 +152,8 @@ export default function AdminSeasonsPage() {
             Gestion des saisons
           </h1>
         </div>
-        <Button asChild>
-          <Link href="/admin/series">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une saison
-          </Link>
-        </Button>
+        {/* Nouveau bouton : ouvre le sélecteur de série */}
+        <AddSeasonSelector />
       </div>
 
       {loading ? (
