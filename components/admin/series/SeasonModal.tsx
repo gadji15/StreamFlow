@@ -9,12 +9,14 @@ export default function SeasonModal({
   onSubmit,
   initial,
   seriesId,
+  refreshSeasons, // nouveau prop
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
   initial?: any;
   seriesId: string;
+  refreshSeasons?: () => void; // callback optionnel
 }) {
   const [form, setForm] = useState({
     season_number: initial?.season_number?.toString() || "",
@@ -106,6 +108,9 @@ export default function SeasonModal({
       tmdb_series_id: form.tmdb_series_id ? Number(form.tmdb_series_id) : undefined,
       series_id: seriesId,
     });
+    if (refreshSeasons) {
+      refreshSeasons();
+    }
     onClose();
   };
 
