@@ -794,10 +794,59 @@ export default function AdminSeriesPage() {
                                           size="xs"
                                           variant="outline"
                                           className="ml-1"
-                                          onClick={() => setModal({open: true, type: "add-episode", parentId: season.id})}
+                                          onClick={() => setModal({open: true, type: "add-episode", parentId: season.id, payload: {
+                                            tmdbSeriesId: season.tmdb_series_id,
+                                            seasonNumber: season.season_number
+                                          }})}
                                         >
                                           + Épisode
                                         </Button>
+                                        {/* Import massif TMDB */}
+                                        {season.tmdb_series_id && season.season_number && (
+                                          <Button
+                                            size="xs"
+                                            variant="success"
+                                            className="ml-1"
+                                            onClick={async () => {
+                                              if (!window.confirm("Importer tous les épisodes de cette saison via TMDB ?")) return;
+                                              // Import tous les épisodes via TMDB
+                                              const res = await fetch(
+                                                `/api/tmdb/season/${encodeURIComponent(season.tmdb_series_id)}/${encodeURIComponent(season.season_number)}`
+                                              );
+                                              if (!res.ok) {
+                                                toast({title: "Erreur TMDB", description: "Impossible de récupérer les épisodes.", variant: "destructive"});
+                                                return;
+                                              }
+                                              const data = await res.json();
+                                              if (!data.episodes || !Array.isArray(data.episodes)) {
+                                                toast({title: "Erreur TMDB", description: "Aucun épisode trouvé pour cette saison.", variant: "destructive"});
+                                                return;
+                                              }
+                                              // Insérer en masse dans Supabase
+                                              const episodesToInsert = data.episodes.map((ep: any) => ({
+                                                season_id: season.id,
+                                                episode_number: ep.episode_number,
+                                                title: ep.name,
+                                                description: ep.overview ?? "",
+                                                duration: ep.runtime ?? null,
+                                                tmdb_id: ep.id,
+                                                air_date: ep.air_date ?? null,
+                                                thumbnail_url: ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : null,
+                                                is_vip: false,
+                                                published: false,
+                                              }));
+                                              const { error } = await supabase.from("episodes").insert(episodesToInsert);
+                                              if (error) {
+                                                toast({title: "Erreur import", description: error.message, variant: "destructive"});
+                                              } else {
+                                                toast({title: "Import réussi", description: `${episodesToInsert.length} épisodes ajoutés.`});
+                                                fetchEpisodesForSeason(season.id);
+                                              }
+                                            }}
+                                          >
+                                            Importer tous les épisodes TMDB
+                                          </Button>
+                                        )}
                                       </td>
                                     </tr>
                                     {/* --- EPISODES: Accordéon --- */}
