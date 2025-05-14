@@ -501,8 +501,11 @@ export default function SeasonDetailPage() {
                           )}
                         </td>
                         <td className="px-4 py-2">
-                          <Button size="sm" variant="outline" onClick={() => {/* à implémenter : edit episode */}}>
+                          <Button size="sm" variant="outline" onClick={() => openEditEpModal(ep)}>
                             <Edit className="h-4 w-4 mr-1" /> Éditer
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => openDeleteEpModal(ep)}>
+                            <Trash2 className="h-4 w-4 mr-1" /> Supprimer
                           </Button>
                         </td>
                       </tr>
@@ -512,10 +515,237 @@ export default function SeasonDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Modale édition épisode */}
+          {editModalEp && (
+            <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
+                <button
+                  onClick={closeEditEpModal}
+                  className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+                  aria-label="Fermer"
+                >✕</button>
+                <h2 className="text-xl font-bold mb-3 flex items-center">
+                  <Edit className="h-5 w-5 mr-2" />
+                  Éditer épisode #{editModalEp.number}
+                </h2>
+                <form onSubmit={handleEditEpSubmit}>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-ep-title">Titre</label>
+                    <input
+                      id="edit-ep-title"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editEpForm.title}
+                      onChange={e => setEditEpForm(f => ({ ...f, title: e.target.value }))}
+                      disabled={editEpFormLoading}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-ep-description">Description</label>
+                    <textarea
+                      id="edit-ep-description"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      rows={3}
+                      value={editEpForm.description}
+                      onChange={e => setEditEpForm(f => ({ ...f, description: e.target.value }))}
+                      disabled={editEpFormLoading}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-ep-duration">Durée (min)</label>
+                    <input
+                      id="edit-ep-duration"
+                      type="number"
+                      min={1}
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editEpForm.duration === null ? '' : editEpForm.duration}
+                      onChange={e => setEditEpForm(f => ({ ...f, duration: e.target.value ? parseInt(e.target.value) : null }))}
+                      disabled={editEpFormLoading}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-ep-poster">URL poster</label>
+                    <input
+                      id="edit-ep-poster"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editEpForm.poster}
+                      onChange={e => setEditEpForm(f => ({ ...f, poster: e.target.value }))}
+                      disabled={editEpFormLoading}
+                    />
+                    {editEpForm.poster && (
+                      <img src={editEpForm.poster} alt="Poster" className="mt-2 w-20 h-12 object-cover rounded shadow" />
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <label className="block font-medium text-gray-200 mb-1" htmlFor="edit-ep-video">URL vidéo</label>
+                    <input
+                      id="edit-ep-video"
+                      className="input input-bordered w-full px-3 py-2 rounded"
+                      value={editEpForm.video_url}
+                      onChange={e => setEditEpForm(f => ({ ...f, video_url: e.target.value }))}
+                      disabled={editEpFormLoading}
+                    />
+                  </div>
+                  {editEpFormError && <div className="text-red-500 mb-2">{editEpFormError}</div>}
+                  {editEpFormSuccess && <div className="text-green-500 mb-2">{editEpFormSuccess}</div>}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" type="button" onClick={closeEditEpModal} disabled={editEpFormLoading}>Annuler</Button>
+                    <Button variant="default" type="submit" disabled={editEpFormLoading}>
+                      {editEpFormLoading ? (
+                        <>
+                          <Loader2 className="animate-spin h-4 w-4 mr-1" />
+                          Enregistrement...
+                        </>
+                      ) : (
+                        <>Enregistrer</>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modale suppression épisode */}
+          {deleteModalEp && (
+            <div className="fixed z-50 inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl relative">
+                <button
+                  onClick={closeDeleteEpModal}
+                  className="absolute top-2 right-3 text-gray-400 hover:text-red-500"
+                  aria-label="Fermer"
+                >✕</button>
+                <h2 className="text-xl font-bold mb-3 flex items-center text-red-400">
+                  <Trash2 className="h-5 w-5 mr-2" />
+                  Supprimer épisode #{deleteModalEp.number}
+                </h2>
+                <div className="mb-4 text-gray-200">
+                  Es-tu sûr de vouloir supprimer cet épisode ?<br />
+                  <span className="text-sm text-red-400">
+                    Cette action est irréversible.
+                  </span>
+                </div>
+                {deleteEpFormError && <div className="text-red-500 mb-2">{deleteEpFormError}</div>}
+                {deleteEpFormSuccess && <div className="text-green-500 mb-2">{deleteEpFormSuccess}</div>}
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={closeDeleteEpModal} disabled={deleteEpFormLoading}>Annuler</Button>
+                  <Button variant="destructive" onClick={handleDeleteEpConfirm} disabled={deleteEpFormLoading}>
+                    {deleteEpFormLoading ? (
+                      <>
+                        <Loader2 className="animate-spin h-4 w-4 mr-1" />
+                        Suppression...
+                      </>
+                    ) : (
+                      <>Supprimer</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
   );
+}
+
+// Gestion modales édition/suppression épisode
+const [editModalEp, setEditModalEp] = useState<Episode | null>(null);
+const [editEpForm, setEditEpForm] = useState({ title: '', description: '', duration: null as number | null, poster: '', video_url: '' });
+const [editEpFormLoading, setEditEpFormLoading] = useState(false);
+const [editEpFormError, setEditEpFormError] = useState<string | null>(null);
+const [editEpFormSuccess, setEditEpFormSuccess] = useState<string | null>(null);
+
+const [deleteModalEp, setDeleteModalEp] = useState<Episode | null>(null);
+const [deleteEpFormLoading, setDeleteEpFormLoading] = useState(false);
+const [deleteEpFormError, setDeleteEpFormError] = useState<string | null>(null);
+const [deleteEpFormSuccess, setDeleteEpFormSuccess] = useState<string | null>(null);
+
+function openEditEpModal(ep: Episode) {
+  setEditModalEp(ep);
+  setEditEpForm({
+    title: ep.title || '',
+    description: ep.description || '',
+    duration: ep.duration ?? null,
+    poster: ep.poster || '',
+    video_url: ep.video_url || '',
+  });
+  setEditEpFormError(null);
+  setEditEpFormSuccess(null);
+}
+function closeEditEpModal() {
+  setEditModalEp(null);
+  setEditEpForm({ title: '', description: '', duration: null, poster: '', video_url: '' });
+  setEditEpFormError(null);
+  setEditEpFormSuccess(null);
+}
+
+function openDeleteEpModal(ep: Episode) {
+  setDeleteModalEp(ep);
+  setDeleteEpFormError(null);
+  setDeleteEpFormSuccess(null);
+}
+function closeDeleteEpModal() {
+  setDeleteModalEp(null);
+  setDeleteEpFormError(null);
+  setDeleteEpFormSuccess(null);
+}
+
+async function handleEditEpSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  if (!editModalEp) return;
+  setEditEpFormLoading(true);
+  setEditEpFormError(null);
+  setEditEpFormSuccess(null);
+  try {
+    const { error } = await supabase
+      .from('episodes')
+      .update({
+        title: editEpForm.title,
+        description: editEpForm.description,
+        duration: editEpForm.duration,
+        poster: editEpForm.poster,
+        video_url: editEpForm.video_url,
+      })
+      .eq('id', editModalEp.id);
+    if (error) {
+      setEditEpFormError(error.message || "Erreur lors de l'édition.");
+      setEditEpFormLoading(false);
+      return;
+    }
+    setEditEpFormSuccess("Épisode modifié avec succès !");
+    setTimeout(() => {
+      closeEditEpModal();
+      window.location.reload();
+    }, 900);
+  } catch (e: any) {
+    setEditEpFormError(e?.message || "Erreur inattendue.");
+  } finally {
+    setEditEpFormLoading(false);
+  }
+}
+
+async function handleDeleteEpConfirm() {
+  if (!deleteModalEp) return;
+  setDeleteEpFormLoading(true);
+  setDeleteEpFormError(null);
+  setDeleteEpFormSuccess(null);
+  try {
+    const { error } = await supabase.from('episodes').delete().eq('id', deleteModalEp.id);
+    if (error) {
+      setDeleteEpFormError(error.message || "Erreur lors de la suppression.");
+      setDeleteEpFormLoading(false);
+      return;
+    }
+    setDeleteEpFormSuccess("Épisode supprimé avec succès !");
+    setTimeout(() => {
+      closeDeleteEpModal();
+      window.location.reload();
+    }, 900);
+  } catch (e: any) {
+    setDeleteEpFormError(e?.message || "Erreur inattendue.");
+    setDeleteEpFormLoading(false);
+  }
 }
 
 // Bulk import logic
