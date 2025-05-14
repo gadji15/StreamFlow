@@ -16,15 +16,16 @@ export default function SeasonModal({
 }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
-    // Force le champ à number >= 1 ou ""
+    // Toujours string pour les inputs contrôlés
     season_number:
-      typeof initialData.season_number === "number"
-        ? Math.max(1, initialData.season_number)
-        : initialData.season_number
-        ? Math.max(1, parseInt(initialData.season_number) || 1)
+      initialData.season_number !== undefined && initialData.season_number !== null
+        ? String(initialData.season_number)
         : "",
     air_date: initialData.air_date || "",
-    episode_count: initialData.episode_count || "",
+    episode_count:
+      initialData.episode_count !== undefined && initialData.episode_count !== null
+        ? String(initialData.episode_count)
+        : "",
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
@@ -53,9 +54,15 @@ export default function SeasonModal({
     setForm((prev) => ({
       ...prev,
       title: initialData.title || "",
-      season_number: initialData.season_number || "",
+      season_number:
+        initialData.season_number !== undefined && initialData.season_number !== null
+          ? String(initialData.season_number)
+          : "",
       air_date: initialData.air_date || "",
-      episode_count: initialData.episode_count || "",
+      episode_count:
+        initialData.episode_count !== undefined && initialData.episode_count !== null
+          ? String(initialData.episode_count)
+          : "",
       poster: initialData.poster || "",
       tmdb_id: initialData.tmdb_id || "",
       description: initialData.description || "",
