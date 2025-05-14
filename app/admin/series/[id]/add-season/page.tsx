@@ -1,0 +1,244 @@
+'use client';
+
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Save, Download, Loader2 } from 'lucide-react';
+
+type Series = {
+  id: string;
+  title: string;
+  tmdb_id?: number | null;
+};
+
+export default function AddSeasonPage() {
+  const { id } = useParams() as { id: string };
+  const router = useRouter();
+
+  const [series, setSeries] = useState<Series | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Season form state
+  const [number, setNumber] = useState<number>(1);
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [poster, setPoster] = useState<string>('');
+  const [importing, setImporting] = useState<boolean>(false);
+
+  // Pour éviter l'import multiple rapide
+  const importRef = useRef(false);
+
+  // Charger la série courante
+  useEffect(() => {
+    const fetchSeries = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from('series')
+          .select('id, title, tmdb_id')
+          .eq('id', id)
+          .single();
+        if (error || !data) {
+          setError("Série introuvable.");
+          setSeries(null);
+        } else {
+          setSeries(data);
+        }
+      } catch (e: any) {
+        setError(e?.message || "Erreur inattendue.");
+        setSeries(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchSeries();
+  }, [id]);
+
+  // Importer depuis TMDb
+  const handleImportTmdb = async () => {
+    if (!series?.tmdb_id || !number || importRef.current) return;
+    setImporting(true);
+    setError(null);
+    importRef.current = true;
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${number}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
+      );
+      const tmdb = await res.json();
+      if (tmdb.status_code) throw new Error(tmdb.status_message || "Erreur TMDb.");
+      setTitle(tmdb.name || '');
+      setDescription(tmdb.overview || '');
+      setPoster(tmdb.poster_path ? `https://image.tmdb.org/t/p/w500${tmdb.poster_path}` : '');
+      setSuccess("Import TMDb réussi, veuillez vérifier les champs.");
+    } catch (e: any) {
+      setError(e?.message || "Erreur lors de l'import TMDb.");
+    } finally {
+      setImporting(false);
+      importRef.current = false;
+    }
+  };
+
+  // Validation et enregistrement
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      // Vérifier doublon
+      const { data: existing, error: checkErr } = await supabase
+        .from('seasons')
+        .select('id')
+        .eq('series_id', id)
+        .eq('number', number)
+        .maybeSingle();
+      if (existing) {
+        setError("Une saison avec ce numéro existe déjà pour cette série.");
+        setFormLoading(false);
+        return;
+      }
+      // Insertion
+      const { data, error: insertErr } = await supabase
+        .from('seasons')
+        .insert([{
+          series_id: id,
+          number,
+          title,
+          description,
+          poster,
+        }])
+        .select()
+        .single();
+      if (insertErr || !data) {
+        setError(insertErr?.message || "Erreur lors de l'ajout.");
+        setFormLoading(false);
+        return;
+      }
+      setSuccess("Saison ajoutée avec succès !");
+      // Redirige sur la fiche série après un court délai
+      setTimeout(() => router.push(`/admin/series/${id}`), 1200);
+    } catch (e: any) {
+      setError(e?.message || "Erreur inattendue.");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto px-4 py-8">
+      {/* Retour */}
+      <Button asChild variant="ghost" size="sm" className="mb-6">
+        <Link href={`/admin/series/${id}`}>
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Retour fiche série
+        </Link>
+      </Button>
+
+      <h1 className="text-2xl font-bold mb-2">
+        Ajouter une saison {series?.title ? <>à <span className="text-indigo-300">{series.title}</span></> : null}
+      </h1>
+
+      {loading && (
+        <div className="flex items-center justify-center min-h-[20vh]">
+          <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
+        </div>
+      )}
+
+      {error && (
+        <div className="text-red-500 mb-4">{error}</div>
+      )}
+      {success && (
+        <div className="text-green-500 mb-4">{success}</div>
+      )}
+
+      {!loading && series && (
+        <form onSubmit={handleSubmit} className="space-y-6 bg-gray-800 p-6 rounded-lg shadow-lg">
+          <div>
+            <Label htmlFor="number">Numéro de saison <span className="text-red-500">*</span></Label>
+            <Input
+              id="number"
+              type="number"
+              min={1}
+              value={number}
+              onChange={e => setNumber(parseInt(e.target.value) || 1)}
+              required
+              className="mt-1"
+              disabled={formLoading}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleImportTmdb}
+              disabled={importing || !series.tmdb_id || !number}
+              title={series.tmdb_id ? "Importer depuis TMDb" : "Aucun tmdb_id disponible"}
+            >
+              {importing ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : <Download className="h-4 w-4 mr-1" />}
+              Import TMDb
+            </Button>
+            <span className="text-xs text-gray-400">Pré-remplit les champs si trouvés sur TMDb</span>
+          </div>
+          <div>
+            <Label htmlFor="title">Titre de la saison</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              disabled={formLoading}
+              placeholder="Titre (ex: Saison 1, Première saison...)"
+            />
+          </div>
+          <div>
+            <Label htmlFor="description">Synopsis</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              disabled={formLoading}
+              placeholder="Résumé de la saison"
+            />
+          </div>
+          <div>
+            <Label htmlFor="poster">URL poster (optionnel)</Label>
+            <Input
+              id="poster"
+              value={poster}
+              onChange={e => setPoster(e.target.value)}
+              disabled={formLoading}
+              placeholder="Lien image TMDb ou upload personnalisé"
+            />
+            {poster && (
+              <img src={poster} alt="Poster saison" className="mt-2 w-28 h-40 object-cover rounded shadow" />
+            )}
+          </div>
+          <div className="flex justify-end mt-6">
+            <Button type="submit" disabled={formLoading}>
+              {formLoading ? (
+                <>
+                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Enregistrer la saison
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
