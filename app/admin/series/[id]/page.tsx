@@ -299,9 +299,7 @@ export default function AdminSeriesDetailPage() {
                       }}
                     />
                   </div>
-                  <div className="text-xs text-gray-400 mt-1 italic whitespace-pre-line" style={{ maxHeight: 40, overflow: "hidden" }}>
-                    {season.description || <span className="text-gray-600">Aucune description.</span>}
-                  </div>
+                  {/* Description retirée pour éviter tout chevauchement avec les boutons d'action */}
                 </div>
                 <div className="flex flex-col gap-2 items-end absolute right-4 top-4 opacity-80 group-hover:opacity-100 transition">
                   <Tooltip text="Éditer la saison">
