@@ -51,6 +51,7 @@ export default function SeasonModal({
 
   // Stocker le nombre de saisons TMDB
   const [tmdbSeasonCount, setTmdbSeasonCount] = useState<number | null>(null);
+  const [tmdbSeasonError, setTmdbSeasonError] = useState<string | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // Reset le formulaire UNIQUEMENT à l'ouverture ou quand on change de saison à éditer
@@ -93,15 +94,19 @@ export default function SeasonModal({
       }
       // Charger le nombre de saisons TMDB si possible
       setTmdbSeasonCount(null);
+      setTmdbSeasonError(null);
       if (tmdbSeriesId) {
-        fetch(`https://api.themoviedb.org/3/tv/${tmdbSeriesId}?language=fr-FR&append_to_response=seasons`, {
-          headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_BEARER}` }
-        })
-          .then(res => res.json())
+        fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`)
+          .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
           .then(data => {
             if (data && Array.isArray(data.seasons)) {
               setTmdbSeasonCount(data.seasons.length);
+            } else {
+              setTmdbSeasonError("Impossible d'obtenir le nombre de saisons sur TMDB.");
             }
+          })
+          .catch(err => {
+            setTmdbSeasonError("Erreur lors de la récupération TMDB.");
           });
       }
     }
@@ -287,11 +292,16 @@ export default function SeasonModal({
           </button>
         </div>
         {/* Indication du nombre de saisons TMDB */}
-        {tmdbSeasonCount !== null && (
-          <div className="px-3 pt-1 pb-0.5 text-xs text-blue-300 font-medium">
-            Nombre de saisons disponibles sur TMDB : <b>{tmdbSeasonCount}</b>
-          </div>
-        )}
+        <div className="px-3 pt-1 pb-0.5 text-xs font-medium">
+          {tmdbSeasonCount !== null && (
+            <span className="text-blue-300">
+              Nombre de saisons disponibles sur TMDB : <b>{tmdbSeasonCount}</b>
+            </span>
+          )}
+          {tmdbSeasonError && (
+            <span className="text-red-400">Erreur TMDB : {tmdbSeasonError}</span>
+          )}
+        </div>
         {/* TMDB import zone */}
         <div className="flex gap-1 items-end px-3 pt-1">
           <div className="flex-1">

@@ -338,7 +338,8 @@ export default function AdminSeriesDetailPage() {
         onClose={() => setSeasonModal({ open: false })}
         onSubmit={handleSaveSeason}
         initial={seasonModal.initial}
-        seriesId={id}
+        seriesId={id} {/* S'assure que la props seriesId est bien transmise */}
+        tmdbSeriesId={serie.tmdb_id || ""}
         refreshSeasons={fetchSeasons}
       />
 
