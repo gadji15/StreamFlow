@@ -5,11 +5,30 @@ import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useSeasons } from "@/hooks/useSeasons";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminSeriesSeasonsPage() {
   const params = useParams();
   const seriesId = params?.id as string;
   const { toast } = useToast();
+
+  // On charge le tmdb_id de la série courante (une seule fois)
+  const [seriesTmdbId, setSeriesTmdbId] = useState<number | null>(null);
+  const [seriesTitle, setSeriesTitle] = useState<string>("");
+  const [loadingSeries, setLoadingSeries] = useState(true);
+
+  useEffect(() => {
+    async function fetchSeries() {
+      setLoadingSeries(true);
+      const { data, error } = await supabase.from("series").select("tmdb_id, title").eq("id", seriesId).single();
+      if (!error && data) {
+        setSeriesTmdbId(data.tmdb_id || null);
+        setSeriesTitle(data.title || "");
+      }
+      setLoadingSeries(false);
+    }
+    if (seriesId) fetchSeries();
+  }, [seriesId]);
 
   const {
     seasons,
@@ -22,7 +41,7 @@ export default function AdminSeriesSeasonsPage() {
     onSuccess: msg => toast({ title: msg }),
   });
 
-  // Séparez l'état de chargement de la liste et du formulaire
+  // Chargement liste et formulaire
   const [loadingList, setLoadingList] = useState(false);
   const [loadingForm, setLoadingForm] = useState(false);
 
@@ -36,17 +55,11 @@ export default function AdminSeriesSeasonsPage() {
     air_date: "",
     tmdb_id: "",
     episode_count: "",
-    tmdb_series_id: "",
-    series_autocomplete: "",
   });
   const [tmdbPreview, setTmdbPreview] = useState<any>(null);
   const [isTmdbLoading, setIsTmdbLoading] = useState(false);
-  const [seriesSuggestions, setSeriesSuggestions] = useState<any[]>([]);
-  const [seriesLoading, setSeriesLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
-  // Synchronisation initiale si besoin (optionnel car le hook est auto)
+  // Charger les saisons au montage
   useEffect(() => {
     const load = async () => {
       setLoadingList(true);
@@ -56,26 +69,8 @@ export default function AdminSeriesSeasonsPage() {
     if (seriesId) load();
   }, [seriesId, fetchSeasons]);
 
-  // Gestion du formulaire
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    // Recherche TMDB temps réel si tmdb_series_id ET season_number
-    if (
-      (e.target.name === "season_number" || e.target.name === "tmdb_series_id") &&
-      (e.target.value || form.season_number || form.tmdb_series_id)
-    ) {
-      const seriesId = e.target.name === "tmdb_series_id" ? e.target.value : form.tmdb_series_id;
-      const seasonNum = e.target.name === "season_number" ? e.target.value : form.season_number;
-      if (seriesId && seasonNum) {
-        fetchSeasonFromTMDB(seriesId, seasonNum);
-      } else {
-        setTmdbPreview(null);
-      }
-    }
-  };
-
-  // Recherche TMDB temps réel via API route Next.js
-  const fetchSeasonFromTMDB = async (seriesTmdbId: string, seasonNum: string) => {
+  // Fetch saison TMDb pour un numéro donné
+  const fetchSeasonFromTMDB = async (seasonNum: string) => {
     if (!seriesTmdbId || !seasonNum) {
       setTmdbPreview(null);
       return;
@@ -84,7 +79,7 @@ export default function AdminSeriesSeasonsPage() {
     setTmdbPreview(null);
     try {
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(seriesTmdbId)}/${encodeURIComponent(seasonNum)}`
+        `https://api.themoviedb.org/3/tv/${seriesTmdbId}/season/${seasonNum}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=fr-FR`
       );
       if (!res.ok) {
         setTmdbPreview(null);
@@ -104,6 +99,7 @@ export default function AdminSeriesSeasonsPage() {
     if (!tmdbPreview) return;
     setForm((prev) => ({
       ...prev,
+      season_number: tmdbPreview.season_number ? String(tmdbPreview.season_number) : prev.season_number,
       title: tmdbPreview.name || "",
       description: tmdbPreview.overview || "",
       poster: tmdbPreview.poster_path
@@ -125,12 +121,19 @@ export default function AdminSeriesSeasonsPage() {
       air_date: "",
       tmdb_id: "",
       episode_count: "",
-      tmdb_series_id: "",
-      series_autocomplete: "",
     });
     setEditing(null);
     setShowForm(false);
     setTmdbPreview(null);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (e.target.name === "season_number" && e.target.value && seriesTmdbId) {
+      fetchSeasonFromTMDB(e.target.value);
+    } else if (e.target.name === "season_number") {
+      setTmdbPreview(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,7 +165,7 @@ export default function AdminSeriesSeasonsPage() {
     if (result) resetForm();
   };
 
-  const handleEdit = (season: Season) => {
+  const handleEdit = (season: any) => {
     setEditing(season);
     setShowForm(true);
     setForm({
@@ -231,91 +234,58 @@ export default function AdminSeriesSeasonsPage() {
               <h3 className="text-xl font-bold mb-2 text-center">
                 {editing ? "Modifier la saison" : "Ajouter une nouvelle saison"}
               </h3>
-              {/* Recherche série TMDB */}
-              <div className="relative">
-                <label className="block text-sm font-medium mb-1" htmlFor="series-autocomplete">
-                  Série TMDB <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="series-autocomplete"
-                  name="series_autocomplete"
-                  type="search"
-                  autoComplete="off"
-                  className="input input-bordered w-full text-base px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Rechercher une série TMDB…"
-                  value={form.series_autocomplete || ""}
-                  onChange={async (e) => {
-                    setForm(f => ({
-                      ...f,
-                      series_autocomplete: e.target.value,
-                      tmdb_series_id: ""
-                    }));
-                    setSeriesSuggestions([]);
-                    setShowSuggestions(true);
-                    if (e.target.value.length > 2) {
-                      setSeriesLoading(true);
-                      try {
-                        const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(e.target.value)}`);
-                        const data = await resp.json();
-                        setSeriesSuggestions(data.results || []);
-                      } catch { setSeriesSuggestions([]); }
-                      setSeriesLoading(false);
-                    }
-                  }}
-                  aria-autocomplete="list"
-                  aria-controls="series-suggestions"
-                  aria-expanded={showSuggestions}
-                  aria-activedescendant={activeSuggestionIndex >= 0 ? `series-suggestion-${activeSuggestionIndex}` : undefined}
-                  role="combobox"
-                  required
-                />
-                {/* Suggestions dropdown */}
-                {showSuggestions && !!form.series_autocomplete && (
-                  <ul
-                    id="series-suggestions"
-                    className="absolute z-10 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-60 overflow-y-auto"
-                    role="listbox"
-                  >
-                    {seriesLoading && (
-                      <li className="p-2 text-sm text-gray-400">Chargement…</li>
+              {/* Import TMDb contextuel */}
+              {seriesTmdbId && (
+                <div className="mb-2 flex flex-col gap-1">
+                  <label className="block text-sm font-medium mb-1" htmlFor="season_number">
+                    Importer depuis TMDb
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      id="season_number"
+                      type="number"
+                      min={1}
+                      name="season_number"
+                      value={form.season_number}
+                      onChange={handleChange}
+                      className="input input-bordered w-32 text-base px-4 py-2 rounded-lg"
+                      placeholder="Numéro"
+                      aria-label="Numéro de saison"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fetchSeasonFromTMDB(form.season_number)}
+                      disabled={isTmdbLoading || !form.season_number}
+                      aria-label="Importer la saison depuis TMDb"
+                    >
+                      {isTmdbLoading ? "Recherche TMDb..." : "Importer TMDb"}
+                    </Button>
+                    {tmdbPreview && (
+                      <Button type="button" size="sm" onClick={importFromTMDB} aria-label="Pré-remplir">
+                        Pré-remplir
+                      </Button>
                     )}
-                    {seriesSuggestions.map((suggestion, idx) => (
-                      <li
-                        key={suggestion.id}
-                        id={`series-suggestion-${idx}`}
-                        className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSuggestionIndex === idx ? "bg-blue-600/80 text-white" : ""}`}
-                        role="option"
-                        aria-selected={activeSuggestionIndex === idx}
-                        tabIndex={-1}
-                        onClick={() => {
-                          setForm(f => ({
-                            ...f,
-                            series_autocomplete: suggestion.name + (suggestion.first_air_date ? " (" + suggestion.first_air_date.slice(0, 4) + ")" : ""),
-                            tmdb_series_id: suggestion.id.toString()
-                          }));
-                          setSeriesSuggestions([]);
-                          setShowSuggestions(false);
-                        }}
-                      >
-                        <span className="font-medium">{suggestion.name}</span>{" "}
-                        {suggestion.first_air_date && (
-                          <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
-                        )}
-                        {suggestion.poster_path && (
-                          <img
-                            src={`https://image.tmdb.org/t/p/w45${suggestion.poster_path}`}
-                            alt=""
-                            className="inline-block ml-2 h-6 w-auto rounded"
-                          />
-                        )}
-                      </li>
-                    ))}
-                    {!seriesLoading && seriesSuggestions.length === 0 && (
-                      <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
-                    )}
-                  </ul>
-                )}
-              </div>
+                  </div>
+                  {tmdbPreview && (
+                    <div className="flex gap-4 items-center mt-2 p-2 border bg-gray-800 rounded shadow">
+                      {tmdbPreview.poster_path && (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w154${tmdbPreview.poster_path}`}
+                          alt=""
+                          className="h-24 rounded shadow"
+                        />
+                      )}
+                      <div>
+                        <div className="text-base font-bold">{tmdbPreview.name} (Saison {tmdbPreview.season_number})</div>
+                        <div className="text-xs text-gray-400">{tmdbPreview.air_date}</div>
+                        <div className="text-xs">{tmdbPreview.overview?.slice(0, 180)}{tmdbPreview.overview?.length > 180 ? "…" : ""}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium mb-1" htmlFor="season_number">
                   Numéro de saison <span className="text-red-500">*</span>
