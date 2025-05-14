@@ -252,43 +252,83 @@ export default function AdminSeriesDetailPage() {
         ) : seasons.length === 0 ? (
           <div className="text-gray-400">Aucune saison pour cette série.</div>
         ) : (
-          <div className="divide-y divide-gray-800">
+          <div className="grid gap-4 sm:grid-cols-2">
             {seasons.map((season) => (
-              <div key={season.id} className="flex items-center gap-4 py-2">
-                {/* Inline edit du titre de saison */}
-                <span className="font-semibold">
-                  Saison {season.season_number}:{" "}
-                  <InlineEditSeasonTitle
-                    season={season}
-                    onSave={async (newTitle) => {
-                      setSeasonActionLoading(`inlineedit-${season.id}`);
-                      await handleSaveSeason({ ...season, title: newTitle });
-                      setSeasonActionLoading(null);
-                    }}
+              <div
+                key={season.id}
+                className="flex bg-gray-800 rounded-xl shadow p-4 items-center gap-4 relative hover:shadow-lg transition group"
+                style={{ minHeight: 100 }}
+              >
+                <div className="flex-shrink-0">
+                  <img
+                    src={season.poster || "/placeholder-backdrop.jpg"}
+                    alt={season.title || `Saison ${season.season_number}`}
+                    className="h-20 w-16 rounded border border-gray-700 object-cover bg-gray-900"
+                    onError={e => { e.target.src = "/placeholder-backdrop.jpg"; }}
                   />
-                </span>
-                <Tooltip text="Éditer la saison">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSeasonModal({ open: true, initial: season })}
-                  >
-                    ✏️
-                  </Button>
-                </Tooltip>
-                <Tooltip text="Supprimer la saison">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeleteSeason(season.id)}
-                    disabled={seasonActionLoading === `delete-${season.id}`}
-                  >
-                    {seasonActionLoading === `delete-${season.id}` ? "Suppression..." : "🗑️"}
-                  </Button>
-                </Tooltip>
-                {seasonActionLoading === `edit-${season.id}` && (
-                  <span className="text-xs text-blue-400 ml-2">Sauvegarde...</span>
-                )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-indigo-300">
+                      Saison {season.season_number}
+                    </span>
+                    {season.tmdb_id && (
+                      <Tooltip text="ID TMDB lié">
+                        <span className="text-xs bg-green-900/80 text-green-300 rounded px-2 py-0.5 ml-1">
+                          TMDB
+                        </span>
+                      </Tooltip>
+                    )}
+                    {season.air_date && (
+                      <span className="text-xs text-gray-400 ml-2">
+                        {new Date(season.air_date).getFullYear()}
+                      </span>
+                    )}
+                    {typeof season.episode_count !== "undefined" && season.episode_count !== "" && (
+                      <span className="text-xs ml-2 bg-gray-700 px-2 py-0.5 rounded text-blue-200">{season.episode_count} ép.</span>
+                    )}
+                  </div>
+                  {/* Inline edit du titre de saison */}
+                  <div className="font-semibold text-lg text-white truncate">
+                    <InlineEditSeasonTitle
+                      season={season}
+                      onSave={async (newTitle) => {
+                        setSeasonActionLoading(`inlineedit-${season.id}`);
+                        await handleSaveSeason({ ...season, title: newTitle });
+                        setSeasonActionLoading(null);
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1 italic whitespace-pre-line" style={{ maxHeight: 40, overflow: "hidden" }}>
+                    {season.description || <span className="text-gray-600">Aucune description.</span>}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 items-end absolute right-4 top-4 opacity-80 group-hover:opacity-100 transition">
+                  <Tooltip text="Éditer la saison">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSeasonModal({ open: true, initial: season })}
+                      style={{ minWidth: 32 }}
+                    >
+                      ✏️
+                    </Button>
+                  </Tooltip>
+                  <Tooltip text="Supprimer la saison">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteSeason(season.id)}
+                      disabled={seasonActionLoading === `delete-${season.id}`}
+                      style={{ minWidth: 32 }}
+                    >
+                      {seasonActionLoading === `delete-${season.id}` ? "..." : "🗑️"}
+                    </Button>
+                  </Tooltip>
+                  {seasonActionLoading === `edit-${season.id}` && (
+                    <span className="text-xs text-blue-400 ml-2">Sauvegarde...</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
