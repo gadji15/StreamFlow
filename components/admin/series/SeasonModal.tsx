@@ -32,12 +32,6 @@ export default function SeasonModal({
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
-    genres: Array.isArray(initialData.genres)
-      ? initialData.genres
-      : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g) => g.trim())
-        : []),
-    genresInput: "",
   });
 
   // Pour feedback recherche TMDB saison par numéro
@@ -89,12 +83,6 @@ export default function SeasonModal({
         poster: initialData.poster || "",
         tmdb_id: initialData.tmdb_id || "",
         description: initialData.description || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g) => g.trim())
-            : []),
-        genresInput: "",
       });
       setTmdbSearch(
         (seriesTitle ? seriesTitle + " " : "") +
@@ -191,11 +179,6 @@ export default function SeasonModal({
           form.episode_count === "" || form.episode_count === undefined
             ? ""
             : Number(form.episode_count),
-        genres: Array.isArray(form.genres)
-          ? form.genres
-          : typeof form.genres === "string"
-            ? form.genres.split(",").map((g) => g.trim())
-            : [],
       };
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
@@ -351,6 +334,30 @@ export default function SeasonModal({
     setLoading(false);
   };
 
+  // Réinitialisation complète à la fermeture de la modale
+  useEffect(() => {
+    if (!open) {
+      setForm({
+        title: "",
+        season_number: "",
+        air_date: "",
+        episode_count: "",
+        poster: "",
+        tmdb_id: "",
+        description: "",
+      });
+      setErrors({});
+      setTmdbSearch("");
+      setSeasonSearchError(null);
+      setSerieSearch("");
+      setSerieSuggestions([]);
+      setSerieTmdbIdInput("");
+      setTmdbSeasonCount(null);
+      setTmdbSeasonError(null);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -427,7 +434,11 @@ export default function SeasonModal({
                   autoComplete="off"
                 />
                 {showSerieSuggestions && !!serieSearch && (
-                  <ul className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto">
+                  <ul 
+                    className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto"
+                    role="listbox"
+                    aria-live="polite"
+                  >
                     {serieLoading && (
                       <li className="p-2 text-sm text-gray-400">Chargement…</li>
                     )}
@@ -441,6 +452,8 @@ export default function SeasonModal({
                           setSerieSuggestions([]);
                           setShowSerieSuggestions(false);
                         }}
+                        role="option"
+                        aria-selected={activeSerieSuggestion === idx}
                       >
                         <span className="font-medium">{suggestion.name}</span>
                         {suggestion.first_air_date && (
@@ -538,6 +551,7 @@ export default function SeasonModal({
         )}
         {/* Content scrollable */}
         <form
+          id="season-form"
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
@@ -664,11 +678,13 @@ export default function SeasonModal({
             <input
               id="tmdb_id"
               value={form.tmdb_id}
-              onChange={(e) => handleChange("tmdb_id", e.target.value)}
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs"
-              placeholder="Ex: 1234"
+              readOnly
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs opacity-70"
+              placeholder="Rempli automatiquement"
               type="number"
               min={1}
+              tabIndex={-1}
+              aria-readonly="true"
             />
           </div>
           </div>
@@ -690,7 +706,6 @@ export default function SeasonModal({
             variant="success"
             disabled={loading}
             aria-label="Enregistrer la saison"
-            onClick={handleSubmit}
             className="text-xs py-1 px-2"
           >
             {loading ? "..." : "Enregistrer"}
