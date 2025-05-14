@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/use-toast";
  * Amélioration : robustesse du champ numéro de saison (number >= 1)
  */
 
+import { supabase } from "@/lib/supabaseClient";
+
 export default function SeasonModal({
   open,
   onClose,
@@ -13,6 +15,7 @@ export default function SeasonModal({
   initialData = {},
   seriesTitle = "",
   tmdbSeriesId = "",
+  seriesId, // Ajouté pour la vérification dupliqué
 }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
@@ -45,6 +48,10 @@ export default function SeasonModal({
   );
   const firstInput = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Stocker le nombre de saisons TMDB
+  const [tmdbSeasonCount, setTmdbSeasonCount] = useState<number | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // Reset le formulaire UNIQUEMENT à l'ouverture ou quand on change de saison à éditer
   const wasOpen = useRef(false);
@@ -84,6 +91,19 @@ export default function SeasonModal({
       if (firstInput.current) {
         setTimeout(() => firstInput.current && firstInput.current.focus(), 0);
       }
+      // Charger le nombre de saisons TMDB si possible
+      setTmdbSeasonCount(null);
+      if (tmdbSeriesId) {
+        fetch(`https://api.themoviedb.org/3/tv/${tmdbSeriesId}?language=fr-FR&append_to_response=seasons`, {
+          headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_BEARER}` }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data && Array.isArray(data.seasons)) {
+              setTmdbSeasonCount(data.seasons.length);
+            }
+          });
+      }
     }
     wasOpen.current = open;
     // eslint-disable-next-line
@@ -95,7 +115,7 @@ export default function SeasonModal({
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
-  const validate = () => {
+  const validate = async () => {
     const err: { [k: string]: string } = {};
     if (!form.title || !form.title.trim())
       err.title = "Le titre est requis";
@@ -113,12 +133,23 @@ export default function SeasonModal({
       (isNaN(Number(form.episode_count)) || !/^\d+$/.test(form.episode_count) || Number(form.episode_count) < 0)
     )
       err.episode_count = "Nombre d'épisodes invalide";
+    // Vérification anti-doublon à la création
+    if (!initialData.id && form.season_number && seriesId) {
+      const { data: existing } = await supabase
+        .from("seasons")
+        .select("id")
+        .eq("series_id", seriesId)
+        .eq("season_number", Number(form.season_number));
+      if (existing && existing.length > 0) {
+        err.season_number = "Une saison avec ce numéro existe déjà pour cette série.";
+      }
+    }
     return err;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const err = validate();
+    const err = await validate();
     setErrors(err);
     if (Object.keys(err).length > 0) {
       toast({
@@ -154,13 +185,29 @@ export default function SeasonModal({
   };
 
   // Import TMDB intelligent pour une saison
-  // Correction : gestion claire du TMDB ID (depuis prop ou form), feedback loader, activation bouton, toast erreur.
+  // Import TMDB complet et anti-doublon
   const handleTMDBImport = async () => {
     const tmdbIdToUse = tmdbSeriesId || form.tmdb_id;
     if (!tmdbIdToUse || !form.season_number) {
       toast({
         title: "Import impossible",
         description: "Renseignez l'ID TMDB de la série ET le numéro de saison.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Vérification anti-doublon
+    setCheckingDuplicate(true);
+    const { data: existing, error } = await supabase
+      .from("seasons")
+      .select("id")
+      .eq("series_id", seriesId)
+      .eq("season_number", Number(form.season_number));
+    setCheckingDuplicate(false);
+    if (existing && existing.length > 0 && !initialData.id) {
+      toast({
+        title: "Doublon détecté",
+        description: "Une saison avec ce numéro existe déjà pour cette série.",
         variant: "destructive",
       });
       return;
@@ -239,6 +286,12 @@ export default function SeasonModal({
             ✕
           </button>
         </div>
+        {/* Indication du nombre de saisons TMDB */}
+        {tmdbSeasonCount !== null && (
+          <div className="px-3 pt-1 pb-0.5 text-xs text-blue-300 font-medium">
+            Nombre de saisons disponibles sur TMDB : <b>{tmdbSeasonCount}</b>
+          </div>
+        )}
         {/* TMDB import zone */}
         <div className="flex gap-1 items-end px-3 pt-1">
           <div className="flex-1">
@@ -258,16 +311,17 @@ export default function SeasonModal({
                 min={1}
                 pattern="[0-9]*"
                 autoComplete="off"
+                disabled={loading || checkingDuplicate}
               />
               <Button
                 type="button"
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
                 onClick={handleTMDBImport}
-                disabled={loading || !(tmdbSeriesId || form.tmdb_id) || !form.season_number}
+                disabled={loading || !(tmdbSeriesId || form.tmdb_id) || !form.season_number || checkingDuplicate}
                 aria-label="Importer cette saison depuis TMDB"
               >
-                {loading ? (
+                {(loading || checkingDuplicate) ? (
                   <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
