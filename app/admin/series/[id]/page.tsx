@@ -256,8 +256,7 @@ export default function AdminSeriesDetailPage() {
             {seasons.map((season) => (
               <div
                 key={season.id}
-                className="flex bg-gray-800 rounded-xl shadow p-4 items-center gap-4 relative hover:shadow-lg transition group"
-                style={{ minHeight: 100 }}
+                className="flex bg-gray-800 rounded-xl shadow p-4 gap-4 relative hover:shadow-lg transition group min-h-[100px]"
               >
                 <div className="flex-shrink-0">
                   <img
@@ -267,8 +266,9 @@ export default function AdminSeriesDetailPage() {
                     onError={e => { e.target.src = "/placeholder-backdrop.jpg"; }}
                   />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                {/* Saison info */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="text-sm font-semibold text-indigo-300">
                       Saison {season.season_number}
                     </span>
@@ -299,9 +299,9 @@ export default function AdminSeriesDetailPage() {
                       }}
                     />
                   </div>
-                  {/* Description retirée pour éviter tout chevauchement avec les boutons d'action */}
                 </div>
-                <div className="flex flex-col gap-2 items-end absolute right-4 top-4 opacity-80 group-hover:opacity-100 transition">
+                {/* Actions colonne, bien séparée */}
+                <div className="flex flex-col gap-2 items-center justify-center ml-4 self-stretch">
                   <Tooltip text="Éditer la saison">
                     <Button
                       size="sm"
@@ -324,7 +324,7 @@ export default function AdminSeriesDetailPage() {
                     </Button>
                   </Tooltip>
                   {seasonActionLoading === `edit-${season.id}` && (
-                    <span className="text-xs text-blue-400 ml-2">Sauvegarde...</span>
+                    <span className="text-xs text-blue-400 mt-1">Sauvegarde...</span>
                   )}
                 </div>
               </div>
