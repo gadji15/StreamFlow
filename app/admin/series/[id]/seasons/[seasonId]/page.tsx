@@ -9,6 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Plus, Edit, ChevronRight, Loader2, Download, Save, ListVideo, CheckCircle2, XCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 type Series = { id: string; title: string; tmdb_id?: number | null };
 type Season = {
@@ -34,7 +43,15 @@ type Episode = {
 export default function SeasonDetailPage() {
   const { id: seriesId, seasonId } = useParams() as { id: string; seasonId: string };
   const router = useRouter();
+  const { toast } = useToast();
+  const { toast } = useToast();
+  const { toast } = useToast();
+  const { toast } = useToast();
+  const { toast } = useToast();
+  const { toast } = useToast();
 
+  const { toast } = useToast();
+  const { toast } = useToast();
   const [series, setSeries] = useState<Series | null>(null);
   const [season, setSeason] = useState<Season | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -95,7 +112,16 @@ export default function SeasonDetailPage() {
           .order('number', { ascending: true });
         setEpisodes(episodesData || []);
       } catch (e: any) {
-        setErr(e?.message || "Erreur inattendue.");
+        toast({
+          title: "Erreur",
+          description: e?.message || "Erreur inattendue.",
+          variant: "destructive"
+        });
+        toast({
+          title: "Erreur",
+          description: e?.message || "Erreur inattendue.",
+          variant: "destructive"
+        });
         setSeries(null);
         setSeason(null);
         setEpisodes([]);
@@ -127,9 +153,16 @@ export default function SeasonDetailPage() {
       setEpDuration(typeof ep.runtime === 'number' ? ep.runtime : '');
       setEpPoster(ep.still_path ? `https://image.tmdb.org/t/p/w500${ep.still_path}` : '');
       setEpVideoUrl('');
-      setEpFormSuccess("Import TMDb réussi, veuillez vérifier les champs.");
+      toast({
+        title: "Import TMDb réussi",
+        description: "Vérifie et complète les champs si besoin."
+      });
     } catch (e: any) {
-      setEpFormError(e?.message || "Erreur lors de l'import TMDb.");
+      toast({
+        title: "Erreur import TMDb",
+        description: e?.message || "Erreur lors de l'import TMDb.",
+        variant: "destructive"
+      });
     } finally {
       setEpImporting(false);
       epImportRef.current = false;
@@ -151,7 +184,11 @@ export default function SeasonDetailPage() {
         .eq('number', epNumber)
         .maybeSingle();
       if (existing) {
-        setEpFormError("Cet épisode existe déjà.");
+        toast({
+          title: "Erreur",
+          description: "Cet épisode existe déjà.",
+          variant: "destructive"
+        });
         setEpFormLoading(false);
         return;
       }
@@ -170,11 +207,18 @@ export default function SeasonDetailPage() {
         .select()
         .single();
       if (error || !data) {
-        setEpFormError(error?.message || "Erreur lors de l'ajout.");
+        toast({
+          title: "Erreur",
+          description: error?.message || "Erreur lors de l'ajout.",
+          variant: "destructive"
+        });
         setEpFormLoading(false);
         return;
       }
-      setEpFormSuccess("Épisode ajouté avec succès !");
+      toast({
+        title: "Épisode ajouté",
+        description: "L'épisode a bien été ajouté."
+      });
       setEpNumber(epNumber + 1);
       setEpTitle('');
       setEpDescription('');
@@ -190,7 +234,11 @@ export default function SeasonDetailPage() {
       setEpisodes(episodesData || []);
       setEpFormLoading(false);
     } catch (e: any) {
-      setEpFormError(e?.message || "Erreur inattendue.");
+      toast({
+        title: "Erreur inattendue",
+        description: e?.message || "Erreur inconnue.",
+        variant: "destructive"
+      });
       setEpFormLoading(false);
     }
   };
@@ -354,12 +402,7 @@ export default function SeasonDetailPage() {
                     placeholder="URL vidéo (YouTube, mp4, etc.)"
                   />
                 </div>
-                {epFormError && (
-                  <div className="text-red-500">{epFormError}</div>
-                )}
-                {epFormSuccess && (
-                  <div className="text-green-500">{epFormSuccess}</div>
-                )}
+                {/* Feedbacks gérés via toast */}
                 <div className="flex justify-end">
                   <Button type="submit" disabled={epFormLoading}>
                     {epFormLoading ? (
@@ -709,17 +752,28 @@ async function handleEditEpSubmit(e: React.FormEvent) {
       })
       .eq('id', editModalEp.id);
     if (error) {
-      setEditEpFormError(error.message || "Erreur lors de l'édition.");
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de l'édition.",
+        variant: "destructive"
+      });
       setEditEpFormLoading(false);
       return;
     }
-    setEditEpFormSuccess("Épisode modifié avec succès !");
+    toast({
+      title: "Épisode modifié",
+      description: "Les modifications ont été enregistrées."
+    });
     setTimeout(() => {
       closeEditEpModal();
       window.location.reload();
     }, 900);
   } catch (e: any) {
-    setEditEpFormError(e?.message || "Erreur inattendue.");
+    toast({
+      title: "Erreur inattendue",
+      description: e?.message || "Erreur inattendue.",
+      variant: "destructive"
+    });
   } finally {
     setEditEpFormLoading(false);
   }
@@ -733,17 +787,28 @@ async function handleDeleteEpConfirm() {
   try {
     const { error } = await supabase.from('episodes').delete().eq('id', deleteModalEp.id);
     if (error) {
-      setDeleteEpFormError(error.message || "Erreur lors de la suppression.");
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la suppression.",
+        variant: "destructive"
+      });
       setDeleteEpFormLoading(false);
       return;
     }
-    setDeleteEpFormSuccess("Épisode supprimé avec succès !");
+    toast({
+      title: "Épisode supprimé",
+      description: "L'épisode a bien été supprimé."
+    });
     setTimeout(() => {
       closeDeleteEpModal();
       window.location.reload();
     }, 900);
   } catch (e: any) {
-    setDeleteEpFormError(e?.message || "Erreur inattendue.");
+    toast({
+      title: "Erreur inattendue",
+      description: e?.message || "Erreur inattendue.",
+      variant: "destructive"
+    });
     setDeleteEpFormLoading(false);
   }
 }
@@ -828,14 +893,21 @@ async function handleBulkEpImport() {
       .from('episodes')
       .insert(inserts);
     if (error) throw error;
-    setBulkEpSuccess(`Import de ${toImport.length} épisode(s) réussi !`);
-    // Refresh la liste
-    await new Promise((res) => setTimeout(res, 700));
-    setShowBulkEpModal(false);
-    window.location.reload();
-  } catch (e) {
-    setBulkEpError(e?.message || "Erreur lors de l'import.");
-  } finally {
-    setBulkEpInserting(false);
+      toast({
+        title: "Import réussi",
+        description: `Import de ${toImport.length} épisode(s) réussi !`
+      });
+      // Refresh la liste
+      await new Promise((res) => setTimeout(res, 700));
+      setShowBulkEpModal(false);
+      window.location.reload();
+    } catch (e) {
+      toast({
+        title: "Erreur import TMDb",
+        description: e?.message || "Erreur lors de l'import.",
+        variant: "destructive"
+      });
+    } finally {
+      setBulkEpInserting(false);
+    }
   }
-}
