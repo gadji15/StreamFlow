@@ -58,6 +58,14 @@ export default function SeasonModal({
   const [tmdbSeasonError, setTmdbSeasonError] = useState<string | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
+  // Ajout : champ de recherche (autocomplete) série TMDB SI le tmdbSeriesId n'est pas fourni
+  const [serieTmdbIdInput, setSerieTmdbIdInput] = useState(tmdbSeriesId || initialData.tmdb_series_id || "");
+  const [serieSearch, setSerieSearch] = useState("");
+  const [serieSuggestions, setSerieSuggestions] = useState<any[]>([]);
+  const [serieLoading, setSerieLoading] = useState(false);
+  const [showSerieSuggestions, setShowSerieSuggestions] = useState(false);
+  const [activeSerieSuggestion, setActiveSerieSuggestion] = useState(-1);
+
   // Reset le formulaire UNIQUEMENT à l'ouverture ou quand on change de saison à éditer
   const wasOpen = useRef(false);
   useEffect(() => {
@@ -198,8 +206,8 @@ export default function SeasonModal({
     setLoading(false);
   };
 
-  // Recherche TMDB robuste et fluide du TMDB ID de la saison à partir du numéro de saison et du contexte série
-  const handleFindSeasonTmdbId = async () => {
+  // Version personnalisée pour accepter un TMDB ID série dynamique (depuis champ ou props)
+  const handleFindSeasonTmdbIdCustom = async (serieId: string) => {
     setSeasonSearchError(null);
     setSeasonSearchLoading(true);
 
@@ -214,12 +222,10 @@ export default function SeasonModal({
       return;
     }
 
-    // Récupération du TMDB ID de la série : priorité à la prop, fallback à initialData
-    const serieTmdbId = tmdbSeriesId || initialData.tmdb_series_id || initialData.tmdb_id || "";
-    if (!serieTmdbId) {
+    if (!serieId) {
       toast({
         title: "Erreur",
-        description: "Impossible de rechercher la saison : la série n'a pas de TMDB ID associé. Veuillez vérifier les infos de la série.",
+        description: "Veuillez rechercher et sélectionner une série TMDB avant de rechercher la saison.",
         variant: "destructive",
       });
       setSeasonSearchLoading(false);
@@ -228,7 +234,7 @@ export default function SeasonModal({
 
     try {
       // Va chercher toutes les saisons de la série sur TMDB
-      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(serieTmdbId)}`);
+      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(serieId)}`);
       if (!res.ok) {
         toast({
           title: "Erreur TMDB",
@@ -393,8 +399,72 @@ export default function SeasonModal({
         {/* TMDB import zone */}
         <div className="flex gap-1 items-end px-3 pt-1">
           <div className="flex-1">
+            {/* Si tmdbSeriesId absent, proposer un champ de recherche série TMDB */}
+            {!tmdbSeriesId && !initialData.tmdb_series_id && (
+              <div className="mb-2">
+                <label htmlFor="serie_tmdb_search" className="block text-[11px] mb-1 text-white/70 font-medium">
+                  Rechercher la série sur TMDB
+                </label>
+                <input
+                  id="serie_tmdb_search"
+                  value={serieSearch}
+                  onChange={async e => {
+                    setSerieSearch(e.target.value);
+                    setShowSerieSuggestions(true);
+                    setSerieSuggestions([]);
+                    if (e.target.value.length > 2) {
+                      setSerieLoading(true);
+                      try {
+                        const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(e.target.value)}`);
+                        const data = await resp.json();
+                        setSerieSuggestions(data.results || []);
+                      } catch { setSerieSuggestions([]); }
+                      setSerieLoading(false);
+                    }
+                  }}
+                  className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs w-full mb-1"
+                  placeholder="Nom de la série"
+                  autoComplete="off"
+                />
+                {showSerieSuggestions && !!serieSearch && (
+                  <ul className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto">
+                    {serieLoading && (
+                      <li className="p-2 text-sm text-gray-400">Chargement…</li>
+                    )}
+                    {serieSuggestions.map((suggestion, idx) => (
+                      <li
+                        key={suggestion.id}
+                        className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                        onClick={() => {
+                          setSerieTmdbIdInput(String(suggestion.id));
+                          setSerieSearch(suggestion.name);
+                          setSerieSuggestions([]);
+                          setShowSerieSuggestions(false);
+                        }}
+                      >
+                        <span className="font-medium">{suggestion.name}</span>
+                        {suggestion.first_air_date && (
+                          <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                        )}
+                      </li>
+                    ))}
+                    {!serieLoading && serieSuggestions.length === 0 && (
+                      <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                    )}
+                  </ul>
+                )}
+                <input
+                  id="serie_tmdb_id"
+                  value={serieTmdbIdInput}
+                  onChange={e => setSerieTmdbIdInput(e.target.value)}
+                  className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs w-full mt-1"
+                  placeholder="TMDB ID série"
+                  type="text"
+                />
+              </div>
+            )}
             <label htmlFor="tmdb_import" className="block text-[11px] mb-1 text-white/70 font-medium">
-              Importer depuis TMDB (ID série requis)
+              Importer depuis TMDB (recherche par numéro de saison)
             </label>
             <div className="flex gap-1">
               <input
@@ -415,8 +485,26 @@ export default function SeasonModal({
                 type="button"
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
-                onClick={handleFindSeasonTmdbId}
-                disabled={seasonSearchLoading || !form.season_number || Number(form.season_number) < 1}
+                onClick={() => {
+                  // On utilise d'abord tmdbSeriesId (prop), sinon la saisie de l'utilisateur
+                  const serieId = tmdbSeriesId || serieTmdbIdInput || initialData.tmdb_series_id || initialData.tmdb_id || "";
+                  if (!serieId) {
+                    toast({
+                      title: "Erreur",
+                      description: "Veuillez rechercher et sélectionner une série TMDB avant de rechercher la saison.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  // Appel la fonction avec le bon ID
+                  handleFindSeasonTmdbIdCustom(serieId);
+                }}
+                disabled={
+                  seasonSearchLoading ||
+                  !form.season_number ||
+                  Number(form.season_number) < 1 ||
+                  (!tmdbSeriesId && !serieTmdbIdInput && !initialData.tmdb_series_id && !initialData.tmdb_id)
+                }
                 aria-label="Rechercher la saison sur TMDB"
               >
                 {seasonSearchLoading ? (
@@ -431,7 +519,7 @@ export default function SeasonModal({
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
                 onClick={handleTMDBImport}
-                disabled={loading || !(tmdbSeriesId || form.tmdb_id) || !form.season_number || checkingDuplicate}
+                disabled={loading || !(tmdbSeriesId || serieTmdbIdInput || form.tmdb_id) || !form.season_number || checkingDuplicate}
                 aria-label="Importer cette saison depuis TMDB"
               >
                 {(loading || checkingDuplicate) ? (
