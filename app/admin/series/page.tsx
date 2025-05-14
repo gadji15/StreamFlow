@@ -17,6 +17,7 @@ export default function AdminSeriesPage() {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<string[]>([]);
+  const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
 
   // Pagination & sélection
   const [page, setPage] = useState(1);
@@ -70,6 +71,24 @@ export default function AdminSeriesPage() {
         );
       }
       setSeries(filteredSeries);
+
+      // --- Charger le nombre de saisons par série
+      if (filteredSeries.length > 0) {
+        const seriesIds = filteredSeries.map((s) => s.id);
+        // Récupérer les saisons groupées par série_id et compter
+        const { data: seasonData, error: seasonError } = await supabase
+          .from('seasons')
+          .select('series_id, id');
+        if (!seasonError && Array.isArray(seasonData)) {
+          const counts: { [seriesId: string]: number } = {};
+          for (const s of seriesIds) {
+            counts[s] = seasonData.filter((seas) => seas.series_id === s).length;
+          }
+          setSeasonCounts(counts);
+        }
+      } else {
+        setSeasonCounts({});
+      }
     } catch (error: any) {
       toast({ title: 'Erreur', description: 'Impossible de charger la liste des séries.', variant: 'destructive' });
     } finally {
@@ -310,7 +329,7 @@ export default function AdminSeriesPage() {
             totalPages={totalPages}
             setPage={setPage}
             loading={loading}
-            seasonCounts={{}} // À remplir si besoin
+            seasonCounts={seasonCounts}
             genres={genres}
           />
         )}
