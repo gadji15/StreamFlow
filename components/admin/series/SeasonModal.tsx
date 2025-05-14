@@ -9,12 +9,14 @@ export default function SeasonModal({
   onSubmit,
   initial,
   seriesId,
+  refreshSeasons, // nouveau prop
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
   initial?: any;
   seriesId: string;
+  refreshSeasons?: () => void; // callback optionnel
 }) {
   const [form, setForm] = useState({
     season_number: initial?.season_number?.toString() || "",
@@ -106,6 +108,9 @@ export default function SeasonModal({
       tmdb_series_id: form.tmdb_series_id ? Number(form.tmdb_series_id) : undefined,
       series_id: seriesId,
     });
+    if (refreshSeasons) {
+      refreshSeasons();
+    }
     onClose();
   };
 
@@ -188,11 +193,33 @@ export default function SeasonModal({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => fetchSeasonFromTMDB(form.tmdb_series_id, form.season_number)}
+                onClick={async () => {
+                  setTmdbLoading(true);
+                  try {
+                    const res = await fetch(`/api/tmdb/season/${encodeURIComponent(form.tmdb_series_id)}/${encodeURIComponent(form.season_number)}`);
+                    if (!res.ok) throw new Error("Erreur réseau TMDB");
+                    const tmdbPreview = await res.json();
+                    setForm(f => ({
+                      ...f,
+                      title: tmdbPreview.name || f.title,
+                      description: tmdbPreview.overview || f.description,
+                      poster: tmdbPreview.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${tmdbPreview.poster_path}`
+                        : f.poster,
+                      air_date: tmdbPreview.air_date || f.air_date,
+                      tmdb_id: tmdbPreview.id ? String(tmdbPreview.id) : f.tmdb_id,
+                      episode_count: tmdbPreview.episodes ? String(tmdbPreview.episodes.length) : (tmdbPreview.episode_count ? String(tmdbPreview.episode_count) : f.episode_count),
+                    }));
+                    toast({ title: "Import TMDB réussi", description: "Champs pré-remplis depuis TMDB !" });
+                  } catch (e) {
+                    toast({ title: "Erreur TMDB", description: String(e), variant: "destructive" });
+                  }
+                  setTmdbLoading(false);
+                }}
                 disabled={tmdbLoading}
                 className="mt-2"
               >
-                {tmdbLoading ? "Recherche TMDB..." : "Rechercher sur TMDB"}
+                {tmdbLoading ? "Chargement..." : "Importer TMDB"}
               </Button>
             )}
             {tmdbPreview && (

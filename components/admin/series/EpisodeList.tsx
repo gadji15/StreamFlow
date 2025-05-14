@@ -3,19 +3,35 @@ import EpisodeRow from "./EpisodeRow";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason }) {
-  const { toast } = useToast();
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+export default function EpisodeList({
+  episodes,
+  seasonId,
+  fetchEpisodesForSeason,
+  tmdbSeriesId,
+  seasonNumber,
+}) {
+  // ...
+  const refreshEpisodes = () => {
+    fetchEpisodesForSeason(seasonId);
+  };
 
-  // Drag & drop reorder logic
-  const moveEpisode = async (fromIdx: number, toIdx: number) => {
-    if (fromIdx === toIdx) return;
-    const reordered = [...episodes];
-    const [removed] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, removed);
-    // Update order field in DB (assume field: "order")
-    await Promise.all(reordered.map((ep, idx) =>
-      supabase.from("episodes").update({ order: idx }).eq('id', ep.id)
+  return (
+    <div>
+      {/* ... */}
+      <EpisodeModal
+        open={modalOpen}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        initial={editingEpisode}
+        seasonId={seasonId}
+        tmdbSeriesId={tmdbSeriesId}
+        seasonNumber={seasonNumber}
+        refreshEpisodes={refreshEpisodes}
+      />
+      {/* ... */}
+    </div>
+  );
+}).eq('id', ep.id)
     ));
     fetchEpisodesForSeason();
     toast({ title: "Ordre des épisodes mis à jour" });

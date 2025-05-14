@@ -9,14 +9,17 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     start_year: initialData.start_year || "",
     end_year: initialData.end_year || "",
     genres: initialData.genres || [],
+    genresInput: "",
     vote_average: initialData.vote_average || "",
     published: !!initialData.published,
     isvip: !!initialData.isvip,
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
+    description: initialData.description || "",
   });
+  const [errors, setErrors] = useState<{[key:string]:string}>({});
   const [loading, setLoading] = useState(false);
-  const [tmdbQuery, setTmdbQuery] = useState("");
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
 
@@ -24,9 +27,27 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
+    setErrors({});
   }, [open]);
 
-  const handleChange = (field, value) => setForm(f => ({ ...f, [field]: value }));
+  const handleChange = (field, value) => {
+    setForm(f => ({ ...f, [field]: value }));
+    setErrors(e => ({ ...e, [field]: undefined }));
+  };
+
+  // Validation avancée
+  const validate = () => {
+    const err: { [k: string]: string } = {};
+    if (!form.title || !form.title.trim()) err.title = "Le titre est requis";
+    if (form.vote_average && (isNaN(Number(form.vote_average)) || Number(form.vote_average) < 0 || Number(form.vote_average) > 10))
+      err.vote_average = "La note doit être comprise entre 0 et 10";
+    if (form.start_year && (isNaN(Number(form.start_year)) || Number(form.start_year) < 1900 || Number(form.start_year) > 2100))
+      err.start_year = "Année invalide";
+    if (form.end_year && (isNaN(Number(form.end_year)) || Number(form.end_year) < 1900 || Number(form.end_year) > 2100))
+      err.end_year = "Année invalide";
+    if (form.tmdb_id && isNaN(Number(form.tmdb_id))) err.tmdb_id = "ID TMDB invalide";
+    return err;
+  };
 
   const handleTMDB = async () => {
     if (!tmdbQuery) return;
@@ -55,8 +76,10 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) {
-      toast({ title: "Titre requis", variant: "destructive" });
+    const err = validate();
+    setErrors(err);
+    if (Object.keys(err).length > 0) {
+      toast({ title: "Erreur de validation", description: Object.values(err)[0], variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -70,6 +93,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
     setLoading(false);
   };
 
+
   if (!open) return null;
 
   return (
@@ -81,7 +105,16 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
       tabIndex={-1}
       onClick={onClose}
     >
-      <div className="bg-gray-900 p-6 rounded shadow-lg max-w-lg w-full relative" onClick={e => e.stopPropagation()}>
+      <div
+        className="bg-gray-900 p-4 sm:p-6 rounded shadow-xl w-full max-w-md sm:max-w-lg md:max-w-xl relative"
+        style={{
+          minHeight: 'fit-content',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <h2 className="text-lg font-bold mb-4" id="series-modal-title">
           {initialData.id ? "Modifier la série" : "Ajouter une série"}
         </h2>
@@ -96,11 +129,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               id="title"
               value={form.title}
               onChange={e => handleChange("title", e.target.value)}
-              className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+              className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.title ? "border-red-500" : ""}`}
               required
               aria-required="true"
             />
+            {errors.title && <div className="text-xs text-red-400 mt-0.5">{errors.title}</div>}
+          </div>}
           </div>
+
           <div>
             <label htmlFor="creator" className="block text-sm font-medium">
               Créateur
@@ -142,14 +178,41 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
           <div>
             <label htmlFor="genres" className="block text-sm font-medium">
               Genres
-              <span tabIndex={0} aria-label="Séparez les genres par des virgules ex: Drame,Comédie">ℹ️</span>
+              <span tabIndex={0} aria-label="Tapez puis appuyez sur Entrée ou virgule pour ajouter">ℹ️</span>
             </label>
+            <div className="flex flex-wrap gap-1 mb-1">
+              {(Array.isArray(form.genres) ? form.genres : []).map((g, idx) => (
+                <span key={g+idx} className="inline-flex items-center px-2 py-1 bg-indigo-700/30 text-indigo-200 rounded text-xs mr-1">
+                  {g}
+                  <button
+                    type="button"
+                    aria-label={`Supprimer le genre ${g}`}
+                    className="ml-1 text-indigo-300 hover:text-red-400 text-xs"
+                    onClick={() => handleChange("genres", form.genres.filter((x, i) => i !== idx))}
+                  >×</button>
+                </span>
+              ))}
+            </div>
             <input
               id="genres"
-              value={Array.isArray(form.genres) ? form.genres.join(", ") : form.genres}
-              onChange={e => handleChange("genres", e.target.value.split(",").map(g => g.trim()))}
+              value={form.genresInput || ""}
+              onChange={e => handleChange("genresInput", e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === "Enter" || e.key === ",") && form.genresInput?.trim()) {
+                  e.preventDefault();
+                  const genre = form.genresInput.trim();
+                  if (genre.length > 0 && !(form.genres || []).includes(genre)) {
+                    handleChange("genres", [...(form.genres || []), genre]);
+                  }
+                  handleChange("genresInput", "");
+                }
+                if (e.key === "Backspace" && !form.genresInput && Array.isArray(form.genres) && form.genres.length > 0) {
+                  handleChange("genres", form.genres.slice(0, -1));
+                }
+              }}
               className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
-              placeholder="Drame, Comédie"
+              placeholder="Ajoutez un genre puis Entrée ou ,"
+              autoComplete="off"
             />
           </div>
           <div>
@@ -163,10 +226,13 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               step="0.1"
               value={form.vote_average}
               onChange={e => handleChange("vote_average", e.target.value)}
-              className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
+              className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.vote_average ? "border-red-500" : ""}`}
               min="0"
               max="10"
             />
+            {errors.vote_average && <div className="text-xs text-red-400 mt-0.5">{errors.vote_average}</div>}
+          </div>}
+
           </div>
           <div>
             <label htmlFor="poster" className="block text-sm font-medium">
@@ -181,7 +247,21 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
               placeholder="https://..."
             />
             {form.poster && (
-              <img src={form.poster} alt="Poster" className="mt-2 h-24 rounded shadow" />
+              <div className="flex flex-col items-start mt-2">
+                <img
+                  src={form.poster}
+                  alt="Aperçu affiche"
+                  className="h-24 sm:h-32 rounded shadow border border-gray-700"
+                  style={{maxWidth:"100%"}}
+                />
+                <button
+                  type="button"
+                  className="text-xs text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("poster", "")}
+                >
+                  Supprimer l'affiche
+                </button>
+              </div>
             )}
           </div>
           <div className="flex gap-3 items-center">
@@ -207,41 +287,88 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, t
             </label>
           </div>
           <div className="flex gap-2 items-end">
-            <div>
+            <div className="flex-1">
               <label htmlFor="tmdb_id" className="block text-sm font-medium">TMDB ID</label>
-              <input
-                id="tmdb_id"
-                value={form.tmdb_id}
-                onChange={e => handleChange("tmdb_id", e.target.value)}
-                className="mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white"
-                placeholder="Ex: 1396"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="tmdb_id"
+                  value={form.tmdb_id}
+                  onChange={e => handleChange("tmdb_id", e.target.value)}
+                  className={`mt-1 w-full rounded border px-2 py-1 bg-gray-800 text-white ${errors.tmdb_id ? "border-red-500" : ""}`}
+                  placeholder="Ex: 1396"
+                  type="number"
+                  min={1}
+                />
+                {errors.tmdb_id && <div className="text-xs text-red-400 mt-0.5">{errors.tmdb_id}</div>}
+                {errors.tmdb_id && <div className="text-xs text-red-400 mt-1">{errors.tmdb_id}</div>}
+
+                {form.tmdb_id && (
+                  <a
+                    href={`https://www.themoviedb.org/tv/${form.tmdb_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-1 text-indigo-400 hover:text-indigo-200 underline"
+                    title="Voir sur TMDB"
+                    tabIndex={0}
+                    aria-label="Ouvrir la fiche TMDB dans un nouvel onglet"
+                  >
+                    TMDB ↗
+                  </a>
+                )}
+              </div>
             </div>
-            <div>
-              <label htmlFor="tmdb_search" className="block text-xs mb-1">Recherche TMDB</label>
-              <input
-                id="tmdb_search"
-                value={tmdbQuery}
-                onChange={e => setTmdbQuery(e.target.value)}
-                className="rounded border px-2 py-1 bg-gray-800 text-white"
-                placeholder="Nom série ou ID"
-                aria-describedby="tmdb-search-tooltip"
-              />
-              <button
-                type="button"
-                className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white"
-                onClick={handleTMDB}
-                disabled={loading}
-                aria-label="Pré-remplir via TMDB"
-              >
-                Importer TMDB
-              </button>
-              <span className="ml-1 text-xs" id="tmdb-search-tooltip" role="tooltip">
-                Cherchez par titre ou ID TMDB
-              </span>
-            </div>
+            {form.tmdb_id && (
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  className="ml-2 px-2 py-1 rounded bg-indigo-600 text-white flex items-center"
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(form.tmdb_id)}`);
+                      if (!res.ok) throw new Error("Erreur réseau TMDB");
+                      const data = await res.json();
+                      if (data && data.id) {
+                        setForm(f => ({
+                          ...f,
+                          title: data.name || f.title,
+                          poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : f.poster,
+                          start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : f.start_year,
+                          end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : f.end_year,
+                          genres: data.genres ? data.genres.map((g) => g.name) : f.genres,
+                          vote_average: data.vote_average ?? f.vote_average,
+                          description: data.overview ?? f.description,
+                        }));
+                        toast({ title: "Import TMDB réussi", description: "Champs pré-remplis depuis TMDB !" });
+                      } else {
+                        toast({ title: "Introuvable TMDB", description: "Aucune série trouvée pour cet ID.", variant: "destructive" });
+                      }
+                    } catch (e) {
+                      toast({ title: "Erreur TMDB", description: String(e), variant: "destructive" });
+                    }
+                    setLoading(false);
+                  }}
+                  disabled={loading}
+                  aria-label="Importer les infos TMDB"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                      </svg>
+                      Chargement...
+                    </>
+                  ) : (
+                    "Importer TMDB"
+                  )}
+                </button>
+              </div>
+            )}
           </div>
-          <div className="flex gap-2 mt-6 justify-end">
+          </div>
+          {/* Actions sticky en bas */}
+          <div className="flex gap-2 mt-8 justify-end sticky bottom-0 bg-gray-900 py-3 z-10">
             <Button type="button" variant="outline" onClick={onClose} aria-label="Annuler">Annuler</Button>
             <Button type="submit" variant="success" disabled={loading} aria-label="Enregistrer la série">
               {loading ? "Chargement..." : "Enregistrer"}

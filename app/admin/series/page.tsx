@@ -17,12 +17,17 @@ export default function AdminSeriesPage() {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<string[]>([]);
+  const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
 
   // Pagination & sélection
   const [page, setPage] = useState(1);
   const pageSize = 20;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
+
+  // Loader suppression
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Filtres/recherche
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,6 +75,24 @@ export default function AdminSeriesPage() {
         );
       }
       setSeries(filteredSeries);
+
+      // --- Charger le nombre de saisons par série
+      if (filteredSeries.length > 0) {
+        const seriesIds = filteredSeries.map((s) => s.id);
+        // Récupérer les saisons groupées par série_id et compter
+        const { data: seasonData, error: seasonError } = await supabase
+          .from('seasons')
+          .select('series_id, id');
+        if (!seasonError && Array.isArray(seasonData)) {
+          const counts: { [seriesId: string]: number } = {};
+          for (const s of seriesIds) {
+            counts[s] = seasonData.filter((seas) => seas.series_id === s).length;
+          }
+          setSeasonCounts(counts);
+        }
+      } else {
+        setSeasonCounts({});
+      }
     } catch (error: any) {
       toast({ title: 'Erreur', description: 'Impossible de charger la liste des séries.', variant: 'destructive' });
     } finally {
@@ -100,11 +123,19 @@ export default function AdminSeriesPage() {
   // Action groupée
   const handleBulkDelete = async () => {
     if (!window.confirm(`Supprimer ${selectedIds.length} séries sélectionnées ?`)) return;
-    await supabase.from("series").delete().in("id", selectedIds);
-    toast({ title: "Séries supprimées" });
-    setSelectedIds([]);
-    setAllSelected(false);
-    fetchSeries();
+    setBulkDeleting(true);
+    try {
+      const { error } = await supabase.from("series").delete().in("id", selectedIds);
+      if (error) throw error;
+      toast({ title: "Séries supprimées" });
+      setSelectedIds([]);
+      setAllSelected(false);
+      fetchSeries();
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
   };
 
   // --- Gestion modale d'ajout/édition série
@@ -295,13 +326,21 @@ export default function AdminSeriesPage() {
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
-            onAction={(action, serie) => {
+            onAction={async (action, serie) => {
               if (action === "edit") setSeriesModal({ open: true, serie });
               if (action === "delete") {
                 if (window.confirm(`Supprimer la série "${serie.title}" ?`)) {
-                  supabase.from("series").delete().eq("id", serie.id).then(() => {
-                    toast({ title: "Série supprimée" }); fetchSeries();
-                  });
+                  setDeletingId(serie.id);
+                  try {
+                    const { error } = await supabase.from("series").delete().eq("id", serie.id);
+                    if (error) throw error;
+                    toast({ title: "Série supprimée" });
+                    fetchSeries();
+                  } catch (e: any) {
+                    toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
+                  } finally {
+                    setDeletingId(null);
+                  }
                 }
               }
               if (action === "seasons") setShowTree(true);
@@ -310,8 +349,10 @@ export default function AdminSeriesPage() {
             totalPages={totalPages}
             setPage={setPage}
             loading={loading}
-            seasonCounts={{}} // À remplir si besoin
+            seasonCounts={seasonCounts}
             genres={genres}
+            deletingId={deletingId}
+            bulkDeleting={bulkDeleting}
           />
         )}
 
@@ -349,7 +390,41 @@ export default function AdminSeriesPage() {
         onClose={() => setSeriesModal({ open: false })}
         onSave={handleSeriesModalSave}
         initialData={seriesModal.serie}
-        tmdbSearch={async (query) => { /* Implémente ta recherche TMDB ici */ return null; }}
+        tmdbSearch={async (query) => {
+          if (!query) return null;
+          // Si query est numérique, on tente par ID, sinon par recherche texte
+          if (/^\d+$/.test(query.trim())) {
+            // Recherche par ID
+            const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(query.trim())}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+              title: data.name,
+              poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
+              start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : "",
+              end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : "",
+              genres: data.genres ? data.genres.map((g) => g.name) : [],
+              tmdb_id: data.id,
+            };
+          } else {
+            // Recherche par titre
+            const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(query.trim())}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              const serie = data.results[0];
+              return {
+                title: serie.name,
+                poster: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : "",
+                start_year: serie.first_air_date ? serie.first_air_date.slice(0, 4) : "",
+                end_year: serie.last_air_date ? serie.last_air_date.slice(0, 4) : "",
+                genres: serie.genre_ids || [],
+                tmdb_id: serie.id,
+              };
+            }
+            return null;
+          }
+        }}
       />
 
       {/* Modals saisons/épisodes */}
