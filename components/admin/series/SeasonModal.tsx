@@ -46,13 +46,12 @@ export default function SeasonModal({
   const firstInput = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  // Ce useEffect reset le form à chaque render => bloque toute saisie !
+  // Correction : ne reset que lors de l'ouverture initiale OU changement d'ID de saison (édition)
   useEffect(() => {
-    if (open && firstInput.current) {
-      firstInput.current.focus();
-    }
+    if (!open) return;
     setErrors({});
-    setForm((prev) => ({
-      ...prev,
+    setForm({
       title: initialData.title || "",
       season_number:
         initialData.season_number !== undefined && initialData.season_number !== null
@@ -72,13 +71,18 @@ export default function SeasonModal({
           ? initialData.genre.split(",").map((g) => g.trim())
           : []),
       genresInput: "",
-    }));
+    });
     setTmdbSearch(
       (seriesTitle ? seriesTitle + " " : "") +
         (initialData.season_number ? `Saison ${initialData.season_number}` : "")
     );
+    // Focus input à l'ouverture
+    if (firstInput.current) {
+      setTimeout(() => firstInput.current && firstInput.current.focus(), 0);
+    }
+    // On ne dépend que de open (ou de initialData.id pour edit)
     // eslint-disable-next-line
-  }, [open, initialData, seriesTitle]);
+  }, [open, initialData?.id, seriesTitle]);
 
   // Gère le changement de champs : laisse l'utilisateur saisir librement, contrôle à la validation
   const handleChange = (field, value) => {
