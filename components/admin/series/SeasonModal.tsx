@@ -205,20 +205,34 @@ export default function SeasonModal({
     setSeasonSearchLoading(true);
     try {
       if (!tmdbSeriesId || !form.season_number) {
-        setSeasonSearchError("ID TMDB série et numéro de saison requis.");
+        toast({
+          title: "Erreur",
+          description: "Veuillez renseigner un numéro de saison et un ID TMDB série valide.",
+          variant: "destructive",
+        });
+        setSeasonSearchLoading(false);
         return;
       }
-      // Appel à l'API proxy locale
       const res = await fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`);
       if (!res.ok) {
-        setSeasonSearchError("Erreur de connexion à l'API TMDB.");
+        toast({
+          title: "Erreur TMDB",
+          description: "Erreur de connexion à l'API TMDB.",
+          variant: "destructive",
+        });
+        setSeasonSearchLoading(false);
         return;
       }
       const data = await res.json();
       const num = Number(form.season_number);
       if (!data || !Array.isArray(data.seasons)) {
-        setSeasonSearchError("Impossible d'obtenir la liste des saisons TMDB (structure inattendue).");
+        toast({
+          title: "Erreur TMDB",
+          description: "Impossible d'obtenir la liste des saisons TMDB (structure inattendue).",
+          variant: "destructive",
+        });
         setForm(f => ({ ...f, tmdb_id: "" }));
+        setSeasonSearchLoading(false);
         return;
       }
       const found = data.seasons.find((s) =>
@@ -226,13 +240,24 @@ export default function SeasonModal({
       );
       if (found && found.id) {
         setForm((f) => ({ ...f, tmdb_id: String(found.id) }));
-        setSeasonSearchError(null);
+        toast({
+          title: "Saison trouvée",
+          description: `ID TMDB de la saison ${num} : ${found.id}`,
+        });
       } else {
         setForm((f) => ({ ...f, tmdb_id: "" }));
-        setSeasonSearchError("Aucune saison TMDB trouvée pour ce numéro.");
+        toast({
+          title: "Saison introuvable",
+          description: `La saison n°${num} n'existe pas sur TMDB pour cette série.`,
+          variant: "destructive",
+        });
       }
     } catch (e: any) {
-      setSeasonSearchError("Erreur TMDB ou connexion.");
+      toast({
+        title: "Erreur",
+        description: "Erreur TMDB ou connexion.",
+        variant: "destructive",
+      });
     } finally {
       setSeasonSearchLoading(false);
     }
@@ -378,7 +403,7 @@ export default function SeasonModal({
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
                 onClick={handleFindSeasonTmdbId}
-                disabled={seasonSearchLoading || !tmdbSeriesId || !form.season_number}
+                disabled={seasonSearchLoading || !form.season_number || Number(form.season_number) < 1}
                 aria-label="Rechercher la saison sur TMDB"
               >
                 {seasonSearchLoading ? (
