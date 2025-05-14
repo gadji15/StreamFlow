@@ -73,31 +73,28 @@ export default function SeasonModal({
     // eslint-disable-next-line
   }, [open, initialData, seriesTitle]);
 
-  // Gère le changement de champs, force le numéro de saison à un entier >= 1
+  // Gère le changement de champs : laisse l'utilisateur saisir librement, contrôle à la validation
   const handleChange = (field, value) => {
-    if (field === "season_number") {
-      let val = value === "" ? "" : Math.max(1, parseInt(value.replace(/\D/g, ""), 10) || 1);
-      setForm((f) => ({ ...f, season_number: val }));
-      setErrors((e) => ({ ...e, [field]: undefined }));
-    } else {
-      setForm((f) => ({ ...f, [field]: value }));
-      setErrors((e) => ({ ...e, [field]: undefined }));
-    }
+    setForm((f) => ({ ...f, [field]: value }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
   const validate = () => {
     const err: { [k: string]: string } = {};
     if (!form.title || !form.title.trim())
       err.title = "Le titre est requis";
+    // Pour le numéro de saison : doit être un entier >=1
     if (
       form.season_number === "" ||
       isNaN(Number(form.season_number)) ||
+      !/^\d+$/.test(form.season_number) ||
       Number(form.season_number) < 1
     )
       err.season_number = "Numéro de saison requis (entier positif)";
+    // Pour le nombre d'épisodes : doit être un entier >=0 (optionnel)
     if (
       form.episode_count &&
-      (isNaN(Number(form.episode_count)) || Number(form.episode_count) < 0)
+      (isNaN(Number(form.episode_count)) || !/^\d+$/.test(form.episode_count) || Number(form.episode_count) < 0)
     )
       err.episode_count = "Nombre d'épisodes invalide";
     return err;
@@ -119,7 +116,12 @@ export default function SeasonModal({
     try {
       const submitData = {
         ...form,
+        // Conversion sûre
         season_number: form.season_number === "" ? "" : Number(form.season_number),
+        episode_count:
+          form.episode_count === "" || form.episode_count === undefined
+            ? ""
+            : Number(form.episode_count),
         genres: Array.isArray(form.genres)
           ? form.genres
           : typeof form.genres === "string"
