@@ -273,6 +273,7 @@ export default function SeasonModal({
         poster: clean(form.poster),
         title: clean(form.title),
         description: clean(form.description),
+        series_id: seriesId, // Correction majeure : on ajoute la liaison série
       };
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
