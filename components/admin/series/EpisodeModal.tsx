@@ -420,8 +420,8 @@ export default function EpisodeModal({
             </div>
           )}
           <div className="flex gap-1 items-end">
-            <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-end gap-1">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row items-end gap-2 flex-1">
+              <div>
                 <label htmlFor="parent_season_number" className="block text-[11px] mb-1 text-white/70 font-medium">
                   Saison
                 </label>
@@ -434,7 +434,7 @@ export default function EpisodeModal({
                   tabIndex={-1}
                 />
               </div>
-              <div className="flex-1">
+              <div>
                 <label htmlFor="num_episode" className="block text-[11px] mb-1 text-white/70 font-medium">
                   Numéro d'épisode <span className="text-red-500">*</span>
                 </label>
