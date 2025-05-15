@@ -420,21 +420,36 @@ export default function EpisodeModal({
             </div>
           )}
           <div className="flex gap-1 items-end">
-            <div className="flex-1">
-              <label htmlFor="num_episode" className="block text-[11px] mb-1 text-white/70 font-medium">
-                Numéro d'épisode <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="num_episode"
-                value={form.episode_number}
-                onChange={e => handleChange("episode_number", e.target.value)}
-                className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-24 text-xs transition-shadow"
-                placeholder="N° ep"
-                type="number"
-                min={1}
-                disabled={loading}
-                aria-required="true"
-              />
+            <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-end gap-1">
+              <div className="flex-1">
+                <label htmlFor="parent_season_number" className="block text-[11px] mb-1 text-white/70 font-medium">
+                  Saison
+                </label>
+                <input
+                  id="parent_season_number"
+                  value={parentSeasonNumber || ""}
+                  className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-900 text-indigo-300 w-20 text-xs font-bold"
+                  disabled
+                  aria-label="Numéro de saison"
+                  tabIndex={-1}
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="num_episode" className="block text-[11px] mb-1 text-white/70 font-medium">
+                  Numéro d'épisode <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="num_episode"
+                  value={form.episode_number}
+                  onChange={e => handleChange("episode_number", e.target.value)}
+                  className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-24 text-xs transition-shadow"
+                  placeholder="N° ep"
+                  type="number"
+                  min={1}
+                  disabled={loading}
+                  aria-required="true"
+                />
+              </div>
             </div>
             <Button
               type="button"
@@ -444,6 +459,7 @@ export default function EpisodeModal({
               disabled={
                 loading ||
                 !form.tmdb_series_id ||
+                !parentSeasonNumber ||
                 !form.episode_number
               }
               aria-label="Importer cet épisode depuis TMDB"
