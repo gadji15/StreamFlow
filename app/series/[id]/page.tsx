@@ -328,7 +328,7 @@ export default function SeriesDetailPage() {
               </div>
               
               <div className="mt-2 flex flex-wrap gap-2">
-                {series.genres.map(genreId => (
+                {series.genres?.map(genreId => (
                   <span 
                     key={genreId} 
                     className="px-3 py-1 bg-gray-700 text-xs rounded-full"
@@ -482,7 +482,7 @@ export default function SeriesDetailPage() {
                     )}
                     <li className="flex justify-between">
                       <span className="text-gray-400">Genres :</span>
-                      <span className="text-right">{series.genres.join(', ')}</span>
+                      <span className="text-right">{series.genres?.join(', ') || ''}</span>
                     </li>
                     {series.rating && (
                       <li className="flex justify-between">
