@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -20,6 +21,7 @@ export default function SeasonModal({
   // Le champ genres est retiré du form state (non exposé dans l'UI, à réintégrer si besoin)
   // S'assurer que tmdb_id existe toujours dans le form state (même caché)
   const [form, setForm] = useState({
+    id: initialData.id,
     title: initialData.title || "",
     season_number:
       initialData.season_number !== undefined && initialData.season_number !== null
@@ -34,6 +36,12 @@ export default function SeasonModal({
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
   });
+  // Pour garder la valeur originelle du numéro pour la détection de modification
+  const originalSeasonNumber = useRef(
+    initialData.season_number !== undefined && initialData.season_number !== null
+      ? String(initialData.season_number)
+      : ""
+  );
 
   // Pour feedback recherche TMDB saison par numéro
   const [seasonSearchLoading, setSeasonSearchLoading] = useState(false);
@@ -41,6 +49,11 @@ export default function SeasonModal({
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
+  // Pour désactiver tous les champs lors du loading
+  const isDisabled = loading || checkingDuplicate || seasonSearchLoading || serieLoading;
+  // Gestion d'image poster erreur
+  const [posterError, setPosterError] = useState(false);
+
   const [tmdbSearch, setTmdbSearch] = useState(
     (seriesTitle ? seriesTitle + " " : "") +
       (initialData.season_number ? `Saison ${initialData.season_number}` : "")
@@ -63,6 +76,12 @@ export default function SeasonModal({
 
   // Reset le formulaire UNIQUEMENT à l'ouverture ou quand on change de saison à éditer
   const wasOpen = useRef(false);
+  // Pour abort les fetch TMDB au besoin
+  const tmdbSeriesAbortController = useRef<AbortController | null>(null);
+
+  // Gestion d'abort des fetch TMDB
+  const tmdbAbortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     // Si on vient d'ouvrir la modale, ou si on change de saison à éditer
     if (open && (!wasOpen.current || initialData?.id !== form?.id)) {
@@ -83,6 +102,10 @@ export default function SeasonModal({
         tmdb_id: initialData.tmdb_id || "",
         description: initialData.description || "",
       });
+      originalSeasonNumber.current =
+        initialData.season_number !== undefined && initialData.season_number !== null
+          ? String(initialData.season_number)
+          : "";
       setTmdbSearch(
         (seriesTitle ? seriesTitle + " " : "") +
           (initialData.season_number ? `Saison ${initialData.season_number}` : "")
@@ -94,8 +117,16 @@ export default function SeasonModal({
       // Charger le nombre de saisons TMDB si possible
       setTmdbSeasonCount(null);
       setTmdbSeasonError(null);
+      // Abort previous fetch if any
+      if (tmdbAbortControllerRef.current) {
+        tmdbAbortControllerRef.current.abort();
+      }
       if (tmdbSeriesId) {
-        fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`)
+        const abortController = new AbortController();
+        tmdbAbortControllerRef.current = abortController;
+        fetch(`/api/tmdb/series/${encodeURIComponent(tmdbSeriesId)}`, {
+          signal: abortController.signal
+        })
           .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
           .then(data => {
             if (data && Array.isArray(data.seasons)) {
@@ -105,7 +136,9 @@ export default function SeasonModal({
             }
           })
           .catch(err => {
-            setTmdbSeasonError("Erreur lors de la récupération TMDB.");
+            if (err.name !== "AbortError") {
+              setTmdbSeasonError("Erreur lors de la récupération TMDB.");
+            }
           });
       }
     }
@@ -129,10 +162,15 @@ export default function SeasonModal({
       setActiveSerieSuggestion(-1);
       setTmdbSeasonCount(null);
       setTmdbSeasonError(null);
+      // Abort TMDB fetch en cours si fermeture
+      if (tmdbAbortControllerRef.current) {
+        tmdbAbortControllerRef.current.abort();
+      }
     }
     wasOpen.current = open;
     // eslint-disable-next-line
   }, [open, initialData?.id]);
+
 
   // Gère le changement de champs : laisse l'utilisateur saisir librement, contrôle à la validation
   const handleChange = (field, value) => {
@@ -167,19 +205,32 @@ export default function SeasonModal({
     if (!form.tmdb_id || isNaN(Number(form.tmdb_id)) || Number(form.tmdb_id) < 1) {
       err.tmdb_id = "L'import TMDB de la saison est obligatoire.";
     }
-    // Vérification anti-doublon à la création
-    if (!initialData.id && form.season_number && seriesId) {
+    // Vérification anti-doublon à la création ET à l'édition si le numéro a changé
+    if (
+      form.season_number &&
+      seriesId &&
+      (
+        (!initialData.id) ||
+        (initialData.id && String(form.season_number) !== String(originalSeasonNumber.current))
+      )
+    ) {
       const { data: existing } = await supabase
         .from("seasons")
         .select("id")
         .eq("series_id", seriesId)
         .eq("season_number", Number(form.season_number));
-      if (existing && existing.length > 0) {
+      // Si création OU édition et la saison existante n'est pas celle qu'on édite
+      if (
+        existing &&
+        existing.length > 0 &&
+        (!initialData.id || !existing.some(s => s.id === initialData.id))
+      ) {
         err.season_number = "Une saison avec ce numéro existe déjà pour cette série.";
       }
     }
     return err;
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -195,15 +246,18 @@ export default function SeasonModal({
     }
     setLoading(true);
     try {
+      // Nettoyage des données envoyées : "" --> null, conversion nombre, etc.
+      const clean = (v: any) => (v === "" || v === undefined ? null : v);
+
       const submitData = {
         ...form,
-        // Conversion sûre
-        season_number: form.season_number === "" ? "" : Number(form.season_number),
-        episode_count:
-          form.episode_count === "" || form.episode_count === undefined
-            ? ""
-            : Number(form.episode_count),
-        tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
+        season_number: clean(form.season_number) !== null ? Number(form.season_number) : null,
+        episode_count: clean(form.episode_count) !== null ? Number(form.episode_count) : null,
+        tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
+        air_date: clean(form.air_date),
+        poster: clean(form.poster),
+        title: clean(form.title),
+        description: clean(form.description),
       };
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
@@ -213,6 +267,15 @@ export default function SeasonModal({
     }
     setLoading(false);
   };
+      await onSave(submitData);
+      toast({ title: "Saison enregistrée" });
+      onClose();
+    } catch (e) {
+      toast({ title: "Erreur", description: String(e), variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
 
   // Suppression de handleFindSeasonTmdbIdCustom : la recherche de tmdb_id est intégrée à handleTMDBImport
 
@@ -229,7 +292,7 @@ export default function SeasonModal({
       return;
     }
 
-    // Vérification anti-doublon
+    // Vérification anti-doublon (création ou édition ET numéro modifié)
     setCheckingDuplicate(true);
     const { data: existing } = await supabase
       .from("seasons")
@@ -237,15 +300,26 @@ export default function SeasonModal({
       .eq("series_id", seriesId)
       .eq("season_number", Number(seasonNumber));
     setCheckingDuplicate(false);
-    if (existing && existing.length > 0 && !initialData.id) {
+    if (
+      existing &&
+      existing.length > 0 &&
+      (!initialData.id || !existing.some(s => s.id === initialData.id))
+    ) {
       setSeasonSearchError("Une saison avec ce numéro existe déjà pour cette série.");
       return;
     }
     setLoading(true);
     try {
+      // Abort previous fetch if any
+      if (tmdbAbortControllerRef.current) {
+        tmdbAbortControllerRef.current.abort();
+      }
+      const abortController = new AbortController();
+      tmdbAbortControllerRef.current = abortController;
       // On va chercher les infos détaillées de la saison sur TMDB via le TMDB ID série et le numéro de saison
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(serieTmdbId)}/${encodeURIComponent(seasonNumber)}`
+        `/api/tmdb/season/${encodeURIComponent(serieTmdbId)}/${encodeURIComponent(seasonNumber)}`,
+        { signal: abortController.signal }
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
@@ -270,10 +344,13 @@ export default function SeasonModal({
         setSeasonSearchError("Aucune saison trouvée pour ces paramètres.");
       }
     } catch (e) {
-      setSeasonSearchError("Erreur TMDB ou connexion.");
+      if (e.name !== "AbortError") {
+        setSeasonSearchError("Erreur TMDB ou connexion.");
+      }
     }
     setLoading(false);
   };
+
 
   if (!open) return null;
 
@@ -422,7 +499,9 @@ export default function SeasonModal({
                 min={1}
                 pattern="[0-9]*"
                 autoComplete="off"
-                disabled={loading || checkingDuplicate}
+                disabled={isDisabled}
+                aria-invalid={!!errors.season_number}
+                aria-describedby={errors.season_number ? "err-season_number" : undefined}
               />
               <Button
                 type="button"
@@ -430,8 +509,7 @@ export default function SeasonModal({
                 variant="outline"
                 onClick={handleTMDBImport}
                 disabled={
-                  loading ||
-                  checkingDuplicate ||
+                  isDisabled ||
                   !(tmdbSeriesId || serieTmdbIdInput) ||
                   !form.season_number ||
                   isNaN(Number(form.season_number)) ||
@@ -449,10 +527,11 @@ export default function SeasonModal({
             </div>
             {/* Feedback erreur import */}
             {seasonSearchError && (
-              <div className="px-3 pb-1 text-xs text-red-400">{seasonSearchError}</div>
+              <div className="px-3 pb-1 text-xs text-red-400" role="alert" aria-live="assertive">{seasonSearchError}</div>
             )}
           </div>
         </div>
+
         {/* Content scrollable */}
         <form
           id="season-form"
@@ -564,11 +643,17 @@ export default function SeasonModal({
                   alt="Aperçu affiche"
                   className="h-10 rounded shadow border border-gray-700"
                   style={{ maxWidth: "100%" }}
+                  onError={e => {
+                    // Fallback si l'image ne charge pas
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/no-image.png";
+                  }}
                 />
                 <button
                   type="button"
                   className="text-[10px] text-red-400 hover:underline mt-1"
                   onClick={() => handleChange("poster", "")}
+                  disabled={loading}
                 >
                   Supprimer l'affiche
                 </button>
@@ -585,6 +670,7 @@ export default function SeasonModal({
             onClick={onClose}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
+            disabled={loading}
           >
             Annuler
           </Button>
@@ -598,6 +684,11 @@ export default function SeasonModal({
             {loading ? "..." : "Enregistrer"}
           </button>
         </div>
+        {/* ARIA live pour retour d’erreur critique */}
+        <div role="alert" aria-live="assertive" style={{ position: "absolute", left: -9999, top: "auto", width: "1px", height: "1px", overflow: "hidden" }}>
+          {Object.values(errors).length > 0 ? Object.values(errors).join(" ") : ""}
+          {seasonSearchError ? seasonSearchError : ""}
+        </div>
       </div>
       <style jsx global>{`
         @keyframes fadeInScale {
@@ -606,6 +697,10 @@ export default function SeasonModal({
         }
         .animate-\[fadeInScale_0\.25s_ease\] {
           animation: fadeInScale 0.25s ease;
+        }
+        input[disabled], textarea[disabled] {
+          background: #222 !important;
+          cursor: not-allowed;
         }
       `}</style>
     </div>
