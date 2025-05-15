@@ -228,8 +228,9 @@ export default function EpisodeModal({
   // Import TMDB pour un épisode
   const handleTMDBImport = async () => {
     setTmdbError(null);
-    if (!tmdbSeriesId || !parentSeasonNumber || !form.episode_number) {
-      setTmdbError("Renseignez l'ID TMDB de la série, la saison et le numéro d'épisode.");
+    // On ne regarde plus jamais tmdbSeriesId/parentSeasonNumber côté utilisateur, mais le tmdb_series_id du form (issu autocomplete ou prop)
+    if (!form.tmdb_series_id || !parentSeasonNumber || !form.episode_number) {
+      setTmdbError("Veuillez d'abord sélectionner la série via la recherche TMDB, puis saisir le numéro d'épisode.");
       return;
     }
     setLoading(true);
