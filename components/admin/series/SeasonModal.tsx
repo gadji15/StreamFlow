@@ -263,18 +263,20 @@ export default function SeasonModal({
     setLoading(true);
     try {
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
-      const submitData = {
+      // On construit l'objet, puis on retire tmdb_series_id avant l'envoi à Supabase
+      const fullData = {
         ...form,
         season_number: clean(form.season_number) !== null ? Number(form.season_number) : null,
         episode_count: clean(form.episode_count) !== null ? Number(form.episode_count) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
-        tmdb_series_id: clean(form.tmdb_series_id),
+        // tmdb_series_id: utilisé côté front uniquement
         air_date: clean(form.air_date),
         poster: clean(form.poster),
         title: clean(form.title),
         description: clean(form.description),
-        series_id: seriesId, // Correction majeure : on ajoute la liaison série
+        series_id: seriesId,
       };
+      const { tmdb_series_id, ...submitData } = fullData;
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
       onClose();
