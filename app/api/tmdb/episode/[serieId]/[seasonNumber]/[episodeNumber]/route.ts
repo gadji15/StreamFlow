@@ -5,22 +5,22 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { seriesId: string; seasonNumber: string; episodeNumber: string } }
+  { params }: { params: { serieId: string; seasonNumber: string; episodeNumber: string } }
 ) {
-  const { seriesId, seasonNumber, episodeNumber } = params;
+  const { serieId, seasonNumber, episodeNumber } = params;
 
   if (!TMDB_API_KEY) {
     return NextResponse.json({ error: "TMDB_API_KEY manquante." }, { status: 500 });
   }
 
-  if (!seriesId || !seasonNumber || !episodeNumber) {
+  if (!serieId || !seasonNumber || !episodeNumber) {
     return NextResponse.json({ error: "Paramètres manquants." }, { status: 400 });
   }
 
   try {
     // 1. Récupérer les détails de l'épisode
     const episodeRes = await fetch(
-      `https://api.themoviedb.org/3/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}?api_key=${TMDB_API_KEY}&language=fr-FR`
+      `https://api.themoviedb.org/3/tv/${serieId}/season/${seasonNumber}/episode/${episodeNumber}?api_key=${TMDB_API_KEY}&language=fr-FR`
     );
     if (!episodeRes.ok) {
       return NextResponse.json({ error: "Épisode non trouvé sur TMDB." }, { status: episodeRes.status });
@@ -29,7 +29,7 @@ export async function GET(
 
     // 2. Récupérer les vidéos de l'épisode (trailers...)
     const videosRes = await fetch(
-      `https://api.themoviedb.org/3/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}/videos?api_key=${TMDB_API_KEY}&language=fr-FR`
+      `https://api.themoviedb.org/3/tv/${serieId}/season/${seasonNumber}/episode/${episodeNumber}/videos?api_key=${TMDB_API_KEY}&language=fr-FR`
     );
     let videosData = { results: [] };
     if (videosRes.ok) {
