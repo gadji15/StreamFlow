@@ -330,40 +330,30 @@ export default function AdminSeriesDetailPage() {
             {seasons.map((season) => (
               <div
                 key={season.id}
-                className="bg-gray-800 rounded-xl shadow p-4 hover:shadow-lg transition group min-h-[120px] flex flex-col sm:flex-row gap-4"
+                className="bg-gray-800 rounded-xl shadow p-3 hover:shadow-lg transition group min-h-[64px] flex items-center gap-3"
               >
-                {/* Poster */}
-                <div className="flex-shrink-0 flex items-center justify-center">
+                {/* Poster compact */}
+                <div className="flex-shrink-0 flex items-center">
                   <img
                     src={season.poster || "/placeholder-backdrop.jpg"}
                     alt={season.title || `Saison ${season.season_number}`}
-                    className="h-20 w-16 rounded border border-gray-700 object-cover bg-gray-900"
+                    className="h-14 w-10 rounded border border-gray-700 object-cover bg-gray-900"
                     onError={e => { e.target.src = "/placeholder-backdrop.jpg"; }}
                   />
                 </div>
-                {/* Infos & titre */}
-                <div className="flex-1 flex flex-col justify-center min-w-0">
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 items-center mb-1">
+                {/* Infos essentielles */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-indigo-300">
-                      Saison {season.season_number}
+                      S{season.season_number}
                     </span>
-                    {season.tmdb_id && (
-                      <Tooltip text="ID TMDB lié">
-                        <span className="text-xs bg-green-900/80 text-green-300 rounded px-2 py-0.5">
-                          TMDB
-                        </span>
-                      </Tooltip>
-                    )}
                     {season.air_date && (
                       <span className="text-xs text-gray-400">
                         {new Date(season.air_date).getFullYear()}
                       </span>
                     )}
-                    {typeof season.episode_count !== "undefined" && season.episode_count !== "" && (
-                      <span className="text-xs bg-gray-700 px-2 py-0.5 rounded text-blue-200">{season.episode_count} ép.</span>
-                    )}
                   </div>
-                  <div className="font-semibold text-lg text-white truncate max-w-full">
+                  <div className="font-semibold text-base text-white truncate max-w-full">
                     <InlineEditSeasonTitle
                       season={season}
                       onSave={async (newTitle) => {
@@ -374,42 +364,43 @@ export default function AdminSeriesDetailPage() {
                     />
                   </div>
                 </div>
-                {/* Actions, bien espacées et alignées, responsive */}
-                <div className="flex sm:flex-col flex-row gap-2 items-center justify-center sm:ml-4 sm:self-stretch pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-gray-700 sm:pl-4 w-full sm:w-auto">
-                  <Tooltip text="Gérer les épisodes de cette saison">
+                {/* Actions compactes (icônes seules avec tooltips) */}
+                <div className="flex flex-row gap-1 items-center justify-end ml-2">
+                  <Tooltip text="Épisodes">
                     <Button
-                      size="sm"
+                      size="icon"
                       variant="success"
                       onClick={() => handleOpenEpisodes(season)}
-                      style={{ minWidth: 120 }}
+                      className="rounded-full"
                     >
-                      🎬 Gérer les épisodes
+                      <span role="img" aria-label="Episodes">🎬</span>
                     </Button>
                   </Tooltip>
                   <Tooltip text="Éditer la saison">
                     <Button
-                      size="sm"
+                      size="icon"
                       variant="ghost"
                       onClick={() => setSeasonModal({ open: true, initial: season })}
-                      style={{ minWidth: 100 }}
+                      className="rounded-full"
                     >
-                      ✏️ Modifier
+                      <span role="img" aria-label="Modifier">✏️</span>
                     </Button>
                   </Tooltip>
                   <Tooltip text="Supprimer la saison">
                     <Button
-                      size="sm"
+                      size="icon"
                       variant="destructive"
                       onClick={() => handleDeleteSeason(season.id)}
                       disabled={seasonActionLoading === `delete-${season.id}`}
-                      style={{ minWidth: 100 }}
+                      className="rounded-full"
                     >
-                      {seasonActionLoading === `delete-${season.id}` ? "..." : "🗑️ Supprimer"}
+                      {seasonActionLoading === `delete-${season.id}` ? (
+                        <span className="animate-spin inline-block">⏳</span>
+                      ) : (
+                        <span role="img" aria-label="Supprimer">🗑️</span>
+                      )}
                     </Button>
                   </Tooltip>
-                  {seasonActionLoading === `edit-${season.id}` && (
-                    <span className="text-xs text-blue-400 mt-1">Sauvegarde...</span>
-                  )}
                 </div>
               </div>
             ))}
