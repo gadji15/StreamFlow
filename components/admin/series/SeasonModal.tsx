@@ -286,23 +286,32 @@ export default function SeasonModal({
 
   // Import TMDB complet et anti-doublon (champ tmdb_id modifiable manuellement ou automatiquement)
   const handleTMDBImport = async () => {
-    const serieTmdbId = tmdbSeriesId || initialData.tmdb_series_id || initialData.tmdb_id || "";
-    const seasonTmdbId = form.tmdb_id;
-    if (!serieTmdbId || !form.season_number || !seasonTmdbId) {
+    // On autorise l'import s'il y a une série TMDB sélectionnée et un numéro de saison valide
+    const serieTmdbId =
+      tmdbSeriesId ||
+      serieTmdbIdInput ||
+      initialData.tmdb_series_id ||
+      initialData.tmdb_id ||
+      "";
+
+    const seasonNumber = form.season_number;
+    // Validation stricte côté UI
+    if (!serieTmdbId || !seasonNumber || isNaN(Number(seasonNumber)) || Number(seasonNumber) < 1) {
       toast({
         title: "Import impossible",
-        description: "Veuillez rechercher et remplir le TMDB ID de la saison avant d'importer.",
+        description: "Veuillez sélectionner une série TMDB et saisir un numéro de saison valide.",
         variant: "destructive",
       });
       return;
     }
+
     // Vérification anti-doublon
     setCheckingDuplicate(true);
-    const { data: existing, error } = await supabase
+    const { data: existing } = await supabase
       .from("seasons")
       .select("id")
       .eq("series_id", seriesId)
-      .eq("season_number", Number(form.season_number));
+      .eq("season_number", Number(seasonNumber));
     setCheckingDuplicate(false);
     if (existing && existing.length > 0 && !initialData.id) {
       toast({
@@ -314,9 +323,9 @@ export default function SeasonModal({
     }
     setLoading(true);
     try {
-      // On va chercher les infos détaillées de la saison sur TMDB via son TMDB ID et le TMDB ID série
+      // On va chercher les infos détaillées de la saison sur TMDB via le TMDB ID série et le numéro de saison
       const res = await fetch(
-        `/api/tmdb/season/${encodeURIComponent(serieTmdbId)}/${encodeURIComponent(form.season_number)}`
+        `/api/tmdb/season/${encodeURIComponent(serieTmdbId)}/${encodeURIComponent(seasonNumber)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
@@ -536,7 +545,14 @@ export default function SeasonModal({
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
                 variant="outline"
                 onClick={handleTMDBImport}
-                disabled={loading || !(tmdbSeriesId || serieTmdbIdInput || form.tmdb_id) || !form.season_number || checkingDuplicate}
+                disabled={
+                  loading ||
+                  checkingDuplicate ||
+                  !(tmdbSeriesId || serieTmdbIdInput || initialData.tmdb_series_id || initialData.tmdb_id) ||
+                  !form.season_number ||
+                  isNaN(Number(form.season_number)) ||
+                  Number(form.season_number) < 1
+                }
                 aria-label="Importer cette saison depuis TMDB"
               >
                 {(loading || checkingDuplicate) ? (
