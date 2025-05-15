@@ -318,7 +318,7 @@ export default function EpisodeModal({
         </div>
         {/* TMDB import zone - harmonisée avec SeasonModal */}
         <div className="flex flex-col gap-1 px-3 pt-1">
-          {/* Recherche série TMDB */}
+          {/* Recherche série TMDB, logique identique à SeasonModal */}
           {!tmdbSeriesId && !initialData.tmdb_series_id && (
             <div className="mb-2 relative">
               <label htmlFor="serie_tmdb_search" className="block text-[11px] mb-1 text-white/70 font-medium">
@@ -408,18 +408,13 @@ export default function EpisodeModal({
                   )}
                 </ul>
               )}
+              {/* TMDB Series ID stocké caché */}
               <input
                 id="serie_tmdb_id"
                 value={form.tmdb_series_id}
-                onChange={e => handleChange("tmdb_series_id", e.target.value)}
-                className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs w-full mt-1"
-                placeholder="TMDB ID série"
-                type="text"
-                aria-label="TMDB ID série"
-                style={{ display: "none" }} // champ caché
-                tabIndex={-1}
                 readOnly
-                disabled
+                style={{ display: "none" }}
+                tabIndex={-1}
               />
             </div>
           )}
@@ -788,29 +783,14 @@ export default function EpisodeModal({
             )}
           </div>
 
-          <div className="flex gap-1 items-end">
-            <div className="flex-1">
-              <label htmlFor="tmdb_id" className="block text-[11px] font-medium text-white/80">
-                TMDB ID
-              </label>
-              <input
-                id="tmdb_id"
-                value={form.tmdb_id}
-                onChange={(e) => handleChange("tmdb_id", e.target.value)}
-                className={`mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs ${
-                  errors.tmdb_id ? "border-red-500" : ""
-                }`}
-                placeholder="Ex: 56789"
-                type="number"
-                min={1}
-                disabled={loading}
-                aria-label="TMDB ID"
-              />
-              {errors.tmdb_id && (
-                <div className="text-xs text-red-400 mt-0.5">{errors.tmdb_id}</div>
-              )}
-            </div>
-          </div>
+          {/* TMDB ID de l'épisode est maintenant totalement caché à l'utilisateur */}
+          <input
+            type="hidden"
+            value={form.tmdb_id}
+            readOnly
+            tabIndex={-1}
+            name="tmdb_id"
+          />
         </form>
         <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
           <Button
