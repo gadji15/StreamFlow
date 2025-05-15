@@ -576,28 +576,29 @@ export default function SeasonModal({
             )}
           </div>
           {/* Le champ tmdb_id est géré en interne, on ne l'affiche plus à l'admin */}
-        </form>
         {/* Actions sticky */}
-        <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            aria-label="Annuler"
-            className="text-xs py-1 px-2"
-          >
-            Annuler
-          </Button>
-          <button
-            type="submit"
-            form="season-form"
-            disabled={loading}
-            aria-label="Enregistrer la saison"
-            className="text-xs py-1 px-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition"
-          >
-            {loading ? "..." : "Enregistrer"}
-          </button>
-        </div>
+          <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              aria-label="Annuler"
+              className="text-xs py-1 px-2"
+            >
+              Annuler
+            </Button>
+            {/* Placer le bouton ENREGISTRER dans le form pour garantir la soumission */}
+            <button
+              type="submit"
+              disabled={loading}
+              aria-label="Enregistrer la saison"
+              className="text-xs py-1 px-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition"
+            >
+              {loading ? "..." : "Enregistrer"}
+            </button>
+          </div>
+        </form>
+      </div>
       </div>
       <style jsx global>{`
         @keyframes fadeInScale {
