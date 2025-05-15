@@ -336,7 +336,7 @@ export default function AdminSeriesDetailPage() {
       <SeasonModal
         open={seasonModal.open}
         onClose={() => setSeasonModal({ open: false })}
-        onSubmit={handleSaveSeason}
+        onSave={handleSaveSeason}
         initial={seasonModal.initial}
         seriesId={id}
         refreshSeasons={fetchSeasons}
