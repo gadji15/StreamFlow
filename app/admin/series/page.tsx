@@ -441,7 +441,8 @@ export default function AdminSeriesPage() {
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
         onSave={async (values) => {
-          await supabase.from("seasons").update(values).eq("id", values.id);
+          // Ajout de series_id pour garantir la cohérence même à l'édition
+          await supabase.from("seasons").update({ ...values, series_id: modal.parentId }).eq("id", values.id);
           if (modal.parentId) {/* refresh seasons */}
         }}
         initial={modal.payload}
@@ -451,7 +452,8 @@ export default function AdminSeriesPage() {
         open={modal.open && modal.type === "add-season"}
         onClose={() => setModal({ open: false, type: "" })}
         onSave={async (values) => {
-          await supabase.from("seasons").insert([values]);
+          // Ajout explicite de series_id à l'objet inséré
+          await supabase.from("seasons").insert([{ ...values, series_id: modal.parentId }]);
           if (modal.parentId) {/* refresh seasons */}
         }}
         seriesId={modal.parentId}
