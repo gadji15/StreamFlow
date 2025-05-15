@@ -31,6 +31,8 @@ export default function EpisodeModal({
         : "",
     air_date: initialData.air_date || "",
     thumbnail_url: initialData.thumbnail_url || "",
+    video_url: initialData.video_url || "",
+    trailer_url: initialData.trailer_url || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
     published: !!initialData.published,
@@ -102,6 +104,8 @@ export default function EpisodeModal({
         episode_number: "",
         air_date: "",
         thumbnail_url: "",
+        video_url: "",
+        trailer_url: "",
         tmdb_id: "",
         description: "",
         published: false,
@@ -118,7 +122,7 @@ export default function EpisodeModal({
   const handleChange = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
-    if (field === "thumbnail_url") setTmdbError(null);
+    if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url") setTmdbError(null);
   };
 
   const validate = () => {
@@ -139,6 +143,14 @@ export default function EpisodeModal({
     // Vérification URL image
     if (form.thumbnail_url && !isValidImageUrl(form.thumbnail_url)) {
       err.thumbnail_url = "URL d'image invalide (jpg, png, gif, webp, bmp, svg)";
+    }
+    // Vérification URL vidéo principale
+    if (form.video_url && !/^https?:\/\/.+/.test(form.video_url)) {
+      err.video_url = "URL de la vidéo invalide";
+    }
+    // Vérification URL trailer
+    if (form.trailer_url && !/^https?:\/\/.+/.test(form.trailer_url)) {
+      err.trailer_url = "URL du trailer invalide";
     }
     return err;
   };
@@ -165,6 +177,8 @@ export default function EpisodeModal({
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
         thumbnail_url: clean(form.thumbnail_url),
+        video_url: clean(form.video_url),
+        trailer_url: clean(form.trailer_url),
         title: clean(form.title),
         description: clean(form.description),
         published: !!form.published,
@@ -196,6 +210,22 @@ export default function EpisodeModal({
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
       if (detail && detail.id) {
+        // Récupérer les vidéos associées à l'épisode (trailer, etc)
+        let trailerUrl = "";
+        let videoUrl = "";
+        if (detail.videos && Array.isArray(detail.videos.results)) {
+          const ytTrailer = detail.videos.results.find(
+            v =>
+              v.type === "Trailer" &&
+              v.site === "YouTube" &&
+              v.key
+          );
+          if (ytTrailer) {
+            trailerUrl = `https://www.youtube.com/watch?v=${ytTrailer.key}`;
+          }
+          // Si TMDB fournit d'autres vidéos, on peut en prendre une principale si besoin
+          // À adapter si besoin d'autres plateformes
+        }
         setForm((f) => ({
           ...f,
           title: detail.name || f.title,
@@ -206,6 +236,8 @@ export default function EpisodeModal({
           thumbnail_url: detail.still_path
             ? `https://image.tmdb.org/t/p/w500${detail.still_path}`
             : f.thumbnail_url,
+          trailer_url: trailerUrl || f.trailer_url,
+          video_url: videoUrl || f.video_url,
         }));
         toast({
           title: "Import TMDB réussi",
@@ -453,6 +485,129 @@ export default function EpisodeModal({
               VIP
             </label>
           </div>
+
+          {/* Champ vidéo principale */}
+          <div>
+            <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
+              Vidéo principale (URL)
+            </label>
+            <input
+              id="video_url"
+              value={form.video_url}
+              onChange={e => handleChange("video_url", e.target.value)}
+              className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                errors.video_url ? "border-red-500" : ""
+              }`}
+              placeholder="https://..."
+              disabled={loading}
+              aria-label="URL de la vidéo principale"
+            />
+            {errors.video_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.video_url}</div>
+            )}
+            {form.video_url && (
+              <div className="flex flex-col items-start mt-1">
+                {form.video_url.includes("youtube.com") || form.video_url.includes("youtu.be") ? (
+                  <iframe
+                    width="180"
+                    height="101"
+                    src={form.video_url.replace("watch?v=", "embed/")}
+                    title="Aperçu vidéo"
+                    frameBorder="0"
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                  ></iframe>
+                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                  <video
+                    src={form.video_url}
+                    controls
+                    className="h-20 rounded border border-gray-700"
+                    style={{ maxWidth: "100%" }}
+                  />
+                ) : (
+                  <a
+                    href={form.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-400 underline"
+                  >
+                    Voir la vidéo
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("video_url", "")}
+                  disabled={loading}
+                  aria-label="Supprimer la vidéo"
+                >
+                  Supprimer la vidéo
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Champ trailer */}
+          <div>
+            <label htmlFor="trailer_url" className="block text-[11px] font-medium text-white/80">
+              Trailer (URL)
+            </label>
+            <input
+              id="trailer_url"
+              value={form.trailer_url}
+              onChange={e => handleChange("trailer_url", e.target.value)}
+              className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                errors.trailer_url ? "border-red-500" : ""
+              }`}
+              placeholder="https://..."
+              disabled={loading}
+              aria-label="URL du trailer"
+            />
+            {errors.trailer_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.trailer_url}</div>
+            )}
+            {form.trailer_url && (
+              <div className="flex flex-col items-start mt-1">
+                {form.trailer_url.includes("youtube.com") || form.trailer_url.includes("youtu.be") ? (
+                  <iframe
+                    width="180"
+                    height="101"
+                    src={form.trailer_url.replace("watch?v=", "embed/")}
+                    title="Aperçu trailer"
+                    frameBorder="0"
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                  ></iframe>
+                ) : form.trailer_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                  <video
+                    src={form.trailer_url}
+                    controls
+                    className="h-20 rounded border border-gray-700"
+                    style={{ maxWidth: "100%" }}
+                  />
+                ) : (
+                  <a
+                    href={form.trailer_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-400 underline"
+                  >
+                    Voir le trailer
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("trailer_url", "")}
+                  disabled={loading}
+                  aria-label="Supprimer le trailer"
+                >
+                  Supprimer le trailer
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-1 items-end">
             <div className="flex-1">
               <label htmlFor="tmdb_id" className="block text-[11px] font-medium text-white/80">
