@@ -594,7 +594,6 @@ export default function SeasonModal({
             variant="success"
             disabled={loading}
             aria-label="Enregistrer la saison"
-            onClick={handleSubmit}
             className="text-xs py-1 px-2"
           >
             {loading ? "..." : "Enregistrer"}
