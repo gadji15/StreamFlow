@@ -213,21 +213,32 @@ export default function EpisodeModal({
     try {
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
+      // Nettoyer explicitement tous les champs non présents en base (plus de "order" !)
+      const {
+        local_video_file,
+        parentSeasonNumber,
+        thumbnail_url, // va être nettoyé plus bas
+        video_url,     // idem
+        trailer_url,   // idem
+        ...restForm
+      } = form;
+
+      // Seuls les champs explicitement listés sont envoyés à la base
       const submitData = {
-        ...form,
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
-        thumbnail_url: clean(form.thumbnail_url),
-        video_url: clean(form.video_url),
-        trailer_url: clean(form.trailer_url),
+        thumbnail_url: clean(thumbnail_url),
+        video_url: clean(video_url),
+        trailer_url: clean(trailer_url),
         title: clean(form.title),
         description: clean(form.description),
         published: !!form.published,
         isvip: !!form.isvip,
         video_unavailable: !!form.video_unavailable,
         tmdb_series_id: clean(form.tmdb_series_id),
-        // On ne transmet pas local_video_file au backend, à gérer côté parent/onSave si besoin
+        sort_order: clean(form.sort_order) !== null ? Number(form.sort_order) : null,
+        // autres champs persistants de la table (si besoin : ajouter ici)
       };
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
