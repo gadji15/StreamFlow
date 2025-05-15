@@ -441,9 +441,31 @@ export default function AdminSeriesPage() {
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
         onSave={async (values) => {
-          // Ajout de series_id pour garantir la cohérence même à l'édition
-          await supabase.from("seasons").update({ ...values, series_id: modal.parentId }).eq("id", values.id);
-          if (modal.parentId) {/* refresh seasons */}
+          // Correction : typage strict et nettoyage pour l'édition
+          const season_number = values.season_number ? Number(values.season_number) : null;
+          const series_id = modal.parentId;
+          if (!series_id || !season_number) {
+            alert("Erreur : series_id ou season_number manquant !");
+            return;
+          }
+          const updateObj = {
+            ...values,
+            series_id,
+            season_number,
+            tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
+            episode_count: values.episode_count ? Number(values.episode_count) : null,
+          };
+          Object.keys(updateObj).forEach(k => {
+            if (updateObj[k] === "" || updateObj[k] === undefined) updateObj[k] = null;
+          });
+          console.log('Payload envoyé à Supabase (update):', updateObj);
+          const { error } = await supabase.from("seasons").update(updateObj).eq("id", values.id);
+          if (error) {
+            console.error("Erreur Supabase:", error);
+            alert(error.message);
+          } else {
+            // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+          }
         }}
         initial={modal.payload}
         seriesId={modal.parentId}
@@ -452,9 +474,31 @@ export default function AdminSeriesPage() {
         open={modal.open && modal.type === "add-season"}
         onClose={() => setModal({ open: false, type: "" })}
         onSave={async (values) => {
-          // Ajout explicite de series_id à l'objet inséré
-          await supabase.from("seasons").insert([{ ...values, series_id: modal.parentId }]);
-          if (modal.parentId) {/* refresh seasons */}
+          // Correction : typage strict et nettoyage pour l'ajout
+          const season_number = values.season_number ? Number(values.season_number) : null;
+          const series_id = modal.parentId;
+          if (!series_id || !season_number) {
+            alert("Erreur : series_id ou season_number manquant !");
+            return;
+          }
+          const insertObj = {
+            ...values,
+            series_id,
+            season_number,
+            tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
+            episode_count: values.episode_count ? Number(values.episode_count) : null,
+          };
+          Object.keys(insertObj).forEach(k => {
+            if (insertObj[k] === "" || insertObj[k] === undefined) insertObj[k] = null;
+          });
+          console.log('Payload envoyé à Supabase (insert):', insertObj);
+          const { error } = await supabase.from("seasons").insert([insertObj]);
+          if (error) {
+            console.error("Erreur Supabase:", error);
+            alert(error.message);
+          } else {
+            // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+          }
         }}
         seriesId={modal.parentId}
       />
