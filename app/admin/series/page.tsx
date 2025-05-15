@@ -440,7 +440,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={async (values) => {
           await supabase.from("seasons").update(values).eq("id", values.id);
           if (modal.parentId) {/* refresh seasons */}
         }}
@@ -450,7 +450,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "add-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={async (values) => {
           await supabase.from("seasons").insert([values]);
           if (modal.parentId) {/* refresh seasons */}
         }}
