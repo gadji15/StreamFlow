@@ -38,7 +38,16 @@ export default function EpisodeModal({
     published: !!initialData.published,
     isvip: !!initialData.isvip,
     video_unavailable: !!initialData.video_unavailable,
+    tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
+    local_video_file: null,
   });
+
+  // Pour la recherche TMDB série (autocomplete)
+  const [serieSearch, setSerieSearch] = useState("");
+  const [serieSuggestions, setSerieSuggestions] = useState<any[]>([]);
+  const [serieLoading, setSerieLoading] = useState(false);
+  const [showSerieSuggestions, setShowSerieSuggestions] = useState(false);
+  const [activeSerieSuggestion, setActiveSerieSuggestion] = useState(-1);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
@@ -112,7 +121,13 @@ export default function EpisodeModal({
         published: false,
         isvip: false,
         video_unavailable: false,
+        tmdb_series_id: "",
+        local_video_file: null,
       });
+      setSerieSearch("");
+      setSerieSuggestions([]);
+      setActiveSerieSuggestion(-1);
+      setShowSerieSuggestions(false);
       setErrors({});
       setTmdbSearch("");
       setTmdbError(null);
@@ -125,6 +140,14 @@ export default function EpisodeModal({
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
     if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url") setTmdbError(null);
+    if (field === "local_video_file" && value) {
+      // Si upload local, vider video_url
+      setForm(f => ({ ...f, video_url: "" }));
+    }
+    if (field === "video_url" && value) {
+      // Si lien vidéo, vider upload local
+      setForm(f => ({ ...f, local_video_file: null }));
+    }
   };
 
   const validate = () => {
@@ -153,6 +176,10 @@ export default function EpisodeModal({
     // Vérification URL trailer
     if (form.trailer_url && !/^https?:\/\/.+/.test(form.trailer_url)) {
       err.trailer_url = "URL du trailer invalide";
+    }
+    // Vérification fichier vidéo local
+    if (form.local_video_file && form.local_video_file.type && !/^video\/(mp4|webm|ogg)$/i.test(form.local_video_file.type)) {
+      err.local_video_file = "Format vidéo non supporté (mp4, webm, ogg)";
     }
     return err;
   };
@@ -186,6 +213,8 @@ export default function EpisodeModal({
         published: !!form.published,
         isvip: !!form.isvip,
         video_unavailable: !!form.video_unavailable,
+        tmdb_series_id: clean(form.tmdb_series_id),
+        // On ne transmet pas local_video_file au backend, à gérer côté parent/onSave si besoin
       };
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
@@ -206,14 +235,13 @@ export default function EpisodeModal({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/tmdb/episode/${encodeURIComponent(tmdbSeriesId)}/${encodeURIComponent(
+        `/api/tmdb/episode/${encodeURIComponent(form.tmdb_series_id)}/${encodeURIComponent(
           parentSeasonNumber
         )}/${encodeURIComponent(form.episode_number)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const detail = await res.json();
       if (detail && detail.id) {
-        // Récupérer les vidéos associées à l'épisode (trailer, etc)
         let trailerUrl = "";
         let videoUrl = "";
         if (detail.videos && Array.isArray(detail.videos.results)) {
@@ -226,8 +254,7 @@ export default function EpisodeModal({
           if (ytTrailer) {
             trailerUrl = `https://www.youtube.com/watch?v=${ytTrailer.key}`;
           }
-          // Si TMDB fournit d'autres vidéos, on peut en prendre une principale si besoin
-          // À adapter si besoin d'autres plateformes
+          // On pourrait aussi récupérer d'autres vidéos ici si TMDB fournit un lien direct
         }
         setForm((f) => ({
           ...f,
@@ -289,57 +316,153 @@ export default function EpisodeModal({
             ✕
           </button>
         </div>
-        {/* TMDB import zone */}
-        <div className="flex gap-1 items-end px-3 pt-1">
-          <div className="flex-1">
-            <label htmlFor="tmdb_import" className="block text-[11px] mb-1 text-white/70 font-medium">
-              Importer depuis TMDB (ID série, saison & n° épisode requis)
-            </label>
-            <div className="flex gap-1">
+        {/* TMDB import zone - harmonisée avec SeasonModal */}
+        <div className="flex flex-col gap-1 px-3 pt-1">
+          {/* Recherche série TMDB */}
+          {!tmdbSeriesId && !initialData.tmdb_series_id && (
+            <div className="mb-2 relative">
+              <label htmlFor="serie_tmdb_search" className="block text-[11px] mb-1 text-white/70 font-medium">
+                Rechercher la série sur TMDB
+              </label>
               <input
-                id="num_saison"
-                value={parentSeasonNumber}
-                disabled
-                className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white w-14 text-xs opacity-70"
-                placeholder="Saison"
-                type="number"
-                readOnly
+                id="serie_tmdb_search"
+                value={serieSearch}
+                onChange={async e => {
+                  setSerieSearch(e.target.value);
+                  setShowSerieSuggestions(true);
+                  setSerieSuggestions([]);
+                  setActiveSerieSuggestion(-1);
+                  if (e.target.value.length > 2) {
+                    setSerieLoading(true);
+                    try {
+                      const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(e.target.value)}`);
+                      const data = await resp.json();
+                      setSerieSuggestions(data.results || []);
+                    } catch { setSerieSuggestions([]); }
+                    setSerieLoading(false);
+                  }
+                }}
+                onKeyDown={e => {
+                  if (!showSerieSuggestions || serieSuggestions.length === 0) return;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveSerieSuggestion((v) => (v + 1) % serieSuggestions.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveSerieSuggestion((v) => (v - 1 + serieSuggestions.length) % serieSuggestions.length);
+                  } else if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (activeSerieSuggestion >= 0 && activeSerieSuggestion < serieSuggestions.length) {
+                      const suggestion = serieSuggestions[activeSerieSuggestion];
+                      setForm(f => ({
+                        ...f,
+                        tmdb_series_id: String(suggestion.id)
+                      }));
+                      setSerieSearch(suggestion.name);
+                      setSerieSuggestions([]);
+                      setShowSerieSuggestions(false);
+                    }
+                  }
+                }}
+                className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs w-full mb-1"
+                placeholder="Nom de la série"
+                autoComplete="off"
+                aria-label="Recherche série TMDB"
+                disabled={loading}
               />
+              {showSerieSuggestions && !!serieSearch && (
+                <ul
+                  className="absolute z-20 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto"
+                  role="listbox"
+                  aria-label="Suggestions de séries"
+                >
+                  {serieLoading && (
+                    <li className="p-2 text-sm text-gray-400">Chargement…</li>
+                  )}
+                  {serieSuggestions.map((suggestion, idx) => (
+                    <li
+                      key={suggestion.id}
+                      className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                      role="option"
+                      aria-selected={activeSerieSuggestion === idx}
+                      tabIndex={0}
+                      onClick={() => {
+                        setForm(f => ({
+                          ...f,
+                          tmdb_series_id: String(suggestion.id)
+                        }));
+                        setSerieSearch(suggestion.name);
+                        setSerieSuggestions([]);
+                        setShowSerieSuggestions(false);
+                      }}
+                      onMouseEnter={() => setActiveSerieSuggestion(idx)}
+                    >
+                      <span className="font-medium">{suggestion.name}</span>
+                      {suggestion.first_air_date && (
+                        <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                      )}
+                    </li>
+                  ))}
+                  {!serieLoading && serieSuggestions.length === 0 && (
+                    <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                  )}
+                </ul>
+              )}
+              <input
+                id="serie_tmdb_id"
+                value={form.tmdb_series_id}
+                onChange={e => handleChange("tmdb_series_id", e.target.value)}
+                className="rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs w-full mt-1"
+                placeholder="TMDB ID série"
+                type="text"
+                aria-label="TMDB ID série"
+                style={{ display: "none" }} // champ caché
+                tabIndex={-1}
+                readOnly
+                disabled
+              />
+            </div>
+          )}
+          <div className="flex gap-1 items-end">
+            <div className="flex-1">
+              <label htmlFor="num_episode" className="block text-[11px] mb-1 text-white/70 font-medium">
+                Numéro d'épisode <span className="text-red-500">*</span>
+              </label>
               <input
                 id="num_episode"
                 value={form.episode_number}
                 onChange={e => handleChange("episode_number", e.target.value)}
-                className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-14 text-xs transition-shadow"
+                className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-24 text-xs transition-shadow"
                 placeholder="N° ep"
                 type="number"
                 min={1}
                 disabled={loading}
+                aria-required="true"
               />
-              <Button
-                type="button"
-                className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
-                variant="outline"
-                onClick={handleTMDBImport}
-                disabled={
-                  loading ||
-                  !tmdbSeriesId ||
-                  !parentSeasonNumber ||
-                  !form.episode_number
-                }
-                aria-label="Importer cet épisode depuis TMDB"
-              >
-                {loading ? (
-                  <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                ) : "Importer"}
-              </Button>
             </div>
-            {tmdbError && (
-              <div className="px-2 py-1 text-xs text-red-400">{tmdbError}</div>
-            )}
+            <Button
+              type="button"
+              className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
+              variant="outline"
+              onClick={handleTMDBImport}
+              disabled={
+                loading ||
+                !form.tmdb_series_id ||
+                !form.episode_number
+              }
+              aria-label="Importer cet épisode depuis TMDB"
+            >
+              {loading ? (
+                <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              ) : "Importer"}
+            </Button>
           </div>
+          {tmdbError && (
+            <div className="px-2 py-1 text-xs text-red-400">{tmdbError}</div>
+          )}
         </div>
         <form
           id="episode-form"
@@ -489,11 +612,11 @@ export default function EpisodeModal({
             </label>
           </div>
 
-          {/* Champ vidéo principale + indisponibilité */}
+          {/* Champ vidéo principale + upload local + indisponibilité */}
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-                Vidéo principale (URL)
+                Vidéo principale (URL ou upload)
               </label>
               <label className="flex items-center gap-1 cursor-pointer text-[11px] text-red-400 font-medium">
                 <input
@@ -507,21 +630,59 @@ export default function EpisodeModal({
                 Vidéo non disponible
               </label>
             </div>
-            <input
-              id="video_url"
-              value={form.video_url}
-              onChange={e => handleChange("video_url", e.target.value)}
-              className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
-                errors.video_url ? "border-red-500" : ""
-              }`}
-              placeholder="https://..."
-              disabled={loading || form.video_unavailable}
-              aria-label="URL de la vidéo principale"
-            />
+            <div className="flex flex-col gap-1 mt-0.5">
+              <input
+                id="video_url"
+                value={form.video_url}
+                onChange={e => handleChange("video_url", e.target.value)}
+                className={`rounded-lg border border-neutral-700 focus:border-indigo-500 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
+                  errors.video_url ? "border-red-500" : ""
+                }`}
+                placeholder="https://..."
+                disabled={loading || form.video_unavailable || !!form.local_video_file}
+                aria-label="URL de la vidéo principale"
+              />
+              <input
+                id="local_video_file"
+                type="file"
+                accept="video/mp4,video/webm,video/ogg"
+                onChange={e => {
+                  const file = e.target.files && e.target.files[0];
+                  handleChange("local_video_file", file || null);
+                }}
+                className="block w-full text-xs text-gray-400 bg-gray-800 border border-neutral-700 rounded-lg px-2 py-1"
+                disabled={loading || form.video_unavailable || !!form.video_url}
+                aria-label="Uploader une vidéo locale"
+              />
+            </div>
             {errors.video_url && (
               <div className="text-xs text-red-400 mt-0.5">{errors.video_url}</div>
             )}
-            {form.video_url && !form.video_unavailable && (
+            {errors.local_video_file && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.local_video_file}</div>
+            )}
+            {/* Aperçu vidéo locale */}
+            {form.local_video_file && !form.video_unavailable && (
+              <div className="flex flex-col items-start mt-1">
+                <video
+                  src={form.local_video_file instanceof File ? URL.createObjectURL(form.local_video_file) : ""}
+                  controls
+                  className="h-20 rounded border border-gray-700"
+                  style={{ maxWidth: "100%" }}
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("local_video_file", null)}
+                  disabled={loading}
+                  aria-label="Supprimer la vidéo locale"
+                >
+                  Supprimer la vidéo locale
+                </button>
+              </div>
+            )}
+            {/* Aperçu vidéo externe si pas de vidéo locale */}
+            {form.video_url && !form.local_video_file && !form.video_unavailable && (
               <div className="flex flex-col items-start mt-1">
                 {form.video_url.includes("youtube.com") || form.video_url.includes("youtu.be") ? (
                   <iframe
