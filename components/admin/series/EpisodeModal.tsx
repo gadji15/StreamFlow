@@ -21,6 +21,11 @@ export default function EpisodeModal({
   tmdbSeriesId = "",
   parentSeasonNumber = "",
 }) {
+  // Vérification stricte de parentSeasonNumber
+  const validParentSeasonNumber = parentSeasonNumber !== undefined && parentSeasonNumber !== null && parentSeasonNumber !== ""
+    ? String(parentSeasonNumber)
+    : "";
+
   // Form state
   const [form, setForm] = useState({
     id: initialData.id,
@@ -40,6 +45,7 @@ export default function EpisodeModal({
     video_unavailable: !!initialData.video_unavailable,
     tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
     local_video_file: null,
+    parentSeasonNumber: validParentSeasonNumber, // Ajout dans le form state pour cohérence
   });
 
   // Pour la recherche TMDB série (autocomplete)
@@ -53,7 +59,7 @@ export default function EpisodeModal({
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearch, setTmdbSearch] = useState(
     (seriesTitle ? seriesTitle + " " : "") +
-      (parentSeasonNumber ? `Saison ${parentSeasonNumber} ` : "") +
+      (validParentSeasonNumber ? `Saison ${validParentSeasonNumber} ` : "") +
       (initialData.episode_number ? `Épisode ${initialData.episode_number}` : "")
   );
   const [tmdbError, setTmdbError] = useState<string | null>(null);
@@ -94,14 +100,20 @@ export default function EpisodeModal({
             : "",
         air_date: initialData.air_date || "",
         thumbnail_url: initialData.thumbnail_url || "",
+        video_url: initialData.video_url || "",
+        trailer_url: initialData.trailer_url || "",
         tmdb_id: initialData.tmdb_id || "",
         description: initialData.description || "",
         published: !!initialData.published,
         isvip: !!initialData.isvip,
+        video_unavailable: !!initialData.video_unavailable,
+        tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
+        local_video_file: null,
+        parentSeasonNumber: validParentSeasonNumber,
       });
       setTmdbSearch(
         (seriesTitle ? seriesTitle + " " : "") +
-          (parentSeasonNumber ? `Saison ${parentSeasonNumber} ` : "") +
+          (validParentSeasonNumber ? `Saison ${validParentSeasonNumber} ` : "") +
           (initialData.episode_number ? `Épisode ${initialData.episode_number}` : "")
       );
       if (firstInput.current) {
@@ -123,6 +135,7 @@ export default function EpisodeModal({
         video_unavailable: false,
         tmdb_series_id: "",
         local_video_file: null,
+        parentSeasonNumber: "",
       });
       setSerieSearch("");
       setSerieSuggestions([]);
@@ -228,16 +241,43 @@ export default function EpisodeModal({
   // Import TMDB pour un épisode
   const handleTMDBImport = async () => {
     setTmdbError(null);
-    // On ne regarde plus jamais tmdbSeriesId/parentSeasonNumber côté utilisateur, mais le tmdb_series_id du form (issu autocomplete ou prop)
-    if (!form.tmdb_series_id || !parentSeasonNumber || !form.episode_number) {
-      setTmdbError("Veuillez d'abord sélectionner la série via la recherche TMDB, puis saisir le numéro d'épisode.");
+
+    // Vérification explicite de la présence de parentSeasonNumber
+    if (!form.tmdb_series_id) {
+      setTmdbError("Veuillez sélectionner une série via la recherche TMDB.");
       return;
     }
+    if (!form.parentSeasonNumber) {
+      setTmdbError("Numéro de saison parent absent ou invalide. Veuillez réouvrir la modale depuis la bonne saison.");
+      return;
+    }
+    if (!form.episode_number) {
+      setTmdbError("Veuillez saisir le numéro d'épisode.");
+      return;
+    }
+
+    // Pour debuggage (désactiver en prod)
+    // console.log("DEBUG TMDB import params", {
+    //   tmdb_series_id: form.tmdb_series_id,
+    //   parentSeasonNumber: form.parentSeasonNumber,
+    //   episode_number: form.episode_number,
+    // });
+
+    // DEBUG LOG : affiche les paramètres du fetch TMDB épisode
+    console.log('IMPORT TMDB DEBUG', {
+      tmdb_series_id: form.tmdb_series_id,
+      parentSeasonNumber: form.parentSeasonNumber,
+      episode_number: form.episode_number,
+      fetch_url: `/api/tmdb/episode/${encodeURIComponent(form.tmdb_series_id)}/${encodeURIComponent(
+        form.parentSeasonNumber
+      )}/${encodeURIComponent(form.episode_number)}`
+    });
+
     setLoading(true);
     try {
       const res = await fetch(
         `/api/tmdb/episode/${encodeURIComponent(form.tmdb_series_id)}/${encodeURIComponent(
-          parentSeasonNumber
+          form.parentSeasonNumber
         )}/${encodeURIComponent(form.episode_number)}`
       );
       if (!res.ok) throw new Error("Erreur réseau TMDB");
@@ -255,7 +295,6 @@ export default function EpisodeModal({
           if (ytTrailer) {
             trailerUrl = `https://www.youtube.com/watch?v=${ytTrailer.key}`;
           }
-          // On pourrait aussi récupérer d'autres vidéos ici si TMDB fournit un lien direct
         }
         setForm((f) => ({
           ...f,
@@ -319,6 +358,12 @@ export default function EpisodeModal({
         </div>
         {/* TMDB import zone - harmonisée avec SeasonModal */}
         <div className="flex flex-col gap-1 px-3 pt-1">
+          {/* Affichage d'un avertissement si le numéro de saison parent est absent */}
+          {(!validParentSeasonNumber || validParentSeasonNumber === "") && (
+            <div className="mb-2 text-xs text-red-400 font-semibold">
+              ⚠️ Impossible d'importer un épisode sans contexte de saison. Veuillez ouvrir la modale depuis une saison.
+            </div>
+          )}
           {/* Recherche série TMDB, logique identique à SeasonModal */}
           {!tmdbSeriesId && !initialData.tmdb_series_id && (
             <div className="mb-2 relative">
@@ -444,7 +489,8 @@ export default function EpisodeModal({
               disabled={
                 loading ||
                 !form.tmdb_series_id ||
-                !form.episode_number
+                !form.episode_number ||
+                !validParentSeasonNumber // Désactive le bouton si le numéro de saison parent est manquant
               }
               aria-label="Importer cet épisode depuis TMDB"
             >
