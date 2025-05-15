@@ -462,11 +462,7 @@ export default function AdminSeriesPage() {
           const { error } = await supabase.from("seasons").update(updateObj).eq("id", values.id);
           if (error) {
             console.error("Erreur Supabase:", error);
-            if (typeof window !== "undefined" && window?.toast) {
-              window.toast({ title: "Erreur Supabase", description: error.message, variant: "destructive" });
-            } else {
-              alert(error.message);
-            }
+            alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
           }
@@ -499,11 +495,7 @@ export default function AdminSeriesPage() {
           const { error } = await supabase.from("seasons").insert([insertObj]);
           if (error) {
             console.error("Erreur Supabase:", error);
-            if (typeof window !== "undefined" && window?.toast) {
-              window.toast({ title: "Erreur Supabase", description: error.message, variant: "destructive" });
-            } else {
-              alert(error.message);
-            }
+            alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
           }
