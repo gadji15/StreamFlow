@@ -53,15 +53,19 @@ export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason
         <h3 className="font-semibold text-white/90 text-base">Épisodes</h3>
         <Button
           variant="success"
-          onClick={() => setEpisodeModalOpen(true)}
+          onClick={() => {
+            if (seasonNumber) setEpisodeModalOpen(true)
+          }}
           className="text-xs px-3 py-1"
           aria-label="Ajouter un épisode"
+          disabled={!seasonNumber}
+          title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
         >
           + Ajouter un épisode
         </Button>
       </div>
       <EpisodeModal
-        open={episodeModalOpen}
+        open={episodeModalOpen && !!seasonNumber}
         onClose={() => setEpisodeModalOpen(false)}
         onSave={handleAddEpisode}
         seriesTitle={seriesTitle}
