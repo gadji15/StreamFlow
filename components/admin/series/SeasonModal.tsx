@@ -588,16 +588,15 @@ export default function SeasonModal({
           >
             Annuler
           </Button>
-          <Button
+          <button
             type="submit"
             form="season-form"
-            variant="success"
             disabled={loading}
             aria-label="Enregistrer la saison"
-            className="text-xs py-1 px-2"
+            className="text-xs py-1 px-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition"
           >
             {loading ? "..." : "Enregistrer"}
-          </Button>
+          </button>
         </div>
       </div>
       <style jsx global>{`
