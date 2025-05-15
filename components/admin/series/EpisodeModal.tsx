@@ -37,6 +37,7 @@ export default function EpisodeModal({
     description: initialData.description || "",
     published: !!initialData.published,
     isvip: !!initialData.isvip,
+    video_unavailable: !!initialData.video_unavailable,
   });
 
   const [loading, setLoading] = useState(false);
@@ -110,6 +111,7 @@ export default function EpisodeModal({
         description: "",
         published: false,
         isvip: false,
+        video_unavailable: false,
       });
       setErrors({});
       setTmdbSearch("");
@@ -183,6 +185,7 @@ export default function EpisodeModal({
         description: clean(form.description),
         published: !!form.published,
         isvip: !!form.isvip,
+        video_unavailable: !!form.video_unavailable,
       };
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
@@ -486,11 +489,24 @@ export default function EpisodeModal({
             </label>
           </div>
 
-          {/* Champ vidéo principale */}
+          {/* Champ vidéo principale + indisponibilité */}
           <div>
-            <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-              Vidéo principale (URL)
-            </label>
+            <div className="flex items-center gap-3">
+              <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
+                Vidéo principale (URL)
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer text-[11px] text-red-400 font-medium">
+                <input
+                  type="checkbox"
+                  checked={form.video_unavailable}
+                  onChange={e => handleChange("video_unavailable", e.target.checked)}
+                  className="accent-rose-500"
+                  aria-label="Vidéo non disponible"
+                  disabled={loading}
+                />
+                Vidéo non disponible
+              </label>
+            </div>
             <input
               id="video_url"
               value={form.video_url}
@@ -499,13 +515,13 @@ export default function EpisodeModal({
                 errors.video_url ? "border-red-500" : ""
               }`}
               placeholder="https://..."
-              disabled={loading}
+              disabled={loading || form.video_unavailable}
               aria-label="URL de la vidéo principale"
             />
             {errors.video_url && (
               <div className="text-xs text-red-400 mt-0.5">{errors.video_url}</div>
             )}
-            {form.video_url && (
+            {form.video_url && !form.video_unavailable && (
               <div className="flex flex-col items-start mt-1">
                 {form.video_url.includes("youtube.com") || form.video_url.includes("youtu.be") ? (
                   <iframe
@@ -544,6 +560,9 @@ export default function EpisodeModal({
                   Supprimer la vidéo
                 </button>
               </div>
+            )}
+            {form.video_unavailable && (
+              <div className="mt-1 text-xs text-rose-400 font-medium">La vidéo n'est pas encore disponible pour cet épisode.</div>
             )}
           </div>
 
