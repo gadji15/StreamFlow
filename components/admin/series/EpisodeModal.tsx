@@ -213,8 +213,14 @@ export default function EpisodeModal({
     try {
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
+      // Retirer explicitement local_video_file du payload
+      const {
+        local_video_file,
+        ...restForm
+      } = form;
+
       const submitData = {
-        ...form,
+        ...restForm,
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
@@ -227,7 +233,7 @@ export default function EpisodeModal({
         isvip: !!form.isvip,
         video_unavailable: !!form.video_unavailable,
         tmdb_series_id: clean(form.tmdb_series_id),
-        // On ne transmet pas local_video_file au backend, à gérer côté parent/onSave si besoin
+        // local_video_file n'est plus présent dans submitData !
       };
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
