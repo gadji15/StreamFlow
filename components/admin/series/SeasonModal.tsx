@@ -208,100 +208,18 @@ export default function SeasonModal({
     setLoading(false);
   };
 
-  // Version personnalisée pour accepter un TMDB ID série dynamique (depuis champ ou props)
-  const handleFindSeasonTmdbIdCustom = async (serieId: string) => {
-    setSeasonSearchError(null);
-    setSeasonSearchLoading(true);
-
-    // Validation : numéro de saison positif
-    if (!form.season_number || isNaN(Number(form.season_number)) || Number(form.season_number) < 1) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir un numéro de saison strictement positif.",
-        variant: "destructive",
-      });
-      setSeasonSearchLoading(false);
-      return;
-    }
-
-    if (!serieId) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez rechercher et sélectionner une série TMDB avant de rechercher la saison.",
-        variant: "destructive",
-      });
-      setSeasonSearchLoading(false);
-      return;
-    }
-
-    try {
-      // Va chercher toutes les saisons de la série sur TMDB
-      const res = await fetch(`/api/tmdb/series/${encodeURIComponent(serieId)}`);
-      if (!res.ok) {
-        toast({
-          title: "Erreur TMDB",
-          description: "Erreur de connexion à l'API TMDB.",
-          variant: "destructive",
-        });
-        setSeasonSearchLoading(false);
-        return;
-      }
-      const data = await res.json();
-      const num = Number(form.season_number);
-      if (!data || !Array.isArray(data.seasons)) {
-        toast({
-          title: "Erreur TMDB",
-          description: "Impossible d'obtenir la liste des saisons TMDB (structure inattendue).",
-          variant: "destructive",
-        });
-        setForm(f => ({ ...f, tmdb_id: "" }));
-        setSeasonSearchLoading(false);
-        return;
-      }
-      const found = data.seasons.find((s) => Number(s.season_number) === num);
-      if (found && found.id) {
-        setForm((f) => ({ ...f, tmdb_id: String(found.id) }));
-        toast({
-          title: "Saison trouvée",
-          description: `ID TMDB de la saison ${num} : ${found.id}`,
-        });
-      } else {
-        setForm((f) => ({ ...f, tmdb_id: "" }));
-        toast({
-          title: "Saison introuvable",
-          description: `La saison n°${num} n'existe pas sur TMDB pour cette série.`,
-          variant: "destructive",
-        });
-      }
-    } catch (e: any) {
-      toast({
-        title: "Erreur",
-        description: "Erreur TMDB ou connexion.",
-        variant: "destructive",
-      });
-    } finally {
-      setSeasonSearchLoading(false);
-    }
-  };
+  // Suppression de handleFindSeasonTmdbIdCustom : la recherche de tmdb_id est intégrée à handleTMDBImport
 
   // Import TMDB complet et anti-doublon (champ tmdb_id modifiable manuellement ou automatiquement)
   const handleTMDBImport = async () => {
-    // On autorise l'import s'il y a une série TMDB sélectionnée et un numéro de saison valide
-    const serieTmdbId =
-      tmdbSeriesId ||
-      serieTmdbIdInput ||
-      initialData.tmdb_series_id ||
-      initialData.tmdb_id ||
-      "";
+    setSeasonSearchError(null);
 
+    // Détermination de la série TMDB sélectionnée (prop ou autocomplete)
+    const serieTmdbId = tmdbSeriesId || serieTmdbIdInput || "";
     const seasonNumber = form.season_number;
-    // Validation stricte côté UI
+
     if (!serieTmdbId || !seasonNumber || isNaN(Number(seasonNumber)) || Number(seasonNumber) < 1) {
-      toast({
-        title: "Import impossible",
-        description: "Veuillez sélectionner une série TMDB et saisir un numéro de saison valide.",
-        variant: "destructive",
-      });
+      setSeasonSearchError("Veuillez sélectionner une série TMDB et saisir un numéro de saison valide.");
       return;
     }
 
@@ -314,11 +232,7 @@ export default function SeasonModal({
       .eq("season_number", Number(seasonNumber));
     setCheckingDuplicate(false);
     if (existing && existing.length > 0 && !initialData.id) {
-      toast({
-        title: "Doublon détecté",
-        description: "Une saison avec ce numéro existe déjà pour cette série.",
-        variant: "destructive",
-      });
+      setSeasonSearchError("Une saison avec ce numéro existe déjà pour cette série.");
       return;
     }
     setLoading(true);
@@ -338,6 +252,7 @@ export default function SeasonModal({
             ? `https://image.tmdb.org/t/p/w500${detail.poster_path}`
             : f.poster,
           air_date: detail.air_date || f.air_date,
+          // tmdb_id géré en interne, pas affiché
           tmdb_id: detail.id,
           episode_count: detail.episodes ? String(detail.episodes.length) : (detail.episode_count ? String(detail.episode_count) : f.episode_count),
         }));
@@ -346,18 +261,10 @@ export default function SeasonModal({
           description: "Saison préremplie depuis TMDB !",
         });
       } else {
-        toast({
-          title: "Introuvable TMDB",
-          description: "Aucune saison trouvée pour ces paramètres.",
-          variant: "destructive",
-        });
+        setSeasonSearchError("Aucune saison trouvée pour ces paramètres.");
       }
     } catch (e) {
-      toast({
-        title: "Erreur TMDB",
-        description: String(e),
-        variant: "destructive",
-      });
+      setSeasonSearchError("Erreur TMDB ou connexion.");
     }
     setLoading(false);
   };
@@ -489,14 +396,18 @@ export default function SeasonModal({
                 />
               </div>
             )}
-            <label htmlFor="tmdb_import" className="block text-[11px] mb-1 text-white/70 font-medium">
-              Importer depuis TMDB (recherche par numéro de saison)
+            <label htmlFor="season_number" className="block text-[11px] mb-1 text-white/70 font-medium">
+              Importer depuis TMDB
             </label>
             <div className="flex gap-1">
               <input
-                id="tmdb_import"
+                id="season_number"
                 value={form.season_number}
-                onChange={e => handleChange("season_number", e.target.value)}
+                onChange={e => {
+                  handleChange("season_number", e.target.value);
+                  // reset tmdb_id à chaque changement de numéro
+                  setForm(f => ({ ...f, tmdb_id: "" }));
+                }}
                 className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-16 text-xs transition-shadow"
                 placeholder="N°"
                 type="number"
@@ -505,41 +416,8 @@ export default function SeasonModal({
                 min={1}
                 pattern="[0-9]*"
                 autoComplete="off"
-                disabled={loading || checkingDuplicate || seasonSearchLoading}
+                disabled={loading || checkingDuplicate}
               />
-              <Button
-                type="button"
-                className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
-                variant="outline"
-                onClick={() => {
-                  // On utilise d'abord tmdbSeriesId (prop), sinon la saisie de l'utilisateur
-                  const serieId = tmdbSeriesId || serieTmdbIdInput || initialData.tmdb_series_id || initialData.tmdb_id || "";
-                  if (!serieId) {
-                    toast({
-                      title: "Erreur",
-                      description: "Veuillez rechercher et sélectionner une série TMDB avant de rechercher la saison.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  // Appel la fonction avec le bon ID
-                  handleFindSeasonTmdbIdCustom(serieId);
-                }}
-                disabled={
-                  seasonSearchLoading ||
-                  !form.season_number ||
-                  Number(form.season_number) < 1 ||
-                  (!tmdbSeriesId && !serieTmdbIdInput && !initialData.tmdb_series_id && !initialData.tmdb_id)
-                }
-                aria-label="Rechercher la saison sur TMDB"
-              >
-                {seasonSearchLoading ? (
-                  <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                ) : "Rechercher"}
-              </Button>
               <Button
                 type="button"
                 className="flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
@@ -548,27 +426,27 @@ export default function SeasonModal({
                 disabled={
                   loading ||
                   checkingDuplicate ||
-                  !(tmdbSeriesId || serieTmdbIdInput || initialData.tmdb_series_id || initialData.tmdb_id) ||
+                  !(tmdbSeriesId || serieTmdbIdInput) ||
                   !form.season_number ||
                   isNaN(Number(form.season_number)) ||
                   Number(form.season_number) < 1
                 }
-                aria-label="Importer cette saison depuis TMDB"
+                aria-label="Importer la saison depuis TMDB"
               >
                 {(loading || checkingDuplicate) ? (
                   <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                   </svg>
-                ) : "Importer"}
+                ) : "Importer depuis TMDB"}
               </Button>
             </div>
+            {/* Feedback erreur import */}
+            {seasonSearchError && (
+              <div className="px-3 pb-1 text-xs text-red-400">{seasonSearchError}</div>
+            )}
           </div>
         </div>
-        {/* Feedback recherche TMDB saison */}
-        {seasonSearchError && (
-          <div className="px-3 pb-1 text-xs text-red-400">{seasonSearchError}</div>
-        )}
         {/* Content scrollable */}
         <form
           id="season-form"
@@ -691,25 +569,7 @@ export default function SeasonModal({
               </div>
             )}
           </div>
-          <div className="flex gap-1 items-end">
-            <div className="flex-1">
-              <label htmlFor="tmdb_id" className="block text-[11px] font-medium text-white/80">
-              TMDB ID (rempli automatiquement après recherche)
-            </label>
-            <input
-              id="tmdb_id"
-              value={form.tmdb_id}
-              readOnly
-              tabIndex={-1}
-              aria-readonly="true"
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 px-2 py-1 bg-gray-800 text-white text-xs bg-gray-700/40 cursor-not-allowed"
-              placeholder="Ex: 1234"
-              type="number"
-              min={1}
-            />
-            <span className="text-[10px] text-gray-400">Ce champ est rempli automatiquement via TMDB</span>
-          </div>
-          </div>
+          {/* Le champ tmdb_id est géré en interne, on ne l'affiche plus à l'admin */}
         </form>
         {/* Actions sticky */}
         <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
