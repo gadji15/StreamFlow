@@ -213,10 +213,9 @@ export default function EpisodeModal({
     try {
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
-      // Nettoyer explicitement tous les champs non présents en base
+      // Nettoyer explicitement tous les champs non présents en base (plus de "order" !)
       const {
         local_video_file,
-        order,
         parentSeasonNumber,
         thumbnail_url, // va être nettoyé plus bas
         video_url,     // idem
