@@ -263,6 +263,16 @@ export default function EpisodeModal({
     //   episode_number: form.episode_number,
     // });
 
+    // DEBUG LOG : affiche les paramètres du fetch TMDB épisode
+    console.log('IMPORT TMDB DEBUG', {
+      tmdb_series_id: form.tmdb_series_id,
+      parentSeasonNumber: form.parentSeasonNumber,
+      episode_number: form.episode_number,
+      fetch_url: `/api/tmdb/episode/${encodeURIComponent(form.tmdb_series_id)}/${encodeURIComponent(
+        form.parentSeasonNumber
+      )}/${encodeURIComponent(form.episode_number)}`
+    });
+
     setLoading(true);
     try {
       const res = await fetch(
