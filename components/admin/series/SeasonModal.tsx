@@ -276,7 +276,8 @@ export default function SeasonModal({
         description: clean(form.description),
         series_id: seriesId,
       };
-      const { tmdb_series_id, ...submitData } = fullData;
+      // On retire tmdb_series_id ET id avant l'envoi à Supabase
+      const { tmdb_series_id, id, ...submitData } = fullData;
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
       onClose();
