@@ -36,6 +36,8 @@ function getGenres(serie) {
   return [];
 }
 
+import EpisodeList from "@/components/admin/series/EpisodeList";
+
 export default function AdminSeriesDetailPage() {
   const router = useRouter();
   const { id } = useParams();
@@ -47,6 +49,11 @@ export default function AdminSeriesDetailPage() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [seasonLoading, setSeasonLoading] = useState(true);
   const [seasonModal, setSeasonModal] = useState<{ open: boolean, initial?: any }>({ open: false });
+
+  // Episodes modal state
+  const [selectedSeason, setSelectedSeason] = useState<any>(null);
+  const [episodesList, setEpisodesList] = useState<any[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
 
   // Toast
   const { toast } = useToast();
@@ -113,6 +120,30 @@ export default function AdminSeriesDetailPage() {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
     }
     setSeasonActionLoading(null);
+  };
+
+  // Ouvre le modal d'épisodes et charge la liste pour la saison sélectionnée
+  const handleOpenEpisodes = async (season: any) => {
+    setSelectedSeason(season);
+    setEpisodesLoading(true);
+    const { data, error } = await supabase.from("episodes")
+      .select("*")
+      .eq("season_id", season.id)
+      .order("episode_number", { ascending: true });
+    if (!error) setEpisodesList(data || []);
+    setEpisodesLoading(false);
+  };
+
+  // Pour rafraîchir la liste après ajout/suppression
+  const fetchEpisodesForSelectedSeason = async () => {
+    if (!selectedSeason) return;
+    setEpisodesLoading(true);
+    const { data, error } = await supabase.from("episodes")
+      .select("*")
+      .eq("season_id", selectedSeason.id)
+      .order("episode_number", { ascending: true });
+    if (!error) setEpisodesList(data || []);
+    setEpisodesLoading(false);
   };
 
   const handleDeleteSeason = async (seasonId) => {
@@ -238,6 +269,49 @@ export default function AdminSeriesDetailPage() {
         <div className="mt-1 whitespace-pre-line">{serie.description || "Aucune description."}</div>
       </div>
       {/* Gestion arborescence saisons */}
+      {/* Episodes Modal */}
+      {/** Ajout du composant d'affichage des épisodes d'une saison sélectionnée */}
+      {selectedSeason && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="episodes-modal-title"
+          tabIndex={-1}
+          onClick={() => setSelectedSeason(null)}
+        >
+          <div
+            className="bg-gray-900 rounded-2xl shadow-2xl border border-neutral-800 w-full max-w-2xl relative flex flex-col"
+            style={{ maxHeight: "85vh" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
+              <h2 className="text-base font-bold tracking-tight text-white/90" id="episodes-modal-title">
+                Épisodes de la saison {selectedSeason.season_number}
+              </h2>
+              <button
+                aria-label="Fermer"
+                className="text-gray-400 hover:text-white text-base p-1 transition-colors"
+                tabIndex={0}
+                onClick={() => setSelectedSeason(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1">
+              <EpisodeList
+                episodes={episodesList}
+                seasonId={selectedSeason.id}
+                fetchEpisodesForSeason={fetchEpisodesForSelectedSeason}
+                seriesTitle={serie.title}
+                tmdbSeriesId={serie.tmdb_id}
+                seasonNumber={selectedSeason.season_number}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-8">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">Saisons</h2>
@@ -302,6 +376,16 @@ export default function AdminSeriesDetailPage() {
                 </div>
                 {/* Actions colonne, bien séparée */}
                 <div className="flex flex-col gap-2 items-center justify-center ml-4 self-stretch">
+                  <Tooltip text="Gérer les épisodes de cette saison">
+                    <Button
+                      size="sm"
+                      variant="success"
+                      onClick={() => handleOpenEpisodes(season)}
+                      style={{ minWidth: 32 }}
+                    >
+                      🎬 Gérer les épisodes
+                    </Button>
+                  </Tooltip>
                   <Tooltip text="Éditer la saison">
                     <Button
                       size="sm"
