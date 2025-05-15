@@ -18,6 +18,7 @@ export default function SeasonModal({
   seriesId, // Ajouté pour la vérification dupliqué
 }) {
   // Le champ genres est retiré du form state (non exposé dans l'UI, à réintégrer si besoin)
+  // S'assurer que tmdb_id existe toujours dans le form state (même caché)
   const [form, setForm] = useState({
     title: initialData.title || "",
     season_number:
@@ -162,6 +163,10 @@ export default function SeasonModal({
       (isNaN(Number(form.episode_count)) || !/^\d+$/.test(form.episode_count) || Number(form.episode_count) < 0)
     )
       err.episode_count = "Nombre d'épisodes invalide";
+    // Exiger tmdb_id si on veut que l'import TMDB soit obligatoire
+    if (!form.tmdb_id || isNaN(Number(form.tmdb_id)) || Number(form.tmdb_id) < 1) {
+      err.tmdb_id = "L'import TMDB de la saison est obligatoire.";
+    }
     // Vérification anti-doublon à la création
     if (!initialData.id && form.season_number && seriesId) {
       const { data: existing } = await supabase
@@ -198,6 +203,7 @@ export default function SeasonModal({
           form.episode_count === "" || form.episode_count === undefined
             ? ""
             : Number(form.episode_count),
+        tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
       };
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
