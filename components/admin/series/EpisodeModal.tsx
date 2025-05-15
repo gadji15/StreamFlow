@@ -228,9 +228,15 @@ export default function EpisodeModal({
   // Import TMDB pour un épisode
   const handleTMDBImport = async () => {
     setTmdbError(null);
-    // On ne regarde plus jamais tmdbSeriesId/parentSeasonNumber côté utilisateur, mais le tmdb_series_id du form (issu autocomplete ou prop)
+    // Debug log pour traçabilité
+    console.log(
+      "TMDB fetch params",
+      "tmdb_series_id:", form.tmdb_series_id,
+      "parentSeasonNumber:", parentSeasonNumber,
+      "episode_number:", form.episode_number
+    );
     if (!form.tmdb_series_id || !parentSeasonNumber || !form.episode_number) {
-      setTmdbError("Veuillez d'abord sélectionner la série via la recherche TMDB, puis saisir le numéro d'épisode.");
+      setTmdbError("Veuillez d'abord sélectionner la série via la recherche TMDB, sélectionner la saison et saisir le numéro d'épisode.");
       return;
     }
     setLoading(true);
@@ -282,6 +288,39 @@ export default function EpisodeModal({
     }
     setLoading(false);
   };
+
+  // Si parentSeasonNumber est manquant, bloquer tout
+  if (!parentSeasonNumber) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 opacity-100"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="episode-modal-title"
+        tabIndex={-1}
+        onClick={handleOverlayClick}
+      >
+        <div className="bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-800 rounded-2xl shadow-2xl border border-neutral-800 w-full max-w-xs sm:max-w-sm md:max-w-md relative flex flex-col p-6 items-center justify-center text-center">
+          <h2 className="text-lg font-bold text-white mb-2" id="episode-modal-title">
+            Problème de contexte
+          </h2>
+          <p className="text-sm text-red-300 mb-4">
+            Impossible d’ajouter ou d’importer un épisode : aucune saison parente sélectionnée.<br/>
+            Veuillez d’abord sélectionner une saison pour la série avant d’ouvrir cette modale.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            aria-label="Fermer"
+            className="text-xs py-1 px-2"
+          >
+            Fermer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!open) return null;
 
@@ -444,7 +483,8 @@ export default function EpisodeModal({
               disabled={
                 loading ||
                 !form.tmdb_series_id ||
-                !form.episode_number
+                !form.episode_number ||
+                !parentSeasonNumber // also require parentSeasonNumber
               }
               aria-label="Importer cet épisode depuis TMDB"
             >
