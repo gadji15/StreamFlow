@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
-export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason, seriesTitle = "", tmdbSeriesId = "", seasonNumber = "" }) {
+export default function EpisodeList({ episodes, seasonId, seriesId, fetchEpisodesForSeason, seriesTitle = "", tmdbSeriesId = "", seasonNumber = "" }) {
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -15,11 +15,12 @@ export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason
   // Ajout robuste d'un épisode à la saison
   async function handleAddEpisode(form) {
     // form contient title, episode_number, air_date, thumbnail_url, tmdb_id, description, published, isvip
-    // On complète avec la relation de saison
+    // On complète avec la relation de saison et de série
     const insertObj = {
       ...form,
       season_id: seasonId,
-      order: episodes.length, // place à la fin
+      series_id: seriesId, // AJOUT du series_id obligatoire
+      sort_order: episodes.length, // place à la fin
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -38,9 +39,9 @@ export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason
     const reordered = [...episodes];
     const [removed] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, removed);
-    // Update order field in DB (assume field: "order")
+    // Update sort_order field in DB (use correct field: "sort_order")
     await Promise.all(reordered.map((ep, idx) =>
-      supabase.from("episodes").update({ order: idx }).eq('id', ep.id)
+      supabase.from("episodes").update({ sort_order: idx }).eq('id', ep.id)
     ));
     fetchEpisodesForSeason();
     toast({ title: "Ordre des épisodes mis à jour" });

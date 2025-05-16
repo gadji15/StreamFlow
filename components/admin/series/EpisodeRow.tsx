@@ -71,30 +71,40 @@ export default function SeasonRow({
     // Optionnel: insérer les épisodes dans Supabase ici
   };
 
+  // Protection contre un season undefined ou mal formé
+  if (!season) {
+    return (
+      <tr>
+        <td colSpan={5} className="text-red-500 text-center py-2">Saison non trouvée ou donnée absente.</td>
+      </tr>
+    );
+  }
+
   return (
-    <>
-      <tr className="hover:bg-gray-900 transition">
-        <td className="py-2">
-          <InlineEdit
-            value={season.season_number}
-            type="number"
-            min={1}
-            onSave={newValue => handleUpdateField("season_number", newValue)}
-          />
-        </td>
-        <td className="py-2">
-          <InlineEdit
-            value={season.title || ""}
-            onSave={newValue => handleUpdateField("title", newValue)}
-          />
-        </td>
-        <td className="py-2">{season.air_date ?? "-"}</td>
-        <td className="py-2">
-          <span className="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
-            {season.episode_count ?? "-"}
-          </span>
-        </td>
-        <td className="py-2 flex flex-wrap gap-1">
+    <tr className="hover:bg-gray-900 transition">
+      <td className="py-2">
+        <InlineEdit
+          value={season.season_number}
+          type="number"
+          min={1}
+          onSave={newValue => handleUpdateField("season_number", newValue)}
+        />
+      </td>
+      <td className="py-2">
+        <InlineEdit
+          value={season.title || ""}
+          onSave={newValue => handleUpdateField("title", newValue)}
+        />
+      </td>
+      <td className="py-2">{season.air_date ?? "-"}</td>
+      <td className="py-2">
+        <span className="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
+          {season.episode_count ?? "-"}
+        </span>
+      </td>
+      <td className="py-2 flex flex-wrap gap-1">
+  );
+}
           <Button
             size="xs"
             variant={expanded ? "success" : "outline"}
@@ -155,6 +165,7 @@ export default function SeasonRow({
               <EpisodeList
                 episodes={seasonEpisodes}
                 seasonId={season.id}
+                seriesId={seriesId}
                 fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
               />
             )}
