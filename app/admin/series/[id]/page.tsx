@@ -34,6 +34,42 @@ export default function AdminSeriesDetailPage() {
   const [episodesModal, setEpisodesModal] = useState<{ open: boolean, seasonId?: string }>({ open: false });
   const [episodeModal, setEpisodeModal] = useState<{ open: boolean, seasonId?: string, initial?: any }>({ open: false });
 
+  // State for episodes of the selected season
+  const [seasonEpisodes, setSeasonEpisodes] = useState<any[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [episodesError, setEpisodesError] = useState<string | null>(null);
+
+  // Fetch episodes for a season
+  const fetchEpisodesForSeason = async (seasonId: string) => {
+    setEpisodesLoading(true);
+    setEpisodesError(null);
+    try {
+      const { data, error } = await supabase
+        .from("episodes")
+        .select("*")
+        .eq("season_id", seasonId)
+        .order("episode_number", { ascending: true });
+      if (error) throw error;
+      setSeasonEpisodes(data || []);
+    } catch (err: any) {
+      setEpisodesError(err?.message || String(err));
+      setSeasonEpisodes([]);
+    } finally {
+      setEpisodesLoading(false);
+    }
+  };
+
+  // When opening the episodes modal, fetch episodes for the selected season
+  useEffect(() => {
+    if (episodesModal.open && episodesModal.seasonId) {
+      fetchEpisodesForSeason(episodesModal.seasonId);
+    }
+    if (!episodesModal.open) {
+      setSeasonEpisodes([]);
+      setEpisodesError(null);
+    }
+  }, [episodesModal.open, episodesModal.seasonId]);
+
   const [search, setSearch] = useState("");
   const filteredSeasons = useMemo(
     () =>
@@ -389,17 +425,17 @@ export default function AdminSeriesDetailPage() {
               <h3 className="text-lg md:text-xl font-bold">Épisodes de la saison</h3>
             </div>
             <EpisodeList
+              seriesId={seriesId}
               seasonId={episodesModal.seasonId}
               seasonNumber={
                 filteredSeasons.find(s => s.id === episodesModal.seasonId)?.season_number ?? ""
               }
-              onEditEpisode={ep =>
-                setEpisodeModal({
-                  open: true,
-                  seasonId: episodesModal.seasonId,
-                  initial: ep
-                })
-              }
+              episodes={seasonEpisodes}
+              fetchEpisodesForSeason={() => fetchEpisodesForSeason(episodesModal.seasonId!)}
+              episodesLoading={episodesLoading}
+              error={episodesError}
+              seriesTitle={serie.title}
+              tmdbSeriesId={serie.tmdb_id}
             />
           </div>
         </div>
