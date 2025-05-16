@@ -137,7 +137,7 @@ export default function AdminSeriesEpisodesPage() {
       if (a.season !== b.season) {
         return a.season - b.season;
       }
-      return a.episodeNumber - b.episodeNumber;
+      return a.episode_number - b.episode_number;
     });
   
   // Récupérer toutes les saisons disponibles
