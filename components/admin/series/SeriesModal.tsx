@@ -57,7 +57,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     });
     setTmdbSearch(initialData.title || "");
     // eslint-disable-next-line
-  }, [open, initialData]);
+  }, [open, initialData && initialData.id]);
 
   const handleChange = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
