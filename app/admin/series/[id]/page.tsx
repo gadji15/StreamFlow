@@ -95,16 +95,21 @@ export default function AdminSeriesDetailPage() {
       if (!serie) throw new Error("Série introuvable");
       const payload = {
         ...values,
-        season_number: Number(values.season_number),
-        series_id: seriesId,
+        title: values.title || null, // obligatoire ?
+        season_number: values.season_number ? Number(values.season_number) : null,
+        series_id: seriesId || null,
         tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
-        episode_count: values.episode_count ? Number(values.episode_count) : null
+        episode_count: values.episode_count ? Number(values.episode_count) : null,
+        air_date: values.air_date || null,
+        poster: values.poster || null,
+        description: values.description || null,
       };
       Object.keys(payload).forEach(
         k => {
           if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
         }
       );
+      console.log("Saison payload", payload);
       let result;
       if (isEdit) {
         result = await supabase.from("seasons").update(payload).eq("id", values.id);
