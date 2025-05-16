@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import SeasonList from "./SeasonList";
 
 export default function SeriesHierarchyTree({
-  series, seriesSeasons, fetchSeasonsForSeries, fetchEpisodesForSeason, seasonEpisodes, seasonEpisodesLoading
+  series, 
+  seriesSeasons = {}, 
+  fetchSeasonsForSeries, 
+  fetchEpisodesForSeason, 
+  seasonEpisodes = {}, 
+  seasonEpisodesLoading = {}
 }) {
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
