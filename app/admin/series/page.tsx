@@ -12,7 +12,10 @@ import SeriesHierarchyTree from "@/components/admin/series/SeriesHierarchyTree";
 import SeasonModal from "@/components/admin/series/SeasonModal";
 import EpisodeModal from "@/components/admin/series/EpisodeModal";
 
+import { useRouter } from "next/navigation";
+
 export default function AdminSeriesPage() {
+  const router = useRouter();
   // --- State principal
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -402,14 +405,19 @@ export default function AdminSeriesPage() {
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
             onAction={async (action, serie) => {
-              // Aperçu (œil) : redirige vers la fiche publique ou admin de la série
+              console.log("[AdminSeriesPage] ACTION:", action, serie && serie.id);
               if (action === "preview") {
                 window.open(`/series/${serie.id}`, "_blank");
                 return;
               }
-              // Arborescence (livres) : redirige vers la fiche admin série (liste saisons/épisodes)
               if (action === "expand" || action === "seasons") {
-                window.location.href = `/admin/series/${serie.id}`;
+                const dest = `/admin/series/${serie.id}`;
+                console.log("[AdminSeriesPage] NAVIGATION:", dest);
+                try {
+                  router.push(dest);
+                } catch (e) {
+                  console.error("[AdminSeriesPage] router.push error:", e);
+                }
                 return;
               }
               if (action === "edit") setSeriesModal({ open: true, serie });

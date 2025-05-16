@@ -111,17 +111,19 @@ export default function EpisodeList({
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-semibold text-white/90 text-base">Épisodes</h3>
         <Button
-          variant="success"
-          onClick={() => {
-            if (seasonNumber) setEpisodeModalOpen(true);
-          }}
-          className="text-xs px-3 py-1"
-          aria-label="Ajouter un épisode"
-          disabled={!seasonNumber}
-          title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
-        >
-          + Ajouter un épisode
-        </Button>
+  size="icon"
+  variant="secondary"
+  onClick={() => onAddEpisode && onAddEpisode(seasonId)}
+  aria-label="Ajouter un épisode"
+  title="Ajouter un épisode"
+  className="p-2"
+  disabled={!onAddEpisode || !seasonId}
+>
+  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 8v8M8 12h8" />
+  </svg>
+</Button>
       </div>
       {/* Modal ajout */}
       <EpisodeModal
