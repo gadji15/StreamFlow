@@ -335,6 +335,42 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
         >
+          {/* Import & affichage du cast */}
+          {form.tmdb_id && (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1 mb-2"
+                onClick={handleImportCast}
+                disabled={loadingCast}
+                aria-label="Importer les acteurs principaux"
+              >
+                {loadingCast ? "Import..." : "Importer les acteurs"}
+              </Button>
+              {cast && cast.length > 0 && (
+                <div className="mt-1 mb-2 max-h-32 overflow-y-auto rounded">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {cast.map(actor => (
+                      <div key={actor.id} className="flex flex-col items-center text-center">
+                        <img
+                          src={
+                            actor.profile_path
+                              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                              : "/placeholder-backdrop.jpg"
+                          }
+                          alt={actor.name}
+                          className="w-12 h-12 rounded-full object-cover border border-gray-800 shadow mb-1 bg-gray-900"
+                          style={{ minWidth: "3rem", minHeight: "3rem" }}
+                        />
+                        <span className="text-[11px] text-white/90 truncate w-full block" title={actor.name}>{actor.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
               Titre <span className="text-red-500">*</span>
