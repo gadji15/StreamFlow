@@ -7,10 +7,18 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function EpisodesPage() {
   const params = useParams();
-  let seriesId = params?.id;
-  // Normalize catch-all or array param
+  let seriesId = params && "id" in params ? params.id : undefined;
+  // Normalize catch-all param
   if (Array.isArray(seriesId)) seriesId = seriesId[0];
-  console.log("EpisodesPage seriesId", seriesId, "params", params);
+  // Sécurité : si jamais sérieId est absent, on bloque tout
+  if (!seriesId) {
+    return (
+      <div className="p-4 text-red-500 font-bold">
+        Erreur : impossible de déterminer l’identifiant de la série depuis l’URL.
+      </div>
+    );
+  }
+  console.log("EpisodesPage seriesId (ALWAYS DEFINED)", seriesId, "params", params);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [error, setError] = useState(null);
