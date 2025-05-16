@@ -155,6 +155,7 @@ export default function SeasonRow({
               <EpisodeList
                 episodes={seasonEpisodes}
                 seasonId={season.id}
+                seriesId={seriesId}
                 fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
               />
             )}
