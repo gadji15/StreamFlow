@@ -103,8 +103,10 @@ export default function SeriesRow({
           <button
             type="button"
             aria-label={`Afficher saisons et épisodes pour "${serie.title}"`}
-            className="bg-gray-700 text-white px-2 rounded"
+            className="bg-red-700 text-white px-2 rounded border-2 border-yellow-400"
+            style={{ fontWeight: "bold", fontSize: "20px" }}
             onClick={() => {
+              alert("[DEBUG SeriesRow] Bouton cliqué pour id: " + serie.id);
               console.log("[SeriesRow] CLICK expand", serie.id);
               if (onAction) {
                 onAction("expand", serie);
@@ -113,7 +115,7 @@ export default function SeriesRow({
               }
             }}
           >
-            📚
+            📚 [DEBUG SeriesRow]
           </button>
           <button
             type="button"
