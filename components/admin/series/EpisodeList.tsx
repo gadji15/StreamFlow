@@ -61,6 +61,16 @@ export default function EpisodeList({
     console.log("[DEBUG] EpisodeList episodes prop:", episodes);
   }
 
+  // Champ de recherche dynamique (filtrage local)
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredEpisodes = searchTerm.trim()
+    ? episodes.filter(
+        ep =>
+          (ep.title || "").toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
+          String(ep.episode_number).includes(searchTerm.trim())
+      )
+    : episodes;
+
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -226,38 +236,48 @@ export default function EpisodeList({
   // Rendu principal
   return (
     <div>
-      {/* Bouton Ajouter un épisode */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-semibold text-white/90 text-base">Épisodes</h3>
-        <Button
-          variant="success"
-          onClick={() => {
-            if (!seriesId) {
-              alert("Impossible d’ajouter un épisode : série introuvable (seriesId manquant)");
-              return;
+      {/* Bouton Ajouter un épisode & champ de recherche */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+        <h3 className="font-semibold text-white/90 text-base flex-shrink-0">Épisodes</h3>
+        <div className="flex flex-1 gap-2 items-center">
+          <input
+            type="search"
+            className="w-full sm:w-52 px-2 py-1 rounded border border-gray-700 bg-gray-900 text-white text-xs focus:ring-1 focus:ring-indigo-400 outline-none transition"
+            placeholder="Rechercher (titre ou numéro)…"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            aria-label="Recherche épisodes"
+          />
+          <Button
+            variant="success"
+            onClick={() => {
+              if (!seriesId) {
+                alert("Impossible d’ajouter un épisode : série introuvable (seriesId manquant)");
+                return;
+              }
+              if (!seasonNumber) {
+                alert("Impossible d’ajouter un épisode : sélectionnez une saison.");
+                return;
+              }
+              setModalState({ open: true, mode: "add" });
+            }}
+            className="text-xs px-3 py-1"
+            aria-label="Ajouter un épisode"
+            disabled={!seasonNumber || !seriesId || actionLoading}
+            title={
+              !seriesId
+                ? "Impossible d’ajouter un épisode : série introuvable."
+                : !seasonNumber
+                ? "Veuillez sélectionner une saison avant d’ajouter un épisode."
+                : ""
             }
-            if (!seasonNumber) {
-              alert("Impossible d’ajouter un épisode : sélectionnez une saison.");
-              return;
-            }
-            setModalState({ open: true, mode: "add" });
-          }}
-          className="text-xs px-3 py-1"
-          aria-label="Ajouter un épisode"
-          disabled={!seasonNumber || !seriesId || actionLoading}
-          title={
-            !seriesId
-              ? "Impossible d’ajouter un épisode : série introuvable."
-              : !seasonNumber
-              ? "Veuillez sélectionner une saison avant d’ajouter un épisode."
-              : ""
-          }
-        >
-          {actionLoading && modalState.open && modalState.mode === "add" ? (
-            <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
-          ) : null}
-          + Ajouter un épisode
-        </Button>
+          >
+            {actionLoading && modalState.open && modalState.mode === "add" ? (
+              <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
+            ) : null}
+            + Ajouter un épisode
+          </Button>
+        </div>
       </div>
       {/* Modal ajout/édition unique */}
       <EpisodeModal
@@ -282,60 +302,67 @@ export default function EpisodeList({
       ) : error ? (
         <div className="text-red-400 text-center py-2">{error}</div>
       ) : (
-        <table className="w-full text-xs bg-gray-950 rounded"
-          role="table"
-          aria-label="Liste des épisodes"
-        >
-          <thead>
-            <tr>
-              <th className="py-1" scope="col">Numéro</th>
-              <th className="py-1" scope="col">Titre</th>
-              <th className="py-1" scope="col">Durée</th>
-              <th className="py-1" scope="col">Statut</th>
-              <th className="py-1" scope="col">VIP</th>
-              <th className="py-1" scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {episodes.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-gray-500 text-center py-2">
-                  Aucun épisode enregistré.
-                </td>
-              </tr>
-            ) : (
-              episodes.map((episode, idx) => (
-                <EpisodeRow
-                  key={episode.id}
-                  episode={episode}
-                  seasonId={seasonId}
-                  fetchEpisodesForSeason={fetchEpisodesForSeason}
-                  onEdit={() =>
-                    setModalState({ open: true, mode: "edit", initialData: episode })
-                  }
-                  onDelete={() => handleDeleteEpisode(episode.id)}
-                  draggableProps={{
-                    draggable: true,
-                    onDragStart: () => setDraggedIndex(idx),
-                    onDragOver: (e) => { e.preventDefault(); },
-                    onDrop: () => {
-                      if (draggedIndex !== null && draggedIndex !== idx) {
-                        moveEpisode(draggedIndex, idx);
+        // Scroll dynamique pour la table
+        <div className="relative" style={{ maxHeight: "410px", minHeight: "120px", overflow: "hidden" }}>
+          <div className="overflow-y-auto scroll-smooth custom-scrollbar"
+               style={{ maxHeight: "380px", minHeight: "80px" }}>
+            <table className="w-full text-xs bg-gray-950 rounded"
+              role="table"
+              aria-label="Liste des épisodes"
+            >
+              <thead>
+                <tr>
+                  <th className="py-1" scope="col"></th>
+                  <th className="py-1 text-center" scope="col">Numéro</th>
+                  <th className="py-1" scope="col">Titre</th>
+                  <th className="py-1 text-center" scope="col">Durée</th>
+                  <th className="py-1 text-center" scope="col">Statut</th>
+                  <th className="py-1 text-center" scope="col">VIP</th>
+                  <th className="py-1 text-center" scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEpisodes.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-gray-500 text-center py-2">
+                      Aucun épisode enregistré.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredEpisodes.map((episode, idx) => (
+                    <EpisodeRow
+                      key={episode.id}
+                      episode={episode}
+                      seasonId={seasonId}
+                      fetchEpisodesForSeason={fetchEpisodesForSeason}
+                      onEdit={() =>
+                        setModalState({ open: true, mode: "edit", initialData: episode })
                       }
-                      setDraggedIndex(null);
-                    },
-                    onDragEnd: () => setDraggedIndex(null),
-                    style: {
-                      cursor: "grab",
-                      background: draggedIndex === idx ? "rgba(99,102,241,0.1)" : undefined
-                    }
-                  }}
-                  actionLoading={actionLoading}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+                      onDelete={() => handleDeleteEpisode(episode.id)}
+                      draggableProps={{
+                        draggable: true,
+                        onDragStart: () => setDraggedIndex(idx),
+                        onDragOver: (e) => { e.preventDefault(); },
+                        onDrop: () => {
+                          if (draggedIndex !== null && draggedIndex !== idx) {
+                            moveEpisode(draggedIndex, idx);
+                          }
+                          setDraggedIndex(null);
+                        },
+                        onDragEnd: () => setDraggedIndex(null),
+                        style: {
+                          cursor: "grab",
+                          background: draggedIndex === idx ? "rgba(99,102,241,0.1)" : undefined
+                        }
+                      }}
+                      actionLoading={actionLoading}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );
