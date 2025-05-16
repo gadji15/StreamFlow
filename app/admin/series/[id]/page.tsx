@@ -355,6 +355,7 @@ export default function AdminSeriesDetailPage() {
         onSave={handleSaveSeason}
         initial={seasonModal.initial}
         seriesId={seriesId}
+        tmdbSeriesId={serie.tmdb_id}
       />
 
       {/* Modale EpisodeList */}
