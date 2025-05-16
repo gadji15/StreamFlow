@@ -214,28 +214,25 @@ export default function EpisodeModal({
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
 
-      // Supprimer explicitement toute propriété "order" du form si elle existe (sécurité)
-      if ('order' in form) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { order, ...formSansOrder } = form;
-        form = formSansOrder;
-      }
+      // Créer un objet sans la propriété "order" si elle existe
+      // (on ne touche pas à form lui-même !)
+      const { order, ...formSansOrder } = form;
 
       // Seuls les champs explicitement listés sont envoyés à la base
       const submitData = {
-        episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
-        tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
-        air_date: clean(form.air_date),
-        thumbnail_url: clean(form.thumbnail_url),
-        video_url: clean(form.video_url),
-        trailer_url: clean(form.trailer_url),
-        title: clean(form.title),
-        description: clean(form.description),
-        published: !!form.published,
-        isvip: !!form.isvip,
-        video_unavailable: !!form.video_unavailable,
-        tmdb_series_id: clean(form.tmdb_series_id),
-        sort_order: clean(form.sort_order) !== null ? Number(form.sort_order) : null,
+        episode_number: clean(formSansOrder.episode_number) !== null ? Number(formSansOrder.episode_number) : null,
+        tmdb_id: clean(formSansOrder.tmdb_id) !== null ? Number(formSansOrder.tmdb_id) : null,
+        air_date: clean(formSansOrder.air_date),
+        thumbnail_url: clean(formSansOrder.thumbnail_url),
+        video_url: clean(formSansOrder.video_url),
+        trailer_url: clean(formSansOrder.trailer_url),
+        title: clean(formSansOrder.title),
+        description: clean(formSansOrder.description),
+        published: !!formSansOrder.published,
+        isvip: !!formSansOrder.isvip,
+        video_unavailable: !!formSansOrder.video_unavailable,
+        tmdb_series_id: clean(formSansOrder.tmdb_series_id),
+        sort_order: clean(formSansOrder.sort_order) !== null ? Number(formSansOrder.sort_order) : null,
         // autres champs persistants de la table (si besoin : ajouter ici)
       };
       await onSave(submitData);
