@@ -62,6 +62,14 @@ export default function EpisodeList({
 
   // Ajout d'un épisode
   async function handleAddEpisode(form: EpisodeFormInput & { [key: string]: any }) {
+    if (!seriesId) {
+      toast({ title: "Erreur", description: "Série introuvable (seriesId manquant)", variant: "destructive" });
+      return;
+    }
+    if (!seasonId) {
+      toast({ title: "Erreur", description: "Saison introuvable (seasonId manquant)", variant: "destructive" });
+      return;
+    }
     setActionLoading(true);
     try {
       // Remap fields to match the database
