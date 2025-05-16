@@ -347,6 +347,10 @@ export default function AdminSeriesDetailPage() {
             </div>
             <EpisodeList
               seasonId={episodesModal.seasonId}
+              seasonNumber={
+                // On trouve la saison dans la liste par son ID pour obtenir le numéro
+                filteredSeasons.find(s => s.id === episodesModal.seasonId)?.season_number ?? ""
+              }
               onEditEpisode={ep =>
                 setEpisodeModal({
                   open: true,
