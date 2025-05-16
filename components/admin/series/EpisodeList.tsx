@@ -304,7 +304,9 @@ export default function EpisodeList({
                 </td>
               </tr>
             ) : (
-              episodes.map((episode, idx) => (
+              episodes.map((episode, idx) => {
+              console.log("[DEBUG] Rendering EpisodeRow:", episode);
+              return (
                 <EpisodeRow
                   key={episode.id}
                   episode={episode}
@@ -332,7 +334,8 @@ export default function EpisodeList({
                   }}
                   actionLoading={actionLoading}
                 />
-              ))
+              );
+            })
             )}
           </tbody>
         </table>
