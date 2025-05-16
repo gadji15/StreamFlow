@@ -513,6 +513,9 @@ export default function AdminSeriesPage() {
             alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+            if (series_id) {
+              await fetchSeasonsForSeries(series_id);
+            }
           }
         }}
         initial={modal.payload}
@@ -546,6 +549,9 @@ export default function AdminSeriesPage() {
             alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+            if (series_id) {
+              await fetchSeasonsForSeries(series_id);
+            }
           }
         }}
         seriesId={modal.parentId}
