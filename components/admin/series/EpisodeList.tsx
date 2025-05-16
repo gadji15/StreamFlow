@@ -54,6 +54,12 @@ export default function EpisodeList({
   }
   // Défense : episodes toujours un tableau pour éviter les bugs d’affichage
   episodes = Array.isArray(episodes) ? episodes : [];
+  // Log pour analyse du contenu des épisodes reçus
+  console.log("EpisodeList episodes prop:", episodes);
+  // DEBUG : Log reçu
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[DEBUG] EpisodeList episodes prop:", episodes);
+  }
 
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);

@@ -39,7 +39,7 @@ export default function AdminSeriesDetailPage() {
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [episodesError, setEpisodesError] = useState<string | null>(null);
 
-  // Fetch episodes for a season
+  // Fetch episodes for a season (with debug logging)
   const fetchEpisodesForSeason = async (seasonId: string) => {
     setEpisodesLoading(true);
     setEpisodesError(null);
@@ -49,6 +49,7 @@ export default function AdminSeriesDetailPage() {
         .select("*")
         .eq("season_id", seasonId)
         .order("episode_number", { ascending: true });
+      console.log("Episodes fetched for season:", seasonId, data, error);
       if (error) throw error;
       setSeasonEpisodes(data || []);
     } catch (err: any) {
@@ -64,9 +65,13 @@ export default function AdminSeriesDetailPage() {
     if (episodesModal.open && episodesModal.seasonId) {
       fetchEpisodesForSeason(episodesModal.seasonId);
     }
+    // Ne pas vider setSeasonEpisodes ici : on garde les données affichées tant que la modale est ouverte
+    // On ne vide qu'à la fermeture de la modale
     if (!episodesModal.open) {
-      setSeasonEpisodes([]);
-      setEpisodesError(null);
+      setTimeout(() => {
+        setSeasonEpisodes([]);
+        setEpisodesError(null);
+      }, 300); // délai pour laisser le temps à la fermeture d'animations éventuelles
     }
   }, [episodesModal.open, episodesModal.seasonId]);
 
