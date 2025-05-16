@@ -264,3 +264,8 @@ export default function EpisodeList({
     </div>
   );
 }
+
+
+
+
+quand j'appuie sur enregistrer pour ajouter une episode , il ne saffiche pas dans episodelist: il n'est pas enregistré

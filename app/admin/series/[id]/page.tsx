@@ -8,6 +8,17 @@ import { useToast } from "@/components/ui/use-toast";
 import SeasonModal from "@/components/admin/series/SeasonModal";
 import EpisodeList from "@/components/admin/series/EpisodeList";
 import EpisodeModal from "@/components/admin/series/EpisodeModal";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Clapperboard,
+  Rows,
+  Users,
+  Star,
+  Eye,
+  EyeOff
+} from "lucide-react";
 
 export default function AdminSeriesDetailPage() {
   const params = useParams();
@@ -20,12 +31,9 @@ export default function AdminSeriesDetailPage() {
 
   // Modals
   const [seasonModal, setSeasonModal] = useState<{ open: boolean, initial?: any }>({ open: false });
-  // EpisodeList modal state
   const [episodesModal, setEpisodesModal] = useState<{ open: boolean, seasonId?: string }>({ open: false });
-  // EpisodeModal state
   const [episodeModal, setEpisodeModal] = useState<{ open: boolean, seasonId?: string, initial?: any }>({ open: false });
 
-  // Recherche dynamique des saisons
   const [search, setSearch] = useState("");
   const filteredSeasons = useMemo(
     () =>
@@ -41,11 +49,9 @@ export default function AdminSeriesDetailPage() {
     [search, seasons]
   );
 
-  // Fetch série + saisons
   useEffect(() => {
     async function fetchSerieAndSeasons() {
       setLoading(true);
-      // Fetch serie
       const { data: serieData, error: serieError } = await supabase
         .from("series")
         .select("*")
@@ -62,7 +68,6 @@ export default function AdminSeriesDetailPage() {
       }
       setSerie(serieData);
 
-      // Fetch seasons
       const { data: seasonsData, error: seasonsError } = await supabase
         .from("seasons")
         .select("*")
@@ -178,106 +183,118 @@ export default function AdminSeriesDetailPage() {
   if (!serie) return <div className="p-8 text-xl text-red-500">Série introuvable</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="mx-auto px-2 py-4 max-w-6xl w-full">
       {/* Header Série */}
-      <div className="flex flex-col md:flex-row gap-8 border-b border-gray-700 pb-6 mb-8">
-        <img
-          src={serie.poster || "/placeholder-backdrop.jpg"}
-          alt={serie.title}
-          className="w-40 h-60 object-cover rounded shadow border border-gray-700 bg-gray-800"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-4 mb-2">
-            <h1 className="text-3xl font-bold">{serie.title}</h1>
+      <section
+        className="
+          flex flex-col md:flex-row md:gap-8 gap-4 border-b border-gray-700 pb-5 mb-8
+          bg-gradient-to-b from-gray-900/80 to-gray-950/80 rounded-xl shadow
+          md:items-center
+        "
+      >
+        <div className="mx-auto md:mx-0 flex-shrink-0">
+          <img
+            src={serie.poster || "/placeholder-backdrop.jpg"}
+            alt={serie.title}
+            className="w-36 h-52 md:w-40 md:h-60 object-cover rounded-lg shadow border border-gray-800 bg-gray-900 transition-all"
+            style={{ maxWidth: "100%", height: "auto" }}
+          />
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3 mb-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-white break-words">{serie.title}</h1>
             {serie.tmdb_id && (
               <a
                 href={`https://www.themoviedb.org/tv/${serie.tmdb_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-indigo-400 hover:underline"
+                className="text-indigo-300 hover:text-indigo-100 transition underline text-xs"
                 title="Voir sur TMDB"
               >
-                TMDB ↗
+                <Clapperboard className="inline h-4 w-4 mr-1" /> TMDB
               </a>
             )}
           </div>
-          <div className="text-gray-400 mb-2">Créateur : <b>{serie.creator || "N/A"}</b></div>
-          <div className="flex gap-6 mb-2">
-            <div>Première diffusion : <b>{serie.start_year || "?"}</b></div>
-            <div>Dernière diffusion : <b>{serie.end_year || "?"}</b></div>
-            <div>Note : <b>{serie.vote_average ? Number(serie.vote_average).toFixed(1) : "-"}</b></div>
-            <div>Statut : <b>{serie.published ? "Publiée" : "Brouillon"}</b></div>
-            <div>VIP : <b>{serie.isvip ? "Oui" : "Non"}</b></div>
+          <div className="flex flex-wrap gap-4 mb-1 text-gray-400 text-sm">
+            <span><Users className="inline h-4 w-4 mr-1" /> Créateur : <b className="text-white">{serie.creator || "N/A"}</b></span>
+            <span><Eye className="inline h-4 w-4 mr-1" /> Statut : <b className="text-white">{serie.published ? "Publiée" : "Brouillon"}</b></span>
+            <span><Star className="inline h-4 w-4 mr-1" /> Note : <b className="text-white">{serie.vote_average ? Number(serie.vote_average).toFixed(1) : "-"}</b></span>
+            <span><Rows className="inline h-4 w-4 mr-1" /> Années : <b className="text-white">{serie.start_year || "?"} - {serie.end_year || "?"}</b></span>
+            <span><EyeOff className={`inline h-4 w-4 mr-1 ${serie.isvip ? "text-amber-400" : "text-gray-400"}`} /> VIP : <b className="text-white">{serie.isvip ? "Oui" : "Non"}</b></span>
           </div>
-          <div className="flex flex-wrap gap-2 mb-2">
+          <div className="flex flex-wrap gap-2 mb-1">
             {Array.isArray(serie.genres)
               ? serie.genres.map((g: string) => (
-                  <span key={g} className="px-2 py-0.5 bg-indigo-700/30 text-indigo-200 rounded text-xs">{g}</span>
+                  <span key={g} className="px-2 py-0.5 bg-indigo-700/20 text-indigo-100 rounded text-xs">{g}</span>
                 ))
               : null}
           </div>
-          <div className="text-sm mt-2 text-gray-300">{serie.description}</div>
+          <div className="text-sm text-gray-300 leading-relaxed max-w-2xl">{serie.description}</div>
         </div>
-      </div>
+      </section>
 
       {/* Recherche saisons & ajout */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
         <input
           type="search"
-          className="w-full max-w-xs border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white"
+          className="w-full md:max-w-xs border border-gray-700 rounded px-3 py-2 text-sm bg-gray-900 text-white focus:ring-2 focus:ring-indigo-400"
           placeholder="Rechercher une saison (titre ou numéro)…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <Button onClick={() => setSeasonModal({ open: true })} className="ml-auto">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v8M8 12h8" />
-          </svg>
+        <Button
+          onClick={() => setSeasonModal({ open: true })}
+          className="ml-0 md:ml-auto flex gap-2 items-center"
+          variant="outline"
+        >
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Ajouter une saison</span>
         </Button>
       </div>
 
       {/* Liste des saisons */}
       {filteredSeasons.length === 0 ? (
-        <div className="text-gray-400 italic mb-8">Aucune saison trouvée.</div>
+        <div className="text-gray-400 italic mb-8 text-center">Aucune saison trouvée.</div>
       ) : (
-        <div className="grid gap-6 mb-12">
+        <div className="grid gap-4 mb-12">
           {filteredSeasons.map(season => (
             <div
               key={season.id}
-              className="bg-gray-900 border border-gray-700 rounded-lg shadow flex flex-col md:flex-row items-stretch md:items-center p-4 gap-6"
+              className="
+                bg-gray-900 border border-gray-800 rounded-lg shadow flex flex-col md:flex-row items-stretch md:items-center p-3 md:p-4 gap-4 
+                hover:shadow-lg transition-all
+              "
             >
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <img
                   src={season.poster || "/placeholder-backdrop.jpg"}
                   alt={season.title || `Saison ${season.season_number}`}
-                  className="w-20 h-28 object-cover rounded shadow border border-gray-700 bg-gray-800"
+                  className="w-16 h-24 md:w-20 md:h-28 object-cover rounded shadow border border-gray-800 bg-gray-900"
+                  style={{ maxWidth: "100%", height: "auto" }}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold">Saison {season.season_number}</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base md:text-lg font-bold text-white">Saison {season.season_number}</span>
                     {season.tmdb_id && (
                       <a
                         href={`https://www.themoviedb.org/tv/${serie.tmdb_id}/season/${season.season_number}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-indigo-400 hover:underline"
+                        className="text-xs text-indigo-300 hover:text-indigo-100 transition underline"
                         title="Voir sur TMDB"
                       >
-                        TMDB ↗
+                        <Clapperboard className="inline h-4 w-4 mr-1" /> TMDB
                       </a>
                     )}
                   </div>
-                  <div className="text-gray-300 mb-1">{season.title}</div>
-                  <div className="flex gap-4 text-sm text-gray-400">
-                    <span>Date : <b>{season.air_date || "-"}</b></span>
-                    <span>Épisodes : <b>{season.episode_count || "-"}</b></span>
+                  <div className="text-gray-300 text-xs md:text-sm mb-1">{season.title}</div>
+                  <div className="flex gap-3 text-xs text-gray-400">
+                    <span>Date : <b className="text-white">{season.air_date || "-"}</b></span>
+                    <span>Épisodes : <b className="text-white">{season.episode_count || "-"}</b></span>
                   </div>
-                  {/* Description intentionally omitted */}
                 </div>
               </div>
-              <div className="flex md:flex-col gap-2 md:items-end items-center mt-4 md:mt-0">
-                {/* Edit icon */}
+              <div className="flex flex-row md:flex-col gap-2 md:items-end items-center mt-3 md:mt-0">
                 <Button
                   size="icon"
                   variant="outline"
@@ -286,11 +303,8 @@ export default function AdminSeriesDetailPage() {
                   title="Modifier la saison"
                   className="p-2"
                 >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828A2 2 0 019 17H7v-2a2 2 0 01.586-1.414L15.232 5.232z" />
-                  </svg>
+                  <Pencil className="h-4 w-4" />
                 </Button>
-                {/* Delete icon */}
                 <Button
                   size="icon"
                   variant="destructive"
@@ -299,11 +313,8 @@ export default function AdminSeriesDetailPage() {
                   title="Supprimer la saison"
                   className="p-2"
                 >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                  </svg>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-                {/* Episodes icon */}
                 <Button
                   size="icon"
                   variant="secondary"
@@ -312,10 +323,7 @@ export default function AdminSeriesDetailPage() {
                   title="Gérer les épisodes"
                   className="p-2"
                 >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <rect x="4" y="4" width="16" height="16" rx="2" />
-                    <path d="M8 8h8v8H8z" />
-                  </svg>
+                  <Rows className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -334,8 +342,8 @@ export default function AdminSeriesDetailPage() {
 
       {/* Modale EpisodeList */}
       {episodesModal.open && episodesModal.seasonId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-xl p-4 w-full max-w-lg md:max-w-2xl max-h-[95vh] overflow-y-auto relative">
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-white"
               onClick={() => setEpisodesModal({ open: false })}
@@ -343,29 +351,13 @@ export default function AdminSeriesDetailPage() {
               title="Fermer"
             >✕</button>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Épisodes de la saison</h3>
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() =>
-                  setEpisodeModal({
-                    open: true,
-                    seasonId: episodesModal.seasonId,
-                    initial: undefined
-                  })
-                }
-                aria-label="Ajouter un épisode"
-                title="Ajouter un épisode"
-                className="p-2"
-              >
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 8v8M8 12h8" />
-                </svg>
-              </Button>
+              <h3 className="text-lg md:text-xl font-bold">Épisodes de la saison</h3>
             </div>
             <EpisodeList
               seasonId={episodesModal.seasonId}
+              seasonNumber={
+                filteredSeasons.find(s => s.id === episodesModal.seasonId)?.season_number ?? ""
+              }
               onEditEpisode={ep =>
                 setEpisodeModal({
                   open: true,
