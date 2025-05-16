@@ -96,10 +96,15 @@ export default function EpisodeList({
         vote_count: form.vote_count ? Number(form.vote_count) : null,
         vote_average: form.vote_average ? Number(form.vote_average) : null
       };
-      const { error } = await supabase.from("episodes").insert([insertObj]);
+      const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
         if (process.env.NODE_ENV === "development") console.error(error);
+        return;
+      }
+      if (!data) {
+        toast({ title: "Problème", description: "L'insertion a échoué : aucun épisode créé. Vérifiez vos règles de sécurité Supabase (RLS) ou les champs obligatoires.", variant: "destructive" });
+        if (process.env.NODE_ENV === "development") console.error("Insert result:", { data, error });
         return;
       }
       await fetchEpisodesForSeason?.();
