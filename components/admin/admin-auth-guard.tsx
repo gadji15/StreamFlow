@@ -16,8 +16,8 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     // Tant que le chargement n'est pas fini, ne rien faire
     if (isLoading) return;
 
-    // Si l'utilisateur N'EST PAS CONNECTÉ (userData === null)
-    if (!userData) {
+    // Si l'utilisateur N'EST PAS CONNECTÉ (user === null)
+    if (!user) {
       router.replace("/login");
       return;
     }
@@ -28,7 +28,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       return;
     }
     // Sinon, il est admin : on laisse passer
-  }, [isAdmin, isLoading, userData, router]);
+  }, [isAdmin, isLoading, user, router]);
 
   // Afficher un écran de chargement tant que l'état d'auth n'est pas déterminé
   if (isLoading || (user && userData === null)) {

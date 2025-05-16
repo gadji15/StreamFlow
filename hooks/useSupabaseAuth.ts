@@ -56,10 +56,16 @@ export function useSupabaseAuth() {
     isLoading: loading || profileLoading,
   });
 
+  // On est "en chargement" si :
+  // - la session Supabase est en cours OU
+  // - le profil est en cours OU
+  // - on a un user authentifié MAIS userData (profil complet) n'est pas encore chargé
+  const realIsLoading = loading || profileLoading || (user && userData === null);
+
   return {
-    user, // Ajouté !
+    user,
     isLoggedIn: !!user,
-    isLoading: loading || profileLoading,
+    isLoading: realIsLoading,
     userData,
     isVIP,
     isAdmin,
