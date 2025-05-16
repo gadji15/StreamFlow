@@ -38,8 +38,20 @@ export default function SeasonModal({
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
-    tmdb_series_id: initialData.tmdb_series_id || "", // NE PAS préremplir ici, voir useEffect ci-dessous
+    tmdb_series_id: initialData.tmdb_series_id || "", // Ne pas préremplir ici, on le fait dans useEffect
   });
+
+  // Synchronise tmdb_series_id à chaque ouverture du modal pour une création
+  useEffect(() => {
+    if (open && !initialData.id && tmdbSeriesId) {
+      setForm(f => ({
+        ...f,
+        tmdb_series_id: String(tmdbSeriesId)
+      }));
+    }
+    // Pas de changement en édition
+    // eslint-disable-next-line
+  }, [open, tmdbSeriesId, initialData.id]);
 
   // Prendre le tmdbSeriesId du parent à chaque ouverture de la modale (création)
   useEffect(() => {
@@ -231,6 +243,11 @@ export default function SeasonModal({
       err.tmdb_id = "Le TMDB ID saison doit être un entier positif ou vide.";
     }
 
+    // --- VALIDATION STRICTE tmdb_series_id ---
+    if (!form.tmdb_series_id || isNaN(Number(form.tmdb_series_id))) {
+      err.tmdb_series_id = "L’identifiant TMDB de la série est requis (nombre).";
+    }
+
     // Doublon numéro de saison
     if (
       form.season_number &&
@@ -256,10 +273,6 @@ export default function SeasonModal({
     // Vérification URL affiche
     if (form.poster && !isValidImageUrl(form.poster)) {
       err.poster = "URL d'image invalide (jpg, png, gif, webp, bmp, svg)";
-    }
-    // Vérification obligatoire du TMDB series id
-    if (!form.tmdb_series_id || isNaN(Number(form.tmdb_series_id))) {
-      err.tmdb_series_id = "L’identifiant TMDB de la série est requis (nombre).";
     }
     return err;
   };
@@ -517,10 +530,16 @@ export default function SeasonModal({
                   placeholder="TMDB ID série"
                   type="text"
                   aria-label="TMDB ID série"
-                  // Champ TOUJOURS éditable
+                  required
                 />
                 {errors.tmdb_series_id && (
                   <div className="text-xs text-red-400 mt-0.5">{errors.tmdb_series_id}</div>
+                )}
+                {/* Message UX si la série n'a pas d'id TMDB */}
+                {!tmdbSeriesId && !initialData.id && (
+                  <div className="text-xs text-amber-400 mt-0.5">
+                    ⚠️ Aucun ID TMDB n’a été trouvé pour cette série. Veuillez le renseigner manuellement.
+                  </div>
                 )}
               </div>
             )}
@@ -714,7 +733,7 @@ export default function SeasonModal({
           <button
             type="submit"
             form="season-form"
-            disabled={loading}
+            disabled={loading || !form.tmdb_series_id || isNaN(Number(form.tmdb_series_id))}
             aria-label="Enregistrer la saison"
             className="text-xs py-1 px-2 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold transition"
           >
