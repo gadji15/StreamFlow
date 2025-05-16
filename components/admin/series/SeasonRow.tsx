@@ -121,15 +121,7 @@ export default function SeasonRow({
           >
             <Trash2 className="h-4 w-4" /> Supprimer
           </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            className="ml-1"
-            onClick={() => onAction && onAction("add-episode", { season, seriesId })}
-            disabled={loading}
-          >
-            <Plus className="h-4 w-4" /> + Épisode
-          </Button>
+          {/* Le bouton + Épisode est supprimé ici, EpisodeList le gère contextuellement */}
           {(season.tmdb_series_id && season.season_number) && (
             <Button
               size="xs"
@@ -158,7 +150,6 @@ export default function SeasonRow({
                 seriesId={seriesId}
                 seasonNumber={season.season_number}
                 fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
-                showAddButton={false} // Désactive le bouton dans la liste, car le parent gère l'ajout
               />
             )}
           </td>
