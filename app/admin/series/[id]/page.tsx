@@ -302,6 +302,7 @@ export default function AdminSeriesDetailPage() {
               <EpisodeList
                 episodes={episodesList}
                 seasonId={selectedSeason.id}
+                seriesId={serie.id}
                 fetchEpisodesForSeason={fetchEpisodesForSelectedSeason}
                 seriesTitle={serie.title}
                 tmdbSeriesId={serie.tmdb_id}
