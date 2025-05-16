@@ -30,6 +30,7 @@ interface EpisodeListProps {
   seriesTitle?: string;
   tmdbSeriesId?: string;
   seasonNumber?: number | string;
+  showAddButton?: boolean; // NEW: control add button display
 }
 
 type ModalState =
@@ -46,7 +47,8 @@ export default function EpisodeList({
   error = null,
   seriesTitle = "",
   tmdbSeriesId = "",
-  seasonNumber = ""
+  seasonNumber = "",
+  showAddButton = true
 }: EpisodeListProps) {
   // Défense : episodes toujours un tableau pour éviter les bugs d’affichage
   episodes = Array.isArray(episodes) ? episodes : [];
@@ -167,21 +169,23 @@ export default function EpisodeList({
       {/* Bouton Ajouter un épisode */}
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-semibold text-white/90 text-base">Épisodes</h3>
-        <Button
-          variant="success"
-          onClick={() => {
-            if (seasonNumber) setModalState({ open: true, mode: "add" });
-          }}
-          className="text-xs px-3 py-1"
-          aria-label="Ajouter un épisode"
-          disabled={!seasonNumber || actionLoading}
-          title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
-        >
-          {actionLoading && modalState.open && modalState.mode === "add" ? (
-            <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
-          ) : null}
-          + Ajouter un épisode
-        </Button>
+        {showAddButton && (
+          <Button
+            variant="success"
+            onClick={() => {
+              if (seasonNumber) setModalState({ open: true, mode: "add" });
+            }}
+            className="text-xs px-3 py-1"
+            aria-label="Ajouter un épisode"
+            disabled={!seasonNumber || actionLoading}
+            title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
+          >
+            {actionLoading && modalState.open && modalState.mode === "add" ? (
+              <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
+            ) : null}
+            + Ajouter un épisode
+          </Button>
+        )}
       </div>
       {/* Modal ajout/édition unique */}
       <EpisodeModal

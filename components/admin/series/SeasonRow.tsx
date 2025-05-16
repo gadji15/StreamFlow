@@ -158,6 +158,7 @@ export default function SeasonRow({
                 seriesId={seriesId}
                 seasonNumber={season.season_number}
                 fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
+                showAddButton={false} // Désactive le bouton dans la liste, car le parent gère l'ajout
               />
             )}
           </td>

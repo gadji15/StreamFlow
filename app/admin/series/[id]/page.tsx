@@ -373,6 +373,7 @@ export default function AdminSeriesDetailPage() {
                   initial: ep
                 })
               }
+              showAddButton={false} // N'affiche pas le bouton dans ce contexte modal
             />
           </div>
         </div>
