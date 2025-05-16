@@ -93,6 +93,17 @@ export default function AdminSeriesDetailPage() {
     const isEdit = !!values.id;
     try {
       if (!serie) throw new Error("Série introuvable");
+      // Correction : on force la récupération de tmdb_series_id depuis values ET on vérifie sa présence
+      const tmdbSeriesIdForInsert = values.tmdb_series_id || (serie && serie.tmdb_id) || null;
+      if (!tmdbSeriesIdForInsert) {
+        toast({
+          title: "Erreur",
+          description: "L'identifiant TMDB de la série est obligatoire. Merci de le renseigner dans le formulaire.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const payload = {
         ...values,
         title: values.title || null,
@@ -103,14 +114,14 @@ export default function AdminSeriesDetailPage() {
         air_date: values.air_date || null,
         poster: values.poster || null,
         description: values.description || null,
-        tmdb_series_id: values.tmdb_series_id ? Number(values.tmdb_series_id) : null, // AJOUT CRUCIAL
+        tmdb_series_id: Number(tmdbSeriesIdForInsert),
       };
       Object.keys(payload).forEach(
         k => {
           if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
         }
       );
-      console.log("Saison payload", payload);
+      console.log("Saison payload (après correction tmdb_series_id)", payload);
       let result;
       if (isEdit) {
         result = await supabase.from("seasons").update(payload).eq("id", values.id);
