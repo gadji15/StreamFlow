@@ -411,7 +411,7 @@ export default function AdminSeriesPage() {
                 return;
               }
               if (action === "expand" || action === "seasons") {
-                const dest = `/admin/series/${serie.id}/seasons`;
+                const dest = `/admin/series/${serie.id}`;
                 console.log("[AdminSeriesPage] NAVIGATION:", dest);
                 try {
                   router.push(dest);
