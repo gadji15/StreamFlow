@@ -239,32 +239,49 @@ export default function AdminSeriesDetailPage() {
                     <span>Date : <b>{season.air_date || "-"}</b></span>
                     <span>Épisodes : <b>{season.episode_count || "-"}</b></span>
                   </div>
-                  <div className="text-xs text-gray-400 mt-2">{season.description}</div>
+                  {/* Description retirée pour plus de clarté */}
                 </div>
               </div>
               <div className="flex md:flex-col gap-2 md:items-end items-center mt-4 md:mt-0">
+                {/* Edit icon */}
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="outline"
                   onClick={() => setSeasonModal({ open: true, initial: season })}
                   aria-label="Modifier la saison"
+                  title="Modifier la saison"
+                  className="p-2"
                 >
-                  Modifier
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828A2 2 0 019 17H7v-2a2 2 0 01.586-1.414L15.232 5.232z" />
+                  </svg>
                 </Button>
+                {/* Delete icon */}
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="destructive"
                   onClick={() => handleDeleteSeason(season.id)}
                   aria-label="Supprimer la saison"
+                  title="Supprimer la saison"
+                  className="p-2"
                 >
-                  Supprimer
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                  </svg>
                 </Button>
+                {/* Add episode icon */}
                 <Button
-                  size="sm"
-                  onClick={() => setEpisodeModal({ open: true, seasonId: season.id })}
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => setEpisodeModal({ open: true, seasonId: season.id, initial: undefined })}
                   aria-label="Ajouter un épisode"
+                  title="Ajouter un épisode"
+                  className="p-2"
                 >
-                  + Épisode
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v8M8 12h8" />
+                  </svg>
                 </Button>
               </div>
               {/* Liste des épisodes */}
