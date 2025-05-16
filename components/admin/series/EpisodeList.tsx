@@ -61,13 +61,26 @@ export default function EpisodeList({
   const [actionLoading, setActionLoading] = useState(false);
 
   // Ajout d'un épisode
-  async function handleAddEpisode(form: EpisodeFormInput) {
+  async function handleAddEpisode(form: EpisodeFormInput & { [key: string]: any }) {
     setActionLoading(true);
     try {
+      // Remap fields to match the database
       const insertObj = {
-        ...form,
         season_id: seasonId,
         series_id: seriesId,
+        episode_number: form.episode_number,
+        title: form.title,
+        description: form.description || '',
+        duration: form.duration || 0,
+        video_url: form.video_url || null,
+        trailer_url: form.trailer_url || null,
+        thumbnail_url: form.thumbnail_url || null,
+        air_date: form.air_date || null,
+        is_vip: form.isvip ?? false,
+        published: form.published ?? false,
+        video_unavailable: form.video_unavailable ?? false,
+        tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
+        tmdb_series_id: form.tmdb_series_id || null,
         sort_order: episodes.length,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
