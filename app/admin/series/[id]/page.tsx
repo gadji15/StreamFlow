@@ -109,9 +109,20 @@ export default function AdminSeriesDetailPage() {
       if (isEdit) {
         result = await supabase.from("seasons").update(payload).eq("id", values.id);
       } else {
-        result = await supabase.from("seasons").insert([payload]);
+        result = await supabase.from("seasons").insert([payload]).select().single();
       }
       if (result.error) throw result.error;
+      if (!result.data) {
+        toast({
+          title: "Erreur à l'insertion",
+          description: "La saison n'a pas été créée. Vérifiez vos règles de sécurité (RLS), les champs obligatoires, ou la validité du payload.",
+          variant: "destructive"
+        });
+        if (process.env.NODE_ENV === "development") {
+          console.error("SAISON NON INSÉRÉE", { result, payload });
+        }
+        return;
+      }
       toast({ title: isEdit ? "Saison modifiée" : "Saison ajoutée" });
       setSeasonModal({ open: false });
       // Refresh seasons
