@@ -71,7 +71,6 @@ export default function EpisodeList({
         episode_number: form.episode_number,
         title: form.title,
         description: form.description || '',
-        duration: form.duration || 0,
         video_url: form.video_url || null,
         trailer_url: form.trailer_url || null,
         thumbnail_url: form.thumbnail_url || null,
@@ -277,8 +276,3 @@ export default function EpisodeList({
     </div>
   );
 }
-
-
-
-
-quand j'appuie sur enregistrer pour ajouter une episode , il ne saffiche pas dans episodelist: il n'est pas enregistré
