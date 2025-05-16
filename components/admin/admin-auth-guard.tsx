@@ -10,7 +10,7 @@ type AdminAuthGuardProps = {
 
 export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const router = useRouter();
-  const { isAdmin, isLoading, userData } = useSupabaseAuth();
+  const { isAdmin, isLoading, userData, user } = useSupabaseAuth();
 
   useEffect(() => {
     // Tant que le chargement n'est pas fini, ne rien faire

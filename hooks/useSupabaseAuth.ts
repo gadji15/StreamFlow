@@ -57,6 +57,7 @@ export function useSupabaseAuth() {
   });
 
   return {
+    user, // Ajouté !
     isLoggedIn: !!user,
     isLoading: loading || profileLoading,
     userData,
