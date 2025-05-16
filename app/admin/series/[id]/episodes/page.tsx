@@ -7,11 +7,14 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function EpisodesPage() {
   const params = useParams();
-  // Analyse défensive : log l'URL et tous les params
-  if (typeof window !== "undefined") {
-    console.log("DEBUG PATHNAME", window.location.pathname);
-  }
-  console.log("DEBUG PARAMS OBJECT", params);
+  // Analyse défensive : log l’URL et les params côté client, à chaque rendu
+  import { useEffect } from "react";
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("DEBUG PATHNAME", window.location.pathname);
+      console.log("DEBUG PARAMS OBJECT", params);
+    }
+  }, [params]);
 
   // Extraction robuste du bon paramètre (id, seriesId, series, etc.)
   let seriesId =
