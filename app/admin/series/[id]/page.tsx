@@ -95,7 +95,7 @@ export default function AdminSeriesDetailPage() {
       if (!serie) throw new Error("Série introuvable");
       const payload = {
         ...values,
-        title: values.title || null, // obligatoire ?
+        title: values.title || null,
         season_number: values.season_number ? Number(values.season_number) : null,
         series_id: seriesId || null,
         tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
@@ -103,6 +103,7 @@ export default function AdminSeriesDetailPage() {
         air_date: values.air_date || null,
         poster: values.poster || null,
         description: values.description || null,
+        tmdb_series_id: values.tmdb_series_id ? Number(values.tmdb_series_id) : null, // AJOUT CRUCIAL
       };
       Object.keys(payload).forEach(
         k => {
