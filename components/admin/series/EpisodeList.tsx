@@ -138,43 +138,44 @@ export default function EpisodeList({
           </tr>
         </thead>
         <tbody>
-          {episodes.map((episode, idx) => (
-            <EpisodeRow
-              key={episode.id}
-              episode={episode}
-              seasonId={seasonId}
-              fetchEpisodesForSeason={fetchEpisodesForSeason}
-              onEdit={() => setEditEpisode(episode)}
-              onDelete={() => handleDeleteEpisode(episode.id)}
-              draggableProps={{
-                draggable: true,
-                onDragStart: () => setDraggedIndex(idx),
-                onDragOver: (e) => {
-                  e.preventDefault();
-                },
-                onDrop: () => {
-                  if (draggedIndex !== null && draggedIndex !== idx) {
-                    moveEpisode(draggedIndex, idx);
-                  }
-                  setDraggedIndex(null);
-                },
-                onDragEnd: () => setDraggedIndex(null),
-                style: {
-                  cursor: "grab",
-                  background:
-                    draggedIndex === idx
-                      ? "rgba(99,102,241,0.1)"
-                      : undefined
-                }
-              }}
-            />
-          ))}
-          {episodes.length === 0 && (
+          {episodes.length === 0 ? (
             <tr>
               <td colSpan={6} className="text-gray-500 text-center py-2">
                 Aucun épisode enregistré.
               </td>
             </tr>
+          ) : (
+            episodes.map((episode, idx) => (
+              <EpisodeRow
+                key={episode.id}
+                episode={episode}
+                seasonId={seasonId}
+                fetchEpisodesForSeason={fetchEpisodesForSeason}
+                onEdit={() => setEditEpisode(episode)}
+                onDelete={() => handleDeleteEpisode(episode.id)}
+                draggableProps={{
+                  draggable: true,
+                  onDragStart: () => setDraggedIndex(idx),
+                  onDragOver: (e) => {
+                    e.preventDefault();
+                  },
+                  onDrop: () => {
+                    if (draggedIndex !== null && draggedIndex !== idx) {
+                      moveEpisode(draggedIndex, idx);
+                    }
+                    setDraggedIndex(null);
+                  },
+                  onDragEnd: () => setDraggedIndex(null),
+                  style: {
+                    cursor: "grab",
+                    background:
+                      draggedIndex === idx
+                        ? "rgba(99,102,241,0.1)"
+                        : undefined
+                  }
+                }}
+              />
+            ))
           )}
         </tbody>
       </table>
