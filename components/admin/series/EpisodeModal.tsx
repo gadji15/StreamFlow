@@ -16,11 +16,13 @@ export default function EpisodeModal({
   open,
   onClose,
   onSave,
-  initialData = {},
+  initialData,
   seriesTitle = "",
   tmdbSeriesId = "",
   parentSeasonNumber = "",
 }) {
+  // Protection : si initialData est null ou undefined, on force un objet vide
+  initialData = initialData || {};
   // Vérification stricte de parentSeasonNumber
   const validParentSeasonNumber = parentSeasonNumber !== undefined && parentSeasonNumber !== null && parentSeasonNumber !== ""
     ? String(parentSeasonNumber)
