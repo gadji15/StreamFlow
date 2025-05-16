@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SeriesModal({ open, onClose, onSave, initialData = {} }) {
+  if (!open) return null;
+
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -21,6 +23,9 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
   });
+
+  const [cast, setCast] = useState<{ id: number, name: string, profile_path: string|null }[]>(initialData.cast || []);
+  const [loadingCast, setLoadingCast] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
@@ -55,6 +60,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
         description: initialData.description || "",
       };
     });
+    setCast(initialData.cast || []);
     setTmdbSearch(initialData.title || "");
     // eslint-disable-next-line
   }, [open, initialData && initialData.id]);
@@ -115,6 +121,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
           : typeof form.genres === "string"
             ? form.genres.split(",").map((g) => g.trim())
             : [],
+        cast, // Ajoute le cast importé au submit
       };
       await onSave(submitData);
       toast({ title: "Série enregistrée" });
@@ -227,6 +234,39 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     setLoading(false);
   };
 
+  // Importation des acteurs principaux (cast) depuis TMDB
+  const handleImportCast = async () => {
+    if (!form.tmdb_id) {
+      toast({ title: "TMDB ID manquant", description: "Renseignez l'ID TMDB avant d'importer les acteurs.", variant: "destructive" });
+      return;
+    }
+    setLoadingCast(true);
+    try {
+      const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(form.tmdb_id)}/credits`);
+      if (!res.ok) throw new Error("Erreur réseau TMDB (cast)");
+      const data = await res.json();
+      if (Array.isArray(data.cast)) {
+        setCast(
+          data.cast
+            .slice(0, 20)
+            .map(actor => ({
+              id: actor.id,
+              name: actor.name,
+              profile_path: actor.profile_path,
+            }))
+        );
+        toast({ title: "Cast importé", description: "Acteurs principaux importés avec succès !" });
+      } else {
+        setCast([]);
+        toast({ title: "Aucun acteur trouvé", variant: "destructive" });
+      }
+    } catch (e) {
+      setCast([]);
+      toast({ title: "Erreur TMDB (cast)", description: String(e), variant: "destructive" });
+    }
+    setLoadingCast(false);
+  };
+
   if (!open) return null;
 
   return (
@@ -297,6 +337,42 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
         >
+          {/* Import & affichage du cast */}
+          {form.tmdb_id && (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1 mb-2"
+                onClick={handleImportCast}
+                disabled={loadingCast}
+                aria-label="Importer les acteurs principaux"
+              >
+                {loadingCast ? "Import..." : "Importer les acteurs"}
+              </Button>
+              {cast && cast.length > 0 && (
+                <div className="mt-1 mb-2 max-h-32 overflow-y-auto rounded">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {cast.map(actor => (
+                      <div key={actor.id} className="flex flex-col items-center text-center">
+                        <img
+                          src={
+                            actor.profile_path
+                              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                              : "/placeholder-backdrop.jpg"
+                          }
+                          alt={actor.name}
+                          className="w-12 h-12 rounded-full object-cover border border-gray-800 shadow mb-1 bg-gray-900"
+                          style={{ minWidth: "3rem", minHeight: "3rem" }}
+                        />
+                        <span className="text-[11px] text-white/90 truncate w-full block" title={actor.name}>{actor.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
               Titre <span className="text-red-500">*</span>
@@ -557,7 +633,44 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
               </div>
             )}
           </div>
-        </form>
+        {/* Import & affichage du cast */}
+        <div className="px-3 pb-2">
+          {form.tmdb_id && (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1 mb-2"
+                onClick={handleImportCast}
+                disabled={loadingCast}
+                aria-label="Importer les acteurs principaux"
+              >
+                {loadingCast ? "Import..." : "Importer les acteurs"}
+              </Button>
+              {cast && cast.length > 0 && (
+                <div className="mt-1 mb-2 max-h-32 overflow-y-auto rounded">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {cast.map(actor => (
+                      <div key={actor.id} className="flex flex-col items-center text-center">
+                        <img
+                          src={
+                            actor.profile_path
+                              ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                              : "/placeholder-backdrop.jpg"
+                          }
+                          alt={actor.name}
+                          className="w-12 h-12 rounded-full object-cover border border-gray-800 shadow mb-1 bg-gray-900"
+                          style={{ minWidth: "3rem", minHeight: "3rem" }}
+                        />
+                        <span className="text-[11px] text-white/90 truncate w-full block" title={actor.name}>{actor.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         {/* Actions sticky */}
         <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
           <Button
