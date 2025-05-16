@@ -53,7 +53,11 @@ export default function SeriesTable({
               serie={serie}
               selected={selectedIds.includes(serie.id)}
               onSelect={onSelect}
-              onAction={onAction}
+              onAction={(action, serie) => {
+                console.log("[SeriesTable] onAction", action, serie.id);
+                if (onAction) onAction(action, serie);
+                else console.warn("[SeriesTable] onAction prop is missing from parent");
+              }}
               seasonCount={seasonCounts[serie.id]}
               genres={genres}
             />
