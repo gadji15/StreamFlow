@@ -7,18 +7,32 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function EpisodesPage() {
   const params = useParams();
-  let seriesId = params && "id" in params ? params.id : undefined;
-  // Normalize catch-all param
+  // Analyse défensive : log l'URL et tous les params
+  if (typeof window !== "undefined") {
+    console.log("DEBUG PATHNAME", window.location.pathname);
+  }
+  console.log("DEBUG PARAMS OBJECT", params);
+
+  // Extraction robuste du bon paramètre (id, seriesId, series, etc.)
+  let seriesId =
+    params?.id ||
+    params?.seriesId ||
+    params?.series ||
+    (Array.isArray(params) && params[0]) ||
+    undefined;
   if (Array.isArray(seriesId)) seriesId = seriesId[0];
+
   // Sécurité : si jamais sérieId est absent, on bloque tout
   if (!seriesId) {
     return (
       <div className="p-4 text-red-500 font-bold">
-        Erreur : impossible de déterminer l’identifiant de la série depuis l’URL.
+        Erreur : impossible de déterminer l’identifiant de la série depuis l’URL.<br />
+        <pre>{JSON.stringify(params, null, 2)}</pre>
+        <pre>{typeof window !== "undefined" ? window.location.pathname : ""}</pre>
       </div>
     );
   }
-  console.log("EpisodesPage seriesId (ALWAYS DEFINED)", seriesId, "params", params);
+  console.log("EpisodesPage seriesId (ALWAYS DEFINED, robust extraction)", seriesId, "params", params);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [error, setError] = useState(null);
