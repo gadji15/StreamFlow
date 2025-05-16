@@ -64,14 +64,20 @@ export default function EpisodeList({
   async function handleAddEpisode(form: EpisodeFormInput & { [key: string]: any }) {
     if (!seriesId) {
       toast({ title: "Erreur", description: "Série introuvable (seriesId manquant)", variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: seriesId is missing", { form, seasonId, seriesId });
       return;
     }
     if (!seasonId) {
       toast({ title: "Erreur", description: "Saison introuvable (seasonId manquant)", variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: seasonId is missing", { form, seasonId, seriesId });
       return;
     }
     setActionLoading(true);
     try {
+      // Log the form received
+      if (process.env.NODE_ENV === "development") {
+        console.log("handleAddEpisode: form received", form);
+      }
       // Remap fields to match the database
       const insertObj = {
         season_id: seasonId,
@@ -96,11 +102,14 @@ export default function EpisodeList({
         vote_count: form.vote_count ? Number(form.vote_count) : null,
         vote_average: form.vote_average ? Number(form.vote_average) : null
       };
+      if (process.env.NODE_ENV === "development") {
+        console.log("handleAddEpisode: insertObj for Supabase", insertObj);
+      }
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
-        if (process.env.NODE_ENV === "development") console.error(error);
+        if (process.env.NODE_ENV === "development") console.error("Supabase insert error", error);
         return;
       }
       if (!data) {
@@ -117,7 +126,7 @@ export default function EpisodeList({
       toast({ title: "Épisode ajouté !" });
     } catch (err) {
       toast({ title: "Erreur inconnue", description: String(err), variant: "destructive" });
-      if (process.env.NODE_ENV === "development") console.error(err);
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: catch error", err);
     } finally {
       setActionLoading(false);
     }
