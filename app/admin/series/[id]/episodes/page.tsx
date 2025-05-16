@@ -141,19 +141,12 @@ export default function EpisodesPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-white mb-4">Épisodes de la série</h1>
-      {showParams && (
-        <div className="bg-gray-900 text-green-300 rounded p-3 mb-4 text-xs">
-          <b>DEBUG PARAMS (useParams):</b>
-          <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(params, null, 2)}</pre>
-          <b>seriesId extrait :</b> {String(seriesId)}
-          <button
-            className="ml-2 px-2 py-0.5 bg-red-700 text-white rounded text-xs"
-            onClick={() => setShowParams(false)}
-          >
-            Masquer debug
-          </button>
-        </div>
-      )}
+      {/* Bloc debug toujours affiché, même si showParams est false */}
+      <div className="bg-red-900 text-yellow-200 rounded p-3 mb-4 text-xs">
+        <b>DEBUG PARAMS (useParams):</b>
+        <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(params, null, 2)}</pre>
+        <b>seriesId extrait :</b> {String(seriesId)}
+      </div>
       <div className="mb-3">
         <label htmlFor="season-picker" className="block text-sm text-white font-medium mb-1">
           Saison :
