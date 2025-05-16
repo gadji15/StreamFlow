@@ -51,6 +51,9 @@ export default function EpisodesPage() {
   const [seasonNumber, setSeasonNumber] = useState("");
 
   // Fetch série info (title, tmdb_id)
+  // Affichage du debug params sur la page pour diagnostiquer
+  const [showParams, setShowParams] = useState(true);
+
   useEffect(() => {
     async function fetchSeriesInfo() {
       if (!seriesId) return;
@@ -138,6 +141,19 @@ export default function EpisodesPage() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-white mb-4">Épisodes de la série</h1>
+      {showParams && (
+        <div className="bg-gray-900 text-green-300 rounded p-3 mb-4 text-xs">
+          <b>DEBUG PARAMS (useParams):</b>
+          <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(params, null, 2)}</pre>
+          <b>seriesId extrait :</b> {String(seriesId)}
+          <button
+            className="ml-2 px-2 py-0.5 bg-red-700 text-white rounded text-xs"
+            onClick={() => setShowParams(false)}
+          >
+            Masquer debug
+          </button>
+        </div>
+      )}
       <div className="mb-3">
         <label htmlFor="season-picker" className="block text-sm text-white font-medium mb-1">
           Saison :
