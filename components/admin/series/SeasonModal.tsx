@@ -245,6 +245,10 @@ export default function SeasonModal({
     if (form.poster && !isValidImageUrl(form.poster)) {
       err.poster = "URL d'image invalide (jpg, png, gif, webp, bmp, svg)";
     }
+    // Vérification obligatoire du TMDB series id
+    if (!form.tmdb_series_id || isNaN(Number(form.tmdb_series_id))) {
+      err.tmdb_series_id = "L’identifiant TMDB de la série est requis (nombre).";
+    }
     return err;
   };
 
@@ -501,7 +505,11 @@ export default function SeasonModal({
                   placeholder="TMDB ID série"
                   type="text"
                   aria-label="TMDB ID série"
+                  // Champ TOUJOURS éditable
                 />
+                {errors.tmdb_series_id && (
+                  <div className="text-xs text-red-400 mt-0.5">{errors.tmdb_series_id}</div>
+                )}
               </div>
             )}
             <div className="flex items-center gap-2">
