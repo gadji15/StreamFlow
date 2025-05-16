@@ -6,11 +6,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
 // Types TypeScript pour la clarté
-interface Episode {
+export interface Episode {
   id: string;
   episode_number: number;
   title: string;
   // ... autres champs utiles
+}
+
+interface EpisodeFormInput {
+  id?: string;
+  episode_number: number;
+  title: string;
+  // autres champs nécessaires (compléter selon vos besoins)
 }
 
 interface EpisodeListProps {
@@ -24,6 +31,11 @@ interface EpisodeListProps {
   tmdbSeriesId?: string;
   seasonNumber?: number | string;
 }
+
+type ModalState =
+  | { open: false }
+  | { open: true; mode: "add" }
+  | { open: true; mode: "edit"; initialData: Episode };
 
 export default function EpisodeList({
   episodes,
@@ -41,67 +53,112 @@ export default function EpisodeList({
 
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [episodeModalOpen, setEpisodeModalOpen] = useState(false);
-  const [editEpisode, setEditEpisode] = useState<Episode | null>(null);
+
+  // Unification de la gestion de la modale d'ajout/édition
+  const [modalState, setModalState] = useState<ModalState>({ open: false });
+
+  // Pour gérer le chargement lors d'une action (ajout/édition/suppression)
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Ajout d'un épisode
-  async function handleAddEpisode(form: any) {
-    const insertObj = {
-      ...form,
-      season_id: seasonId,
-      series_id: seriesId,
-      sort_order: episodes.length,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    const { error } = await supabase.from("episodes").insert([insertObj]);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
+  async function handleAddEpisode(form: EpisodeFormInput) {
+    setActionLoading(true);
+    try {
+      const insertObj = {
+        ...form,
+        season_id: seasonId,
+        series_id: seriesId,
+        sort_order: episodes.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await supabase.from("episodes").insert([insertObj]);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        if (process.env.NODE_ENV === "development") console.error(error);
+        return;
+      }
+      await fetchEpisodesForSeason?.();
+      setModalState({ open: false });
+      toast({ title: "Épisode ajouté !" });
+    } catch (err) {
+      toast({ title: "Erreur inconnue", description: String(err), variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    await fetchEpisodesForSeason?.();
-    setEpisodeModalOpen(false);
-    toast({ title: "Épisode ajouté !" });
   }
 
   // Edition d'un épisode
-  async function handleEditEpisode(form: any) {
-    const { id, ...updateObj } = form;
-    const { error } = await supabase.from("episodes").update(updateObj).eq("id", id);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
+  async function handleEditEpisode(form: EpisodeFormInput) {
+    setActionLoading(true);
+    try {
+      const { id, ...updateObj } = form;
+      if (!id) {
+        toast({ title: "Erreur", description: "ID d'épisode manquant", variant: "destructive" });
+        return;
+      }
+      const { error } = await supabase.from("episodes").update(updateObj).eq("id", id);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        if (process.env.NODE_ENV === "development") console.error(error);
+        return;
+      }
+      await fetchEpisodesForSeason?.();
+      setModalState({ open: false });
+      toast({ title: "Épisode modifié !" });
+    } catch (err) {
+      toast({ title: "Erreur inconnue", description: String(err), variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    await fetchEpisodesForSeason?.();
-    setEditEpisode(null);
-    toast({ title: "Épisode modifié !" });
   }
 
-  // Suppression d'un épisode
+  // Suppression d'un épisode avec confirmation modal custom
   async function handleDeleteEpisode(id: string) {
+    // Vous pouvez remplacer window.confirm par une modale UI si dispo
     if (!window.confirm("Supprimer cet épisode ?")) return;
-    const { error } = await supabase.from("episodes").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
+    setActionLoading(true);
+    try {
+      const { error } = await supabase.from("episodes").delete().eq("id", id);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        if (process.env.NODE_ENV === "development") console.error(error);
+        return;
+      }
+      await fetchEpisodesForSeason?.();
+      toast({ title: "Épisode supprimé !" });
+    } catch (err) {
+      toast({ title: "Erreur inconnue", description: String(err), variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error(err);
+    } finally {
+      setActionLoading(false);
     }
-    await fetchEpisodesForSeason?.();
-    toast({ title: "Épisode supprimé !" });
   }
 
   // Drag & drop reorder logic
   const moveEpisode = async (fromIdx: number, toIdx: number) => {
     if (fromIdx === toIdx) return;
-    const reordered = [...episodes];
-    const [removed] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, removed);
-    await Promise.all(
-      reordered.map((ep, idx) =>
-        supabase.from("episodes").update({ sort_order: idx }).eq("id", ep.id)
-      )
-    );
-    await fetchEpisodesForSeason?.();
-    toast({ title: "Ordre des épisodes mis à jour" });
+    setActionLoading(true);
+    try {
+      const reordered = [...episodes];
+      const [removed] = reordered.splice(fromIdx, 1);
+      reordered.splice(toIdx, 0, removed);
+      // Idéalement, remplacer par une mutation en lot si Supabase le permet
+      await Promise.all(
+        reordered.map((ep, idx) =>
+          supabase.from("episodes").update({ sort_order: idx }).eq("id", ep.id)
+        )
+      );
+      await fetchEpisodesForSeason?.();
+      toast({ title: "Ordre des épisodes mis à jour" });
+    } catch (err) {
+      toast({ title: "Erreur lors du réordonnancement", description: String(err), variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // Rendu principal
@@ -113,34 +170,33 @@ export default function EpisodeList({
         <Button
           variant="success"
           onClick={() => {
-            if (seasonNumber) setEpisodeModalOpen(true);
+            if (seasonNumber) setModalState({ open: true, mode: "add" });
           }}
           className="text-xs px-3 py-1"
           aria-label="Ajouter un épisode"
-          disabled={!seasonNumber}
+          disabled={!seasonNumber || actionLoading}
           title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
         >
+          {actionLoading && modalState.open && modalState.mode === "add" ? (
+            <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
+          ) : null}
           + Ajouter un épisode
         </Button>
       </div>
-      {/* Modal ajout */}
+      {/* Modal ajout/édition unique */}
       <EpisodeModal
-        open={episodeModalOpen && !!seasonNumber}
-        onClose={() => setEpisodeModalOpen(false)}
-        onSave={handleAddEpisode}
+        open={modalState.open}
+        onClose={() => setModalState({ open: false })}
+        onSave={
+          modalState.open && modalState.mode === "edit"
+            ? handleEditEpisode
+            : handleAddEpisode
+        }
+        initialData={modalState.open && modalState.mode === "edit" ? modalState.initialData : undefined}
         seriesTitle={seriesTitle}
         tmdbSeriesId={tmdbSeriesId}
         parentSeasonNumber={seasonNumber}
-      />
-      {/* Modal édition */}
-      <EpisodeModal
-        open={!!editEpisode}
-        onClose={() => setEditEpisode(null)}
-        onSave={handleEditEpisode}
-        initialData={editEpisode}
-        seriesTitle={seriesTitle}
-        tmdbSeriesId={tmdbSeriesId}
-        parentSeasonNumber={seasonNumber}
+        loading={actionLoading}
       />
       {/* Gestion loading/erreur */}
       {episodesLoading ? (
@@ -178,7 +234,9 @@ export default function EpisodeList({
                   episode={episode}
                   seasonId={seasonId}
                   fetchEpisodesForSeason={fetchEpisodesForSeason}
-                  onEdit={() => setEditEpisode(episode)}
+                  onEdit={() =>
+                    setModalState({ open: true, mode: "edit", initialData: episode })
+                  }
                   onDelete={() => handleDeleteEpisode(episode.id)}
                   draggableProps={{
                     draggable: true,
@@ -196,6 +254,7 @@ export default function EpisodeList({
                       background: draggedIndex === idx ? "rgba(99,102,241,0.1)" : undefined
                     }
                   }}
+                  actionLoading={actionLoading}
                 />
               ))
             )}
