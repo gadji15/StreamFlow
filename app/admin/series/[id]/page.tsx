@@ -52,7 +52,7 @@ export default function AdminSeriesDetailPage() {
 
   // Episodes modal state
   const [selectedSeason, setSelectedSeason] = useState<any>(null);
-  const [episodesList, setEpisodesList] = useState<any[]>([]);
+  const [episodesList, setEpisodesList] = useState<any[]>([]); // Toujours un tableau
   const [episodesLoading, setEpisodesLoading] = useState(false);
 
   // Toast
@@ -142,7 +142,7 @@ export default function AdminSeriesDetailPage() {
       .select("*")
       .eq("season_id", selectedSeason.id)
       .order("episode_number", { ascending: true });
-    if (!error) setEpisodesList(data || []);
+    setEpisodesList(Array.isArray(data) ? data : []); // Toujours un tableau
     setEpisodesLoading(false);
   };
 

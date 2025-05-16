@@ -15,7 +15,7 @@ export default function EpisodeList({
   seasonNumber = ""
 }) {
   // Défense : toujours un tableau, même si parent passe null/undefined
-  episodes = episodes || [];
+  if (!Array.isArray(episodes)) episodes = [];
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
