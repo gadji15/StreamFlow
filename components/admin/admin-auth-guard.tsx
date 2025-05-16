@@ -10,14 +10,14 @@ type AdminAuthGuardProps = {
 
 export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   const router = useRouter();
-  const { isAdmin, isLoading, userData } = useSupabaseAuth();
+  const { isAdmin, isLoading, userData, user } = useSupabaseAuth();
 
   useEffect(() => {
     // Tant que le chargement n'est pas fini, ne rien faire
     if (isLoading) return;
 
-    // Si l'utilisateur N'EST PAS CONNECTÉ (userData === null)
-    if (!userData) {
+    // Si l'utilisateur N'EST PAS CONNECTÉ (user === null)
+    if (!user) {
       router.replace("/login");
       return;
     }
@@ -28,10 +28,10 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       return;
     }
     // Sinon, il est admin : on laisse passer
-  }, [isAdmin, isLoading, userData, router]);
+  }, [isAdmin, isLoading, user, router]);
 
   // Afficher un écran de chargement tant que l'état d'auth n'est pas déterminé
-  if (isLoading) {
+  if (isLoading || (user && userData === null)) {
     return (
       <div style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span>Chargement...</span>
