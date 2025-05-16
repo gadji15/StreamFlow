@@ -10,8 +10,8 @@ export function useSupabaseAuth() {
   const { user, loading } = useCurrentUser()
   const [userData, setUserData] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(true)
-  const [isVIP, setIsVIP] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isVIP, setIsVIP] = useState<boolean | null>(null)
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -36,8 +36,8 @@ export function useSupabaseAuth() {
       })
     } else {
       setUserData(null)
-      setIsVIP(false)
-      setIsAdmin(false)
+      setIsVIP(null)
+      setIsAdmin(null)
       setProfileLoading(false)
     }
     return () => { ignore = true }
