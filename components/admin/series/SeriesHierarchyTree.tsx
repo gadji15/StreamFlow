@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SeasonList from "./SeasonList";
 
 export default function SeriesHierarchyTree({
@@ -6,6 +6,16 @@ export default function SeriesHierarchyTree({
 }) {
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
+
+  // Quand expandedSeries change (ou après premier affichage), on charge les saisons si besoin
+  useEffect(() => {
+    if (expandedSeries && typeof fetchSeasonsForSeries === "function") {
+      // Ne refetch que si non déjà fetché (pas obligatoire, mais évite appels inutiles)
+      if (!seriesSeasons[expandedSeries] || seriesSeasons[expandedSeries].length === 0) {
+        fetchSeasonsForSeries(expandedSeries);
+      }
+    }
+  }, [expandedSeries, fetchSeasonsForSeries, seriesSeasons]);
 
   return (
     <div>
@@ -20,7 +30,7 @@ export default function SeriesHierarchyTree({
                   setExpandedSeries(null);
                 } else {
                   setExpandedSeries(serie.id);
-                  fetchSeasonsForSeries(serie.id);
+                  // fetchSeasonsForSeries sera appelé automatiquement par le useEffect
                 }
               }}
             >
