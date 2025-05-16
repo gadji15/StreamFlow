@@ -275,10 +275,24 @@ export default function AdminFilmsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Films</h1>
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
+            <Film className="h-8 w-8 text-indigo-400" />
+            Gestion des Films
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Recherchez, gérez et structurez tous vos films et leur publication.
+          </p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="ghost" aria-label="Rafraîchir" onClick={handleRefresh}>
+          <Button
+            variant="ghost"
+            aria-label="Rafraîchir"
+            onClick={handleRefresh}
+            className="hover:bg-indigo-50/10 border border-transparent hover:border-indigo-400 transition"
+          >
             <RefreshCw className="h-5 w-5" />
           </Button>
           <Button
@@ -329,36 +343,40 @@ export default function AdminFilmsPage() {
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
             }}
+            className="border-indigo-400 text-indigo-300 hover:bg-indigo-900/20"
           >
             Export CSV
           </Button>
           <Link href="/admin/films/add">
-            <Button>
+            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
               <Plus className="h-4 w-4 mr-2" />
               Ajouter un film
             </Button>
           </Link>
         </div>
       </div>
-      <div className="bg-gray-800 rounded-lg p-6">
+      {/* FILTERS / SEARCH */}
+      <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
         {/* Recherche rapide et avancée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               type="search"
-              placeholder="Recherche rapide (titre film)..."
+              placeholder="🔍 Recherche rapide (titre film)..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="pl-10"
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
               aria-label="Recherche de film"
             />
+            <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="8" r="7" /><path d="m16 16-3.5-3.5" /></svg>
+            </span>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => handleRefresh()}
-            className="hidden sm:block"
+            className="hidden sm:block border-indigo-400 text-indigo-300 hover:bg-indigo-900/20"
           >
             Réinitialiser
           </Button>
@@ -372,7 +390,7 @@ export default function AdminFilmsPage() {
             placeholder="Titre…"
             value={advancedSearch.title}
             onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par titre"
           />
           <Input
@@ -380,7 +398,7 @@ export default function AdminFilmsPage() {
             placeholder="Réalisateur…"
             value={advancedSearch.director}
             onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par réalisateur"
           />
           <Input
@@ -388,7 +406,7 @@ export default function AdminFilmsPage() {
             placeholder="Année…"
             value={advancedSearch.year}
             onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par année"
           />
           <Input
@@ -396,7 +414,7 @@ export default function AdminFilmsPage() {
             placeholder="TMDB ID…"
             value={advancedSearch.tmdb}
             onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par TMDB ID"
           />
         </form>
@@ -404,7 +422,7 @@ export default function AdminFilmsPage() {
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
             aria-label="Filtrer par genre"
           >
             <option value="all">Tous les genres</option>
@@ -415,7 +433,7 @@ export default function AdminFilmsPage() {
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
             aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
@@ -425,23 +443,24 @@ export default function AdminFilmsPage() {
         </div>
         {/* Table et actions */}
         {loading ? (
-          <div className="py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="py-24 flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-400 border-t-transparent mb-6"></div>
+            <span className="text-indigo-300 font-medium">Chargement des films…</span>
           </div>
         ) : movies.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-lg">
-            <Film className="h-12 w-12 mx-auto mb-4 text-gray-600" />
-            <h2 className="text-xl font-semibold mb-2">Aucun film trouvé</h2>
-            <p className="text-gray-400 mb-6">
+          <div className="text-center py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl shadow-lg border-2 border-dashed border-indigo-400">
+            <Film className="h-16 w-16 mx-auto mb-6 text-indigo-500/60 drop-shadow" />
+            <h2 className="text-2xl font-bold mb-2 text-indigo-200">Aucun film trouvé</h2>
+            <p className="text-gray-400 mb-8">
               {searchTerm
-                ? `Aucun film ne correspond à votre recherche "${searchTerm}"`
+                ? `Aucun film ne correspond à votre recherche « ${searchTerm} »`
                 : statusFilter !== 'all'
-                ? `Aucun film avec le statut "${statusFilter === 'published' ? 'Publié' : 'Brouillon'}"`
-                : "Commencez par ajouter votre premier film"
+                ? `Aucun film avec le statut « ${statusFilter === 'published' ? 'Publié' : 'Brouillon'} »`
+                : "Commencez par ajouter votre premier film pour enrichir votre catalogue."
               }
             </p>
             <Link href="/admin/films/add">
-              <Button>
+              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter un film
               </Button>
@@ -682,13 +701,16 @@ export default function AdminFilmsPage() {
             </table>
             {/* Actions groupées */}
             {selectedIds.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center my-2 p-2 bg-gray-900 border border-gray-700 rounded justify-center">
-                <span className="text-xs text-gray-400">{selectedIds.length} sélectionné(s)</span>
+              <div className="mb-4 flex items-center gap-3 bg-red-900/30 border border-red-500 rounded-lg px-4 py-2 animate-pulse">
+                <span className="font-semibold text-red-300">
+                  {selectedIds.length} film{selectedIds.length > 1 ? "s" : ""} sélectionné{selectedIds.length > 1 ? "s" : ""}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleBulkPublish(true)}
                   disabled={isDeleting}
+                  className="ml-2"
                 >
                   Publier
                 </Button>
@@ -697,6 +719,7 @@ export default function AdminFilmsPage() {
                   size="sm"
                   onClick={() => handleBulkPublish(false)}
                   disabled={isDeleting}
+                  className="ml-2"
                 >
                   Dépublier
                 </Button>
@@ -705,6 +728,7 @@ export default function AdminFilmsPage() {
                   size="sm"
                   onClick={handleDeleteSelected}
                   disabled={isDeleting}
+                  className="ml-2"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
                   Supprimer
@@ -713,17 +737,18 @@ export default function AdminFilmsPage() {
             )}
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-6">
+              <div className="flex justify-center items-center gap-2 mt-8">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
+                  className="hover:bg-indigo-900/20"
                   aria-label="Page précédente"
                 >
                   &larr;
                 </Button>
-                <span className="text-xs text-gray-400 mx-2">
+                <span className="text-xs px-4 py-1 rounded bg-gray-800 text-indigo-300 border border-gray-700 shadow">
                   Page {page} sur {totalPages}
                 </span>
                 <Button
@@ -731,6 +756,7 @@ export default function AdminFilmsPage() {
                   size="sm"
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
+                  className="hover:bg-indigo-900/20"
                   aria-label="Page suivante"
                 >
                   &rarr;
