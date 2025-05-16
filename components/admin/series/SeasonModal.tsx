@@ -38,8 +38,20 @@ export default function SeasonModal({
     poster: initialData.poster || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
-    tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
+    tmdb_series_id: initialData.tmdb_series_id || "", // NE PAS préremplir ici, voir useEffect ci-dessous
   });
+
+  // Prendre le tmdbSeriesId du parent à chaque ouverture de la modale (création)
+  useEffect(() => {
+    if (open && !initialData.id && tmdbSeriesId) {
+      setForm(f => ({
+        ...f,
+        tmdb_series_id: String(tmdbSeriesId)
+      }));
+    }
+    // Ne rien faire si édition (on garde la valeur existante)
+    // eslint-disable-next-line
+  }, [open, tmdbSeriesId, initialData.id]);
   const originalSeasonNumber = useRef(
     initialData.season_number !== undefined && initialData.season_number !== null
       ? String(initialData.season_number)
