@@ -96,6 +96,7 @@ export default function EpisodeList({
         vote_count: form.vote_count ? Number(form.vote_count) : null,
         vote_average: form.vote_average ? Number(form.vote_average) : null
       };
+      const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -103,8 +104,12 @@ export default function EpisodeList({
         return;
       }
       if (!data) {
-        toast({ title: "Problème", description: "L'insertion a échoué : aucun épisode créé. Vérifiez vos règles de sécurité Supabase (RLS) ou les champs obligatoires.", variant: "destructive" });
-        if (process.env.NODE_ENV === "development") console.error("Insert result:", { data, error });
+        toast({ 
+          title: "Problème d’insertion (RLS ?)", 
+          description: `Aucun épisode créé. user_id courant : ${(userData && userData.user && userData.user.id) || "non connecté"}. Vérifiez le rôle dans user_roles_flat.`,
+          variant: "destructive"
+        });
+        if (process.env.NODE_ENV === "development") console.error("Insert result:", { data, error, user: userData });
         return;
       }
       await fetchEpisodesForSeason?.();
