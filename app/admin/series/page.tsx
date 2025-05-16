@@ -404,7 +404,7 @@ export default function AdminSeriesPage() {
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
-            onAction={(action, serie) => {
+            onAction={async (action, serie) => {
               console.log("[AdminSeriesPage] ACTION:", action, serie && serie.id);
               if (action === "preview") {
                 window.open(`/series/${serie.id}`, "_blank");
