@@ -411,9 +411,10 @@ export default function AdminSeriesPage() {
                 return;
               }
               if (action === "expand" || action === "seasons") {
-                console.log("[AdminSeriesPage] NAVIGATION:", `/admin/series/${serie.id}`);
+                const dest = `/admin/series/${serie.id}/seasons`;
+                console.log("[AdminSeriesPage] NAVIGATION:", dest);
                 try {
-                  router.push(`/admin/series/${serie.id}`);
+                  router.push(dest);
                 } catch (e) {
                   console.error("[AdminSeriesPage] router.push error:", e);
                 }
