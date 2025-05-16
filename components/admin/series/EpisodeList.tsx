@@ -75,14 +75,18 @@ export default function EpisodeList({
         trailer_url: form.trailer_url || null,
         thumbnail_url: form.thumbnail_url || null,
         air_date: form.air_date || null,
-        is_vip: form.isvip ?? false,
+        isvip: form.isvip ?? false,
         published: form.published ?? false,
         video_unavailable: form.video_unavailable ?? false,
         tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
         tmdb_series_id: form.tmdb_series_id || null,
         sort_order: episodes.length,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        runtime: form.runtime ? Number(form.runtime) : null, // correspond à la durée
+        poster: form.poster || null,
+        vote_count: form.vote_count ? Number(form.vote_count) : null,
+        vote_average: form.vote_average ? Number(form.vote_average) : null
       };
       const { error } = await supabase.from("episodes").insert([insertObj]);
       if (error) {
