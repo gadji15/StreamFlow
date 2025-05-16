@@ -159,8 +159,53 @@ export default function AdminSeriesPage() {
     fetchSeries();
   };
 
-  // --- Gestion arborescence (voir code précédent pour fetchSeasonsForSeries/fetchEpisodesForSeason)
-  // À passer en props à SeriesHierarchyTree si besoin
+  // --- Gestion arborescence (fetchSeasonsForSeries, fetchEpisodesForSeason, etc.)
+
+  // State: Map seriesId -> array of seasons
+  const [seriesSeasons, setSeriesSeasons] = useState<{ [seriesId: string]: any[] }>({});
+  // State: Map seasonId -> array of episodes
+  const [seasonEpisodes, setSeasonEpisodes] = useState<{ [seasonId: string]: any[] }>({});
+  // State: Loading indicator for episodes fetch
+  const [seasonEpisodesLoading, setSeasonEpisodesLoading] = useState<{ [seasonId: string]: boolean }>({});
+
+  // Fetch seasons for a particular series
+  const fetchSeasonsForSeries = useCallback(async (seriesId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('seasons')
+        .select('*')
+        .eq('series_id', seriesId)
+        .order('season_number', { ascending: true });
+      if (error) throw error;
+      setSeriesSeasons((prev) => ({
+        ...prev,
+        [seriesId]: data || [],
+      }));
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les saisons.', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  // Fetch episodes for a particular season
+  const fetchEpisodesForSeason = useCallback(async (seasonId: string) => {
+    setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: true }));
+    try {
+      const { data, error } = await supabase
+        .from('episodes')
+        .select('*')
+        .eq('season_id', seasonId)
+        .order('episode_number', { ascending: true });
+      if (error) throw error;
+      setSeasonEpisodes((prev) => ({
+        ...prev,
+        [seasonId]: data || [],
+      }));
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les épisodes.', variant: 'destructive' });
+    } finally {
+      setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: false }));
+    }
+  }, [toast]);
 
   return (
     <div className="space-y-6">
@@ -315,8 +360,11 @@ export default function AdminSeriesPage() {
         ) : showTree ? (
           <SeriesHierarchyTree
             series={paginatedSeries}
-            // Passe ici les props pour saisons/épisodes arborescents
-            // ex: fetchSeasonsForSeries, fetchEpisodesForSeason, etc.
+            seriesSeasons={seriesSeasons}
+            fetchSeasonsForSeries={fetchSeasonsForSeries}
+            fetchEpisodesForSeason={fetchEpisodesForSeason}
+            seasonEpisodes={seasonEpisodes}
+            seasonEpisodesLoading={seasonEpisodesLoading}
             setModal={setModal}
           />
         ) : (
