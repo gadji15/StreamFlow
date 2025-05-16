@@ -197,6 +197,31 @@ export default function EpisodeModal({
     return err;
   };
 
+  // Fonction utilitaire pour nettoyer l'objet épisode avant envoi API
+function cleanEpisodeForApi(episode) {
+  const allowed = [
+    "episode_number",
+    "tmdb_id",
+    "air_date",
+    "thumbnail_url",
+    "video_url",
+    "trailer_url",
+    "title",
+    "description",
+    "published",
+    "isvip",
+    "video_unavailable",
+    "tmdb_series_id",
+    "sort_order",
+    "season_id",
+    "series_id"
+    // ajoute ici tout autre champ autorisé côté BDD
+  ];
+  return Object.fromEntries(
+    Object.entries(episode).filter(([key]) => allowed.includes(key))
+  );
+}
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
@@ -213,24 +238,15 @@ export default function EpisodeModal({
     try {
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
-      // Nettoyer explicitement tous les champs non présents en base (plus de "order" !)
-      const {
-        local_video_file,
-        parentSeasonNumber,
-        thumbnail_url, // va être nettoyé plus bas
-        video_url,     // idem
-        trailer_url,   // idem
-        ...restForm
-      } = form;
 
-      // Seuls les champs explicitement listés sont envoyés à la base
-      const submitData = {
+      // On prépare l'objet à envoyer (toujours sans "order")
+      const rawSubmitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
-        thumbnail_url: clean(thumbnail_url),
-        video_url: clean(video_url),
-        trailer_url: clean(trailer_url),
+        thumbnail_url: clean(form.thumbnail_url),
+        video_url: clean(form.video_url),
+        trailer_url: clean(form.trailer_url),
         title: clean(form.title),
         description: clean(form.description),
         published: !!form.published,
@@ -238,8 +254,13 @@ export default function EpisodeModal({
         video_unavailable: !!form.video_unavailable,
         tmdb_series_id: clean(form.tmdb_series_id),
         sort_order: clean(form.sort_order) !== null ? Number(form.sort_order) : null,
-        // autres champs persistants de la table (si besoin : ajouter ici)
+        season_id: clean(form.season_id),
+        series_id: clean(form.series_id),
+        // autres champs éventuels...
       };
+      // Nettoyage final avec la whitelist
+      const submitData = cleanEpisodeForApi(rawSubmitData);
+
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
       onClose();

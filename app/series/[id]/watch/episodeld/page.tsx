@@ -49,7 +49,7 @@ export default function WatchEpisodePage() {
         // Charger l'épisode demandé
         const { data: episodeData, error: epErr } = await supabase
           .from('episodes')
-          .select('*')
+          .select('id, title, description, season, episode_number, duration, is_vip, published, video_url, thumbnail_url, season_id, series_id, air_date, sort_order, tmdb_id, trailer_url, video_unavailable, created_at, updated_at')
           .eq('id', episodeId)
           .single();
 
@@ -97,7 +97,7 @@ export default function WatchEpisodePage() {
         // Charger tous les épisodes pour trouver le suivant
         const { data: allEpisodes } = await supabase
           .from('episodes')
-          .select('*')
+          .select('id, title, description, season, episode_number, duration, is_vip, published, video_url, thumbnail_url, season_id, series_id, air_date, sort_order, tmdb_id, trailer_url, video_unavailable, created_at, updated_at')
           .eq('series_id', seriesId)
           .eq('published', true);
 
