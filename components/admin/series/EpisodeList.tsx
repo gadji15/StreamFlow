@@ -302,7 +302,7 @@ export default function EpisodeList({
       ) : error ? (
         <div className="text-red-400 text-center py-2">{error}</div>
       ) : (
-        // Scroll dynamique pour la table
+        // Scroll dynamique pour la table : la hauteur reste compacte, seul le contenu scroll
         <div className="relative" style={{ maxHeight: "410px", minHeight: "120px", overflow: "hidden" }}>
           <div className="overflow-y-auto scroll-smooth custom-scrollbar"
                style={{ maxHeight: "380px", minHeight: "80px" }}>
