@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Series as SeriesIcon, Plus, RefreshCw, ListTree } from "lucide-react";
+import { Clapperboard as SeriesIcon, Plus, RefreshCw, ListTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabaseClient";
@@ -159,28 +159,86 @@ export default function AdminSeriesPage() {
     fetchSeries();
   };
 
-  // --- Gestion arborescence (voir code précédent pour fetchSeasonsForSeries/fetchEpisodesForSeason)
-  // À passer en props à SeriesHierarchyTree si besoin
+  // --- Gestion arborescence (fetchSeasonsForSeries, fetchEpisodesForSeason, etc.)
+
+  // State: Map seriesId -> array of seasons
+  const [seriesSeasons, setSeriesSeasons] = useState<{ [seriesId: string]: any[] }>({});
+  // State: Map seasonId -> array of episodes
+  const [seasonEpisodes, setSeasonEpisodes] = useState<{ [seasonId: string]: any[] }>({});
+  // State: Loading indicator for episodes fetch
+  const [seasonEpisodesLoading, setSeasonEpisodesLoading] = useState<{ [seasonId: string]: boolean }>({});
+
+  // Fetch seasons for a particular series
+  const fetchSeasonsForSeries = useCallback(async (seriesId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('seasons')
+        .select('*')
+        .eq('series_id', seriesId)
+        .order('season_number', { ascending: true });
+      if (error) throw error;
+      setSeriesSeasons((prev) => ({
+        ...prev,
+        [seriesId]: data || [],
+      }));
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les saisons.', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  // Fetch episodes for a particular season
+  const fetchEpisodesForSeason = useCallback(async (seasonId: string) => {
+    setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: true }));
+    try {
+      const { data, error } = await supabase
+        .from('episodes')
+        .select('*')
+        .eq('season_id', seasonId)
+        .order('episode_number', { ascending: true });
+      if (error) throw error;
+      setSeasonEpisodes((prev) => ({
+        ...prev,
+        [seasonId]: data || [],
+      }));
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: 'Impossible de charger les épisodes.', variant: 'destructive' });
+    } finally {
+      setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: false }));
+    }
+  }, [toast]);
 
   return (
     <div className="space-y-6">
       {/* Header + Boutons globaux */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">Séries</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
+            <SeriesIcon className="h-8 w-8 text-indigo-400" />
+            Gestion des Séries
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Visualisez, recherchez, gérez et structurez toutes vos séries et saisons.
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="ghost"
             aria-label="Rafraîchir"
             title="Rafraîchir la liste"
             onClick={handleRefresh}
+            className="hover:bg-indigo-50/10 border border-transparent hover:border-indigo-400 transition"
           >
             <RefreshCw className="h-5 w-5" />
           </Button>
           <Button
             variant={showTree ? "outline" : "ghost"}
             aria-label="Vue arborescente"
-            title="Afficher la vue arborescente"
+            title={showTree ? "Vue tableau" : "Vue arborescente"}
             onClick={() => setShowTree(v => !v)}
+            className={showTree
+              ? "border-indigo-400 bg-indigo-900/30 text-indigo-200"
+              : "hover:bg-indigo-50/10 border border-transparent hover:border-indigo-400 transition"
+            }
           >
             <ListTree className="h-5 w-5" />
           </Button>
@@ -188,6 +246,7 @@ export default function AdminSeriesPage() {
             onClick={() => setSeriesModal({ open: true })}
             aria-label="Ajouter une série"
             title="Ajouter une nouvelle série"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
           >
             <Plus className="h-4 w-4 mr-2" />
             Ajouter une série
@@ -196,21 +255,26 @@ export default function AdminSeriesPage() {
       </div>
 
       {/* Filtres/recherche */}
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <Input
-            type="search"
-            placeholder="Recherche rapide (titre série)..."
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-            className="pl-10"
-            aria-label="Recherche de série"
-          />
+          <div className="relative flex-1">
+            <Input
+              type="search"
+              placeholder="🔍 Recherche rapide (titre série)..."
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
+              aria-label="Recherche de série"
+            />
+            <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="8" r="7" /><path d="m16 16-3.5-3.5" /></svg>
+            </span>
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            className="hidden sm:block"
+            className="hidden sm:block border-indigo-400 text-indigo-300 hover:bg-indigo-900/20"
             aria-label="Réinitialiser les filtres"
             title="Réinitialiser les filtres"
           >
@@ -221,34 +285,34 @@ export default function AdminSeriesPage() {
           onSubmit={e => { e.preventDefault(); setPage(1); }}>
           <Input
             type="text"
-            placeholder="Titre..."
+            placeholder="Titre…"
             value={advancedSearch.title}
             onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par titre"
           />
           <Input
             type="text"
-            placeholder="Créateur..."
+            placeholder="Créateur…"
             value={advancedSearch.creator}
             onChange={e => setAdvancedSearch(a => ({ ...a, creator: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par créateur"
           />
           <Input
             type="number"
-            placeholder="Année début..."
+            placeholder="Année début…"
             value={advancedSearch.year}
             onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par année"
           />
           <Input
             type="number"
-            placeholder="TMDB ID..."
+            placeholder="TMDB ID…"
             value={advancedSearch.tmdb}
             onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
             aria-label="Recherche par TMDB ID"
           />
         </form>
@@ -256,7 +320,7 @@ export default function AdminSeriesPage() {
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
             aria-label="Filtrer par genre"
           >
             <option value="all">Tous les genres</option>
@@ -267,7 +331,7 @@ export default function AdminSeriesPage() {
           <select
             value={statusFilter}
             onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
             aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
@@ -278,36 +342,44 @@ export default function AdminSeriesPage() {
 
         {/* Bulk actions */}
         {selectedIds.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-3 bg-red-900/30 border border-red-500 rounded-lg px-4 py-2 animate-pulse">
+            <span className="font-semibold text-red-300">
+              {selectedIds.length} série{selectedIds.length > 1 ? "s" : ""} sélectionnée{selectedIds.length > 1 ? "s" : ""}
+            </span>
             <Button
               onClick={handleBulkDelete}
               variant="destructive"
               aria-label="Supprimer la sélection"
               title="Supprimer toutes les séries sélectionnées"
+              className="ml-auto"
             >
-              Supprimer la sélection ({selectedIds.length})
+              Supprimer la sélection
             </Button>
           </div>
         )}
 
         {/* Vue listing ou arborescence */}
         {loading ? (
-          <div className="py-12 flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="py-24 flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-400 border-t-transparent mb-6"></div>
+            <span className="text-indigo-300 font-medium">Chargement des séries…</span>
           </div>
         ) : series.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-lg">
-            <SeriesIcon className="h-12 w-12 mx-auto mb-4 text-gray-600" />
-            <h2 className="text-xl font-semibold mb-2">Aucune série trouvée</h2>
-            <p className="text-gray-400 mb-6">
+          <div className="text-center py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl shadow-lg border-2 border-dashed border-indigo-400">
+            <SeriesIcon className="h-16 w-16 mx-auto mb-6 text-indigo-500/60 drop-shadow" />
+            <h2 className="text-2xl font-bold mb-2 text-indigo-200">Aucune série trouvée</h2>
+            <p className="text-gray-400 mb-8">
               {searchTerm
-                ? `Aucune série ne correspond à votre recherche "${searchTerm}"`
+                ? `Aucune série ne correspond à votre recherche « ${searchTerm} »`
                 : statusFilter !== 'all'
-                  ? `Aucune série avec le statut "${statusFilter === 'published' ? 'Publiée' : 'Brouillon'}"`
-                  : "Commencez par ajouter votre première série"
+                  ? `Aucune série avec le statut « ${statusFilter === 'published' ? 'Publiée' : 'Brouillon'} »`
+                  : "Commencez par ajouter votre première série pour enrichir votre catalogue."
               }
             </p>
-            <Button onClick={() => setSeriesModal({ open: true })}>
+            <Button 
+              onClick={() => setSeriesModal({ open: true })}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Ajouter une série
             </Button>
@@ -315,8 +387,11 @@ export default function AdminSeriesPage() {
         ) : showTree ? (
           <SeriesHierarchyTree
             series={paginatedSeries}
-            // Passe ici les props pour saisons/épisodes arborescents
-            // ex: fetchSeasonsForSeries, fetchEpisodesForSeason, etc.
+            seriesSeasons={seriesSeasons}
+            fetchSeasonsForSeries={fetchSeasonsForSeries}
+            fetchEpisodesForSeason={fetchEpisodesForSeason}
+            seasonEpisodes={seasonEpisodes}
+            seasonEpisodesLoading={seasonEpisodesLoading}
             setModal={setModal}
           />
         ) : (
@@ -367,17 +442,18 @@ export default function AdminSeriesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-6">
+          <div className="flex justify-center items-center gap-2 mt-8">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
+              className="hover:bg-indigo-900/20"
               aria-label="Page précédente"
             >
               &larr;
             </Button>
-            <span className="text-xs text-gray-400 mx-2">
+            <span className="text-xs px-4 py-1 rounded bg-gray-800 text-indigo-300 border border-gray-700 shadow">
               Page {page} sur {totalPages}
             </span>
             <Button
@@ -385,6 +461,7 @@ export default function AdminSeriesPage() {
               size="sm"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
+              className="hover:bg-indigo-900/20"
               aria-label="Page suivante"
             >
               &rarr;
@@ -465,6 +542,9 @@ export default function AdminSeriesPage() {
             alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+            if (series_id) {
+              await fetchSeasonsForSeries(series_id);
+            }
           }
         }}
         initial={modal.payload}
@@ -498,6 +578,9 @@ export default function AdminSeriesPage() {
             alert("SUPABASE ERROR : " + JSON.stringify(error));
           } else {
             // Rafraîchir ici la hiérarchie/arborescence si nécessaire
+            if (series_id) {
+              await fetchSeasonsForSeries(series_id);
+            }
           }
         }}
         seriesId={modal.parentId}
