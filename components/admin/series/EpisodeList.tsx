@@ -112,7 +112,16 @@ export default function EpisodeList({
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        // Gère l'unicité (conflit 409 ou code erreur 23505 Postgres)
+        if (error.code === "23505" || error.message?.includes("duplicate key")) {
+          toast({
+            title: "Doublon d'épisode",
+            description: "Un épisode avec ce numéro existe déjà dans cette saison.",
+            variant: "destructive"
+          });
+        } else {
+          toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        }
         if (process.env.NODE_ENV === "development") console.error("Supabase insert error", error);
         return;
       }
