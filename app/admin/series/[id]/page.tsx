@@ -344,25 +344,6 @@ export default function AdminSeriesDetailPage() {
             >✕</button>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">Épisodes de la saison</h3>
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() =>
-                  setEpisodeModal({
-                    open: true,
-                    seasonId: episodesModal.seasonId,
-                    initial: undefined
-                  })
-                }
-                aria-label="Ajouter un épisode"
-                title="Ajouter un épisode"
-                className="p-2"
-              >
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 8v8M8 12h8" />
-                </svg>
-              </Button>
             </div>
             <EpisodeList
               seasonId={episodesModal.seasonId}
@@ -373,7 +354,6 @@ export default function AdminSeriesDetailPage() {
                   initial: ep
                 })
               }
-              showAddButton={false} // N'affiche pas le bouton dans ce contexte modal
             />
           </div>
         </div>
