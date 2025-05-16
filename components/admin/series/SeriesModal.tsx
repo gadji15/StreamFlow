@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SeriesModal({ open, onClose, onSave, initialData = {} }) {
+  if (!open) return null;
+
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
