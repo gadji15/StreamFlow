@@ -48,6 +48,10 @@ export default function EpisodeList({
   tmdbSeriesId = "",
   seasonNumber = ""
 }: EpisodeListProps) {
+  // Défense : log les IDs reçus
+  if (process.env.NODE_ENV === "development") {
+    console.log("EpisodeList received seriesId:", seriesId, "seasonId:", seasonId);
+  }
   // Défense : episodes toujours un tableau pour éviter les bugs d’affichage
   episodes = Array.isArray(episodes) ? episodes : [];
 
@@ -213,12 +217,26 @@ export default function EpisodeList({
         <Button
           variant="success"
           onClick={() => {
-            if (seasonNumber) setModalState({ open: true, mode: "add" });
+            if (!seriesId) {
+              alert("Impossible d’ajouter un épisode : série introuvable (seriesId manquant)");
+              return;
+            }
+            if (!seasonNumber) {
+              alert("Impossible d’ajouter un épisode : sélectionnez une saison.");
+              return;
+            }
+            setModalState({ open: true, mode: "add" });
           }}
           className="text-xs px-3 py-1"
           aria-label="Ajouter un épisode"
-          disabled={!seasonNumber || actionLoading}
-          title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
+          disabled={!seasonNumber || !seriesId || actionLoading}
+          title={
+            !seriesId
+              ? "Impossible d’ajouter un épisode : série introuvable."
+              : !seasonNumber
+              ? "Veuillez sélectionner une saison avant d’ajouter un épisode."
+              : ""
+          }
         >
           {actionLoading && modalState.open && modalState.mode === "add" ? (
             <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>

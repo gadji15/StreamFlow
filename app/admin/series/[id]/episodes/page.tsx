@@ -6,7 +6,11 @@ import EpisodeList from "@/components/admin/series/EpisodeList";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function EpisodesPage() {
-  const { id: seriesId } = useParams();
+  const params = useParams();
+  let seriesId = params?.id;
+  // Normalize catch-all or array param
+  if (Array.isArray(seriesId)) seriesId = seriesId[0];
+  console.log("EpisodesPage seriesId", seriesId, "params", params);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [error, setError] = useState(null);
