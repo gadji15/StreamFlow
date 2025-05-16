@@ -21,6 +21,8 @@ export default function AdminSeriesDetailPage() {
   // Modals
   const [seasonModal, setSeasonModal] = useState<{ open: boolean, initial?: any }>({ open: false });
   const [episodeModal, setEpisodeModal] = useState<{ open: boolean, initial?: any, seasonId?: string }>({ open: false });
+  const [episodeListModal, setEpisodeListModal] = useState<{ open: boolean, seasonId?: string }>({ open: false });
+
 
   // Recherche dynamique des saisons
   const [search, setSearch] = useState("");
@@ -269,14 +271,21 @@ export default function AdminSeriesDetailPage() {
                     <path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                   </svg>
                 </Button>
-                </div>
-            {/* Liste des épisodes */}
-            <div className="w-full md:w-auto mt-4 md:mt-0 flex-1">
-              <EpisodeList
-                seasonId={season.id}
-                onAddEpisode={() => setEpisodeModal({ open: true, seasonId: season.id, initial: undefined })}
-              />
-            </div>
+                {/* Episodes icon */}
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => setEpisodeModal({ open: false, seasonId: season.id, initial: undefined, list: true })}
+                  aria-label="Voir les épisodes"
+                  title="Gérer les épisodes"
+                  className="p-2"
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <path d="M8 8h8v8H8z" />
+                  </svg>
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -290,9 +299,85 @@ export default function AdminSeriesDetailPage() {
         initial={seasonModal.initial}
         seriesId={seriesId}
       />
+      {/* Modale des épisodes (liste et ajout) */}
+      {episodeModal.showList && episodeModal.seasonId && (
+        <EpisodeListModal
+          seasonId={episodeModal.seasonId}
+          onClose={() => setEpisodeModal({ open: false, seasonId: undefined, initial: undefined, showList: false })}
+          onAddEpisode={() => setEpisodeModal({
+            open: true, seasonId: episodeModal.seasonId, initial: undefined, showList: false
+          })}
+          onEditEpisode={episode =>
+            setEpisodeModal({
+              open: true,
+              seasonId: episodeModal.seasonId,
+              initial: episode,
+              showList: false
+            })
+          }
+        />
+      )}
+      {/* Modale d'ajout/édition d'épisode */}
+      {/* MODALE EPISODE LIST */}
+      {episodeModal.episodeListOpen && (
+        <EpisodeListModal
+          seasonId={episodeModal.seasonId!}
+          onClose={() => setEpisodeModal({ open: false, episodeListOpen: false })}
+          onAddEpisode={() =>
+            setEpisodeModal({
+              open: true,
+              seasonId: episodeModal.seasonId,
+              initial: undefined,
+              episodeListOpen: true,
+            })
+          }
+          onEditEpisode={initial =>
+            setEpisodeModal({
+              open: true,
+              seasonId: episodeModal.seasonId,
+              initial,
+              episodeListOpen: true,
+            })
+          }
+        />
+      )}
+      {/* EpisodeList modal */}
+      {episodeModal.list && episodeModal.seasonId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-white"
+              onClick={() => setEpisodeModal({ open: false })}
+              aria-label="Fermer"
+              title="Fermer"
+            >✕</button>
+            <h3 className="text-xl font-bold mb-4">Épisodes de la saison</h3>
+            <EpisodeList
+              seasonId={episodeModal.seasonId}
+              onAddEpisode={() =>
+                setEpisodeModal({
+                  open: true,
+                  seasonId: episodeModal.seasonId,
+                  initial: undefined,
+                  list: false,
+                })
+              }
+              onEditEpisode={ep =>
+                setEpisodeModal({
+                  open: true,
+                  seasonId: episodeModal.seasonId,
+                  initial: ep,
+                  list: false,
+                })
+              }
+            />
+          </div>
+        </div>
+      )}
+      {/* EpisodeModal */}
       <EpisodeModal
         open={episodeModal.open}
-        onClose={() => setEpisodeModal({ open: false })}
+        onClose={() => setEpisodeModal({ open: false, list: true, seasonId: episodeModal.seasonId })}
         seasonId={episodeModal.seasonId}
         initial={episodeModal.initial}
         onSubmit={values => {
