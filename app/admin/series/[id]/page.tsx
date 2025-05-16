@@ -269,25 +269,14 @@ export default function AdminSeriesDetailPage() {
                     <path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                   </svg>
                 </Button>
-                {/* Add episode icon */}
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={() => setEpisodeModal({ open: true, seasonId: season.id, initial: undefined })}
-                  aria-label="Ajouter un épisode"
-                  title="Ajouter un épisode"
-                  className="p-2"
-                >
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v8M8 12h8" />
-                  </svg>
-                </Button>
-              </div>
-              {/* Liste des épisodes */}
-              <div className="w-full md:w-auto mt-4 md:mt-0 flex-1">
-                <EpisodeList seasonId={season.id} />
-              </div>
+                </div>
+            {/* Liste des épisodes */}
+            <div className="w-full md:w-auto mt-4 md:mt-0 flex-1">
+              <EpisodeList
+                seasonId={season.id}
+                onAddEpisode={() => setEpisodeModal({ open: true, seasonId: season.id, initial: undefined })}
+              />
+            </div>
             </div>
           ))}
         </div>
