@@ -38,9 +38,10 @@ export default function EpisodeList({
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
       throw new Error(error.message);
     }
+    // Attendre le rafraîchissement AVANT de fermer la modale
+    await fetchEpisodesForSeason();
     toast({ title: "Épisode ajouté !" });
     setEpisodeModalOpen(false);
-    fetchEpisodesForSeason();
   }
 
   // Edition d'un épisode
