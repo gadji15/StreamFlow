@@ -1,6 +1,6 @@
 import React from "react";
 import SeasonRow from "./SeasonRow";
-import { Film } from "lucide-react";
+import { Clapperboard } from "lucide-react";
 
 export default function SeasonList({
   seasons,
@@ -29,7 +29,7 @@ export default function SeasonList({
             <tr>
               <td colSpan={5} className="py-8 text-center text-indigo-200">
                 <div className="flex flex-col items-center gap-2">
-                  <Film className="h-8 w-8 text-indigo-400 mb-1" />
+                  <Clapperboard className="h-8 w-8 text-indigo-400 mb-1" />
                   <span className="font-medium">Aucune saison enregistrée.</span>
                   <span className="text-xs text-gray-400">Ajoutez une saison pour cette série afin de mieux organiser le contenu.</span>
                 </div>
