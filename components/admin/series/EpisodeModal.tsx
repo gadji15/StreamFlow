@@ -209,6 +209,34 @@ export default function EpisodeModal({
       });
       return;
     }
+
+    // Vérification côté client de l'unicité du numéro d'épisode pour la saison
+    try {
+      const { data: existing, error } = await supabase
+        .from("episodes")
+        .select("id")
+        .eq("parent_season_number", form.parentSeasonNumber)
+        .eq("episode_number", Number(form.episode_number));
+      if (
+        existing &&
+        existing.length > 0 &&
+        (!form.id || !existing.some(e => e.id === form.id))
+      ) {
+        setErrors(prev => ({
+          ...prev,
+          episode_number: "Un épisode avec ce numéro existe déjà dans cette saison.",
+        }));
+        toast({
+          title: "Doublon",
+          description: "Un épisode avec ce numéro existe déjà dans cette saison.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (e) {
+      // Si l'appel à la base échoue, on peut continuer, la contrainte sera levée côté serveur.
+    }
+
     setLoading(true);
     try {
       // Nettoyage des champs
@@ -244,7 +272,20 @@ export default function EpisodeModal({
       toast({ title: "Épisode enregistré" });
       onClose();
     } catch (e) {
-      toast({ title: "Erreur", description: String(e), variant: "destructive" });
+      // Gestion spécifique du code d'erreur 23505 (doublon)
+      if (e.code === "23505" || (e.message && e.message.includes("duplicate key"))) {
+        setErrors(prev => ({
+          ...prev,
+          episode_number: "Un épisode avec ce numéro existe déjà dans cette saison.",
+        }));
+        toast({
+          title: "Doublon",
+          description: "Un épisode avec ce numéro existe déjà dans cette saison.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Erreur", description: String(e), variant: "destructive" });
+      }
     }
     setLoading(false);
   };
