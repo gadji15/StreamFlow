@@ -12,7 +12,10 @@ import SeriesHierarchyTree from "@/components/admin/series/SeriesHierarchyTree";
 import SeasonModal from "@/components/admin/series/SeasonModal";
 import EpisodeModal from "@/components/admin/series/EpisodeModal";
 
+import { useRouter } from "next/navigation";
+
 export default function AdminSeriesPage() {
+  const router = useRouter();
   // --- State principal
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -409,7 +412,7 @@ export default function AdminSeriesPage() {
               }
               // Arborescence (livres) : redirige vers la fiche admin série (liste saisons/épisodes)
               if (action === "expand" || action === "seasons") {
-                window.location.href = `/admin/series/${serie.id}`;
+                router.push(`/admin/series/${serie.id}`);
                 return;
               }
               if (action === "edit") setSeriesModal({ open: true, serie });
