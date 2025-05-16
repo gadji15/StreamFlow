@@ -1,62 +1,102 @@
-import React from "react";
-import SeasonRow from "./SeasonRow";
-import { Clapperboard } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import EpisodeList from "./EpisodeList";
+import { useToast } from "@/components/ui/use-toast";
 
-export default function SeasonList({
-  seasons,
-  seriesId,
-  expandedSeason,
-  setExpandedSeason,
-  fetchEpisodesForSeason,
-  seasonEpisodes,
-  seasonEpisodesLoading,
-  onAction
-}) {
+type Season = {
+  id: string;
+  season_number: number;
+  title?: string;
+  overview?: string;
+  episode_count?: number;
+  // ...autres champs utiles
+};
+
+interface SeasonListProps {
+  seriesId: string;
+}
+
+export default function SeasonList({ seriesId }: SeasonListProps) {
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+
+  const { toast } = useToast();
+
+  // Fetch les saisons de la série
+  const fetchSeasons = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from("seasons")
+        .select("*")
+        .eq("series_id", seriesId)
+        .order("season_number", { ascending: true });
+      if (error) throw error;
+      setSeasons(data || []);
+      // Sélectionner la première saison par défaut
+      if (data && data.length > 0) setSelectedSeasonId(data[0].id);
+    } catch (e: any) {
+      setError(e?.message || "Erreur de chargement des saisons");
+      setSeasons([]);
+      toast({ title: "Erreur", description: e?.message || "Erreur de chargement", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [seriesId, toast]);
+
+  useEffect(() => { fetchSeasons(); }, [fetchSeasons]);
+
+  if (loading) {
+    return (
+      <div className="py-6 flex justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-6 text-red-400">
+        <p>{error}</p>
+        <Button onClick={fetchSeasons} className="mt-2">Réessayer</Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 shadow-lg mb-2 overflow-x-auto">
-      <table className="min-w-full text-sm rounded-xl" role="table" aria-label="Liste des saisons">
-        <thead>
-          <tr className="text-indigo-300 border-b border-gray-700">
-            <th className="py-3 px-2 text-left font-bold tracking-wide">#</th>
-            <th className="py-3 px-2 text-left font-bold tracking-wide">Titre</th>
-            <th className="py-3 px-2 text-left font-bold tracking-wide">Date</th>
-            <th className="py-3 px-2 text-left font-bold tracking-wide">Épisodes</th>
-            <th className="py-3 px-2 text-left font-bold tracking-wide">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {seasons.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-8 text-center text-indigo-200">
-                <div className="flex flex-col items-center gap-2">
-                  <Clapperboard className="h-8 w-8 text-indigo-400 mb-1" />
-                  <span className="font-medium">Aucune saison enregistrée.</span>
-                  <span className="text-xs text-gray-400">Ajoutez une saison pour cette série afin de mieux organiser le contenu.</span>
-                </div>
-              </td>
-            </tr>
-          )}
+    <div>
+      <h2 className="text-lg font-semibold mb-2">Saisons</h2>
+      {seasons.length === 0 ? (
+        <div className="text-gray-400">Aucune saison enregistrée.</div>
+      ) : (
+        <div className="flex gap-2 mb-4 flex-wrap">
           {seasons.map(season => (
-            <React.Fragment key={season.id}>
-              <SeasonRow
-                season={season}
-                seriesId={seriesId}
-                expanded={expandedSeason === season.id}
-                onExpand={() => {
-                  if (expandedSeason === season.id) setExpandedSeason(null);
-                  else {
-                    setExpandedSeason(season.id);
-                    fetchEpisodesForSeason(season.id);
-                  }
-                }}
-                seasonEpisodes={seasonEpisodes[season.id] || []}
-                seasonEpisodesLoading={seasonEpisodesLoading[season.id]}
-                onAction={onAction}
-              />
-            </React.Fragment>
+            <Button
+              key={season.id}
+              variant={season.id === selectedSeasonId ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSeasonId(season.id)}
+            >
+              Saison {season.season_number} {season.title ? `- ${season.title}` : ""}
+            </Button>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
+
+      {/* Liste des épisodes de la saison sélectionnée */}
+      {selectedSeasonId && (
+        <EpisodeList
+          seasonId={selectedSeasonId}
+          seriesId={seriesId}
+          fetchEpisodesForSeason={async () => {}} {/* à adapter selon logique EpisodeList */}
+          episodesLoading={false}
+          episodes={undefined} {/* EpisodeList devra être adapté pour gérer le fetch interne ou via prop */}
+        />
+      )}
     </div>
   );
 }
