@@ -14,6 +14,8 @@ export default function EpisodeList({
   tmdbSeriesId = "",
   seasonNumber = ""
 }) {
+  // Défense : toujours un tableau, même si parent passe null/undefined
+  episodes = episodes || [];
   const { toast } = useToast();
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
