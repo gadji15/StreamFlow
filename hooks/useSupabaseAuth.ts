@@ -15,6 +15,7 @@ export function useSupabaseAuth() {
 
   useEffect(() => {
     let ignore = false
+    // On considère qu'on est "toujours en chargement" tant que userData est null mais user est présent
     if (user?.id) {
       setProfileLoading(true)
       Promise.all([
@@ -32,6 +33,9 @@ export function useSupabaseAuth() {
         })
         setIsVIP(!!profile?.is_vip)
         setIsAdmin(roles.includes('admin') || roles.includes('super_admin'))
+        setProfileLoading(false)
+      }).catch(() => {
+        if (ignore) return
         setProfileLoading(false)
       })
     } else {

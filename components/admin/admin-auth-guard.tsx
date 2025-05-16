@@ -31,7 +31,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   }, [isAdmin, isLoading, userData, router]);
 
   // Afficher un écran de chargement tant que l'état d'auth n'est pas déterminé
-  if (isLoading || isAdmin === null) {
+  if (isLoading || (user && userData === null)) {
     return (
       <div style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span>Chargement...</span>
