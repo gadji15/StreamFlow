@@ -260,7 +260,13 @@ export default function AdminSeriesDetailPage() {
           onChange={e => setSearch(e.target.value)}
         />
         <Button
-          onClick={() => setSeasonModal({ open: true })}
+          onClick={() => {
+            if (serie && serie.tmdb_id) {
+              setSeasonModal({ open: true });
+            } else {
+              alert("Impossible d’ajouter une saison tant que l’identifiant TMDB de la série n’est pas chargé !");
+            }
+          }}
           className="ml-0 md:ml-auto flex gap-2 items-center"
           variant="outline"
         >

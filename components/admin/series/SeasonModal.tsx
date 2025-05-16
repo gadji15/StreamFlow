@@ -55,10 +55,11 @@ export default function SeasonModal({
 
   // Prendre le tmdbSeriesId du parent à chaque ouverture de la modale (création)
   useEffect(() => {
-    if (open && !initialData.id && tmdbSeriesId) {
+    if (open && !initialData.id) {
+      console.log("DEBUG ouverture modal - tmdbSeriesId reçu :", tmdbSeriesId);
       setForm(f => ({
         ...f,
-        tmdb_series_id: String(tmdbSeriesId)
+        tmdb_series_id: tmdbSeriesId ? String(tmdbSeriesId) : ""
       }));
     }
     // Ne rien faire si édition (on garde la valeur existante)
