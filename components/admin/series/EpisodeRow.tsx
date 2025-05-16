@@ -15,6 +15,9 @@ export default function SeasonRow({
   seasonEpisodesLoading,
   onAction,
 }) {
+  // Protection contre season indéfini
+  if (!season) return null;
+
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
