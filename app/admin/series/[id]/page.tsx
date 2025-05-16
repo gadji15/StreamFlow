@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import SeasonModal from "@/components/admin/series/SeasonModal";
+import EpisodeList from "@/components/admin/series/EpisodeList";
+import EpisodeModal from "@/components/admin/series/EpisodeModal";
 
 export default function AdminSeriesDetailPage() {
   const params = useParams();
@@ -16,10 +18,23 @@ export default function AdminSeriesDetailPage() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Gestion modal saison
+  // Modals
   const [seasonModal, setSeasonModal] = useState<{ open: boolean, initial?: any }>({ open: false });
+  const [episodeModal, setEpisodeModal] = useState<{ open: boolean, initial?: any, seasonId?: string }>({ open: false });
 
-  // Charger la série
+  // Recherche dynamique des saisons
+  const [search, setSearch] = useState("");
+  const filteredSeasons = useMemo(() =>
+    search.trim()
+      ? seasons.filter(
+          s =>
+            (s.title || "").toLowerCase().includes(search.trim().toLowerCase()) ||
+            String(s.season_number).includes(search.trim())
+        )
+      : seasons
+    , [search, seasons]);
+
+  // Fetch série + saisons
   useEffect(() => {
     async function fetchSerieAndSeasons() {
       setLoading(true);
@@ -53,7 +68,7 @@ export default function AdminSeriesDetailPage() {
     if (seriesId) fetchSerieAndSeasons();
   }, [seriesId, toast]);
 
-  // Sauvegarde saison (ajout ou modif)
+  // Ajout/édition saison
   const handleSaveSeason = async (values: any) => {
     const isEdit = !!values.id;
     try {
@@ -89,62 +104,195 @@ export default function AdminSeriesDetailPage() {
     }
   };
 
+  // Suppression saison
+  const handleDeleteSeason = async (seasonId: string) => {
+    if (!window.confirm("Supprimer définitivement cette saison ?")) return;
+    try {
+      const { error } = await supabase.from("seasons").delete().eq("id", seasonId);
+      if (error) throw error;
+      toast({ title: "Saison supprimée" });
+      setSeasons(seasons => seasons.filter(s => s.id !== seasonId));
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || String(err), variant: "destructive" });
+    }
+  };
+
+  // Ajout/édition épisode
+  const handleSaveEpisode = async (values: any, seasonId: string) => {
+    try {
+      const payload = {
+        ...values,
+        season_id: seasonId,
+        tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
+        episode_number: values.episode_number ? Number(values.episode_number) : null,
+      };
+      Object.keys(payload).forEach(k => {
+        if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
+      });
+      let result;
+      if (values.id) {
+        result = await supabase.from("episodes").update(payload).eq("id", values.id);
+      } else {
+        result = await supabase.from("episodes").insert([payload]);
+      }
+      if (result.error) throw result.error;
+      toast({ title: values.id ? "Épisode modifié" : "Épisode ajouté" });
+      setEpisodeModal({ open: false });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || String(err), variant: "destructive" });
+    }
+  };
+
   if (loading) return <div className="p-8 text-xl">Chargement…</div>;
   if (!serie) return <div className="p-8 text-xl text-red-500">Série introuvable</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-2">{serie.title}</h1>
-      <div className="text-gray-400 mb-4">{serie.creator || "Créateur inconnu"}</div>
-      <div className="mb-8">{serie.description}</div>
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header Série */}
+      <div className="flex flex-col md:flex-row gap-8 border-b border-gray-700 pb-6 mb-8">
+        <img
+          src={serie.poster || "/placeholder-backdrop.jpg"}
+          alt={serie.title}
+          className="w-40 h-60 object-cover rounded shadow border border-gray-700 bg-gray-800"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-4 mb-2">
+            <h1 className="text-3xl font-bold">{serie.title}</h1>
+            {serie.tmdb_id && (
+              <a
+                href={`https://www.themoviedb.org/tv/${serie.tmdb_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-400 hover:underline"
+                title="Voir sur TMDB"
+              >
+                TMDB ↗
+              </a>
+            )}
+          </div>
+          <div className="text-gray-400 mb-2">Créateur : <b>{serie.creator || "N/A"}</b></div>
+          <div className="flex gap-6 mb-2">
+            <div>Première diffusion : <b>{serie.start_year || "?"}</b></div>
+            <div>Dernière diffusion : <b>{serie.end_year || "?"}</b></div>
+            <div>Note : <b>{serie.vote_average ? Number(serie.vote_average).toFixed(1) : "-"}</b></div>
+            <div>Statut : <b>{serie.published ? "Publiée" : "Brouillon"}</b></div>
+            <div>VIP : <b>{serie.isvip ? "Oui" : "Non"}</b></div>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {Array.isArray(serie.genres)
+              ? serie.genres.map((g: string) => (
+                  <span key={g} className="px-2 py-0.5 bg-indigo-700/30 text-indigo-200 rounded text-xs">{g}</span>
+                ))
+              : null}
+          </div>
+          <div className="text-sm mt-2 text-gray-300">{serie.description}</div>
+        </div>
+      </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Saisons</h2>
-        <Button onClick={() => setSeasonModal({ open: true })}>
-          Ajouter une saison
+      {/* Recherche saisons & ajout */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
+        <input
+          type="search"
+          className="w-full max-w-xs border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white"
+          placeholder="Rechercher une saison (titre ou numéro)…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <Button onClick={() => setSeasonModal({ open: true })} className="ml-auto">
+          + Ajouter une saison
         </Button>
       </div>
-      {seasons.length === 0 ? (
-        <div className="text-gray-500 mb-8">Aucune saison pour cette série.</div>
+
+      {/* Liste des saisons */}
+      {filteredSeasons.length === 0 ? (
+        <div className="text-gray-400 italic mb-8">Aucune saison trouvée.</div>
       ) : (
-        <table className="w-full mb-8 border border-gray-700 rounded">
-          <thead>
-            <tr className="bg-gray-800">
-              <th className="py-2 px-3 text-left">#</th>
-              <th className="py-2 px-3 text-left">Titre</th>
-              <th className="py-2 px-3 text-left">Date</th>
-              <th className="py-2 px-3 text-left">Épisodes</th>
-              <th className="py-2 px-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {seasons.map(season => (
-              <tr key={season.id} className="border-t border-gray-700">
-                <td className="py-2 px-3">{season.season_number}</td>
-                <td className="py-2 px-3">{season.title}</td>
-                <td className="py-2 px-3">{season.air_date}</td>
-                <td className="py-2 px-3">{season.episode_count}</td>
-                <td className="py-2 px-3">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSeasonModal({ open: true, initial: season })}
-                  >
-                    Modifier
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="grid gap-6 mb-12">
+          {filteredSeasons.map(season => (
+            <div
+              key={season.id}
+              className="bg-gray-900 border border-gray-700 rounded-lg shadow flex flex-col md:flex-row items-stretch md:items-center p-4 gap-6"
+            >
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <img
+                  src={season.poster || "/placeholder-backdrop.jpg"}
+                  alt={season.title || `Saison ${season.season_number}`}
+                  className="w-20 h-28 object-cover rounded shadow border border-gray-700 bg-gray-800"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold">Saison {season.season_number}</span>
+                    {season.tmdb_id && (
+                      <a
+                        href={`https://www.themoviedb.org/tv/${serie.tmdb_id}/season/${season.season_number}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-indigo-400 hover:underline"
+                        title="Voir sur TMDB"
+                      >
+                        TMDB ↗
+                      </a>
+                    )}
+                  </div>
+                  <div className="text-gray-300 mb-1">{season.title}</div>
+                  <div className="flex gap-4 text-sm text-gray-400">
+                    <span>Date : <b>{season.air_date || "-"}</b></span>
+                    <span>Épisodes : <b>{season.episode_count || "-"}</b></span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-2">{season.description}</div>
+                </div>
+              </div>
+              <div className="flex md:flex-col gap-2 md:items-end items-center mt-4 md:mt-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSeasonModal({ open: true, initial: season })}
+                  aria-label="Modifier la saison"
+                >
+                  Modifier
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleDeleteSeason(season.id)}
+                  aria-label="Supprimer la saison"
+                >
+                  Supprimer
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setEpisodeModal({ open: true, seasonId: season.id })}
+                  aria-label="Ajouter un épisode"
+                >
+                  + Épisode
+                </Button>
+              </div>
+              {/* Liste des épisodes */}
+              <div className="w-full md:w-auto mt-4 md:mt-0 flex-1">
+                <EpisodeList seasonId={season.id} />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
+      {/* Modales */}
       <SeasonModal
         open={seasonModal.open}
         onClose={() => setSeasonModal({ open: false })}
         onSave={handleSaveSeason}
         initial={seasonModal.initial}
         seriesId={seriesId}
+      />
+      <EpisodeModal
+        open={episodeModal.open}
+        onClose={() => setEpisodeModal({ open: false })}
+        seasonId={episodeModal.seasonId}
+        initial={episodeModal.initial}
+        onSubmit={values => {
+          if (episodeModal.seasonId)
+            return handleSaveEpisode(values, episodeModal.seasonId);
+        }}
       />
     </div>
   );
