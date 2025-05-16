@@ -7,35 +7,12 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function EpisodesPage() {
   const params = useParams();
-  // Analyse défensive : log l’URL et les params côté client, à chaque rendu
-  import { useEffect } from "react";
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("DEBUG PATHNAME", window.location.pathname);
-      console.log("DEBUG PARAMS OBJECT", params);
-    }
-  }, [params]);
-
-  // Extraction robuste du bon paramètre (id, seriesId, series, etc.)
-  let seriesId =
-    params?.id ||
-    params?.seriesId ||
-    params?.series ||
-    (Array.isArray(params) && params[0]) ||
-    undefined;
+  // DEBUG: Always display params at the top of the page for diagnosis!
+  const debugParams = JSON.stringify(params, null, 2);
+  // Extract seriesId robustly (try all likely keys)
+  let seriesId = params?.id || params?.seriesId || params?.series || "";
   if (Array.isArray(seriesId)) seriesId = seriesId[0];
 
-  // Sécurité : si jamais sérieId est absent, on bloque tout
-  if (!seriesId) {
-    return (
-      <div className="p-4 text-red-500 font-bold">
-        Erreur : impossible de déterminer l’identifiant de la série depuis l’URL.<br />
-        <pre>{JSON.stringify(params, null, 2)}</pre>
-        <pre>{typeof window !== "undefined" ? window.location.pathname : ""}</pre>
-      </div>
-    );
-  }
-  console.log("EpisodesPage seriesId (ALWAYS DEFINED, robust extraction)", seriesId, "params", params);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -140,13 +117,13 @@ export default function EpisodesPage() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-4">Épisodes de la série</h1>
-      {/* Bloc debug toujours affiché, même si showParams est false */}
-      <div className="bg-red-900 text-yellow-200 rounded p-3 mb-4 text-xs">
+      {/* Bloc DEBUG toujours visible */}
+      <div className="bg-gray-900 text-green-300 rounded p-3 mb-4 text-xs">
         <b>DEBUG PARAMS (useParams):</b>
-        <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(params, null, 2)}</pre>
+        <pre style={{ whiteSpace: "pre-wrap" }}>{debugParams}</pre>
         <b>seriesId extrait :</b> {String(seriesId)}
       </div>
+      <h1 className="text-2xl font-bold text-white mb-4">Épisodes de la série</h1>
       <div className="mb-3">
         <label htmlFor="season-picker" className="block text-sm text-white font-medium mb-1">
           Saison :
@@ -166,6 +143,18 @@ export default function EpisodesPage() {
       </div>
       <EpisodeList
         episodes={episodes}
+        seasonId={seasonId}
+        seriesId={seriesId}
+        fetchEpisodesForSeason={fetchEpisodesForSeason}
+        episodesLoading={episodesLoading}
+        error={error}
+        seriesTitle={seriesTitle}
+        tmdbSeriesId={tmdbSeriesId}
+        seasonNumber={seasonNumber}
+      />
+    </div>
+  );
+}
         seasonId={seasonId}
         seriesId={seriesId}
         fetchEpisodesForSeason={fetchEpisodesForSeason}
