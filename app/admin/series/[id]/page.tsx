@@ -93,25 +93,53 @@ export default function AdminSeriesDetailPage() {
     const isEdit = !!values.id;
     try {
       if (!serie) throw new Error("Série introuvable");
+      // Correction : on force la récupération de tmdb_series_id depuis values ET on vérifie sa présence
+      const tmdbSeriesIdForInsert = values.tmdb_series_id || (serie && serie.tmdb_id) || null;
+      if (!tmdbSeriesIdForInsert) {
+        toast({
+          title: "Erreur",
+          description: "L'identifiant TMDB de la série est obligatoire. Merci de le renseigner dans le formulaire.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const payload = {
         ...values,
-        season_number: Number(values.season_number),
-        series_id: seriesId,
+        title: values.title || null,
+        season_number: values.season_number ? Number(values.season_number) : null,
+        series_id: seriesId || null,
         tmdb_id: values.tmdb_id ? Number(values.tmdb_id) : null,
-        episode_count: values.episode_count ? Number(values.episode_count) : null
+        episode_count: values.episode_count ? Number(values.episode_count) : null,
+        air_date: values.air_date || null,
+        poster: values.poster || null,
+        description: values.description || null,
+        tmdb_series_id: Number(tmdbSeriesIdForInsert),
       };
       Object.keys(payload).forEach(
         k => {
           if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
         }
       );
+      console.log("Saison payload (après correction tmdb_series_id)", payload);
       let result;
       if (isEdit) {
         result = await supabase.from("seasons").update(payload).eq("id", values.id);
       } else {
-        result = await supabase.from("seasons").insert([payload]);
+        result = await supabase.from("seasons").insert([payload]).select().single();
       }
       if (result.error) throw result.error;
+      if (!result.data) {
+        toast({
+          title: "Erreur à l'insertion",
+          description: "La saison n'a pas été créée. Vérifiez vos règles de sécurité (RLS), les champs obligatoires, ou la validité du payload.",
+          variant: "destructive"
+        });
+        if (process.env.NODE_ENV === "development") {
+          console.error("SAISON NON INSÉRÉE", { result, payload });
+        }
+        return;
+      }
       toast({ title: isEdit ? "Saison modifiée" : "Saison ajoutée" });
       setSeasonModal({ open: false });
       // Refresh seasons
@@ -243,7 +271,13 @@ export default function AdminSeriesDetailPage() {
           onChange={e => setSearch(e.target.value)}
         />
         <Button
-          onClick={() => setSeasonModal({ open: true })}
+          onClick={() => {
+            if (serie && serie.tmdb_id) {
+              setSeasonModal({ open: true });
+            } else {
+              alert("Impossible d’ajouter une saison tant que l’identifiant TMDB de la série n’est pas chargé !");
+            }
+          }}
           className="ml-0 md:ml-auto flex gap-2 items-center"
           variant="outline"
         >
@@ -338,6 +372,7 @@ export default function AdminSeriesDetailPage() {
         onSave={handleSaveSeason}
         initial={seasonModal.initial}
         seriesId={seriesId}
+        tmdbSeriesId={serie.tmdb_id}
       />
 
       {/* Modale EpisodeList */}

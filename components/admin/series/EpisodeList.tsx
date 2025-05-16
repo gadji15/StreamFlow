@@ -48,6 +48,10 @@ export default function EpisodeList({
   tmdbSeriesId = "",
   seasonNumber = ""
 }: EpisodeListProps) {
+  // Défense : log les IDs reçus
+  if (process.env.NODE_ENV === "development") {
+    console.log("EpisodeList received seriesId:", seriesId, "seasonId:", seasonId);
+  }
   // Défense : episodes toujours un tableau pour éviter les bugs d’affichage
   episodes = Array.isArray(episodes) ? episodes : [];
 
@@ -61,21 +65,64 @@ export default function EpisodeList({
   const [actionLoading, setActionLoading] = useState(false);
 
   // Ajout d'un épisode
-  async function handleAddEpisode(form: EpisodeFormInput) {
+  async function handleAddEpisode(form: EpisodeFormInput & { [key: string]: any }) {
+    if (!seriesId) {
+      toast({ title: "Erreur", description: "Série introuvable (seriesId manquant)", variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: seriesId is missing", { form, seasonId, seriesId });
+      return;
+    }
+    if (!seasonId) {
+      toast({ title: "Erreur", description: "Saison introuvable (seasonId manquant)", variant: "destructive" });
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: seasonId is missing", { form, seasonId, seriesId });
+      return;
+    }
     setActionLoading(true);
     try {
+      // Log the form received
+      if (process.env.NODE_ENV === "development") {
+        console.log("handleAddEpisode: form received", form);
+      }
+      // Remap fields to match the database
       const insertObj = {
-        ...form,
         season_id: seasonId,
         series_id: seriesId,
+        episode_number: form.episode_number,
+        title: form.title,
+        description: form.description || '',
+        video_url: form.video_url || null,
+        trailer_url: form.trailer_url || null,
+        thumbnail_url: form.thumbnail_url || null,
+        air_date: form.air_date || null,
+        isvip: form.isvip ?? false,
+        published: form.published ?? false,
+        video_unavailable: form.video_unavailable ?? false,
+        tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
+        tmdb_series_id: form.tmdb_series_id || null,
         sort_order: episodes.length,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        runtime: form.runtime ? Number(form.runtime) : null, // correspond à la durée
+        poster: form.poster || null,
+        vote_count: form.vote_count ? Number(form.vote_count) : null,
+        vote_average: form.vote_average ? Number(form.vote_average) : null
       };
-      const { error } = await supabase.from("episodes").insert([insertObj]);
+      if (process.env.NODE_ENV === "development") {
+        console.log("handleAddEpisode: insertObj for Supabase", insertObj);
+      }
+      const { data: userData } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
-        if (process.env.NODE_ENV === "development") console.error(error);
+        if (process.env.NODE_ENV === "development") console.error("Supabase insert error", error);
+        return;
+      }
+      if (!data) {
+        toast({ 
+          title: "Problème d’insertion (RLS ?)", 
+          description: `Aucun épisode créé. user_id courant : ${(userData && userData.user && userData.user.id) || "non connecté"}. Vérifiez le rôle dans user_roles_flat.`,
+          variant: "destructive"
+        });
+        if (process.env.NODE_ENV === "development") console.error("Insert result:", { data, error, user: userData });
         return;
       }
       await fetchEpisodesForSeason?.();
@@ -83,7 +130,7 @@ export default function EpisodeList({
       toast({ title: "Épisode ajouté !" });
     } catch (err) {
       toast({ title: "Erreur inconnue", description: String(err), variant: "destructive" });
-      if (process.env.NODE_ENV === "development") console.error(err);
+      if (process.env.NODE_ENV === "development") console.error("handleAddEpisode: catch error", err);
     } finally {
       setActionLoading(false);
     }
@@ -170,12 +217,26 @@ export default function EpisodeList({
         <Button
           variant="success"
           onClick={() => {
-            if (seasonNumber) setModalState({ open: true, mode: "add" });
+            if (!seriesId) {
+              alert("Impossible d’ajouter un épisode : série introuvable (seriesId manquant)");
+              return;
+            }
+            if (!seasonNumber) {
+              alert("Impossible d’ajouter un épisode : sélectionnez une saison.");
+              return;
+            }
+            setModalState({ open: true, mode: "add" });
           }}
           className="text-xs px-3 py-1"
           aria-label="Ajouter un épisode"
-          disabled={!seasonNumber || actionLoading}
-          title={!seasonNumber ? "Veuillez sélectionner une saison avant d’ajouter un épisode." : ""}
+          disabled={!seasonNumber || !seriesId || actionLoading}
+          title={
+            !seriesId
+              ? "Impossible d’ajouter un épisode : série introuvable."
+              : !seasonNumber
+              ? "Veuillez sélectionner une saison avant d’ajouter un épisode."
+              : ""
+          }
         >
           {actionLoading && modalState.open && modalState.mode === "add" ? (
             <span className="animate-spin mr-2 inline-block h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></span>
@@ -264,8 +325,3 @@ export default function EpisodeList({
     </div>
   );
 }
-
-
-
-
-quand j'appuie sur enregistrer pour ajouter une episode , il ne saffiche pas dans episodelist: il n'est pas enregistré

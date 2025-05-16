@@ -10,11 +10,12 @@ export function useSupabaseAuth() {
   const { user, loading } = useCurrentUser()
   const [userData, setUserData] = useState<any>(null)
   const [profileLoading, setProfileLoading] = useState(true)
-  const [isVIP, setIsVIP] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isVIP, setIsVIP] = useState<boolean | null>(null)
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
 
   useEffect(() => {
     let ignore = false
+    // On considère qu'on est "toujours en chargement" tant que userData est null mais user est présent
     if (user?.id) {
       setProfileLoading(true)
       Promise.all([
@@ -33,11 +34,14 @@ export function useSupabaseAuth() {
         setIsVIP(!!profile?.is_vip)
         setIsAdmin(roles.includes('admin') || roles.includes('super_admin'))
         setProfileLoading(false)
+      }).catch(() => {
+        if (ignore) return
+        setProfileLoading(false)
       })
     } else {
       setUserData(null)
-      setIsVIP(false)
-      setIsAdmin(false)
+      setIsVIP(null)
+      setIsAdmin(null)
       setProfileLoading(false)
     }
     return () => { ignore = true }
@@ -52,9 +56,16 @@ export function useSupabaseAuth() {
     isLoading: loading || profileLoading,
   });
 
+  // On est "en chargement" si :
+  // - la session Supabase est en cours OU
+  // - le profil est en cours OU
+  // - on a un user authentifié MAIS userData (profil complet) n'est pas encore chargé
+  const realIsLoading = loading || profileLoading || (user && userData === null);
+
   return {
+    user,
     isLoggedIn: !!user,
-    isLoading: loading || profileLoading,
+    isLoading: realIsLoading,
     userData,
     isVIP,
     isAdmin,
