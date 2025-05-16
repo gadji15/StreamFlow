@@ -19,7 +19,7 @@ export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason
     const insertObj = {
       ...form,
       season_id: seasonId,
-      order: episodes.length, // place à la fin
+      sort_order: episodes.length, // place à la fin
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -38,9 +38,9 @@ export default function EpisodeList({ episodes, seasonId, fetchEpisodesForSeason
     const reordered = [...episodes];
     const [removed] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, removed);
-    // Update order field in DB (assume field: "order")
+    // Update sort_order field in DB (use correct field: "sort_order")
     await Promise.all(reordered.map((ep, idx) =>
-      supabase.from("episodes").update({ order: idx }).eq('id', ep.id)
+      supabase.from("episodes").update({ sort_order: idx }).eq('id', ep.id)
     ));
     fetchEpisodesForSeason();
     toast({ title: "Ordre des épisodes mis à jour" });
