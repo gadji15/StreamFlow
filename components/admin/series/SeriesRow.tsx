@@ -104,7 +104,14 @@ export default function SeriesRow({
             type="button"
             aria-label={`Afficher saisons et épisodes pour "${serie.title}"`}
             className="bg-gray-700 text-white px-2 rounded"
-            onClick={() => onAction && onAction("expand", serie)}
+            onClick={() => {
+              console.log("[SeriesRow] CLICK expand", serie.id);
+              if (onAction) {
+                onAction("expand", serie);
+              } else {
+                console.warn("[SeriesRow] onAction prop is missing");
+              }
+            }}
           >
             📚
           </button>
