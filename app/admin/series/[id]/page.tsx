@@ -377,15 +377,19 @@ export default function AdminSeriesPage() {
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
-            onAction={async (action, serie) => {
-              // Aperçu (œil) : redirige vers la fiche publique ou admin de la série
+            onAction={(action, serie) => {
+              console.log("[AdminSeriesPage /[id]] ACTION:", action, serie && serie.id);
               if (action === "preview") {
                 window.open(`/series/${serie.id}`, "_blank");
                 return;
               }
-              // Arborescence (livres) : redirige vers la fiche admin série (liste saisons/épisodes)
               if (action === "expand" || action === "seasons") {
-                router.push(`/admin/series/${serie.id}`);
+                console.log("[AdminSeriesPage /[id]] NAVIGATION:", `/admin/series/${serie.id}`);
+                try {
+                  router.push(`/admin/series/${serie.id}`);
+                } catch (e) {
+                  console.error("[AdminSeriesPage /[id]] router.push error:", e);
+                }
                 return;
               }
               if (action === "edit") setSeriesModal({ open: true, serie });
