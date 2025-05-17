@@ -683,35 +683,35 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
               // Vérification anti-doublon AVANT import
               if (importedTitle && importedYear) {
-                // Vérification côté base (insensible à la casse et aux espaces)
+                // Recherche plus large : pattern ILIKE avec wildcards pour éviter tout faux négatif
+                const pattern = `%${importedTitle.replace(/\s+/g, ' ').trim()}%`;
                 const { data: dataCheck, error: errorCheck } = await supabase
                   .from('films')
                   .select('id, title, year')
-                  .ilike('title', importedTitle.replace(/\s+/g, ' ').trim())
-                  .eq('year', Number(importedYear))
-                  .limit(1);
+                  .ilike('title', pattern)
+                  .eq('year', Number(importedYear));
 
                 if (errorCheck) {
                   toast({ title: "Erreur", description: String(errorCheck), variant: "destructive" });
                   return;
                 }
-                // Pour une robustesse maximale, double check côté JS (trim, lowercase)
+                // Vérification JS robuste sur chaque résultat retourné
                 if (
                   dataCheck &&
                   dataCheck.length > 0 &&
                   dataCheck.some(
                     (film) =>
                       film.title &&
-                      film.title.trim().toLowerCase() === importedTitle.replace(/\s+/g, ' ').trim().toLowerCase() &&
+                      film.title.replace(/\s+/g, ' ').trim().toLowerCase() === importedTitle.replace(/\s+/g, ' ').trim().toLowerCase() &&
                       Number(film.year) === Number(importedYear)
                   )
                 ) {
                   toast({
                     title: "Ce film existe déjà",
-                    description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                    description: "Un film avec ce titre et cette année est déjà présent dans votre base.",
                     variant: "destructive",
                   });
-                  return;
+                  return; // On bloque l'import
                 }
               }
 
