@@ -124,7 +124,7 @@ export default function ImageUpload({
   return (
     <div className={className}>
       {previewUrl ? (
-        <div className="relative rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
+        <div className="relative rounded-lg overflow-hidden border border-gray-700">
           <img 
             src={previewUrl} 
             alt="Aperçu" 
@@ -163,7 +163,7 @@ export default function ImageUpload({
         </div>
       ) : (
         <div 
-          className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center hover:border-primary cursor-pointer transition-colors"
+          className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-primary cursor-pointer transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           <div className="flex flex-col items-center justify-center">
@@ -171,7 +171,7 @@ export default function ImageUpload({
             <p className="text-sm font-medium mb-1">
               {isUploading ? 'Upload en cours...' : 'Cliquez pour sélectionner une image'}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-400">
               JPG, PNG ou WebP • Max {maxSizeMB}MB
             </p>
             {uploadError && (

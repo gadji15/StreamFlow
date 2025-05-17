@@ -57,7 +57,7 @@ export default function AdminHeader({ title, onMenuToggle }: AdminHeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium">{userData?.displayName || 'Admin'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{userData?.email}</p>
+                <p className="text-xs text-gray-400">{userData?.email}</p>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
