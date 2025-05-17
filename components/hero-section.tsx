@@ -81,14 +81,17 @@ function HeroSection() {
   const currentMovie = featuredMovies[currentIndex];
   
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden bg-muted">
       {/* Background avec effet parallaxe */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-muted"
+          // On supprime le gradient noir, on peut garder une légère transparence si besoin
           style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${currentMovie.backdropUrl})` 
+            // backgroundColor: "rgba(24,24,28,0.92)", // Gris foncé, optionnel sinon via bg-muted
+            backgroundImage: `url(${currentMovie.backdropUrl})`,
+            opacity: 0.18, // Pour donner un effet subtil, à ajuster selon rendu souhaité
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -170,7 +173,7 @@ function HeroSection() {
       
       {/* Boutons de navigation */}
       <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-muted/80 text-white"
         onClick={goToPrevious}
         aria-label="Film précédent"
       >
@@ -178,7 +181,7 @@ function HeroSection() {
       </button>
       
       <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-muted/80 text-white"
         onClick={goToNext}
         aria-label="Film suivant"
       >
