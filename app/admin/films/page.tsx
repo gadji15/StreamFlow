@@ -744,6 +744,9 @@ export default function AdminFilmsPage() {
                                   boxShadow: "0 6px 32px 0 rgb(0 0 0 / 0.22)"
                                 }}
                               >
+                                <DialogHeader>
+                                  <DialogTitle>Actions film</DialogTitle>
+                                </DialogHeader>
                                 {/* Aperçu film (mini header dans la modale) */}
                                 <div className="flex items-center gap-3 px-4 pt-4 pb-2 border-b border-gray-800">
                                   <div className="h-16 w-11 flex-shrink-0 rounded-md overflow-hidden border border-gray-700 bg-gray-800 shadow-inner">
@@ -883,6 +886,9 @@ export default function AdminFilmsPage() {
       {/* Aperçu rapide */}
       <Dialog open={!!selectedMovie} onOpenChange={open => { if (!open) setSelectedMovie(null); }}>
         <DialogContent className="max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0">
+          <DialogHeader>
+            <DialogTitle>Aperçu du film</DialogTitle>
+          </DialogHeader>
           {selectedMovie && (
             <div className="p-5 space-y-4">
               <div className="flex gap-4">
