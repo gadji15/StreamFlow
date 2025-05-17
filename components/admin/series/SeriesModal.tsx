@@ -219,26 +219,41 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     }, 250);
   };
 
-  // Import détaillé à partir d'un objet serie (mapping fiable creator/genres, robustesse accrue)
+  // Import détaillé à partir d'un objet serie (mapping bulletproof pour creator/genres, + debug)
   const importSerieFromTMDB = async (serie) => {
     if (!serie || !serie.id) return;
     setLoading(true);
     try {
       const detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
       const detail = detailRes.ok ? await detailRes.json() : {};
+      // DEBUG: log detail to inspect structure
+      console.log("[TMDB IMPORT] detail:", detail);
+      // Créateur
       let creatorValue = "";
       if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
         creatorValue = detail.created_by.map(c => c.name).join(", ");
       } else if (serie && serie.created_by && Array.isArray(serie.created_by) && serie.created_by.length > 0) {
         creatorValue = serie.created_by.map(c => c.name).join(", ");
+      } else if (detail && detail.creator && typeof detail.creator === "string") {
+        creatorValue = detail.creator;
       }
+      // Genres
       let genresValue = [];
       if (detail && Array.isArray(detail.genres) && detail.genres.length > 0) {
-        genresValue = detail.genres.map((g) => g.name);
-      } else if (serie && Array.isArray(serie.genre_ids) && serie.genre_ids.length > 0 && window && window.__TMDB_GENRES_MAP__) {
-        // Optionally map genre_ids to names if you have a genres map in global state
+        genresValue = detail.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+      } else if (serie && Array.isArray(serie.genres) && serie.genres.length > 0) {
+        genresValue = serie.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+      } else if (detail && typeof detail.genre === "string" && detail.genre.length > 0) {
+        genresValue = detail.genre.split(",").map((g) => g.trim()).filter(Boolean);
+      } else if (serie && typeof serie.genre === "string" && serie.genre.length > 0) {
+        genresValue = serie.genre.split(",").map((g) => g.trim()).filter(Boolean);
+      } else if (serie && Array.isArray(serie.genre_ids) && typeof window !== "undefined" && window.__TMDB_GENRES_MAP__) {
         genresValue = serie.genre_ids.map(id => window.__TMDB_GENRES_MAP__[id] || id);
       }
+      // Fallbacks
+      if (!creatorValue) creatorValue = "";
+      if (!genresValue || genresValue.length === 0) genresValue = [];
+
       setForm((f) => ({
         ...f,
         title: detail.name || serie.name || f.title,
