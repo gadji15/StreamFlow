@@ -1,170 +1,121 @@
-import React, { useState } from "react";
-import InlineEdit from "./InlineEdit";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
-import { useToast } from "@/components/ui/use-toast";
-import EpisodeList from "./EpisodeList";
-import { Edit, Trash2, Plus, Download } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 
-export default function SeasonRow({
-  season,
-  seriesId,
-  expanded,
-  onExpand,
-  seasonEpisodes,
-  seasonEpisodesLoading,
-  onAction,
+const POSTER_SIZE = 40; // px, for compact display
+
+export default function EpisodeRow({
+  episode,
+  seasonId,
+  fetchEpisodesForSeason,
+  onEdit,
+  onDelete,
+  draggableProps,
+  actionLoading,
+}: {
+  episode: any;
+  seasonId: string;
+  fetchEpisodesForSeason: () => Promise<void>;
+  onEdit: () => void;
+  onDelete: () => void;
+  draggableProps: any;
+  actionLoading: boolean;
 }) {
-  // Protection contre season indéfini
-  if (!season) return null;
-
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-
-  // Inline edit handlers
-  const handleUpdateField = async (field, value) => {
-    if (season[field] === value) return false;
-    setLoading(true);
-    const patch = {};
-    patch[field] = value;
-    const { error } = await supabase.from("seasons").update(patch).eq('id', season.id);
-    setLoading(false);
-    if (!error) {
-      toast({ title: "Saison mise à jour" });
-      return true;
-    } else {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return false;
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm("Supprimer définitivement cette saison ?")) return;
-    setLoading(true);
-    const { error } = await supabase.from('seasons').delete().eq('id', season.id);
-    setLoading(false);
-    if (!error) {
-      toast({ title: "Saison supprimée" });
-      if (onAction) onAction("refresh", { seriesId });
-    } else {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleImportTMDB = async () => {
-    if (!season.tmdb_series_id || !season.season_number) {
-      toast({ title: "ID TMDB manquant" });
-      return;
-    }
-    setLoading(true);
-    const res = await fetch(
-      `/api/tmdb/season/${encodeURIComponent(season.tmdb_series_id)}/${encodeURIComponent(season.season_number)}`
-    );
-    setLoading(false);
-    if (!res.ok) {
-      toast({ title: "Erreur TMDB", description: "Impossible de récupérer les épisodes.", variant: "destructive" });
-      return;
-    }
-    const data = await res.json();
-    if (!data.episodes || !Array.isArray(data.episodes)) {
-      toast({ title: "Erreur TMDB", description: "Aucun épisode trouvé pour cette saison.", variant: "destructive" });
-      return;
-    }
-    toast({ title: "Succès", description: `${data.episodes.length} épisodes récupérés.` });
-    // Optionnel: insérer les épisodes dans Supabase ici
-  };
+  // Use thumbnail, poster, or fallback
+  const posterUrl =
+    episode.thumbnail_url ||
+    episode.poster ||
+    (episode.tmdb_id
+      ? `https://image.tmdb.org/t/p/w300${episode.still_path || episode.poster_path || ""}`
+      : null) ||
+    "/placeholder-backdrop.jpg";
 
   return (
-    <>
-      <tr className="hover:bg-gray-900 transition">
-        <td className="py-2">
-          <InlineEdit
-            value={season.season_number}
-            type="number"
-            min={1}
-            onSave={newValue => handleUpdateField("season_number", newValue)}
+    <tr
+      {...(draggableProps || {})}
+      className="group hover:bg-gradient-to-l hover:from-indigo-900/30 hover:to-gray-900 transition-all duration-150 border-b border-gray-900 last:border-b-0"
+      style={{ verticalAlign: "middle" }}
+    >
+      {/* Poster thumbnail */}
+      <td className="py-1 px-2 text-center">
+        <div
+          className="rounded-lg shadow overflow-hidden border border-gray-800 mx-auto bg-gray-950 flex items-center justify-center"
+          style={{ width: POSTER_SIZE, height: POSTER_SIZE, minWidth: POSTER_SIZE, minHeight: POSTER_SIZE }}
+        >
+          <img
+            src={posterUrl}
+            alt={episode.title || `Épisode ${episode.episode_number}`}
+            className="object-cover w-full h-full transition-transform duration-200 group-hover:scale-105"
+            decoding="async"
+            loading="lazy"
+            style={{ width: POSTER_SIZE, height: POSTER_SIZE, display: "block" }}
           />
-        </td>
-        <td className="py-2">
-          <InlineEdit
-            value={season.title || ""}
-            onSave={newValue => handleUpdateField("title", newValue)}
-          />
-        </td>
-        <td className="py-2">{season.air_date ?? "-"}</td>
-        <td className="py-2">
-          <span className="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
-            {season.episode_count ?? "-"}
+        </div>
+      </td>
+      {/* Numéro */}
+      <td className="py-2 text-center font-bold text-base text-indigo-300 drop-shadow-sm w-2">{episode.episode_number}</td>
+      {/* Titre */}
+      <td className="py-2 w-1/3 max-w-[160px] truncate">
+        <span
+          className="block font-semibold text-white/90 truncate"
+          title={episode.title || "Sans titre"}
+        >
+          {episode.title || <span className="text-gray-500 italic">Sans titre</span>}
+        </span>
+        {/* Date de diffusion */}
+        <span className="block text-xs text-gray-500 mt-0.5">{episode.air_date ? new Date(episode.air_date).toLocaleDateString() : ""}</span>
+      </td>
+      {/* Durée */}
+      <td className="py-2 text-center text-gray-200">{episode.runtime ? `${episode.runtime} min` : <span className="text-gray-500">-</span>}</td>
+      {/* Statut */}
+      <td className="py-2 text-center">
+        {episode.published ? (
+          <span className="bg-emerald-700/25 text-emerald-400 px-2 py-0.5 rounded-full text-xs font-semibold animate-pulse group-hover:animate-none transition">
+            Publié
           </span>
-        </td>
-        <td className="py-2 flex flex-wrap gap-1">
-          <Button
-            size="xs"
-            variant={expanded ? "success" : "outline"}
-            onClick={onExpand}
-            disabled={loading}
-          >
-            Episodes
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            className="ml-1"
-            onClick={() => onAction && onAction("edit", { season, seriesId })}
-            disabled={loading}
-          >
-            <Edit className="h-4 w-4" /> Modifier
-          </Button>
-          <Button
-            size="xs"
-            variant="destructive"
-            className="ml-1"
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            <Trash2 className="h-4 w-4" /> Supprimer
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            className="ml-1"
-            onClick={() => onAction && onAction("add-episode", { season, seriesId })}
-            disabled={loading}
-          >
-            <Plus className="h-4 w-4" /> + Épisode
-          </Button>
-          {(season.tmdb_series_id && season.season_number) && (
-            <Button
-              size="xs"
-              variant="success"
-              className="ml-1"
-              onClick={handleImportTMDB}
-              disabled={loading}
-            >
-              <Download className="h-4 w-4 mr-1" /> Import TMDB
-            </Button>
-          )}
-        </td>
-      </tr>
-      {/* Accordéon épisode */}
-      {expanded && (
-        <tr>
-          <td colSpan={5} className="bg-gray-950 border-t border-b border-gray-800 px-2 py-2">
-            {seasonEpisodesLoading ? (
-              <div className="py-3 flex justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-500"></div>
-              </div>
-            ) : (
-              <EpisodeList
-                episodes={seasonEpisodes}
-                seasonId={season.id}
-                seriesId={seriesId}
-                fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
-              />
-            )}
-          </td>
-        </tr>
-      )}
-    </>
+        ) : (
+          <span className="bg-orange-900/30 text-orange-400 px-2 py-0.5 rounded-full text-xs font-semibold transition">
+            Brouillon
+          </span>
+        )}
+      </td>
+      {/* VIP */}
+      <td className="py-2 text-center">
+        {episode.isvip ? (
+          <span className="bg-amber-700/30 text-amber-300 px-2 py-0.5 rounded-full text-xs font-semibold animate-bounce group-hover:animate-none">
+            VIP
+          </span>
+        ) : (
+          <span className="bg-gray-700/30 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">-</span>
+        )}
+      </td>
+      {/* Actions */}
+      <td className="py-2 flex gap-2 justify-center items-center">
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          aria-label="Modifier"
+          title="Modifier"
+          onClick={onEdit}
+          disabled={actionLoading}
+          className="hover:border-indigo-400 hover:text-indigo-300 transition"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="destructive"
+          aria-label="Supprimer"
+          title="Supprimer"
+          onClick={onDelete}
+          disabled={actionLoading}
+          className="hover:border-red-400 hover:text-red-300 transition"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </td>
+    </tr>
   );
 }
