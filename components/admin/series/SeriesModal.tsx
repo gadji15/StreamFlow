@@ -157,48 +157,79 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     return "";
   }
 
-  const handleTMDBImport = async () => {
-    if (!tmdbSearch.trim()) return;
+  // Suggestion TMDB (autocomplete)
+  const [serieSuggestions, setSerieSuggestions] = useState([]);
+  const [serieLoading, setSerieLoading] = useState(false);
+  const [showSerieSuggestions, setShowSerieSuggestions] = useState(false);
+  const [activeSerieSuggestion, setActiveSerieSuggestion] = useState(-1);
+  const suggestionTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Correction : extraction fiable du créateur
+  function extractCreator(detail) {
+    if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
+      return detail.created_by.map(c => c.name).join(", ");
+    }
+    return "";
+  }
+
+  // Suggestion temps réel
+  const handleSerieSearchInput = async (e) => {
+    const value = e.target.value;
+    setTmdbSearch(value);
+    setShowSerieSuggestions(true);
+    setSerieSuggestions([]);
+    setActiveSerieSuggestion(-1);
+
+    if (suggestionTimeout.current) clearTimeout(suggestionTimeout.current);
+    if (value.trim().length < 2) {
+      setSerieSuggestions([]);
+      setSerieLoading(false);
+      return;
+    }
+    setSerieLoading(true);
+    suggestionTimeout.current = setTimeout(async () => {
+      try {
+        const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(value.trim())}`);
+        const data = await resp.json();
+        setSerieSuggestions(data.results || []);
+      } catch {
+        setSerieSuggestions([]);
+      }
+      setSerieLoading(false);
+    }, 250);
+  };
+
+  // Import détaillé à partir d'un objet serie (avec mapping fiable creator/genres)
+  const importSerieFromTMDB = async (serie) => {
+    if (!serie || !serie.id) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbSearch.trim())}`);
-      if (!res.ok) throw new Error("Erreur réseau TMDB");
-      const data = await res.json();
-      const serie = data.results && data.results.length > 0 ? data.results[0] : null;
-      if (serie && serie.id) {
-        const detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
-        const detail = detailRes.ok ? await detailRes.json() : {};
-        setForm((f) => ({
-          ...f,
-          title: detail.name || serie.name || f.title,
-          poster: (detail.poster_path || serie.poster_path)
-            ? `https://image.tmdb.org/t/p/w500${detail.poster_path || serie.poster_path}` : f.poster,
-          start_year: (detail.first_air_date || serie.first_air_date)
-            ? (detail.first_air_date || serie.first_air_date).slice(0, 4)
-            : f.start_year,
-          end_year: (detail.last_air_date || serie.last_air_date)
-            ? (detail.last_air_date || serie.last_air_date).slice(0, 4)
-            : f.end_year,
-          genres: detail.genres ? detail.genres.map((g) => g.name) : f.genres,
-          vote_average: detail.vote_average ?? serie.vote_average ?? f.vote_average,
-          description: detail.overview ?? serie.overview ?? f.description,
-          tmdb_id: serie.id,
-          creator: extractCreator(detail) || f.creator,
-        }));
-        // Nouvelle étape : importer le cast après le succès de l'import série
-        await fetchCast(serie.id);
-        toast({
-          title: "Import TMDB réussi",
-          description: "Champs pré-remplis depuis TMDB !",
-        });
-      } else {
-        setCast([]);
-        toast({
-          title: "Introuvable TMDB",
-          description: "Aucune série trouvée pour cette recherche.",
-          variant: "destructive",
-        });
-      }
+      const detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
+      const detail = detailRes.ok ? await detailRes.json() : {};
+      setForm((f) => ({
+        ...f,
+        title: detail.name || serie.name || f.title,
+        poster: (detail.poster_path || serie.poster_path)
+          ? `https://image.tmdb.org/t/p/w500${detail.poster_path || serie.poster_path}` : f.poster,
+        start_year: (detail.first_air_date || serie.first_air_date)
+          ? (detail.first_air_date || serie.first_air_date).slice(0, 4)
+          : f.start_year,
+        end_year: (detail.last_air_date || serie.last_air_date)
+          ? (detail.last_air_date || serie.last_air_date).slice(0, 4)
+          : f.end_year,
+        // Correction ici : on extrait TOUJOURS le champ genres depuis detail.genres (array of {id, name})
+        genres: detail.genres && Array.isArray(detail.genres) ? detail.genres.map((g) => g.name) : [],
+        vote_average: detail.vote_average ?? serie.vote_average ?? f.vote_average,
+        description: detail.overview ?? serie.overview ?? f.description,
+        tmdb_id: serie.id,
+        // Correction ici : on extrait les créateurs via detail.created_by
+        creator: extractCreator(detail) || f.creator,
+      }));
+      await fetchCast(serie.id);
+      toast({
+        title: "Import TMDB réussi",
+        description: "Champs pré-remplis depuis TMDB !",
+      });
     } catch (e) {
       setCast([]);
       toast({
@@ -293,35 +324,79 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
             ✕
           </button>
         </div>
-        {/* TMDB search zone */}
-        <div className="flex gap-1 items-end px-3 pt-1">
+        {/* TMDB search zone (avec suggestions temps réel) */}
+        <div className="flex gap-1 items-end px-3 pt-1 relative">
           <div className="flex-1">
             <label htmlFor="tmdb_search" className="block text-[11px] mb-1 text-white/70 font-medium">
               Recherche TMDB
             </label>
             <input
               id="tmdb_search"
+              autoComplete="off"
               value={tmdbSearch}
-              onChange={e => setTmdbSearch(e.target.value)}
+              onChange={handleSerieSearchInput}
+              onFocus={() => setShowSerieSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSerieSuggestions(false), 150)}
+              onKeyDown={e => {
+                if (!showSerieSuggestions || serieSuggestions.length === 0) return;
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setActiveSerieSuggestion((v) => (v + 1) % serieSuggestions.length);
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setActiveSerieSuggestion((v) => (v - 1 + serieSuggestions.length) % serieSuggestions.length);
+                } else if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (activeSerieSuggestion >= 0 && activeSerieSuggestion < serieSuggestions.length) {
+                    const suggestion = serieSuggestions[activeSerieSuggestion];
+                    setTmdbSearch(suggestion.name);
+                    setShowSerieSuggestions(false);
+                    setSerieSuggestions([]);
+                    importSerieFromTMDB(suggestion);
+                  }
+                }
+              }}
               className="rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white w-full text-xs transition-shadow"
               placeholder="Titre de la série"
+              disabled={loading}
             />
+            {showSerieSuggestions && tmdbSearch && (
+              <ul
+                className="absolute z-30 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto"
+                role="listbox"
+                aria-label="Suggestions de séries"
+              >
+                {serieLoading && (
+                  <li className="p-2 text-sm text-gray-400">Chargement…</li>
+                )}
+                {serieSuggestions.map((suggestion, idx) => (
+                  <li
+                    key={suggestion.id}
+                    className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                    role="option"
+                    aria-selected={activeSerieSuggestion === idx}
+                    tabIndex={0}
+                    onMouseEnter={() => setActiveSerieSuggestion(idx)}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      setTmdbSearch(suggestion.name);
+                      setShowSerieSuggestions(false);
+                      setSerieSuggestions([]);
+                      importSerieFromTMDB(suggestion);
+                    }}
+                  >
+                    <span className="font-medium">{suggestion.name}</span>
+                    {suggestion.first_air_date && (
+                      <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                    )}
+                  </li>
+                ))}
+                {!serieLoading && serieSuggestions.length === 0 && (
+                  <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                )}
+              </ul>
+            )}
           </div>
-          <Button
-            type="button"
-            className="ml-1 flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
-            variant="outline"
-            onClick={handleTMDBImport}
-            disabled={loading || !tmdbSearch.trim()}
-            aria-label="Chercher et importer depuis TMDB"
-          >
-            {loading ? (
-              <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-              </svg>
-            ) : "Importer"}
-          </Button>
         </div>
         {/* Affichage des acteurs importés */}
         {cast && cast.length > 0 && (
