@@ -89,6 +89,10 @@ export default function AdminFilmsPage() {
   const [filmModalOpen, setFilmModalOpen] = useState(false);
   const [filmModalLoading, setFilmModalLoading] = useState(false);
 
+  // Nouveaux états pour l'édition
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editModalMovie, setEditModalMovie] = useState<MovieDB | null>(null);
+
   // Sélection groupée
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const allSelected = (list: MovieDB[]) => list.length > 0 && list.every(m => selectedIds.includes(m.id));
@@ -783,7 +787,8 @@ export default function AdminFilmsPage() {
                                     className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150"
                                     onClick={() => {
                                       setActionMenuMovie(null);
-                                      router.push(`/admin/films/${movie.id}/edit`);
+                                      setEditModalMovie(movie);
+                                      setEditModalOpen(true);
                                     }}
                                   >
                                     <Edit className="h-4 w-4 mr-2" />
@@ -1029,6 +1034,45 @@ export default function AdminFilmsPage() {
           setFilmModalLoading(false);
         }}
         initialData={{}}
+      />
+
+      {/* FilmModal pour édition d'un film */}
+      <FilmModal
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditModalMovie(null);
+        }}
+        initialData={editModalMovie || {}}
+        onSave={async (updatedFilm) => {
+          if (!editModalMovie) return;
+          setFilmModalLoading(true);
+          try {
+            // Update du film dans la base
+            const { data, error } = await supabase
+              .from('films')
+              .update(updatedFilm)
+              .eq('id', editModalMovie.id)
+              .select();
+            if (error) throw error;
+            if (data && data.length > 0) {
+              setMovies((prev) =>
+                prev.map((movie) =>
+                  movie.id === editModalMovie.id ? { ...movie, ...data[0] } : movie
+                )
+              );
+              toast({
+                title: "Film modifié",
+                description: `Le film "${data[0].title}" a été modifié.`,
+              });
+            }
+            setEditModalOpen(false);
+            setEditModalMovie(null);
+          } catch (e) {
+            toast({ title: "Erreur", description: String(e), variant: "destructive" });
+          }
+          setFilmModalLoading(false);
+        }}
       />
     </div>
   );
