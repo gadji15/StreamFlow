@@ -411,43 +411,93 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     }
     setLoading(true);
 
-    try {
-      const clean = (v) => (v === "" || v === undefined ? null : v);
-      const payload = {
-        title: clean(form.title),
-        original_title: clean(form.original_title),
-        director: clean(form.director),
-        year: clean(form.year) !== null ? Number(form.year) : null,
-        duration: clean(form.duration) !== null ? Number(form.duration) : null,
-        genre:
-          Array.isArray(form.genres)
-            ? form.genres.filter(Boolean).join(", ")
-            : typeof form.genres === "string"
-              ? form.genres
-              : "",
-        vote_average: clean(form.vote_average) !== null ? Number(form.vote_average) : null,
-        vote_count: clean(form.vote_count) !== null ? Number(form.vote_count) : null,
-        published: !!form.published,
-        isvip: !!form.isvip,
-        poster: clean(form.poster),
-        backdrop: clean(form.backdrop),
-        tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
-        imdb_id: clean(form.imdb_id),
-        description: clean(form.description),
-        trailer_url: clean(form.trailer_url),
-        video_url: form.no_video ? null : (clean(form.video_url) || clean(localVideoUrl)),
-        language: clean(form.language),
-        // Correction : envoyer le champ homepage_categories sous forme de tableau JSON si non vide
-        homepage_categories: Array.isArray(form.homepage_categories) && form.homepage_categories.length > 0
-          ? JSON.stringify(form.homepage_categories)
-          : null,
-        popularity: clean(form.popularity),
-        cast: castList && castList.length > 0 ? castList : [],
-        no_video: !!form.no_video,
-      };
+    // Préparation stricte du payload selon le schéma SQL
+    const clean = (v) => (v === "" || v === undefined ? null : v);
 
-      await onSave(payload);
+    // -- Genres (toujours string, séparée par virgule)
+    let genre = "";
+    if (Array.isArray(form.genres)) {
+      genre = form.genres.filter(Boolean).join(", ");
+    } else if (typeof form.genres === "string") {
+      genre = form.genres;
+    }
+
+    // -- homepage_categories (toujours tableau, jamais stringifié JSON)
+    let homepage_categories = [];
+    if (Array.isArray(form.homepage_categories)) {
+      homepage_categories = form.homepage_categories.filter(Boolean);
+    } else if (typeof form.homepage_categories === "string" && form.homepage_categories.trim()) {
+      try {
+        const parsed = JSON.parse(form.homepage_categories);
+        if (Array.isArray(parsed)) homepage_categories = parsed.filter(Boolean);
+      } catch {}
+    }
+
+    // -- Cast (toujours tableau)
+    const cast = Array.isArray(castList) ? castList.filter(m => m.name && m.name.trim() !== "") : [];
+
+    // -- Champs numériques
+    const year = clean(form.year) !== null ? Number(form.year) : null;
+    const duration = clean(form.duration) !== null ? Number(form.duration) : null;
+    const vote_average = clean(form.vote_average) !== null ? Number(form.vote_average) : null;
+    const vote_count = clean(form.vote_count) !== null ? Number(form.vote_count) : null;
+    const popularity = clean(form.popularity) !== null ? Number(form.popularity) : null;
+    const tmdb_id = clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null;
+
+    // -- Champs booléens
+    const published = !!form.published;
+    const isvip = !!form.isvip;
+    const no_video = !!form.no_video;
+
+    // -- Préparation du payload
+    const payload = {
+      title: clean(form.title),
+      original_title: clean(form.original_title),
+      director: clean(form.director),
+      year,
+      duration,
+      genre,
+      vote_average,
+      vote_count,
+      published,
+      isvip,
+      poster: clean(form.poster),
+      backdrop: clean(form.backdrop),
+      tmdb_id,
+      imdb_id: clean(form.imdb_id),
+      description: clean(form.description),
+      trailer_url: clean(form.trailer_url),
+      video_url: no_video ? null : (clean(form.video_url) || clean(localVideoUrl)),
+      language: clean(form.language),
+      homepage_categories,
+      popularity,
+      cast,
+      no_video,
+    };
+
+    // Appel API films POST (création)
+    try {
+      const response = await fetch('/api/films', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast({
+          title: "Erreur API",
+          description: result.error || "Impossible d'ajouter le film (API).",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       toast({ title: "Film enregistré" });
+      if (onSave) onSave(result);
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
