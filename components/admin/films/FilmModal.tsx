@@ -15,6 +15,14 @@ function getYoutubeTrailer(videos) {
   return "";
 }
 
+// Fonction pour normaliser un titre : minuscules, trim, sans accents
+function normalizeTitle(title) {
+  if (!title) return "";
+  // Remove accents
+  const str = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return str.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
   const [form, setForm] = useState({
@@ -465,8 +473,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     const published = !!form.published;
     const no_video = !!form.no_video;
 
+    // Ajout du champ normalisé pour la persistance en base
     return {
       title: form.title?.trim() || "",
+      title_normalized: normalizeTitle(form.title), // pour recherche robuste
       original_title: form.original_title?.trim() || null,
       director: form.director?.trim() || null,
       year,
@@ -648,9 +658,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               }
               let importedTitle = "";
               let importedYear = "";
+              let importedTitleNormalized = "";
               if (toImport) {
-                importedTitle = (toImport.title || "").trim().toLowerCase();
+                importedTitle = (toImport.title || "");
                 importedYear = (toImport.release_date || "").slice(0, 4);
+                importedTitleNormalized = normalizeTitle(importedTitle);
               } else if (tmdbSearch.trim().length > 0) {
                 setLoading(true);
                 try {
@@ -658,8 +670,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                   const data = await resp.json();
                   if (data.results && data.results.length > 0) {
                     toImport = data.results[0];
-                    importedTitle = (toImport.title || "").trim().toLowerCase();
+                    importedTitle = (toImport.title || "");
                     importedYear = (toImport.release_date || "").slice(0, 4);
+                    importedTitleNormalized = normalizeTitle(importedTitle);
                   } else {
                     toast({
                       title: "Introuvable TMDB",
@@ -681,13 +694,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 setLoading(false);
               }
 
-              // Vérification anti-doublon AVANT import
-              if (importedTitle && importedYear) {
-                // Vérification côté base (la plus sûre, car le FilmModal ne reçoit pas la liste globale des films)
+              // Vérification anti-doublon AVANT import (sur title_normalized)
+              if (importedTitleNormalized && importedYear) {
+                // ⚠️ Il faut que la colonne "title_normalized" existe côté base pour que ce contrôle soit parfait !
                 const { data: dataCheck, error: errorCheck } = await supabase
                   .from('films')
                   .select('id')
-                  .eq('title', importedTitle)
+                  .eq('title_normalized', importedTitleNormalized)
                   .eq('year', Number(importedYear))
                   .limit(1);
 
@@ -698,9 +711,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 if (dataCheck && dataCheck.length > 0) {
                   toast({
                     title: "Ce film existe déjà",
-                    description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                    description: `Un film avec ce titre et cette année existe déjà dans votre base. L'import a été annulé.`,
                     variant: "destructive",
                   });
+                  setShowMovieSuggestions(false); // Fermer la liste le cas échéant
+                  setLoading(false); // Stopper le spinner
                   return;
                 }
               }
