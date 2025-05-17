@@ -22,11 +22,32 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     description: initialData.description || "",
   });
 
+  // Nouvel état pour le cast importé depuis TMDB
+  const [cast, setCast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
+
+  // Utilitaire pour charger le cast d'une série TMDB
+  const fetchCast = async (tmdbId) => {
+    if (!tmdbId) {
+      setCast([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/tmdb/series/${tmdbId}/credits`);
+      if (!res.ok) {
+        setCast([]);
+        return;
+      }
+      const data = await res.json();
+      setCast(Array.isArray(data.cast) ? data.cast : []);
+    } catch {
+      setCast([]);
+    }
+  };
 
   useEffect(() => {
     if (open && firstInput.current) {
@@ -56,6 +77,10 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
       };
     });
     setTmdbSearch(initialData.title || "");
+    setCast([]); // Réinitialise le cast à chaque ouverture ou changement de série
+    if (initialData.tmdb_id) {
+      fetchCast(initialData.tmdb_id);
+    }
     // eslint-disable-next-line
   }, [open, initialData && initialData.id]);
 
@@ -160,11 +185,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
           tmdb_id: serie.id,
           creator: extractCreator(detail) || f.creator,
         }));
+        // Nouvelle étape : importer le cast après le succès de l'import série
+        await fetchCast(serie.id);
         toast({
           title: "Import TMDB réussi",
           description: "Champs pré-remplis depuis TMDB !",
         });
       } else {
+        setCast([]);
         toast({
           title: "Introuvable TMDB",
           description: "Aucune série trouvée pour cette recherche.",
@@ -172,6 +200,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
         });
       }
     } catch (e) {
+      setCast([]);
       toast({
         title: "Erreur TMDB",
         description: String(e),
@@ -206,11 +235,13 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
           description: data.overview ?? f.description,
           creator: extractCreator(data) || f.creator,
         }));
+        await fetchCast(data.id);
         toast({
           title: "Import TMDB réussi",
           description: "Champs pré-remplis depuis TMDB !",
         });
       } else {
+        setCast([]);
         toast({
           title: "Introuvable TMDB",
           description: "Aucune série trouvée pour cet ID.",
@@ -218,6 +249,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
         });
       }
     } catch (e) {
+      setCast([]);
       toast({
         title: "Erreur TMDB",
         description: String(e),
@@ -291,6 +323,30 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
             ) : "Importer"}
           </Button>
         </div>
+        {/* Affichage des acteurs importés */}
+        {cast && cast.length > 0 && (
+          <div className="px-3 pt-2 pb-1">
+            <label className="block text-[11px] font-medium text-white/80 mb-1">
+              Acteurs principaux (importés TMDB)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {cast.map((actor) => (
+                <div key={actor.id} className="flex flex-col items-center w-16">
+                  <img
+                    src={actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "/no-image.png"}
+                    alt={actor.name}
+                    className="rounded-full h-12 w-12 object-cover border border-gray-700 bg-gray-800"
+                    style={{ objectFit: "cover" }}
+                  />
+                  <span className="text-xs text-center mt-1 text-white/80">{actor.name}</span>
+                  {actor.character && (
+                    <span className="text-[10px] text-gray-400 text-center">{actor.character}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Content scrollable */}
         <form
           onSubmit={handleSubmit}
