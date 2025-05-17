@@ -698,9 +698,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 if (dataCheck && dataCheck.length > 0) {
                   toast({
                     title: "Ce film existe déjà",
-                    description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                    description: `Un film avec ce titre et cette année existe déjà dans votre base. L'import a été annulé.`,
                     variant: "destructive",
                   });
+                  setShowMovieSuggestions(false); // Fermer la liste le cas échéant
+                  setLoading(false); // Stopper le spinner
                   return;
                 }
               }
