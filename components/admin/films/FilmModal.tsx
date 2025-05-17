@@ -495,9 +495,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       const result = await response.json();
 
       if (!response.ok) {
+        // Message détaillé : inclut erreur, status, payload
         toast({
           title: "Erreur API",
-          description: result.error || "Impossible d'ajouter le film (API).",
+          description:
+            (result && result.error) ? result.error :
+            `Erreur inconnue (status ${response.status})` +
+            (result ? ` : ${JSON.stringify(result)}` : ""),
           variant: "destructive",
         });
         setLoading(false);
