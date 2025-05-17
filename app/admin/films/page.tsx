@@ -29,6 +29,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const FilmModal = dynamic(() => import('@/components/admin/films/FilmModal'), { ssr: false });
 
 type MovieDB = {
   id: string;
@@ -81,6 +84,10 @@ export default function AdminFilmsPage() {
   // Tri dynamique
   const [sortField, setSortField] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // FilmModal state
+  const [filmModalOpen, setFilmModalOpen] = useState(false);
+  const [filmModalLoading, setFilmModalLoading] = useState(false);
 
   // Sélection groupée
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -347,12 +354,13 @@ export default function AdminFilmsPage() {
           >
             Export CSV
           </Button>
-          <Link href="/admin/films/add">
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un film
-            </Button>
-          </Link>
+          <Button
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+            onClick={() => setFilmModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un film
+          </Button>
         </div>
       </div>
       {/* FILTERS / SEARCH */}
@@ -459,12 +467,13 @@ export default function AdminFilmsPage() {
                 : "Commencez par ajouter votre premier film pour enrichir votre catalogue."
               }
             </p>
-            <Link href="/admin/films/add">
-              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un film
-              </Button>
-            </Link>
+            <Button
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+              onClick={() => setFilmModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un film
+            </Button>
           </div>
         ) : (
           <>
@@ -990,6 +999,31 @@ export default function AdminFilmsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    {/* FilmModal pour ajouter un film */}
+      <FilmModal
+        open={filmModalOpen}
+        onClose={() => setFilmModalOpen(false)}
+        onSave={async (newFilm) => {
+          setFilmModalLoading(true);
+          try {
+            // Ajoute le film dans la base et dans la liste locale
+            const { data, error } = await supabase.from('films').insert([newFilm]).select();
+            if (error) throw error;
+            if (data && data.length > 0) {
+              setMovies((prev) => [data[0], ...prev]);
+              toast({
+                title: "Film ajouté",
+                description: `Le film "${data[0].title}" a été ajouté.`,
+              });
+            }
+            setFilmModalOpen(false);
+          } catch (e) {
+            toast({ title: "Erreur", description: String(e), variant: "destructive" });
+          }
+          setFilmModalLoading(false);
+        }}
+        initialData={{}}
+      />
     </div>
   );
 }
