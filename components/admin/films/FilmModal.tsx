@@ -683,14 +683,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
               // Vérification anti-doublon AVANT import
               if (importedTitle && importedYear) {
-                // Normalisation du titre (minuscule, trim)
-                const normalizedTitle = importedTitle.trim().toLowerCase();
-
-                // Recherche insensible à la casse avec ilike
+                // On fait une recherche insensible à la casse (ilike) sur le titre normalisé
                 const { data: dataCheck, error: errorCheck } = await supabase
                   .from('films')
-                  .select('id, title, year')
-                  .ilike('title', normalizedTitle)
+                  .select('id')
+                  .ilike('title', importedTitle)
                   .eq('year', Number(importedYear))
                   .limit(1);
 
