@@ -29,6 +29,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const FilmModal = dynamic(() => import('@/components/admin/films/FilmModal'), { ssr: false });
 
 type MovieDB = {
   id: string;
@@ -81,6 +84,10 @@ export default function AdminFilmsPage() {
   // Tri dynamique
   const [sortField, setSortField] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // FilmModal state
+  const [filmModalOpen, setFilmModalOpen] = useState(false);
+  const [filmModalLoading, setFilmModalLoading] = useState(false);
 
   // Sélection groupée
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -347,12 +354,13 @@ export default function AdminFilmsPage() {
           >
             Export CSV
           </Button>
-          <Link href="/admin/films/add">
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un film
-            </Button>
-          </Link>
+          <Button
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+            onClick={() => setFilmModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un film
+          </Button>
         </div>
       </div>
       {/* FILTERS / SEARCH */}
@@ -442,7 +450,7 @@ export default function AdminFilmsPage() {
           </select>
         </div>
         {/* Table et actions */}
-        {loading ? (
+      {loading ? (
           <div className="py-24 flex flex-col items-center justify-center">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-400 border-t-transparent mb-6"></div>
             <span className="text-indigo-300 font-medium">Chargement des films…</span>
@@ -459,311 +467,417 @@ export default function AdminFilmsPage() {
                 : "Commencez par ajouter votre premier film pour enrichir votre catalogue."
               }
             </p>
-            <Link href="/admin/films/add">
-              <Button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un film
-              </Button>
-            </Link>
+            <Button
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+              onClick={() => setFilmModalOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un film
+            </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="pb-3 font-medium w-5">
-                    <button
-                      type="button"
-                      aria-label="Tout sélectionner"
-                      onClick={toggleSelectAll}
-                      className="bg-transparent border-none focus:outline-none"
-                    >
-                      {allSelected(paginatedMovies) ? (
-                        <CheckSquare className="h-5 w-5 text-indigo-500" />
-                      ) : (
-                        <Square className="h-5 w-5 text-gray-400" />
-                      )}
-                    </button>
-                  </th>
-                  <th
-                    className="pb-3 font-medium cursor-pointer select-none"
-                    onClick={() => {
-                      setSortField('title');
-                      setSortOrder(o => (sortField === 'title' && o === 'asc') ? 'desc' : 'asc');
-                    }}
-                  >
-                    Film {sortField === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th
-                    className="pb-3 font-medium cursor-pointer select-none"
-                    onClick={() => {
-                      setSortField('year');
-                      setSortOrder(o => (sortField === 'year' && o === 'asc') ? 'desc' : 'asc');
-                    }}
-                  >
-                    Année {sortField === 'year' && (sortOrder === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th
-                    className="pb-3 font-medium text-center cursor-pointer select-none"
-                    onClick={() => {
-                      setSortField('vote_average');
-                      setSortOrder(o => (sortField === 'vote_average' && o === 'asc') ? 'desc' : 'asc');
-                    }}
-                  >
-                    Note {sortField === 'vote_average' && (sortOrder === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th className="pb-3 font-medium text-center">Votes</th>
-                  <th className="pb-3 font-medium text-center">Statut</th>
-                  <th className="pb-3 font-medium text-center">VIP</th>
-                  <th className="pb-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedMovies.map((movie) => {
-                  const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
-                  const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
-                  return (
-                    <tr key={movie.id} className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
-                      <td className="py-4 px-2 align-middle">
-                        <button
-                          type="button"
-                          aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
-                          onClick={() => toggleSelect(movie.id)}
-                          className="bg-transparent border-none focus:outline-none"
-                        >
-                          {isChecked(movie.id) ? (
-                            <CheckSquare className="h-5 w-5 text-indigo-500" />
-                          ) : (
-                            <Square className="h-5 w-5 text-gray-400" />
+          <>
+            {/* Responsive card view for mobile devices */}
+            <div className="sm:hidden flex flex-col gap-4">
+              {paginatedMovies.map((movie) => {
+                const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
+                const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
+                return (
+                  <div key={movie.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-4 py-3 flex flex-col">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={posterUrl}
+                        alt={movie.title}
+                        className="h-16 w-12 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                        onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold truncate text-base">{movie.title}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+                          {genres.slice(0, 2).map(g => (
+                            <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
+                          ))}
+                          {genres.length > 2 && <span>…</span>}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-400">{movie.year}</span>
+                          {movie.isvip && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
                           )}
-                        </button>
-                      </td>
-                      <td className="py-4 min-w-[210px]">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0 border border-gray-600 bg-gray-800">
-                            <img
-                              src={posterUrl}
-                              alt={movie.title}
-                              className="h-full w-full object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
-                            />
-                          </div>
-                          <div>
-                            <div className="font-medium">{movie.title}</div>
-                            <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
-                              {genres.slice(0, 2).map(g => (
-                                <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
-                              ))}
-                              {genres.length > 2 && <span>…</span>}
+                          <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-xs font-semibold text-gray-400">
+                            {movie.published ? 'Publié' : 'Brouillon'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
+                        onClick={() => toggleSelect(movie.id)}
+                        className="ml-2 bg-transparent border-none focus:outline-none"
+                      >
+                        {isChecked(movie.id) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-500" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex gap-2 mt-3 justify-end">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Aperçu"
+                        onClick={() => setSelectedMovie(movie)}
+                        className="h-8 w-8"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Actions"
+                        onClick={() => setActionMenuMovie(movie)}
+                        className="h-8 w-8"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              {/* Actions groupées (mobile) */}
+              {selectedIds.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-3 bg-red-900/30 border border-red-500 rounded-lg px-4 py-2 animate-pulse">
+                  <span className="font-semibold text-red-300">
+                    {selectedIds.length} film{selectedIds.length > 1 ? "s" : ""} sélectionné{selectedIds.length > 1 ? "s" : ""}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkPublish(true)}
+                    disabled={isDeleting}
+                  >
+                    Publier
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkPublish(false)}
+                    disabled={isDeleting}
+                  >
+                    Dépublier
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Supprimer
+                  </Button>
+                </div>
+              )}
+            </div>
+            {/* Table view for desktop/tablet */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="pb-3 font-medium w-5">
+                      <button
+                        type="button"
+                        aria-label="Tout sélectionner"
+                        onClick={toggleSelectAll}
+                        className="bg-transparent border-none focus:outline-none"
+                      >
+                        {allSelected(paginatedMovies) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-500" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </th>
+                    <th
+                      className="pb-3 font-medium cursor-pointer select-none min-w-[180px]"
+                      onClick={() => {
+                        setSortField('title');
+                        setSortOrder(o => (sortField === 'title' && o === 'asc') ? 'desc' : 'asc');
+                      }}
+                    >
+                      Film {sortField === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                    <th
+                      className="pb-3 font-medium cursor-pointer select-none w-20"
+                      onClick={() => {
+                        setSortField('year');
+                        setSortOrder(o => (sortField === 'year' && o === 'asc') ? 'desc' : 'asc');
+                      }}
+                    >
+                      Année {sortField === 'year' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                    <th
+                      className="pb-3 font-medium text-center cursor-pointer select-none w-24"
+                      onClick={() => {
+                        setSortField('vote_average');
+                        setSortOrder(o => (sortField === 'vote_average' && o === 'asc') ? 'desc' : 'asc');
+                      }}
+                    >
+                      Note {sortField === 'vote_average' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                    <th className="pb-3 font-medium text-center w-16">Votes</th>
+                    <th className="pb-3 font-medium text-center w-24">Statut</th>
+                    <th className="pb-3 font-medium text-center w-16">VIP</th>
+                    <th className="pb-3 font-medium text-right w-32">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedMovies.map((movie) => {
+                    const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
+                    const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
+                    return (
+                      <tr key={movie.id} className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
+                        <td className="py-4 px-2 align-middle">
+                          <button
+                            type="button"
+                            aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
+                            onClick={() => toggleSelect(movie.id)}
+                            className="bg-transparent border-none focus:outline-none"
+                          >
+                            {isChecked(movie.id) ? (
+                              <CheckSquare className="h-5 w-5 text-indigo-500" />
+                            ) : (
+                              <Square className="h-5 w-5 text-gray-400" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="py-4 min-w-[180px]">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0 border border-gray-600 bg-gray-800">
+                              <img
+                                src={posterUrl}
+                                alt={movie.title}
+                                className="h-full w-full object-cover"
+                                onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
+                              />
+                            </div>
+                            <div>
+                              <div className="font-medium">{movie.title}</div>
+                              <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+                                {genres.slice(0, 2).map(g => (
+                                  <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
+                                ))}
+                                {genres.length > 2 && <span>…</span>}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-4">{movie.year}</td>
-                      <td className="py-4 text-center">
-                        {movie.vote_average ? (
-                          <div className="flex items-center justify-center">
-                            <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
-                            <span>{Number(movie.vote_average).toFixed(1)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-500">-</span>
-                        )}
-                      </td>
-                      <td className="py-4 text-center">
-                        {movie.vote_count ?? <span className="text-gray-500">-</span>}
-                      </td>
-                      <td className="py-4 text-center">
-                        <Button
-                          type="button"
-                          variant={movie.published ? "success" : "ghost"}
-                          aria-label={movie.published ? "Dépublier" : "Publier"}
-                          className={cn(
-                            "px-2 py-1 rounded-full text-xs font-semibold",
-                            movie.published
-                              ? "bg-green-500/20 text-green-500"
-                              : "bg-gray-500/20 text-gray-400"
+                        </td>
+                        <td className="py-4">{movie.year}</td>
+                        <td className="py-4 text-center">
+                          {movie.vote_average ? (
+                            <div className="flex items-center justify-center">
+                              <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
+                              <span>{Number(movie.vote_average).toFixed(1)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">-</span>
                           )}
-                          onClick={() => handleTogglePublished(movie.id, !!movie.published)}
-                        >
-                          {movie.published ? 'Publié' : 'Brouillon'}
-                        </Button>
-                      </td>
-                      <td className="py-4 text-center">
-                        <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-semibold",
-                          movie.isvip
-                            ? "bg-amber-500/20 text-amber-500"
-                            : "bg-gray-500/20 text-gray-400"
-                        )}>
-                          {movie.isvip ? 'VIP' : 'Non'}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right">
-                        <div className="flex justify-end items-center space-x-2">
-                          {/* Aperçu rapide */}
+                        </td>
+                        <td className="py-4 text-center">
+                          {movie.vote_count ?? <span className="text-gray-500">-</span>}
+                        </td>
+                        <td className="py-4 text-center">
                           <Button
-                            variant="outline"
-                            size="icon"
-                            aria-label="Aperçu"
-                            onClick={() => setSelectedMovie(movie)}
+                            type="button"
+                            variant={movie.published ? "success" : "ghost"}
+                            aria-label={movie.published ? "Dépublier" : "Publier"}
+                            className={cn(
+                              "px-2 py-1 rounded-full text-xs font-semibold",
+                              movie.published
+                                ? "bg-green-500/20 text-green-500"
+                                : "bg-gray-500/20 text-gray-400"
+                            )}
+                            onClick={() => handleTogglePublished(movie.id, !!movie.published)}
                           >
-                            <Eye className="h-4 w-4" />
+                            {movie.published ? 'Publié' : 'Brouillon'}
                           </Button>
-                          {/* Menu hamburger actions */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Actions"
-                            onClick={() => setActionMenuMovie(movie)}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                          {/* Menu modal d'actions moderne */}
-                          <Dialog open={actionMenuMovie?.id === movie.id} onOpenChange={open => { if (!open) setActionMenuMovie(null); }}>
-                            <DialogContent
-                              className="max-w-xs p-0 bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl border-0"
-                              style={{
-                                minWidth: 0,
-                                width: "94vw",
-                                maxWidth: "340px",
-                                backgroundColor: "rgba(17,24,39,0.95)",
-                                boxShadow: "0 6px 32px 0 rgb(0 0 0 / 0.22)"
-                              }}
+                        </td>
+                        <td className="py-4 text-center">
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-semibold",
+                            movie.isvip
+                              ? "bg-amber-500/20 text-amber-500"
+                              : "bg-gray-500/20 text-gray-400"
+                          )}>
+                            {movie.isvip ? 'VIP' : 'Non'}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex justify-end items-center space-x-2">
+                            {/* Aperçu rapide */}
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              aria-label="Aperçu"
+                              onClick={() => setSelectedMovie(movie)}
                             >
-                              {/* Aperçu film (mini header dans la modale) */}
-                              <div className="flex items-center gap-3 px-4 pt-4 pb-2 border-b border-gray-800">
-                                <div className="h-16 w-11 flex-shrink-0 rounded-md overflow-hidden border border-gray-700 bg-gray-800 shadow-inner">
-                                  <img
-                                    src={movie.poster || '/placeholder-backdrop.jpg'}
-                                    alt={movie.title}
-                                    className="w-full h-full object-cover"
-                                    style={{ background: "#222" }}
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-semibold truncate">{movie.title}</div>
-                                  <div className="text-xs text-gray-400 truncate">{movie.year} &middot; {(movie.genre || '').split(',').map(g => g.trim()).filter(Boolean).slice(0,2).join(', ')}{movie.genre && movie.genre.split(',').length > 2 ? '…' : ''}</div>
-                                  <div className="flex gap-1 mt-1">
-                                    {movie.published
-                                      ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publié</span>
-                                      : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
-                                    }
-                                    {movie.isvip &&
-                                      <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
-                                    }
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {/* Menu hamburger actions */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Actions"
+                              onClick={() => setActionMenuMovie(movie)}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                            {/* Menu modal d'actions moderne */}
+                            <Dialog open={actionMenuMovie?.id === movie.id} onOpenChange={open => { if (!open) setActionMenuMovie(null); }}>
+                              <DialogContent
+                                className="max-w-xs p-0 bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl border-0"
+                                style={{
+                                  minWidth: 0,
+                                  width: "94vw",
+                                  maxWidth: "340px",
+                                  backgroundColor: "rgba(17,24,39,0.95)",
+                                  boxShadow: "0 6px 32px 0 rgb(0 0 0 / 0.22)"
+                                }}
+                              >
+                                {/* Aperçu film (mini header dans la modale) */}
+                                <div className="flex items-center gap-3 px-4 pt-4 pb-2 border-b border-gray-800">
+                                  <div className="h-16 w-11 flex-shrink-0 rounded-md overflow-hidden border border-gray-700 bg-gray-800 shadow-inner">
+                                    <img
+                                      src={movie.poster || '/placeholder-backdrop.jpg'}
+                                      alt={movie.title}
+                                      className="w-full h-full object-cover"
+                                      style={{ background: "#222" }}
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-semibold truncate">{movie.title}</div>
+                                    <div className="text-xs text-gray-400 truncate">{movie.year} &middot; {(movie.genre || '').split(',').map(g => g.trim()).filter(Boolean).slice(0,2).join(', ')}{movie.genre && movie.genre.split(',').length > 2 ? '…' : ''}</div>
+                                    <div className="flex gap-1 mt-1">
+                                      {movie.published
+                                        ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publié</span>
+                                        : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
+                                      }
+                                      {movie.isvip &&
+                                        <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
+                                      }
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex flex-col gap-2 px-4 py-4">
-                                <Button asChild variant="outline" className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150">
-                                  <Link href={`/films/${movie.id}`} target="_blank">
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Voir la fiche
-                                  </Link>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150"
-                                  onClick={() => {
-                                    setActionMenuMovie(null);
-                                    router.push(`/admin/films/${movie.id}/edit`);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Modifier
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  className="justify-start bg-white/5 hover:bg-red-600/80 hover:text-white transition duration-150"
-                                  onClick={() => {
-                                    setActionMenuMovie(null);
-                                    openDeleteDialog(movie);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
-                                </Button>
-                              </div>
-                              <DialogFooter className="px-4 pb-3 pt-0">
-                                <Button variant="outline" size="sm" onClick={() => setActionMenuMovie(null)} className="w-full mt-2 bg-white/10 hover:bg-white/20 transition">
-                                  Annuler
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {/* Actions groupées */}
-            {selectedIds.length > 0 && (
-              <div className="mb-4 flex items-center gap-3 bg-red-900/30 border border-red-500 rounded-lg px-4 py-2 animate-pulse">
-                <span className="font-semibold text-red-300">
-                  {selectedIds.length} film{selectedIds.length > 1 ? "s" : ""} sélectionné{selectedIds.length > 1 ? "s" : ""}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkPublish(true)}
-                  disabled={isDeleting}
-                  className="ml-2"
-                >
-                  Publier
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkPublish(false)}
-                  disabled={isDeleting}
-                  className="ml-2"
-                >
-                  Dépublier
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteSelected}
-                  disabled={isDeleting}
-                  className="ml-2"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Supprimer
-                </Button>
-              </div>
-            )}
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="hover:bg-indigo-900/20"
-                  aria-label="Page précédente"
-                >
-                  &larr;
-                </Button>
-                <span className="text-xs px-4 py-1 rounded bg-gray-800 text-indigo-300 border border-gray-700 shadow">
-                  Page {page} sur {totalPages}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="hover:bg-indigo-900/20"
-                  aria-label="Page suivante"
-                >
-                  &rarr;
-                </Button>
-              </div>
-            )}
-          </div>
+                                <div className="flex flex-col gap-2 px-4 py-4">
+                                  <Button asChild variant="outline" className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150">
+                                    <Link href={`/films/${movie.id}`} target="_blank">
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Voir la fiche
+                                    </Link>
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    className="justify-start bg-white/5 hover:bg-indigo-500/80 hover:text-white transition duration-150"
+                                    onClick={() => {
+                                      setActionMenuMovie(null);
+                                      router.push(`/admin/films/${movie.id}/edit`);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    className="justify-start bg-white/5 hover:bg-red-600/80 hover:text-white transition duration-150"
+                                    onClick={() => {
+                                      setActionMenuMovie(null);
+                                      openDeleteDialog(movie);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                  </Button>
+                                </div>
+                                <DialogFooter className="px-4 pb-3 pt-0">
+                                  <Button variant="outline" size="sm" onClick={() => setActionMenuMovie(null)} className="w-full mt-2 bg-white/10 hover:bg-white/20 transition">
+                                    Annuler
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {/* Actions groupées */}
+              {selectedIds.length > 0 && (
+                <div className="mb-4 flex items-center gap-3 bg-red-900/30 border border-red-500 rounded-lg px-4 py-2 animate-pulse">
+                  <span className="font-semibold text-red-300">
+                    {selectedIds.length} film{selectedIds.length > 1 ? "s" : ""} sélectionné{selectedIds.length > 1 ? "s" : ""}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkPublish(true)}
+                    disabled={isDeleting}
+                    className="ml-2"
+                  >
+                    Publier
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkPublish(false)}
+                    disabled={isDeleting}
+                    className="ml-2"
+                  >
+                    Dépublier
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    disabled={isDeleting}
+                    className="ml-2"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Supprimer
+                  </Button>
+                </div>
+              )}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="hover:bg-indigo-900/20"
+                    aria-label="Page précédente"
+                  >
+                    &larr;
+                  </Button>
+                  <span className="text-xs px-4 py-1 rounded bg-gray-800 text-indigo-300 border border-gray-700 shadow">
+                    Page {page} sur {totalPages}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="hover:bg-indigo-900/20"
+                    aria-label="Page suivante"
+                  >
+                    &rarr;
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
       {/* Aperçu rapide */}
@@ -885,6 +999,31 @@ export default function AdminFilmsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    {/* FilmModal pour ajouter un film */}
+      <FilmModal
+        open={filmModalOpen}
+        onClose={() => setFilmModalOpen(false)}
+        onSave={async (newFilm) => {
+          setFilmModalLoading(true);
+          try {
+            // Ajoute le film dans la base et dans la liste locale
+            const { data, error } = await supabase.from('films').insert([newFilm]).select();
+            if (error) throw error;
+            if (data && data.length > 0) {
+              setMovies((prev) => [data[0], ...prev]);
+              toast({
+                title: "Film ajouté",
+                description: `Le film "${data[0].title}" a été ajouté.`,
+              });
+            }
+            setFilmModalOpen(false);
+          } catch (e) {
+            toast({ title: "Erreur", description: String(e), variant: "destructive" });
+          }
+          setFilmModalLoading(false);
+        }}
+        initialData={{}}
+      />
     </div>
   );
 }
