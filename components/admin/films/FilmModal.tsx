@@ -683,7 +683,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
               // Vérification anti-doublon AVANT import
               if (importedTitle && importedYear) {
-                // Recherche plus large : pattern ILIKE avec wildcards pour éviter tout faux négatif
+                // Recherche la plus large possible : ILIKE pattern et logs de debug
                 const pattern = `%${importedTitle.replace(/\s+/g, ' ').trim()}%`;
                 const { data: dataCheck, error: errorCheck } = await supabase
                   .from('films')
@@ -691,28 +691,38 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                   .ilike('title', pattern)
                   .eq('year', Number(importedYear));
 
+                // Debug log
+                console.log('[DEBUG Doublon Import]', { importedTitle, importedYear, pattern, dataCheck, errorCheck });
+
                 if (errorCheck) {
                   toast({ title: "Erreur", description: String(errorCheck), variant: "destructive" });
                   return;
                 }
-                // Vérification JS robuste sur chaque résultat retourné
-                if (
-                  dataCheck &&
-                  dataCheck.length > 0 &&
-                  dataCheck.some(
-                    (film) =>
-                      film.title &&
-                      film.title.replace(/\s+/g, ' ').trim().toLowerCase() === importedTitle.replace(/\s+/g, ' ').trim().toLowerCase() &&
-                      Number(film.year) === Number(importedYear)
-                  )
-                ) {
-                  toast({
-                    title: "Ce film existe déjà",
-                    description: "Un film avec ce titre et cette année est déjà présent dans votre base.",
-                    variant: "destructive",
-                  });
-                  return; // On bloque l'import
+                if (dataCheck && dataCheck.length > 0) {
+                  // On log tous les titres trouvés pour debug
+                  const matching = dataCheck.find(film =>
+                    film.title &&
+                    film.title.replace(/\s+/g, ' ').trim().toLowerCase() === importedTitle.replace(/\s+/g, ' ').trim().toLowerCase() &&
+                    Number(film.year) === Number(importedYear)
+                  );
+                  if (matching) {
+                    console.log('[DEBUG Doublon Import] Doublon détecté:', matching);
+                    toast({
+                      title: "Ce film existe déjà",
+                      description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                      variant: "destructive",
+                    });
+                    return; // On bloque l'import
+                  } else {
+                    // Cas rare : résultat trouvé par pattern mais pas strictement égal
+                    toast({
+                      title: "Alerte doublon possible",
+                      description: `Un film approchant existe déjà (titre ou année légèrement différent). Vérifiez votre base.`,
+                      variant: "warning",
+                    });
+                  }
                 }
+              }
               }
 
               if (toImport) {
