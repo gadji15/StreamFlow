@@ -678,27 +678,35 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         </div>
         {/* Content scrollable (formulaire principal) */}
         <form
+          id="film-form"
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
-          style={{ minHeight: 0 }}
+          style={{ minHeight: 0, maxHeight: "calc(90vh - 105px)" }} {/* Ajuste la hauteur scrollable pour laisser header/footer visibles */}
         >
-          <div>
-            <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
-              Titre <span className="text-red-500">*</span>
-            </label>
-            <input
-              ref={firstInput}
-              id="title"
-              value={form.title}
-              onChange={(e) => handleChange("title", e.target.value)}
-              className={`mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow ${
-                errors.title ? "border-red-500" : ""
-              }`}
-              required
-              aria-required="true"
-            />
-            {errors.title && (
-              <div className="text-xs text-red-400 mt-0.5">{errors.title}</div>
+          ...
+          {/* Actions sticky */}
+          <div className="sticky bottom-0 z-30 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent pt-1 pb-2 px-2 rounded-b-2xl flex gap-2 justify-end shadow">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              aria-label="Annuler"
+              className="text-xs py-1 px-2"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              variant="success"
+              disabled={loading}
+              aria-label="Enregistrer le film"
+              className="text-xs py-1 px-2"
+            >
+              {loading ? "..." : "Enregistrer"}
+            </Button>
+          </div>
+        </form>
+      </div>
             )}
           </div>
           <div>
