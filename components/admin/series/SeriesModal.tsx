@@ -2,7 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function SeriesModal({ open, onClose, onSave, initialData = {} }) {
+/**
+ * Modal d'ajout/édition d'une série. 
+ * 
+ * Props :
+ * - open (bool) : ouverture du modal
+ * - onClose (fn) : fermeture
+ * - onSave (fn(payload)) : callback sauvegarde
+ * - initialData (object) : données d'édition
+ * - existingSeries (array) : liste des séries existantes [{title, tmdb_id, id}]
+ */
+export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [] }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -131,6 +141,32 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
       });
       return;
     }
+
+    // --- Vérification doublons ---
+    const normalizedTitle = (form.title || "").trim().toLowerCase();
+    const normalizedTmdbId = form.tmdb_id ? String(form.tmdb_id).trim() : null;
+    const currentId = initialData && initialData.id ? initialData.id : null;
+
+    // On considère doublon si le titre ou le tmdb_id correspondent (hors édition de soi-même)
+    const doublon = existingSeries.find((serie) => {
+      if (currentId && serie.id === currentId) return false; // Ignore self on edit
+      const serieTitle = (serie.title || "").trim().toLowerCase();
+      // Compare tmdb_id si possible, sinon le titre
+      if (normalizedTmdbId && serie.tmdb_id && String(serie.tmdb_id).trim() === normalizedTmdbId) return true;
+      if (normalizedTitle && serieTitle && serieTitle === normalizedTitle) return true;
+      return false;
+    });
+
+    if (doublon) {
+      toast({
+        title: "Doublon détecté",
+        description: "Une série avec ce titre ou ce TMDB ID existe déjà.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // ----------------------------
+
     setLoading(true);
 
     try {
