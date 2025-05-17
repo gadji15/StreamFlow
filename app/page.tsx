@@ -147,7 +147,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 50 }}
         animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
-        className="py-12 px-4 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 mt-12"
+        className="py-12 px-4 bg-muted mt-12"
       >
         <div className="container mx-auto">
           <div className="flex items-center mb-6">
