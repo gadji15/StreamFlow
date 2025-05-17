@@ -1016,6 +1016,47 @@ export default function AdminFilmsPage() {
         onClose={() => setFilmModalOpen(false)}
         onSave={async (newFilm) => {
           setFilmModalLoading(true);
+
+          // Vérification anti-doublon : titre+année
+          const filmExists =
+            movies.some(
+              (m) =>
+                m.title.trim().toLowerCase() === (newFilm.title || '').trim().toLowerCase() &&
+                Number(m.year) === Number(newFilm.year)
+            );
+          if (filmExists) {
+            toast({
+              title: "Doublon détecté",
+              description: `Un film avec ce titre et cette année existe déjà.`,
+              variant: "destructive",
+            });
+            setFilmModalLoading(false);
+            return;
+          }
+
+          // Vérification côté base (pour couvrir d'éventuels films ajoutés depuis un autre client)
+          const { data: dataCheck, error: errorCheck } = await supabase
+            .from('films')
+            .select('id')
+            .eq('title', newFilm.title)
+            .eq('year', newFilm.year)
+            .limit(1);
+
+          if (errorCheck) {
+            toast({ title: "Erreur", description: String(errorCheck), variant: "destructive" });
+            setFilmModalLoading(false);
+            return;
+          }
+          if (dataCheck && dataCheck.length > 0) {
+            toast({
+              title: "Doublon détecté (base)",
+              description: `Un film avec ce titre et cette année existe déjà en base.`,
+              variant: "destructive",
+            });
+            setFilmModalLoading(false);
+            return;
+          }
+
           try {
             // Ajoute le film dans la base et dans la liste locale
             const { data, error } = await supabase.from('films').insert([newFilm]).select();
