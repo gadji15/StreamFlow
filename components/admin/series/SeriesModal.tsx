@@ -199,13 +199,26 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     }, 250);
   };
 
-  // Import détaillé à partir d'un objet serie (avec mapping fiable creator/genres)
+  // Import détaillé à partir d'un objet serie (mapping fiable creator/genres, robustesse accrue)
   const importSerieFromTMDB = async (serie) => {
     if (!serie || !serie.id) return;
     setLoading(true);
     try {
       const detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
       const detail = detailRes.ok ? await detailRes.json() : {};
+      let creatorValue = "";
+      if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
+        creatorValue = detail.created_by.map(c => c.name).join(", ");
+      } else if (serie && serie.created_by && Array.isArray(serie.created_by) && serie.created_by.length > 0) {
+        creatorValue = serie.created_by.map(c => c.name).join(", ");
+      }
+      let genresValue = [];
+      if (detail && Array.isArray(detail.genres) && detail.genres.length > 0) {
+        genresValue = detail.genres.map((g) => g.name);
+      } else if (serie && Array.isArray(serie.genre_ids) && serie.genre_ids.length > 0 && window && window.__TMDB_GENRES_MAP__) {
+        // Optionally map genre_ids to names if you have a genres map in global state
+        genresValue = serie.genre_ids.map(id => window.__TMDB_GENRES_MAP__[id] || id);
+      }
       setForm((f) => ({
         ...f,
         title: detail.name || serie.name || f.title,
@@ -217,13 +230,11 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
         end_year: (detail.last_air_date || serie.last_air_date)
           ? (detail.last_air_date || serie.last_air_date).slice(0, 4)
           : f.end_year,
-        // Correction ici : on extrait TOUJOURS le champ genres depuis detail.genres (array of {id, name})
-        genres: detail.genres && Array.isArray(detail.genres) ? detail.genres.map((g) => g.name) : [],
+        genres: genresValue,
         vote_average: detail.vote_average ?? serie.vote_average ?? f.vote_average,
         description: detail.overview ?? serie.overview ?? f.description,
         tmdb_id: serie.id,
-        // Correction ici : on extrait les créateurs via detail.created_by
-        creator: extractCreator(detail) || f.creator,
+        creator: creatorValue,
       }));
       await fetchCast(serie.id);
       toast({
@@ -324,7 +335,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
             ✕
           </button>
         </div>
-        {/* TMDB search zone (avec suggestions temps réel) */}
+        {/* TMDB search zone (autocomplete + bouton Import) */}
         <div className="flex gap-1 items-end px-3 pt-1 relative">
           <div className="flex-1">
             <label htmlFor="tmdb_search" className="block text-[11px] mb-1 text-white/70 font-medium">
@@ -352,7 +363,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
                     setTmdbSearch(suggestion.name);
                     setShowSerieSuggestions(false);
                     setSerieSuggestions([]);
-                    importSerieFromTMDB(suggestion);
+                    // NE PAS IMPORT AUTOMATIQUE, attendre bouton
                   }
                 }
               }}
@@ -379,10 +390,9 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
                     onMouseEnter={() => setActiveSerieSuggestion(idx)}
                     onMouseDown={e => {
                       e.preventDefault();
+                      setActiveSerieSuggestion(idx);
                       setTmdbSearch(suggestion.name);
                       setShowSerieSuggestions(false);
-                      setSerieSuggestions([]);
-                      importSerieFromTMDB(suggestion);
                     }}
                   >
                     <span className="font-medium">{suggestion.name}</span>
@@ -397,6 +407,55 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
               </ul>
             )}
           </div>
+          <Button
+            type="button"
+            className="ml-1 flex-shrink-0 text-xs py-1 px-2 transition rounded-lg"
+            variant="outline"
+            onClick={async () => {
+              // On importe la suggestion sélectionnée, ou la première suggestion, ou on fait une recherche directe
+              let toImport = null;
+              if (activeSerieSuggestion >= 0 && serieSuggestions[activeSerieSuggestion]) {
+                toImport = serieSuggestions[activeSerieSuggestion];
+              } else if (serieSuggestions.length > 0) {
+                toImport = serieSuggestions[0];
+              }
+              if (toImport) {
+                await importSerieFromTMDB(toImport);
+              } else if (tmdbSearch.trim().length > 0) {
+                // Recherche directe si aucun résultat de suggestion
+                setLoading(true);
+                try {
+                  const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbSearch.trim())}`);
+                  const data = await resp.json();
+                  if (data.results && data.results.length > 0) {
+                    await importSerieFromTMDB(data.results[0]);
+                  } else {
+                    toast({
+                      title: "Introuvable TMDB",
+                      description: "Aucune série trouvée pour cette recherche.",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (e) {
+                  toast({
+                    title: "Erreur TMDB",
+                    description: String(e),
+                    variant: "destructive",
+                  });
+                }
+                setLoading(false);
+              }
+            }}
+            disabled={loading || !tmdbSearch.trim()}
+            aria-label="Chercher et importer depuis TMDB"
+          >
+            {loading ? (
+              <svg className="animate-spin h-4 w-4 mr-1 text-indigo-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-60" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            ) : "Importer"}
+          </Button>
         </div>
         {/* Affichage des acteurs importés */}
         {cast && cast.length > 0 && (
