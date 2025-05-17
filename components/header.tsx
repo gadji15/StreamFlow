@@ -55,7 +55,7 @@ export default function Header() {
 
   return (
     <header className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
-      scrolled ? 'bg-black/90 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
+      scrolled ? 'bg-background backdrop-blur-sm' : 'bg-background'
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
