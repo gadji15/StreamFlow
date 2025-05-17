@@ -2,7 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function SeriesModal({ open, onClose, onSave, initialData = {} }) {
+/**
+ * Modal d'ajout/édition d'une série. 
+ * 
+ * Props :
+ * - open (bool) : ouverture du modal
+ * - onClose (fn) : fermeture
+ * - onSave (fn(payload)) : callback sauvegarde
+ * - initialData (object) : données d'édition
+ * - existingSeries (array) : liste des séries existantes [{title, tmdb_id, id}]
+ */
+export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [] }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -131,6 +141,50 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
       });
       return;
     }
+
+    // --- Vérification anti-doublon côté base ---
+    try {
+      // Vérifier doublon TMDB ID (hors édition de soi-même)
+      if (form.tmdb_id) {
+        const { data: doublonTmdb } = await (await import('@/lib/supabaseClient')).supabase
+          .from("series")
+          .select("id")
+          .eq("tmdb_id", form.tmdb_id)
+          .maybeSingle();
+        if (doublonTmdb && (!initialData.id || doublonTmdb.id !== initialData.id)) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une série avec ce TMDB ID existe déjà.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+      // Vérifier doublon Titre + Année (hors édition de soi-même)
+      const { data: doublonTitle } = await (await import('@/lib/supabaseClient')).supabase
+        .from("series")
+        .select("id")
+        .eq("title", form.title)
+        .eq("start_year", form.start_year ? Number(form.start_year) : null)
+        .maybeSingle();
+      if (doublonTitle && (!initialData.id || doublonTitle.id !== initialData.id)) {
+        toast({
+          title: "Doublon détecté",
+          description: "Une série avec ce titre et cette année existe déjà.",
+          variant: "destructive"
+        });
+        return;
+      }
+    } catch (e) {
+      toast({
+        title: "Erreur",
+        description: String(e),
+        variant: "destructive"
+      });
+      return;
+    }
+    // -------------------------------------------------
+
     setLoading(true);
 
     try {
