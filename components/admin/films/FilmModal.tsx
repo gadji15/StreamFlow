@@ -197,13 +197,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     }, 250);
   };
 
-  // Import depuis TMDB
+  // Import depuis TMDB (corrigé pour tout remplir)
   const importMovieFromTMDB = async (movie) => {
     if (!movie || !movie.id) return;
     setLoading(true);
     try {
+      // On obtient credits et videos en même temps
+      const detailRes = await fetch(`/api/tmdb/movie/${movie.id}?append_to_response=credits,videos`);
       let detail = null;
-      let detailRes = await fetch(`/api/tmdb/movie/${movie.id}`);
       if (detailRes.ok) {
         detail = await detailRes.json();
       } else {
@@ -215,35 +216,48 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         setLoading(false);
         return;
       }
+      // Director extraction
+      let director = "";
+      if (detail.credits && Array.isArray(detail.credits.crew)) {
+        const dir = detail.credits.crew.find((c) => c.job === "Director");
+        if (dir) director = dir.name;
+      }
+      // Genres
+      let genres = [];
+      if (Array.isArray(detail.genres) && detail.genres.length > 0) {
+        genres = detail.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+      }
+      // Trailer extraction (YouTube)
+      let trailer_url = "";
+      if (detail.videos && Array.isArray(detail.videos.results)) {
+        const yt = detail.videos.results.find(
+          (v) => v.type === "Trailer" && v.site === "YouTube"
+        );
+        if (yt && yt.key) trailer_url = `https://www.youtube.com/watch?v=${yt.key}`;
+      }
+      // Affiche
+      let poster = "";
+      if (detail.poster_path) {
+        poster = `https://image.tmdb.org/t/p/w500${detail.poster_path}`;
+      } else if (movie.poster_path) {
+        poster = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+      }
+      // Champs principaux
       setForm((f) => ({
         ...f,
         title: detail.title || movie.title || f.title,
-        poster: (detail.poster_path || movie.poster_path)
-          ? `https://image.tmdb.org/t/p/w500${detail.poster_path || movie.poster_path}` : f.poster,
+        director: director || f.director,
         year: (detail.release_date || movie.release_date)
           ? (detail.release_date || movie.release_date).slice(0, 4)
           : f.year,
-        duration: detail.runtime ?? f.duration,
-        genres: detail.genres ? detail.genres.map((g) => typeof g === "string" ? g : g.name) : f.genres,
+        duration: detail.runtime ?? f.duration ?? "",
+        genres: genres.length > 0 ? genres : f.genres,
         vote_average: detail.vote_average ?? f.vote_average,
         vote_count: detail.vote_count ?? f.vote_count,
+        poster: poster || f.poster,
         description: detail.overview ?? movie.overview ?? f.description,
-        director: (detail.credits && Array.isArray(detail.credits.crew))
-          ? (detail.credits.crew.find((c) => c.job === "Director")?.name || f.director)
-          : f.director,
         tmdb_id: movie.id,
-        trailer_url: (detail.videos && Array.isArray(detail.videos.results))
-          ? (
-            detail.videos.results.find(
-              (v) => v.type === "Trailer" && v.site === "YouTube"
-            )?.key
-              ? "https://www.youtube.com/watch?v=" +
-                detail.videos.results.find(
-                  (v) => v.type === "Trailer" && v.site === "YouTube"
-                )?.key
-              : f.trailer_url
-          )
-          : f.trailer_url,
+        trailer_url: trailer_url || f.trailer_url,
       }));
       await fetchCast(movie.id);
       toast({
@@ -265,27 +279,48 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     if (!form.tmdb_id) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/tmdb/movie/${encodeURIComponent(form.tmdb_id)}`);
+      // Appel enrichi avec credits et videos
+      const res = await fetch(`/api/tmdb/movie/${encodeURIComponent(form.tmdb_id)}?append_to_response=credits,videos`);
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const data = await res.json();
       if (data && data.id) {
+        // Director extraction
+        let director = "";
+        if (data.credits && Array.isArray(data.credits.crew)) {
+          const dir = data.credits.crew.find((c) => c.job === "Director");
+          if (dir) director = dir.name;
+        }
+        // Genres
+        let genres = [];
+        if (Array.isArray(data.genres) && data.genres.length > 0) {
+          genres = data.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+        }
+        // Trailer extraction (YouTube)
+        let trailer_url = "";
+        if (data.videos && Array.isArray(data.videos.results)) {
+          const yt = data.videos.results.find(
+            (v) => v.type === "Trailer" && v.site === "YouTube"
+          );
+          if (yt && yt.key) trailer_url = `https://www.youtube.com/watch?v=${yt.key}`;
+        }
+        // Affiche
+        let poster = "";
+        if (data.poster_path) {
+          poster = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+        }
         setForm((f) => ({
           ...f,
           title: data.title || f.title,
-          poster: data.poster_path
-            ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
-            : f.poster,
-          year: data.release_date
-            ? data.release_date.slice(0, 4)
-            : f.year,
-          duration: data.runtime ?? f.duration,
-          genres: data.genres ? data.genres.map((g) => g.name) : f.genres,
+          director: director || f.director,
+          year: data.release_date ? data.release_date.slice(0, 4) : f.year,
+          duration: data.runtime ?? f.duration ?? "",
+          genres: genres.length > 0 ? genres : f.genres,
           vote_average: data.vote_average ?? f.vote_average,
           vote_count: data.vote_count ?? f.vote_count,
+          poster: poster || f.poster,
           description: data.overview ?? f.description,
-          director: (data.credits && Array.isArray(data.credits.crew))
-            ? (data.credits.crew.find((c) => c.job === "Director")?.name || f.director)
-            : f.director,
+          tmdb_id: data.id,
+          trailer_url: trailer_url || f.trailer_url,
         }));
         await fetchCast(data.id);
         toast({
