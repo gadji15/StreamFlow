@@ -17,7 +17,7 @@ export default function SeriesTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left">
+      <table className="w-full text-left min-w-[580px] sm:min-w-full">
         <thead>
           <tr className="border-b border-gray-700">
             <th className="pb-3 font-medium w-5">
@@ -35,14 +35,14 @@ export default function SeriesTable({
               </button>
             </th>
             <th className="pb-3 font-medium">Série</th>
-            <th className="pb-3 font-medium text-center">Début</th>
-            <th className="pb-3 font-medium text-center">Fin</th>
-            <th className="pb-3 font-medium text-center">Saisons</th>
-            <th className="pb-3 font-medium text-center">Créateur</th>
-            <th className="pb-3 font-medium text-center">Genres</th>
-            <th className="pb-3 font-medium text-center">Note</th>
-            <th className="pb-3 font-medium text-center">Statut</th>
-            <th className="pb-3 font-medium text-center">VIP</th>
+            <th className="pb-3 font-medium text-center hidden xs:table-cell">Début</th>
+            <th className="pb-3 font-medium text-center hidden md:table-cell">Fin</th>
+            <th className="pb-3 font-medium text-center hidden sm:table-cell">Saisons</th>
+            <th className="pb-3 font-medium text-center hidden md:table-cell">Créateur</th>
+            <th className="pb-3 font-medium text-center hidden lg:table-cell">Genres</th>
+            <th className="pb-3 font-medium text-center hidden sm:table-cell">Note</th>
+            <th className="pb-3 font-medium text-center hidden sm:table-cell">Statut</th>
+            <th className="pb-3 font-medium text-center hidden md:table-cell">VIP</th>
             <th className="pb-3 font-medium text-right">Actions</th>
           </tr>
         </thead>
@@ -73,7 +73,7 @@ export default function SeriesTable({
       </table>
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
+        <div className="flex flex-wrap justify-center items-center gap-2 mt-6">
           <button
             className="px-2 py-1 rounded bg-gray-700 text-white"
             onClick={() => setPage(Math.max(1, page - 1))}
