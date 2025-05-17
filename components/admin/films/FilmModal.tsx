@@ -397,6 +397,101 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   };
 
   // --- SUBMIT ---
+  // Fonction utilitaire pour formater le payload
+  function prepareFilmPayload(form: any, castList: any[], localVideoUrl: string) {
+    // Genres : array => string (séparé par virgule)
+    let genre: string | null = null;
+    if (Array.isArray(form.genres) && form.genres.length > 0) {
+      genre = form.genres.join(", ");
+    } else if (typeof form.genres === "string") {
+      genre = form.genres;
+    }
+
+    // Homepage_categories : array obligatoire (pas de stringification JSON)
+    let homepage_categories: string[] = [];
+    if (Array.isArray(form.homepage_categories)) {
+      homepage_categories = form.homepage_categories.filter(
+        (cat) => typeof cat === "string" && cat.trim() !== ""
+      );
+    }
+
+    // Cast : array d’objets (pas de string JSON !)
+    let cast = [];
+    if (Array.isArray(castList)) {
+      cast = castList.filter(
+        (m) => typeof m.name === "string" && m.name.trim() !== ""
+      );
+    }
+
+    // release_date : string YYYY-MM-DD ou null
+    let release_date: string | null = null;
+    if (form.release_date) {
+      const d = new Date(form.release_date);
+      if (!isNaN(d.getTime())) {
+        release_date = d.toISOString().slice(0, 10);
+      }
+    }
+
+    // duration, year : nombre ou null
+    const duration =
+      form.duration !== undefined && form.duration !== ""
+        ? Number(form.duration)
+        : null;
+    const year =
+      form.year !== undefined && form.year !== "" ? Number(form.year) : null;
+
+    // tmdb_id : nombre ou null
+    const tmdb_id =
+      form.tmdb_id !== undefined && form.tmdb_id !== ""
+        ? Number(form.tmdb_id)
+        : null;
+
+    // vote_average, popularity, vote_count : nombres ou null
+    const vote_average =
+      form.vote_average !== undefined && form.vote_average !== ""
+        ? Number(form.vote_average)
+        : null;
+    const popularity =
+      form.popularity !== undefined && form.popularity !== ""
+        ? Number(form.popularity)
+        : null;
+    const vote_count =
+      form.vote_count !== undefined && form.vote_count !== ""
+        ? Number(form.vote_count)
+        : null;
+
+    // Boolean fields : forcer le cast
+    const isvip = !!form.isvip;
+    const published = !!form.published;
+    const no_video = !!form.no_video;
+
+    return {
+      title: form.title?.trim() || "",
+      original_title: form.original_title?.trim() || null,
+      director: form.director?.trim() || null,
+      year,
+      release_date,
+      duration,
+      genre,
+      vote_average,
+      vote_count,
+      published,
+      isvip,
+      poster: form.poster || null,
+      backdrop: form.backdrop || null,
+      tmdb_id,
+      imdb_id: form.imdb_id || null,
+      description: form.description?.trim() || null,
+      trailer_url: form.trailer_url || null,
+      video_url: no_video ? null : (form.video_url || localVideoUrl || null),
+      language: form.language || null,
+      homepage_categories,
+      popularity,
+      cast,
+      no_video,
+    };
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
@@ -412,39 +507,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     setLoading(true);
 
     try {
-      const clean = (v) => (v === "" || v === undefined ? null : v);
-      const payload = {
-        title: clean(form.title),
-        original_title: clean(form.original_title),
-        director: clean(form.director),
-        year: clean(form.year) !== null ? Number(form.year) : null,
-        duration: clean(form.duration) !== null ? Number(form.duration) : null,
-        genre:
-          Array.isArray(form.genres)
-            ? form.genres.filter(Boolean).join(", ")
-            : typeof form.genres === "string"
-              ? form.genres
-              : "",
-        vote_average: clean(form.vote_average) !== null ? Number(form.vote_average) : null,
-        vote_count: clean(form.vote_count) !== null ? Number(form.vote_count) : null,
-        published: !!form.published,
-        isvip: !!form.isvip,
-        poster: clean(form.poster),
-        backdrop: clean(form.backdrop),
-        tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
-        imdb_id: clean(form.imdb_id),
-        description: clean(form.description),
-        trailer_url: clean(form.trailer_url),
-        video_url: form.no_video ? null : (clean(form.video_url) || clean(localVideoUrl)),
-        language: clean(form.language),
-        // Correction : envoyer le champ homepage_categories sous forme de tableau JSON si non vide
-        homepage_categories: Array.isArray(form.homepage_categories) && form.homepage_categories.length > 0
-          ? JSON.stringify(form.homepage_categories)
-          : null,
-        popularity: clean(form.popularity),
-        cast: castList && castList.length > 0 ? castList : [],
-        no_video: !!form.no_video,
-      };
+      const payload = prepareFilmPayload(form, castList, localVideoUrl);
 
       await onSave(payload);
       toast({ title: "Film enregistré" });
