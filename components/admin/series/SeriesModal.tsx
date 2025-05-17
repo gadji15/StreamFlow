@@ -154,12 +154,73 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
         poster: clean(form.poster),
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         description: clean(form.description),
-        // Optionnels
-        // cast: Array.isArray(cast) && cast.length > 0 ? cast : null, // seulement si tu veux stocker le cast
       };
 
-      // On retire les champs qui n'existent pas en base (ex: genres, genresInput, etc.)
-      // Ne pas envoyer undefined/null si le champ est non nullable
+      // --- Vérification anti-doublon série (par tmdb_id, puis titre)
+      if (!initialData) { // seulement si ajout, pas édition
+        let duplicate = null;
+        // Vérifier par tmdb_id si présent
+        if (payload.tmdb_id) {
+          const { data: existing, error } = await window.supabase
+            .from('series')
+            .select('id, title')
+            .eq('tmdb_id', payload.tmdb_id)
+            .limit(1)
+            .maybeSingle();
+          if (!error && existing) duplicate = existing;
+        }
+        // Si pas de tmdb_id, vérifier par titre (normalisé)
+        if (!duplicate && payload.title) {
+          const normTitle = payload.title.trim().toLowerCase();
+          const { data: existing, error } = await window.supabase
+            .from('series')
+            .select('id, title')
+            .ilike('title', normTitle)
+            .limit(1)
+            .maybeSingle();
+          if (!error && existing) duplicate = existing;
+        }
+        if (duplicate) {
+          toast({
+            title: "Doublon détecté",
+            description: `Une série avec ce TMDB ID ou ce titre existe déjà (${duplicate.title}).`,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      await onSave(payload);
+      toast({ title: "Série enregistrée" });
+      onClose();
+    } catch (e) {
+      toast({ title: "Erreur", description: String(e), variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
+      // Vérification anti-doublon côté front (tmdb_id unique)
+      if (!initialData) {
+        // Ajout, pas édition
+        if (payload.tmdb_id) {
+          const { data: existing, error } = await window.supabase
+            .from("series")
+            .select("id")
+            .eq("tmdb_id", payload.tmdb_id)
+            .limit(1)
+            .maybeSingle();
+          if (existing) {
+            toast({
+              title: "Doublon détecté",
+              description: "Cette série existe déjà dans la base (TMDB ID identique).",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      }
 
       await onSave(payload);
       toast({ title: "Série enregistrée" });
