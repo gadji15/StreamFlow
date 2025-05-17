@@ -36,7 +36,7 @@ export default function SeriesRow({
 
   return (
     <tr className="border-b border-gray-700 group hover:bg-gray-700/10 transition">
-      <td className="py-4 px-2 align-middle">
+      <td className="py-2 px-1 align-middle">
         <button
           type="button"
           aria-label={selected ? "Désélectionner" : "Sélectionner"}
@@ -46,9 +46,9 @@ export default function SeriesRow({
           {selected ? "☑️" : "⬜"}
         </button>
       </td>
-      <td className="py-4 min-w-[210px]">
+      <td className="py-2 min-w-[160px] max-w-[210px]">
         <div className="flex items-center">
-          <div className="h-10 w-10 overflow-hidden rounded mr-3 flex-shrink-0 border border-gray-600 bg-gray-800">
+          <div className="h-8 w-8 overflow-hidden rounded mr-2 flex-shrink-0 border border-gray-600 bg-gray-800">
             <img
               src={posterUrl}
               alt={serie.title}
@@ -57,8 +57,8 @@ export default function SeriesRow({
             />
           </div>
           <div>
-            <div className="font-medium">{serie.title}</div>
-            <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+            <div className="font-medium text-xs sm:text-sm">{serie.title}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5 flex flex-wrap gap-1">
               {genreList.slice(0, 2).map(g => (
                 <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
               ))}
@@ -67,35 +67,35 @@ export default function SeriesRow({
           </div>
         </div>
       </td>
-      <td className="py-4 text-center">{serie.start_year ?? "-"}</td>
-      <td className="py-4 text-center">{serie.end_year ?? "-"}</td>
-      <td className="py-4 text-center">
-        <span className="inline-block bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-xs font-semibold">
+      <td className="py-2 text-center hidden xs:table-cell">{serie.start_year ?? "-"}</td>
+      <td className="py-2 text-center hidden md:table-cell">{serie.end_year ?? "-"}</td>
+      <td className="py-2 text-center hidden sm:table-cell">
+        <span className="inline-block bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold">
           {seasonCount ?? "-"}
         </span>
       </td>
-      <td className="py-4 text-center">{serie.creator ?? "-"}</td>
-      <td className="py-4 text-center">
+      <td className="py-2 text-center hidden md:table-cell">{serie.creator ?? "-"}</td>
+      <td className="py-2 text-center hidden lg:table-cell">
         {genreList.join(", ") || "-"}
       </td>
-      <td className="py-4 text-center">
+      <td className="py-2 text-center hidden sm:table-cell">
         {serie.vote_average
-          ? <span>{Number(serie.vote_average).toFixed(1)}</span>
+          ? <span className="text-xs">{Number(serie.vote_average).toFixed(1)}</span>
           : <span className="text-gray-500">-</span>
         }
       </td>
-      <td className="py-4 text-center">
+      <td className="py-2 text-center hidden sm:table-cell">
         <StatusBadge published={!!serie.published} />
       </td>
-      <td className="py-4 text-center">
+      <td className="py-2 text-center hidden md:table-cell">
         <VipBadge isvip={!!serie.isvip} />
       </td>
-      <td className="py-4 text-right">
-        <div className="flex justify-end items-center space-x-2 relative">
+      <td className="py-2 text-right">
+        <div className="flex flex-col sm:flex-row justify-end items-center gap-1 sm:space-x-2 relative">
           <button
             type="button"
             aria-label={`Aperçu de la série "${serie.title}"`}
-            className="bg-gray-700 text-white px-2 rounded"
+            className="bg-gray-700 text-white px-2 rounded mb-1 sm:mb-0"
             onClick={() => onAction && onAction("preview", serie)}
           >
             👁️
@@ -103,7 +103,7 @@ export default function SeriesRow({
           <button
             type="button"
             aria-label={`Afficher saisons et épisodes pour "${serie.title}"`}
-            className="bg-gray-700 text-white px-2 rounded"
+            className="bg-gray-700 text-white px-2 rounded mb-1 sm:mb-0"
             onClick={() => {
               console.log("[SeriesRow] CLICK expand", serie.id);
               if (onAction) {
