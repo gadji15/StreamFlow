@@ -236,6 +236,8 @@ export default function AdminAddSeriesPage() {
   };
 
   // Form submit
+  const [tmdbId, setTmdbId] = useState<string | number | null>(null); // Ajoutez ceci au début avec les autres useState si TMDB ID n'est pas déjà géré
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Validations
@@ -355,15 +357,46 @@ export default function AdminAddSeriesPage() {
         const { data: urlData } = supabase.storage.from('series-videos').getPublicUrl(data.path);
         finalVideoUrl = urlData?.publicUrl || null;
       }
-      // Vérification préalable pour éviter les doublons (titre + année de début)
-      const { data: existingSeries, error: checkErr } = await supabase
+
+      // --- Vérification des doublons (titre+année OU TMDB ID) ---
+      let existingSeries = null;
+      let checkErr = null;
+
+      // Vérification TMDB ID si renseigné
+      let tmdbIdValue = tmdbId || null;
+      if (!tmdbIdValue && typeof window !== "undefined") {
+        // Optionnel: récupération d'un champ TMDB ID si existant dans le formulaire
+        const input = document.getElementById("tmdb_id") as HTMLInputElement;
+        tmdbIdValue = input?.value || null;
+      }
+
+      if (tmdbIdValue) {
+        const { data: doublonTmdb, error: doublonTmdbErr } = await supabase
+          .from('series')
+          .select('id')
+          .eq('tmdb_id', tmdbIdValue)
+          .maybeSingle();
+
+        if (doublonTmdb) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une série avec ce TMDB ID existe déjà.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Vérif doublon par titre + année
+      const { data: doublonTitle, error: doublonTitleErr } = await supabase
         .from('series')
         .select('id')
         .eq('title', title)
         .eq('start_year', startYear)
         .maybeSingle();
 
-      if (existingSeries) {
+      if (doublonTitle) {
         toast({
           title: "Doublon détecté",
           description: "Une série avec ce titre et cette année de début existe déjà.",
@@ -372,6 +405,7 @@ export default function AdminAddSeriesPage() {
         setIsSubmitting(false);
         return;
       }
+      // ---------------------------------------------------------
 
       // Insert series
       const { data: insertData, error: insertError } = await supabase
