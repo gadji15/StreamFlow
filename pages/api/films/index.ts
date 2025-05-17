@@ -1,5 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getFilms, addFilm } from '../../../lib/supabaseFilms'
+import { createServerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { supabase } from '@/lib/supabaseClient'
 
 /**
  * Validation utilitaire pour la création d'un film.
@@ -29,6 +32,7 @@ function validateFilmPayload(body: any) {
     imdb_id,
     language,
     no_video,
+    release_date,
   } = body;
 
   // Champs obligatoires
@@ -42,6 +46,17 @@ function validateFilmPayload(body: any) {
     yearValue = Number(year);
     if (isNaN(yearValue) || yearValue < 1900 || yearValue > 2100) {
       errors.push("L'année doit être un nombre valide entre 1900 et 2100.");
+    }
+  }
+
+  // release_date (optionnel, doit être une date ISO)
+  let releaseDateValue: string | null = null;
+  if (release_date !== undefined && release_date !== null && release_date !== "") {
+    const d = new Date(release_date);
+    if (isNaN(d.getTime())) {
+      errors.push("Le champ 'release_date' doit être une date valide (ISO).");
+    } else {
+      releaseDateValue = d.toISOString().slice(0, 10); // format YYYY-MM-DD
     }
   }
 
@@ -155,6 +170,7 @@ function validateFilmPayload(body: any) {
     title: title.trim(),
     description: description || null,
     year: yearValue,
+    release_date: releaseDateValue,
     duration: durationValue,
     director: director || null,
     genre: genreValue,
@@ -178,6 +194,27 @@ function validateFilmPayload(body: any) {
   return { valid: errors.length === 0, errors, payload };
 }
 
+// Utilitaire pour extraire le token Bearer du header Authorization
+function getBearerToken(req: NextApiRequest): string | null {
+  const auth = req.headers.authorization || "";
+  if (auth.startsWith("Bearer ")) {
+    return auth.replace("Bearer ", "");
+  }
+  return null;
+}
+
+// Vérification du rôle de l'utilisateur dans user_roles_flat
+async function userIsAdminOrSuperAdmin(userId: string): Promise<boolean> {
+  // Utilise la table user_roles_flat, colonne 'role'
+  const { data, error } = await supabase
+    .from('user_roles_flat')
+    .select('role')
+    .eq('user_id', userId);
+  if (error || !data) return false;
+  const roles = data.map((r: any) => r.role);
+  return roles.includes('admin') || roles.includes('super_admin');
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
@@ -187,10 +224,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: error.message || "Erreur serveur" });
     }
   } else if (req.method === 'POST') {
+    // 1. Authentification obligatoire via Bearer ou cookie Supabase
+    let userId: string | null = null;
+    try {
+      let token = getBearerToken(req);
+      if (!token && req.cookies['sb-access-token']) {
+        token = req.cookies['sb-access-token'];
+      }
+      if (!token) {
+        return res.status(401).json({ error: "Authentification requise." });
+      }
+      // Décoder le token avec Supabase pour obtenir l'user id
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData?.user) {
+        return res.status(401).json({ error: "Utilisateur non authentifié." });
+      }
+      userId = userData.user.id;
+    } catch (e) {
+      return res.status(401).json({ error: "Authentification impossible." });
+    }
+
+    // 2. Vérification du rôle admin/super_admin
+    const isAdmin = await userIsAdminOrSuperAdmin(userId);
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Seuls les administrateurs peuvent ajouter un film." });
+    }
+
+    // 3. Validation stricte des données
     const { valid, errors, payload } = validateFilmPayload(req.body);
     if (!valid) {
       return res.status(400).json({ error: errors.join(' ') });
     }
+
+    // 4. Vérification unicité (title + year)
+    if (payload.title && payload.year) {
+      const { data: existing, error: dupErr } = await supabase
+        .from('films')
+        .select('id')
+        .eq('title', payload.title)
+        .eq('year', payload.year)
+        .maybeSingle();
+      if (existing) {
+        return res.status(409).json({ error: "Un film avec ce titre et cette année existe déjà." });
+      }
+    }
+
     try {
       const result = await addFilm(payload);
       if (!result) {
@@ -198,6 +276,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       return res.status(201).json({ success: true });
     } catch (error: any) {
+      // Gestion des erreurs de contraintes SQL
+      if (
+        error?.code === "23505" ||
+        (typeof error?.message === "string" && error.message.toLowerCase().includes("unique"))
+      ) {
+        return res.status(409).json({ error: "Un film avec ce titre et cette année existe déjà." });
+      }
       return res.status(500).json({ error: error.message || "Erreur serveur" });
     }
   }
