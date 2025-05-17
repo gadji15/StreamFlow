@@ -472,7 +472,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       homepage_categories,
       popularity,
       cast,
-      no_video,
+      // no_video retiré car n'existe pas dans la table films
     };
 
     // Appel API films POST (création) avec authentification
