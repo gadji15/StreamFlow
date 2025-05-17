@@ -475,12 +475,20 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       no_video,
     };
 
-    // Appel API films POST (création)
+    // Appel API films POST (création) avec authentification
     try {
+      // Récupérer le token d'accès Supabase
+      let token = null;
+      if (typeof window !== "undefined") {
+        const { data: sessionData } = await supabase.auth.getSession();
+        token = sessionData?.session?.access_token || null;
+      }
+
       const response = await fetch('/api/films', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
