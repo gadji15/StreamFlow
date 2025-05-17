@@ -697,8 +697,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 }
                 if (dataCheck && dataCheck.length > 0) {
                   toast({
-                    title: "Ce film existe déjà",
-                    description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                    title: "Film déjà existant",
+                    description: "Ce film existe déjà dans la base. L'import a été annulé pour éviter un doublon.",
                     variant: "destructive",
                   });
                   return;
