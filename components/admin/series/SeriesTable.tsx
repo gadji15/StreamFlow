@@ -17,7 +17,7 @@ export default function SeriesTable({
 }) {
   return (
     {/* Table for screens >= sm, Card list for mobile */}
-    <div>
+    <>
       {/* Table for tablet and desktop */}
       <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-left min-w-[520px]">
@@ -92,7 +92,7 @@ export default function SeriesTable({
                   <div className="font-semibold text-sm">{serie.title}</div>
                   <div className="text-[11px] text-gray-400 flex gap-2 flex-wrap mt-0.5">
                     {serie.genre && (
-                      <span className="bg-gray-700/60 px-1 rounded">{serie.genre.split(',')[0]}</span>
+                      <span className="bg-gray-700/60 px-1 rounded">{(serie.genre || "").split(',')[0]}</span>
                     )}
                     {serie.start_year && (
                       <span className="">{serie.start_year}</span>
@@ -165,6 +165,6 @@ export default function SeriesTable({
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

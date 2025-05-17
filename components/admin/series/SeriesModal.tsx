@@ -224,8 +224,26 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
     if (!serie || !serie.id) return;
     setLoading(true);
     try {
-      const detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
-      const detail = detailRes.ok ? await detailRes.json() : {};
+      // Try several endpoints if needed
+      let detail = null;
+      let detailRes = await fetch(`/api/tmdb/tv/${serie.id}`);
+      if (detailRes.ok) {
+        detail = await detailRes.json();
+      } else {
+        // Try alternative endpoint (newer code: /series)
+        detailRes = await fetch(`/api/tmdb/series/${serie.id}`);
+        if (detailRes.ok) {
+          detail = await detailRes.json();
+        } else {
+          toast({
+            title: "Erreur TMDB",
+            description: "Aucune donnée TMDB trouvée pour cette série.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
       // DEBUG: log detail to inspect structure
       console.log("[TMDB IMPORT] detail:", detail);
       // Créateur
