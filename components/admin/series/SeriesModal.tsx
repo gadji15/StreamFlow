@@ -329,7 +329,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
             <label className="block text-[11px] font-medium text-white/80 mb-1">
               Acteurs principaux (importés TMDB)
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div
+              className="flex flex-wrap gap-2"
+              style={{
+                maxHeight: "92px",
+                overflowY: "auto",
+                marginBottom: "6px",
+              }}
+            >
               {cast.map((actor) => (
                 <div key={actor.id} className="flex flex-col items-center w-16">
                   <img
