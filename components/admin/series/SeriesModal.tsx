@@ -142,49 +142,48 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
       return;
     }
 
-    // --- Vérification doublons avancée ---
-    const normalizedTitle = (form.title || "").trim().toLowerCase();
-    const normalizedStartYear = form.start_year ? String(form.start_year).trim() : null;
-    const normalizedTmdbId = form.tmdb_id ? String(form.tmdb_id).trim() : null;
-    const currentId = initialData && initialData.id ? initialData.id : null;
-
-    const doublon = existingSeries.find((serie) => {
-      if (currentId && serie.id === currentId) return false; // Ignore self on edit
-
-      const serieTitle = (serie.title || "").trim().toLowerCase();
-      const serieStartYear = serie.start_year ? String(serie.start_year).trim() : null;
-      const serieTmdbId = serie.tmdb_id ? String(serie.tmdb_id).trim() : null;
-
-      // 1. Doublon TMDB ID
-      if (
-        normalizedTmdbId &&
-        serieTmdbId &&
-        serieTmdbId !== "" &&
-        serieTmdbId === normalizedTmdbId
-      ) return true;
-
-      // 2. Doublon titre + année
-      if (
-        normalizedTitle &&
-        serieTitle &&
-        normalizedStartYear &&
-        serieStartYear &&
-        serieTitle === normalizedTitle &&
-        serieStartYear === normalizedStartYear
-      ) return true;
-
-      return false;
-    });
-
-    if (doublon) {
+    // --- Vérification anti-doublon côté base ---
+    try {
+      // Vérifier doublon TMDB ID (hors édition de soi-même)
+      if (form.tmdb_id) {
+        const { data: doublonTmdb } = await (await import('@/lib/supabaseClient')).supabase
+          .from("series")
+          .select("id")
+          .eq("tmdb_id", form.tmdb_id)
+          .maybeSingle();
+        if (doublonTmdb && (!initialData.id || doublonTmdb.id !== initialData.id)) {
+          toast({
+            title: "Doublon détecté",
+            description: "Une série avec ce TMDB ID existe déjà.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+      // Vérifier doublon Titre + Année (hors édition de soi-même)
+      const { data: doublonTitle } = await (await import('@/lib/supabaseClient')).supabase
+        .from("series")
+        .select("id")
+        .eq("title", form.title)
+        .eq("start_year", form.start_year ? Number(form.start_year) : null)
+        .maybeSingle();
+      if (doublonTitle && (!initialData.id || doublonTitle.id !== initialData.id)) {
+        toast({
+          title: "Doublon détecté",
+          description: "Une série avec ce titre et cette année existe déjà.",
+          variant: "destructive"
+        });
+        return;
+      }
+    } catch (e) {
       toast({
-        title: "Doublon détecté",
-        description: "Une série avec ce TMDB ID ou ce Titre + Année existe déjà.",
-        variant: "destructive",
+        title: "Erreur",
+        description: String(e),
+        variant: "destructive"
       });
       return;
     }
-    // ----------------------------
+    // -------------------------------------------------
 
     setLoading(true);
 
