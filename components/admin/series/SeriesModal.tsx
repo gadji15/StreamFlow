@@ -132,16 +132,36 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {} })
       return;
     }
     setLoading(true);
+
     try {
-      const submitData = {
-        ...form,
-        genres: Array.isArray(form.genres)
-          ? form.genres
-          : typeof form.genres === "string"
-            ? form.genres.split(",").map((g) => g.trim())
-            : [],
+      // Construction du payload compatible Supabase
+      const clean = (v) => (v === "" || v === undefined ? null : v);
+      const payload = {
+        // Champs obligatoires ou existants
+        title: clean(form.title),
+        creator: clean(form.creator),
+        start_year: clean(form.start_year) !== null ? Number(form.start_year) : null,
+        end_year: clean(form.end_year) !== null ? Number(form.end_year) : null,
+        genre:
+          Array.isArray(form.genres)
+            ? form.genres.filter(Boolean).join(", ")
+            : typeof form.genres === "string"
+              ? form.genres
+              : "",
+        vote_average: clean(form.vote_average) !== null ? Number(form.vote_average) : null,
+        published: !!form.published,
+        isvip: !!form.isvip,
+        poster: clean(form.poster),
+        tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
+        description: clean(form.description),
+        // Optionnels
+        // cast: Array.isArray(cast) && cast.length > 0 ? cast : null, // seulement si tu veux stocker le cast
       };
-      await onSave(submitData);
+
+      // On retire les champs qui n'existent pas en base (ex: genres, genresInput, etc.)
+      // Ne pas envoyer undefined/null si le champ est non nullable
+
+      await onSave(payload);
       toast({ title: "Série enregistrée" });
       onClose();
     } catch (e) {
