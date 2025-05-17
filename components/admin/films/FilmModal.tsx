@@ -646,21 +646,28 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               } else if (movieSuggestions.length > 0) {
                 toImport = movieSuggestions[0];
               }
+              let importedTitle = "";
+              let importedYear = "";
               if (toImport) {
-                await importMovieFromTMDB(toImport);
+                importedTitle = (toImport.title || "").trim().toLowerCase();
+                importedYear = (toImport.release_date || "").slice(0, 4);
               } else if (tmdbSearch.trim().length > 0) {
                 setLoading(true);
                 try {
                   const resp = await fetch(`/api/tmdb/movie-search?query=${encodeURIComponent(tmdbSearch.trim())}`);
                   const data = await resp.json();
                   if (data.results && data.results.length > 0) {
-                    await importMovieFromTMDB(data.results[0]);
+                    toImport = data.results[0];
+                    importedTitle = (toImport.title || "").trim().toLowerCase();
+                    importedYear = (toImport.release_date || "").slice(0, 4);
                   } else {
                     toast({
                       title: "Introuvable TMDB",
                       description: "Aucun film trouvé pour cette recherche.",
                       variant: "destructive",
                     });
+                    setLoading(false);
+                    return;
                   }
                 } catch (e) {
                   toast({
@@ -668,8 +675,38 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                     description: String(e),
                     variant: "destructive",
                   });
+                  setLoading(false);
+                  return;
                 }
                 setLoading(false);
+              }
+
+              // Vérification anti-doublon AVANT import
+              if (importedTitle && importedYear) {
+                // Vérification côté base (la plus sûre, car le FilmModal ne reçoit pas la liste globale des films)
+                const { data: dataCheck, error: errorCheck } = await supabase
+                  .from('films')
+                  .select('id')
+                  .eq('title', importedTitle)
+                  .eq('year', Number(importedYear))
+                  .limit(1);
+
+                if (errorCheck) {
+                  toast({ title: "Erreur", description: String(errorCheck), variant: "destructive" });
+                  return;
+                }
+                if (dataCheck && dataCheck.length > 0) {
+                  toast({
+                    title: "Ce film existe déjà",
+                    description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
+                    variant: "destructive",
+                  });
+                  return;
+                }
+              }
+
+              if (toImport) {
+                await importMovieFromTMDB(toImport);
               }
             }}
             disabled={loading || !tmdbSearch.trim()}
