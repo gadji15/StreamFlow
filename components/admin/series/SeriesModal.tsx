@@ -142,25 +142,44 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
       return;
     }
 
-    // --- Vérification doublons ---
+    // --- Vérification doublons avancée ---
     const normalizedTitle = (form.title || "").trim().toLowerCase();
+    const normalizedStartYear = form.start_year ? String(form.start_year).trim() : null;
     const normalizedTmdbId = form.tmdb_id ? String(form.tmdb_id).trim() : null;
     const currentId = initialData && initialData.id ? initialData.id : null;
 
-    // On considère doublon si le titre ou le tmdb_id correspondent (hors édition de soi-même)
     const doublon = existingSeries.find((serie) => {
       if (currentId && serie.id === currentId) return false; // Ignore self on edit
+
       const serieTitle = (serie.title || "").trim().toLowerCase();
-      // Compare tmdb_id si possible, sinon le titre
-      if (normalizedTmdbId && serie.tmdb_id && String(serie.tmdb_id).trim() === normalizedTmdbId) return true;
-      if (normalizedTitle && serieTitle && serieTitle === normalizedTitle) return true;
+      const serieStartYear = serie.start_year ? String(serie.start_year).trim() : null;
+      const serieTmdbId = serie.tmdb_id ? String(serie.tmdb_id).trim() : null;
+
+      // 1. Doublon TMDB ID
+      if (
+        normalizedTmdbId &&
+        serieTmdbId &&
+        serieTmdbId !== "" &&
+        serieTmdbId === normalizedTmdbId
+      ) return true;
+
+      // 2. Doublon titre + année
+      if (
+        normalizedTitle &&
+        serieTitle &&
+        normalizedStartYear &&
+        serieStartYear &&
+        serieTitle === normalizedTitle &&
+        serieStartYear === normalizedStartYear
+      ) return true;
+
       return false;
     });
 
     if (doublon) {
       toast({
         title: "Doublon détecté",
-        description: "Une série avec ce titre ou ce TMDB ID existe déjà.",
+        description: "Une série avec ce TMDB ID ou ce Titre + Année existe déjà.",
         variant: "destructive",
       });
       return;
