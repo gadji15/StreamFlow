@@ -437,7 +437,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         trailer_url: clean(form.trailer_url),
         video_url: form.no_video ? null : (clean(form.video_url) || clean(localVideoUrl)),
         language: clean(form.language),
-        homepage_categories: Array.isArray(form.homepage_categories) ? form.homepage_categories : [],
+        // Correction : envoyer le champ homepage_categories sous forme de tableau JSON si non vide
+        homepage_categories: Array.isArray(form.homepage_categories) && form.homepage_categories.length > 0
+          ? JSON.stringify(form.homepage_categories)
+          : null,
         popularity: clean(form.popularity),
         cast: castList && castList.length > 0 ? castList : [],
         no_video: !!form.no_video,
@@ -457,7 +460,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+      className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
         open ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       role="dialog"
@@ -465,11 +468,22 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       aria-labelledby="film-modal-title"
       tabIndex={-1}
       onClick={onClose}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        minHeight: "100vh",
+        overflowY: "auto",
+        paddingTop: 24,
+        paddingBottom: 24,
+      }}
     >
       <div
         className="animate-[fadeInScale_0.25s_ease] bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-800 rounded-2xl shadow-2xl border border-neutral-800 w-full max-w-xs sm:max-w-sm md:max-w-md relative flex flex-col"
         style={{
           maxHeight: "90vh",
+          minHeight: "0",
+          overflowY: "auto",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -678,6 +692,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         </div>
         {/* Content scrollable (formulaire principal) */}
         <form
+          id="film-form"
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
@@ -1070,7 +1085,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
             variant="success"
             disabled={loading}
             aria-label="Enregistrer le film"
-            onClick={handleSubmit}
             className="text-xs py-1 px-2"
           >
             {loading ? "..." : "Enregistrer"}
@@ -1084,6 +1098,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         }
         .animate-\[fadeInScale_0\.25s_ease\] {
           animation: fadeInScale 0.25s ease;
+        }
+        /* Correction pour le modal: garantir visibilité du haut du modal même si le contenu déborde */
+        .modal-root-fix {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          height: 100vh;
+          overflow-y: auto;
+          padding-top: 16px;
+          padding-bottom: 16px;
         }
       `}</style>
     </div>
