@@ -683,11 +683,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
               // Vérification anti-doublon AVANT import
               if (importedTitle && importedYear) {
-                // Vérification côté base (la plus sûre, car le FilmModal ne reçoit pas la liste globale des films)
+                // Vérification côté base (insensible à la casse et aux espaces)
                 const { data: dataCheck, error: errorCheck } = await supabase
                   .from('films')
-                  .select('id')
-                  .eq('title', importedTitle)
+                  .select('id, title, year')
+                  .ilike('title', importedTitle.replace(/\s+/g, ' ').trim())
                   .eq('year', Number(importedYear))
                   .limit(1);
 
@@ -695,7 +695,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                   toast({ title: "Erreur", description: String(errorCheck), variant: "destructive" });
                   return;
                 }
-                if (dataCheck && dataCheck.length > 0) {
+                // Pour une robustesse maximale, double check côté JS (trim, lowercase)
+                if (
+                  dataCheck &&
+                  dataCheck.length > 0 &&
+                  dataCheck.some(
+                    (film) =>
+                      film.title &&
+                      film.title.trim().toLowerCase() === importedTitle.replace(/\s+/g, ' ').trim().toLowerCase() &&
+                      Number(film.year) === Number(importedYear)
+                  )
+                ) {
                   toast({
                     title: "Ce film existe déjà",
                     description: `Un film avec ce titre et cette année est déjà présent dans votre base.`,
