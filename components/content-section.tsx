@@ -98,9 +98,9 @@ export function ContentSection({
     return (
       <CarouselRail
         items={items}
-        slidesToShow={6}
-        minSlideWidth={160}
-        maxSlideWidth={200}
+        slidesToShow={7}
+        minSlideWidth={110}
+        maxSlideWidth={130}
         ariaLabel={title}
         renderItem={(item, idx) => (
           <Link
@@ -129,15 +129,15 @@ export function ContentSection({
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 {isMovie ? (
-                  <Film className="w-10 h-10 text-white" />
+                  <Film className="w-8 h-8 text-white" />
                 ) : (
-                  <Tv className="w-10 h-10 text-white" />
+                  <Tv className="w-8 h-8 text-white" />
                 )}
               </div>
             </div>
             <div className="p-2">
-              <h3 className="text-sm font-medium truncate">{item.title}</h3>
-              <p className="text-xs text-gray-400">
+              <h3 className="text-xs font-medium truncate">{item.title}</h3>
+              <p className="text-[11px] text-gray-400">
                 {isMovie
                   ? (item as Movie).year
                   : `${(item as Series).startYear ?? ''}${
