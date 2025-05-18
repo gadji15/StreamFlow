@@ -157,7 +157,7 @@ function HeroSection() {
               max-w-full sm:max-w-lg md:max-w-xl
               w-full
               bg-black/20 md:bg-transparent
-              backdrop-blur-[1px] md:backdrop-blur-0
+              backdrop-blur-0 md:backdrop-blur-0
               rounded-xl md:rounded-none
               p-4 sm:p-6 md:py-7 md:px-8
               mt-4 md:mt-0
