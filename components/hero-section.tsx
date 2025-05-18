@@ -81,7 +81,7 @@ function HeroSection() {
   const currentMovie = featuredMovies[currentIndex];
   
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+    <section className="relative h-[55vh] xs:h-[65vh] sm:h-[70vh] md:h-[80vh] overflow-hidden">
       {/* Background avec effet parallaxe */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -98,7 +98,7 @@ function HeroSection() {
       </AnimatePresence>
       
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
+      <div className="relative h-full w-full max-w-full sm:container sm:mx-auto px-2 xs:px-3 sm:px-4 flex flex-col justify-end py-10 xs:py-12 sm:py-16">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -106,11 +106,11 @@ function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
-            className="max-w-3xl"
+            className="max-w-full sm:max-w-3xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-6xl font-bold mb-1 xs:mb-2">{currentMovie.title}</h1>
             
-            <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2 xs:gap-3 text-xs xs:text-sm md:text-base text-gray-300 mt-1 xs:mt-2 mb-2 xs:mb-4">
               <span>{currentMovie.year}</span>
               <span className="h-1 w-1 rounded-full bg-gray-500"></span>
               <span>{Math.floor(currentMovie.duration / 60)}h {currentMovie.duration % 60}min</span>
@@ -123,22 +123,22 @@ function HeroSection() {
               </span>
             </div>
             
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-2 xs:mb-4">
               {currentMovie.genres.map((genre, index) => (
                 <span 
                   key={index} 
-                  className="px-3 py-1 bg-gray-700/50 text-sm rounded-full"
+                  className="px-2 xs:px-3 py-0.5 xs:py-1 bg-gray-700/60 text-xs xs:text-sm rounded-full"
                 >
                   {genre}
                 </span>
               ))}
             </div>
             
-            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
+            <p className="text-base xs:text-lg text-gray-200 mb-4 xs:mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3 xs:gap-4">
               <Link href={`/films/${currentMovie.id}`}>
-                <Button size="lg" className="gap-2">
+                <Button size="sm" className="gap-2 px-3 py-2 text-sm xs:text-base rounded-md">
                   <Play className="h-5 w-5" />
                   Regarder
                 </Button>
@@ -148,12 +148,12 @@ function HeroSection() {
         </AnimatePresence>
         
         {/* Pagination */}
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-5 xs:mt-8">
           {featuredMovies.map((_, index) => (
             <button
               key={index}
-              className={`h-1 mx-1 rounded-full transition-all ${
-                index === currentIndex ? 'w-8 bg-white' : 'w-4 bg-gray-600'
+              className={`h-1 mx-0.5 xs:mx-1 rounded-full transition-all ${
+                index === currentIndex ? 'w-6 xs:w-8 bg-white' : 'w-3 xs:w-4 bg-gray-600'
               }`}
               onClick={() => handleManualNavigation(index)}
               aria-label={`Voir le film ${index + 1}`}
@@ -164,19 +164,19 @@ function HeroSection() {
       
       {/* Boutons de navigation */}
       <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute left-2 xs:left-4 top-1/2 transform -translate-y-1/2 w-8 xs:w-10 h-8 xs:h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
         onClick={goToPrevious}
         aria-label="Film précédent"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-5 w-5 xs:h-6 xs:w-6" />
       </button>
       
       <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute right-2 xs:right-4 top-1/2 transform -translate-y-1/2 w-8 xs:w-10 h-8 xs:h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
         onClick={goToNext}
         aria-label="Film suivant"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-5 w-5 xs:h-6 xs:w-6" />
       </button>
     </section>
   );
