@@ -18,6 +18,7 @@ interface ContentSectionProps {
   type?: SectionType;
   genreId?: string;
   count?: number;
+  hideViewAllButton?: boolean;
 }
 
 export function ContentSection({
@@ -27,7 +28,8 @@ export function ContentSection({
   children,
   type = 'custom',
   genreId = '',
-  count = 6
+  count = 6,
+  hideViewAllButton = false,
 }: ContentSectionProps) {
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
@@ -155,43 +157,33 @@ export function ContentSection({
     <section className={`mb-8 ${className}`}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{title}</h2>
-
-        {/* Affiche toujours le bouton Voir tout pour chaque section */}
-        <Link
-          href={
-            viewAllLink ||
-            (
-              type === "popular_movies" ? "/films"
-              : type === "popular_series" ? "/series"
-              : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
-              : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
-              : "/"
-            )
-          }
-          className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
-          style={{ background: "transparent", padding: 0, border: "none" }}
-          onMouseEnter={e => {
-            e.currentTarget.classList.add('gradient-text');
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.classList.remove('gradient-text');
-          }}
-        >
-          <span className="voir-tout-gradient">
-            Voir tout
-          </span>
-          <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
-        </Link>
-        <style jsx global>{`
-          .gradient-text, .voir-tout-gradient {
-            background: linear-gradient(90deg, #d946ef, #a78bfa, #38bdf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
-            transition: background 0.3s;
-          }
-        `}</style>
+        {!hideViewAllButton && (
+          <Link
+            href={
+              viewAllLink ||
+              (
+                type === "popular_movies" ? "/films"
+                : type === "popular_series" ? "/series"
+                : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
+                : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
+                : "/"
+              )
+            }
+            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            style={{ background: "transparent", padding: 0, border: "none" }}
+            onMouseEnter={e => {
+              e.currentTarget.classList.add('gradient-text');
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.classList.remove('gradient-text');
+            }}
+          >
+            <span className="voir-tout-gradient">
+              Voir tout
+            </span>
+            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+          </Link>
+        )}
       </div>
       {renderContent()}
     </section>

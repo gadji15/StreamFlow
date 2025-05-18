@@ -146,6 +146,7 @@ export default function HomePage() {
                 filter="vip"
                 limit={4}
                 showHeader={false}
+                hideViewAllButton={true}
               />
             </div>
           </div>
