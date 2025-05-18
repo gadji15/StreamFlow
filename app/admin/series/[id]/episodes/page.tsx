@@ -55,7 +55,7 @@ export default function EpisodesPage() {
   const [tmdbSeriesId, setTmdbSeriesId] = useState("");
 
   // Gestion des saisons
-  const [seasons, setSeasons] = useState([]);
+  const [seasons, setSeasons] = useState<{ id: any; season_number: any; title: any; }[]>([]);
   const [seasonId, setSeasonId] = useState("");
   const [seasonNumber, setSeasonNumber] = useState("");
 
