@@ -217,7 +217,7 @@ export default function AdminEditSeriesPage() {
       // Préparer les données à mettre à jour
       const updates: Partial<Series> = {
         title,
-        original_title: originalTitle || null,
+        original_title: originalTitle || undefined,
         description,
         start_year: startYear,
         end_year: endYear || null,
