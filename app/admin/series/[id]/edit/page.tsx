@@ -217,18 +217,18 @@ export default function AdminEditSeriesPage() {
       // Préparer les données à mettre à jour
       const updates: Partial<Series> = {
         title,
-        original_title: originalTitle || null,
+        original_title: originalTitle || undefined,
         description,
         start_year: startYear,
         end_year: endYear || null,
         creator: creator || undefined,
         genres: selectedGenres,
         cast: cast.filter(member => member.name.trim() !== ''),
-        trailer_url: trailerUrl || null,
+        trailer_url: trailerUrl || undefined,
         is_vip: isVIP,
         published: isPublished,
-        poster_url: posterUrl || null,
-        backdrop_url: backdropUrl || null,
+        poster_url: posterUrl || undefined,
+        backdrop_url: backdropUrl || undefined,
       };
 
       // Mettre à jour la série
