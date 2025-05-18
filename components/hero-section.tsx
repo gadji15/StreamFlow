@@ -113,7 +113,7 @@ function HeroSection() {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+    <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden">
       {/* Background avec <img> 4K et effet blur-up */}
       <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
         {/* Blur-up low-res background */}
@@ -142,7 +142,11 @@ function HeroSection() {
           }
           sizes="100vw"
           onLoad={() => setImgLoaded(true)}
-          onError={() => setImgLoaded(true)}
+          onError={e => {
+            setImgLoaded(true);
+            // Affiche un placeholder si l'image échoue
+            (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg';
+          }}
           draggable={false}
           initial={{ scale: 1.05 }}
           animate={{ scale: 1.15 }}
@@ -153,7 +157,7 @@ function HeroSection() {
       </div>
       
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
+      <div className="relative h-full container mx-auto px-2 sm:px-4 flex flex-col justify-end pb-8 sm:pb-12 md:pb-16">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -236,7 +240,8 @@ function HeroSection() {
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
                   size="lg"
-                  className="gap-2 transition-transform transition-shadow duration-200 hover:scale-105 hover:shadow-[0_0_16px_4px_rgba(255,255,255,0.10)] focus-visible:scale-105 focus-visible:ring-2 focus-visible:ring-fuchsia-400"
+                  className="gap-2 px-5 py-3 sm:px-7 sm:py-4 text-lg sm:text-xl font-bold rounded-xl transition-transform transition-shadow duration-200 hover:scale-105 hover:shadow-[0_0_16px_4px_rgba(255,255,255,0.10)] focus-visible:scale-105 focus-visible:ring-2 focus-visible:ring-fuchsia-400"
+                  aria-label={`Regarder ${currentMovie.title}`}
                 >
                   <Play className="h-5 w-5" />
                   Regarder
@@ -267,17 +272,19 @@ function HeroSection() {
       {featuredMovies.length > 1 && (
         <>
           <button
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            className="absolute left-1 sm:left-4 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/60 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 transition-all duration-150 hover:bg-black/80"
             onClick={goToPrevious}
-            aria-label="Film précédent"
+            aria-label="Aller au film précédent"
+            tabIndex={0}
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
           
           <button
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            className="absolute right-1 sm:right-4 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/60 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 transition-all duration-150 hover:bg-black/80"
             onClick={goToNext}
-            aria-label="Film suivant"
+            aria-label="Aller au film suivant"
+            tabIndex={0}
           >
             <ChevronRight className="h-6 w-6" />
           </button>
