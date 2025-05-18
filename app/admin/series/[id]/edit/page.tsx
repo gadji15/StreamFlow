@@ -457,6 +457,7 @@ export default function AdminEditSeriesPage() {
                     aspectRatio="2:3"
                     label="Modifier l'affiche"
                   />
+ />
                   <p className="text-xs text-gray-400">
                     Format recommandé: 600x900 pixels (ratio 2:3), JPG ou PNG.
                   </p>
