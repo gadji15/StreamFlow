@@ -36,79 +36,101 @@ export default function HomePage() {
   });
 
   return (
-    <main>
+    <main className="flex flex-col gap-8 sm:gap-10 w-full">
       {/* Section Hero avec carousel */}
-      <HeroSection />
+      <section className="w-full px-3 sm:px-0">
+        <HeroSection />
+      </section>
 
       {/* Présentation du site supprimée */}
 
       {/* Films populaires */}
-      <ContentSection 
-        title="Films populaires"
-        type="popular_movies"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Films populaires"
+          type="popular_movies"
+        />
+      </section>
 
       {/* Séries populaires */}
-      <ContentSection 
-        title="Séries populaires"
-        type="popular_series"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Séries populaires"
+          type="popular_series"
+        />
+      </section>
 
       {/* Suspense */}
-      <ContentSection 
-        title="Suspense"
-        type="movies_by_genre"
-        genreId="thriller"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Suspense"
+          type="movies_by_genre"
+          genreId="thriller"
+        />
+      </section>
 
       {/* Science Fiction */}
-      <ContentSection 
-        title="Science Fiction"
-        type="movies_by_genre"
-        genreId="sci-fi"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Science Fiction"
+          type="movies_by_genre"
+          genreId="sci-fi"
+        />
+      </section>
 
       {/* Action */}
-      <ContentSection 
-        title="Action"
-        type="movies_by_genre"
-        genreId="action"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Action"
+          type="movies_by_genre"
+          genreId="action"
+        />
+      </section>
 
       {/* Animation */}
-      <ContentSection 
-        title="Animation"
-        type="movies_by_genre"
-        genreId="animation"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Animation"
+          type="movies_by_genre"
+          genreId="animation"
+        />
+      </section>
 
       {/* Comédie */}
-      <ContentSection 
-        title="Comédie"
-        type="movies_by_genre"
-        genreId="comedy"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Comédie"
+          type="movies_by_genre"
+          genreId="comedy"
+        />
+      </section>
 
       {/* Documentaire */}
-      <ContentSection 
-        title="Documentaire"
-        type="movies_by_genre"
-        genreId="documentary"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Documentaire"
+          type="movies_by_genre"
+          genreId="documentary"
+        />
+      </section>
 
       {/* Séries - Science Fiction */}
-      <ContentSection 
-        title="Séries Science Fiction"
-        type="series_by_genre"
-        genreId="sci-fi"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Séries Science Fiction"
+          type="series_by_genre"
+          genreId="sci-fi"
+        />
+      </section>
 
       {/* Séries - Thriller */}
-      <ContentSection 
-        title="Séries Thriller"
-        type="series_by_genre"
-        genreId="thriller"
-      />
+      <section className="w-full px-3 sm:px-0">
+        <ContentSection 
+          title="Séries Thriller"
+          type="series_by_genre"
+          genreId="thriller"
+        />
+      </section>
 
       {/* Exclusivités VIP */}
       <motion.section
