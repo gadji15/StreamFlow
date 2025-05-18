@@ -102,10 +102,10 @@ function HeroSection() {
   const duration = (currentMovie as any).duration || null;
 
   // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
+  // Toujours utiliser le backdrop horizontal TMDB (jamais le poster vertical)
   const backdropUrl =
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
-    (currentMovie as any).poster ||
     '/placeholder-backdrop.jpg';
 
   // Ratio compact et dynamique
@@ -163,40 +163,40 @@ function HeroSection() {
             transition={{ duration: 0.4 }}
             className="bg-black/60 backdrop-blur-md rounded-xl max-w-md w-full md:w-[340px] px-4 py-4 md:py-7 shadow-xl mt-6 md:mt-0"
           >
-            <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-lg leading-snug">
+            <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-gray-200 mb-1">
-              {currentMovie.year && <span className="bg-black/30 px-2 py-0.5 rounded">{currentMovie.year}</span>}
+            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white/90 mb-1 drop-shadow-sm">
+              {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
-                  <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                  <span className="bg-black/30 px-2 py-0.5 rounded">
+                  <span className="h-1 w-1 rounded-full bg-white/30"></span>
+                  <span>
                     {Math.floor((duration || (currentMovie as any).duration)/60)}h {(duration || (currentMovie as any).duration)%60}min
                   </span>
                 </>
               )}
-              <span className="h-1 w-1 rounded-full bg-gray-500"></span>
+              <span className="h-1 w-1 rounded-full bg-white/30"></span>
               {(currentMovie as any).rating && (
-                <span className="flex items-center bg-yellow-500/90 text-black font-bold px-2 py-0.5 rounded">
-                  <svg className="w-3 h-3 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <span className="flex items-center font-bold">
+                  <svg className="w-3 h-3 text-yellow-400 mr-1 drop-shadow" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                   {(currentMovie as any).rating}
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mb-2 drop-shadow">
               {genres.slice(0, 2).map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-0.5 bg-white/10 text-xs rounded-full border border-white/15 text-white"
+                  className="px-3 py-0.5 text-xs rounded-full border border-white/20 text-white/95"
                 >
                   {genre}
                 </span>
               ))}
             </div>
-            <p className="text-xs md:text-sm text-gray-200 mb-4 line-clamp-2">{currentMovie.description}</p>
+            <p className="text-xs md:text-sm text-white/90 mb-4 line-clamp-2 drop-shadow">{currentMovie.description}</p>
             <div className="flex gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
