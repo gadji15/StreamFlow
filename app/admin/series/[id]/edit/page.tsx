@@ -221,7 +221,7 @@ export default function AdminEditSeriesPage() {
         description,
         start_year: startYear,
         end_year: endYear || null,
-        creator: creator || null,
+        creator: creator || undefined,
         genres: selectedGenres,
         cast: cast.filter(member => member.name.trim() !== ''),
         trailer_url: trailerUrl || null,
