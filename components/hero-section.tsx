@@ -108,19 +108,16 @@ function HeroSection() {
     (currentMovie as any).poster ||
     '/placeholder-backdrop.jpg';
 
-  const imageWidth = (currentMovie as any).backdropWidth || (currentMovie as any).posterWidth || 3840;
-  const imageHeight = (currentMovie as any).backdropHeight || (currentMovie as any).posterHeight || 1640;
-  const ratio = getImageRatio(imageWidth, imageHeight);
-
-  // Overlay cinéma façon Xalaflix : gradient sombre à gauche + blur
-  const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.90) 0%, rgba(10,10,10,0.40) 60%, rgba(10,10,10,0.05) 100%)';
+  // Ratio compact et dynamique
+  const ratio = 16 / 5; // Plus petit que 21/9
+  const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
     <section
-      className={`relative w-full aspect-[${ratio.toFixed(4)}] md:aspect-[${ratio.toFixed(4)}] overflow-hidden`}
-      style={{ minHeight: 340 }}
+      className="relative w-full h-[38vh] md:h-[48vh] min-h-[210px] max-h-[460px] overflow-hidden flex items-center"
+      style={{ aspectRatio: `${ratio}` }}
     >
-      {/* Image d'arrière-plan ultra nette */}
+      {/* Image de fond nette et compacte */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
@@ -141,18 +138,12 @@ function HeroSection() {
               style={{
                 objectFit: 'cover',
                 objectPosition: 'center',
-                filter: 'brightness(1.07) contrast(1.05)'
-              }}
-              onLoadingComplete={(img) => {
-                setImageMeta({
-                  width: img.naturalWidth,
-                  height: img.naturalHeight,
-                });
+                filter: 'brightness(1.05) contrast(1.04)'
               }}
             />
-            {/* Overlay cinéma */}
+            {/* Overlay subtile pour la lisibilité */}
             <div
-              className="absolute inset-0 z-10 backdrop-blur-sm"
+              className="absolute inset-0 z-10 backdrop-blur-[2px]"
               style={{
                 background: overlayGradient,
               }}
@@ -161,95 +152,82 @@ function HeroSection() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Contenu principal façon Xalaflix : bloc à gauche, semi-transparent, focus */}
-      <div className="relative h-full z-20 flex items-center w-full px-4 md:px-10">
+      {/* Contenu compact et dynamique */}
+      <div className="relative z-20 flex flex-col justify-center md:justify-end h-full w-full px-3 md:px-10">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.5 }}
-            className="bg-black/65 backdrop-blur-lg rounded-2xl max-w-2xl w-full md:w-2/3 p-6 md:p-10 shadow-2xl"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 18 }}
+            transition={{ duration: 0.4 }}
+            className="bg-black/60 backdrop-blur-md rounded-xl max-w-xl w-full md:w-[380px] px-4 py-4 md:py-7 shadow-xl mt-6 md:mt-0"
           >
-            {/* LABEL VIP ou exclusif */}
-            {(currentMovie as any).isVip && (
-              <span className="inline-block px-4 py-1 mb-3 text-xs font-bold uppercase tracking-widest bg-red-700 rounded-full text-white shadow-md">
-                VIP Exclusif
-              </span>
-            )}
-
-            <h1 className="text-3xl md:text-6xl font-bold mb-2 text-white drop-shadow-xl leading-tight">
+            <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-lg leading-snug">
               {currentMovie.title}
             </h1>
-
-            <div className="flex flex-wrap items-center gap-3 text-xs md:text-base text-gray-200 mt-2 mb-4">
-              {currentMovie.year && <span className="bg-black/40 px-2 py-1 rounded">{currentMovie.year}</span>}
+            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-gray-200 mb-1">
+              {currentMovie.year && <span className="bg-black/30 px-2 py-0.5 rounded">{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
                   <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                  <span className="bg-black/40 px-2 py-1 rounded">
+                  <span className="bg-black/30 px-2 py-0.5 rounded">
                     {Math.floor((duration || (currentMovie as any).duration)/60)}h {(duration || (currentMovie as any).duration)%60}min
                   </span>
                 </>
               )}
               <span className="h-1 w-1 rounded-full bg-gray-500"></span>
               {(currentMovie as any).rating && (
-                <span className="flex items-center bg-yellow-500/90 text-black font-bold px-2 py-1 rounded">
-                  <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <span className="flex items-center bg-yellow-500/90 text-black font-bold px-2 py-0.5 rounded">
+                  <svg className="w-3 h-3 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                   {(currentMovie as any).rating}
                 </span>
               )}
             </div>
-
-            <div className="flex flex-wrap gap-2 mb-4">
-              {genres.map((genre, index) => (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {genres.slice(0, 2).map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-white/10 text-sm rounded-full border border-white/15 text-white"
+                  className="px-3 py-0.5 bg-white/10 text-xs rounded-full border border-white/15 text-white"
                 >
                   {genre}
                 </span>
               ))}
             </div>
-
-            <p className="text-base md:text-lg text-gray-200 mb-8 line-clamp-4 drop-shadow-md">
-              {currentMovie.description}
-            </p>
-
-            <div className="flex flex-wrap gap-4">
+            <p className="text-xs md:text-sm text-gray-200 mb-4 line-clamp-2">{currentMovie.description}</p>
+            <div className="flex gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
-                  size="lg"
-                  className="gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-xl shadow-xl text-base md:text-lg transition-transform hover:scale-105"
+                  size="sm"
+                  className="gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
                 >
-                  <Play className="h-5 w-5" />
+                  <Play className="h-4 w-4" />
                   Regarder
                 </Button>
               </Link>
               <Link href={`/films/${currentMovie.id}#details`}>
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-8 py-3 rounded-xl shadow-md text-base md:text-lg transition-transform hover:scale-105"
+                  size="sm"
+                  className="gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
                 >
-                  <Info className="h-5 w-5" />
-                  Plus d’infos
+                  <Info className="h-4 w-4" />
+                  Détails
                 </Button>
               </Link>
             </div>
           </motion.div>
         </AnimatePresence>
-        {/* Pagination façon Xalaflix */}
+        {/* Pagination compacte */}
         {featuredMovies.length > 1 && (
-          <div className="absolute bottom-8 left-8 flex space-x-2 z-30">
+          <div className="absolute bottom-5 left-5 flex space-x-2 z-30">
             {featuredMovies.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 rounded-full transition-all duration-200 ${
-                  index === currentIndex ? 'w-8 bg-white/80' : 'w-4 bg-white/40'
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  index === currentIndex ? 'w-7 bg-white/90' : 'w-3 bg-white/40'
                 }`}
                 onClick={() => handleManualNavigation(index)}
                 aria-label={`Voir le film ${index + 1}`}
@@ -258,22 +236,22 @@ function HeroSection() {
           </div>
         )}
       </div>
-      {/* Boutons de navigation */}
+      {/* Boutons navigation, sobres et petits */}
       {featuredMovies.length > 1 && (
         <>
           <button
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/60 text-white z-40 shadow-lg transition hover:scale-110"
+            className="absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/45 text-white z-40 shadow-md transition hover:scale-110"
             onClick={goToPrevious}
             aria-label="Film précédent"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/60 text-white z-40 shadow-lg transition hover:scale-110"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-black/45 text-white z-40 shadow-md transition hover:scale-110"
             onClick={goToNext}
             aria-label="Film suivant"
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </>
       )}
