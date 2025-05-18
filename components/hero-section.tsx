@@ -23,6 +23,7 @@ function HeroSection() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [imageMeta, setImageMeta] = useState<{width: number, height: number} | null>(null);
 
+  // Permet d'accéder à l'élément image et de lire ses dimensions
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
@@ -119,14 +120,23 @@ function HeroSection() {
     backdropUrl = '/placeholder-backdrop.jpg';
   }
 
-  // Ratio compact et dynamique
-  const ratio = 16 / 5; // Garder ratio cinéma, la hauteur prime ici
+  // Définir un ratio dynamique basé sur la métadonnée de l'image backdrop
+  const defaultRatio = 21 / 9;
+  const ratio = imageMeta?.width && imageMeta?.height
+    ? imageMeta.width / imageMeta.height
+    : defaultRatio;
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
     <section
-      className="relative w-full h-[52vh] md:h-[60vh] min-h-[270px] max-h-[540px] overflow-hidden flex items-center"
-      style={{ aspectRatio: `${ratio}` }}
+      className="relative w-full overflow-hidden flex items-center transition-all duration-500"
+      style={{
+        aspectRatio: ratio,
+        minHeight: imageMeta?.height
+          ? Math.max(270, (window.innerWidth / ratio) * 0.6)
+          : 270,
+        maxHeight: 540
+      }}
     >
       {/* Image de fond nette et compacte */}
       <AnimatePresence initial={false}>
@@ -139,6 +149,22 @@ function HeroSection() {
           transition={{ duration: 1 }}
         >
           <div className="w-full h-full relative">
+            {/* On utilise une balise img cachée pour charger l'image et obtenir ses dimensions réelles */}
+            <img
+              src={backdropUrl}
+              alt="backdrop"
+              ref={imageRef}
+              style={{ display: 'none' }}
+              onLoad={e => {
+                const img = e.currentTarget;
+                if (img.naturalWidth && img.naturalHeight) {
+                  setImageMeta({
+                    width: img.naturalWidth,
+                    height: img.naturalHeight
+                  });
+                }
+              }}
+            />
             <Image
               src={backdropUrl}
               alt={currentMovie.title}
