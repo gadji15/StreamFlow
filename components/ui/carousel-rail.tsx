@@ -123,18 +123,7 @@ export function CarouselRail<T>({
       >
         <ChevronRight className="w-5 h-5 text-white" />
       </button>
-      {/* Indicateurs de pagination */}
-      <div className="flex justify-center gap-1 mt-2">
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <button
-            key={i}
-            className={`w-2 h-2 rounded-full ${i === selectedPage ? 'bg-primary' : 'bg-gray-600'}`}
-            aria-label={`Aller à la page ${i + 1}`}
-            tabIndex={0}
-            onClick={() => emblaApi && emblaApi.scrollTo(i)}
-          />
-        ))}
-      </div>
+      {/* Indicateurs de pagination supprimés */}
     </div>
   );
 }
