@@ -38,13 +38,15 @@ const NativeCarousel: React.FC<NativeCarouselProps> = ({ children, cardWidth = 1
   };
 
   return (
-    <div className="relative flex items-center overflow-hidden group">
+    {/* Le parent direct NE DOIT PAS avoir overflow-x/hidden ! */}
+    <div className="relative flex items-center group w-full">
       <button
-        className="absolute left-0 h-full w-10 bg-black/50 text-white text-2xl z-10 flex items-center justify-center hover:bg-black/80 transition"
+        className="absolute left-0 top-0 bottom-0 h-full w-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent text-white text-2xl z-20 flex items-center justify-center hover:bg-black/80 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
         onClick={() => scrollBy(-cardWidth * 2 - gap * 2)}
         aria-label="Scroll left"
         type="button"
         tabIndex={0}
+        style={{ pointerEvents: "auto" }}
       >
         &#8249;
       </button>
@@ -59,15 +61,24 @@ const NativeCarousel: React.FC<NativeCarouselProps> = ({ children, cardWidth = 1
         {children}
       </div>
       <button
-        className="absolute right-0 h-full w-10 bg-black/50 text-white text-2xl z-10 flex items-center justify-center hover:bg-black/80 transition"
+        className="absolute right-0 top-0 bottom-0 h-full w-10 bg-gradient-to-l from-black/60 via-black/40 to-transparent text-white text-2xl z-20 flex items-center justify-center hover:bg-black/80 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
         onClick={() => scrollBy(cardWidth * 2 + gap * 2)}
         aria-label="Scroll right"
         type="button"
         tabIndex={0}
+        style={{ pointerEvents: "auto" }}
       >
         &#8250;
       </button>
     </div>
+    {/* 
+      ATTENTION : 
+      - Vérifiez dans vos layouts globaux (app/layout.tsx, pages/_app.tsx, styles/globals.css, etc.) 
+        qu'aucun parent du carrousel natif n'a overflow-x: hidden, overflow: hidden ou overflow-x-auto.
+      - Ne pas ajouter de padding/margin horizontal excessif sur le parent direct.
+      - Les boutons flèches sont z-20, donc toujours au-dessus des images.
+      - Si vous voyez des scrollbars masquées, vérifiez qu'aucun CSS global ne masque ::-webkit-scrollbar ou scrollbar-width.
+    */}
   );
 };
 

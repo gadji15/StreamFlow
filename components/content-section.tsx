@@ -134,63 +134,66 @@ export function ContentSection({
 
     const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
 
-    // Utilisation du carrousel natif pour l'affichage horizontal fluide
+    // ATTENTION : le parent direct de NativeCarousel NE DOIT PAS avoir overflow-x/overflow hidden/auto
+    // Vérifiez dans layouts globaux/app/layout.tsx/pages/_app.tsx !
     return (
-      <NativeCarousel cardWidth={count <= 2 ? 190 : 130} gap={16}>
-        {items.map((item, idx) => (
-          <Link
-            key={item.id}
-            href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className="flex-shrink-0 w-[130px] md:w-[160px] lg:w-[190px] h-[200px] md:h-[240px] rounded-lg bg-gray-800 flex items-center justify-center text-white font-bold overflow-hidden transition-transform hover:scale-105 group"
-            style={{
-              minWidth: count <= 2 ? 160 : 100,
-              maxWidth: count <= 2 ? 260 : 130,
-            }}
-          >
-            <div className="relative aspect-[2/3] w-full h-full flex items-center justify-center">
-              <img
-                src={
-                  (item as Movie | Series).poster ||
-                  (item as any).posterUrl ||
-                  '/placeholder-poster.png'
-                }
-                alt={item.title}
-                className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
-                onError={e => {
-                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                }}
-                loading="lazy"
-                style={{
-                  maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
-                  minHeight: count <= 2 ? 180 : 130,
-                }}
-              />
-              {'isVIP' in item && item.isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                {isMovie ? (
-                  <Film className="w-7 h-7 text-white" />
-                ) : (
-                  <Tv className="w-7 h-7 text-white" />
+      <div className="w-full relative"> 
+        <NativeCarousel cardWidth={count <= 2 ? 190 : 130} gap={16}>
+          {items.map((item, idx) => (
+            <Link
+              key={item.id}
+              href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
+              className="flex-shrink-0 w-[130px] md:w-[160px] lg:w-[190px] h-[200px] md:h-[240px] rounded-lg bg-gray-800 flex items-center justify-center text-white font-bold overflow-hidden transition-transform hover:scale-105 group"
+              style={{
+                minWidth: count <= 2 ? 160 : 100,
+                maxWidth: count <= 2 ? 260 : 130,
+              }}
+            >
+              <div className="relative aspect-[2/3] w-full h-full flex items-center justify-center">
+                <img
+                  src={
+                    (item as Movie | Series).poster ||
+                    (item as any).posterUrl ||
+                    '/placeholder-poster.png'
+                  }
+                  alt={item.title}
+                  className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
+                  onError={e => {
+                    (e.target as HTMLImageElement).src = '/placeholder-poster.png';
+                  }}
+                  loading="lazy"
+                  style={{
+                    maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
+                    minHeight: count <= 2 ? 180 : 130,
+                  }}
+                />
+                {'isVIP' in item && item.isVIP && (
+                  <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                    VIP
+                  </div>
                 )}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {isMovie ? (
+                    <Film className="w-7 h-7 text-white" />
+                  ) : (
+                    <Tv className="w-7 h-7 text-white" />
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="p-2 absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm">
-              <h3 className={`truncate font-medium text-xs md:text-sm`}>{item.title}</h3>
-              <p className="text-[11px] text-gray-400">
-                {isMovie
-                  ? (item as Movie).year
-                  : `${(item as Series).startYear ?? ''}${
-                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                    }`}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </NativeCarousel>
+              <div className="p-2 absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm">
+                <h3 className={`truncate font-medium text-xs md:text-sm`}>{item.title}</h3>
+                <p className="text-[11px] text-gray-400">
+                  {isMovie
+                    ? (item as Movie).year
+                    : `${(item as Series).startYear ?? ''}${
+                        (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                      }`}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </NativeCarousel>
+      </div>
     );
   };
 
