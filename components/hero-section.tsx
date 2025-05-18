@@ -16,7 +16,7 @@ function HeroSection() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [imgLoaded, setImgLoaded] = useState(false);
+  // (blur-up désactivé : aucun state local pour l'image)
 
   useEffect(() => {
     let isMounted = true;
@@ -89,34 +89,23 @@ function HeroSection() {
     <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden">
       {/* Background avec <img> 4K et effet blur-up */}
       <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-        {/* Blur-up low-res background */}
-        <img
-          src={backdrop_blur}
-          alt=""
-          aria-hidden="true"
-          className={`w-full h-full object-cover absolute inset-0 blur-xl scale-105 transition-opacity duration-700 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
-          draggable={false}
-        />
-        {/* Image 4K, net, progressive, animée */}
+        {/* Image 4K, nette, animée */}
         <motion.img
           key={backdrop_4k + currentMovie.id}
           src={backdrop_4k}
           alt={currentMovie.title}
           aria-hidden="true"
           className="w-full h-full object-cover absolute inset-0 transition-opacity duration-1000"
-          style={{ opacity: imgLoaded ? 1 : 0 }}
           srcSet={
             [backdrop_4k]
               .concat(
-                (currentMovie as any).backdrop_hd ? [(currentMovie as any).backdrop_hd + ' 1280w'] : [],
-                (currentMovie as any).poster_hd ? [(currentMovie as any).poster_hd + ' 640w'] : []
+                (currentMovie as any)?.backdrop_hd ? [(currentMovie as any).backdrop_hd + ' 1280w'] : [],
+                (currentMovie as any)?.poster_hd ? [(currentMovie as any).poster_hd + ' 640w'] : []
               )
               .join(', ')
           }
           sizes="100vw"
-          onLoad={() => setImgLoaded(true)}
           onError={e => {
-            setImgLoaded(true);
             // Affiche un placeholder si l'image échoue
             (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg';
           }}
