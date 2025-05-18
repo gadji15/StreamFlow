@@ -42,13 +42,15 @@ export function CarouselRail<T>({
     return () => window.removeEventListener('resize', handleResize);
   }, [slidesToShow]);
 
+  // Dynamically set slidesToScroll to match slides (number visible)
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
-    slidesToScroll: 1,
+    slidesToScroll: slides,
     containScroll: 'trimSnaps',
-    dragFree: true,
+    dragFree: false, // important: false pour un vrai "snap" façon xalaflix
     skipSnaps: false,
   });
+
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -90,12 +92,11 @@ export function CarouselRail<T>({
         <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       <div
-        className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+        className="overflow-hidden"
         ref={emblaRef}
         aria-label={ariaLabel}
         tabIndex={0}
         role="region"
-        style={{ WebkitOverflowScrolling: "touch" }}  // pour une inertie fluide sur iOS
       >
         <div
           className="flex gap-4 py-1"
@@ -108,9 +109,9 @@ export function CarouselRail<T>({
               key={idx}
               className="flex-shrink-0"
               style={{
-                minWidth: minSlideWidth,
-                maxWidth: maxSlideWidth,
-                width: `calc((100vw - 4rem) / ${slides})`,
+                minWidth: `min(${minSlideWidth}px, calc(100vw / ${slides}))`,
+                maxWidth: `${maxSlideWidth}px`,
+                width: `calc(100%/${slides})`,
                 transition: 'width 0.3s, min-width 0.3s, max-width 0.3s',
               }}
               tabIndex={-1}
