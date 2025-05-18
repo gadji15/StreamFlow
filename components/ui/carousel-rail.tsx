@@ -46,7 +46,7 @@ export function CarouselRail<T>({
     align: 'start',
     slidesToScroll: slides,
     containScroll: 'trimSnaps',
-    dragFree: false,
+    dragFree: true,
     skipSnaps: false,
   });
 
