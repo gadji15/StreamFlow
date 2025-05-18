@@ -34,6 +34,10 @@ export default function FilmsPage() {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const searchParams = useSearchParams();
   const { isVIP } = useSupabaseAuth();
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const [totalCount, setTotalCount] = useState(0);
 
   // Init filters from URL
   useEffect(() => {
@@ -43,6 +47,7 @@ export default function FilmsPage() {
     setSelectedGenre(genre);
     setSearchTerm(search);
     setShowVIP(vip);
+    setPage(1); // reset page when filters change from URL
   }, [searchParams]);
 
   // Debounce search input for real-time experience
@@ -52,36 +57,33 @@ export default function FilmsPage() {
     debounceRef.current = setTimeout(() => {
       setDebouncedTerm(searchTerm.trim());
       setSearching(false);
+      setPage(1); // reset page when search changes
     }, 400);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [searchTerm]);
 
-  // Fetch movies from Supabase, filtered server-side if possible
+  // Fetch movies from Supabase, paginated server-side
   useEffect(() => {
     const fetchMovies = async () => {
       setLoading(true);
       setError(null);
       try {
-        let query = getFilms();
-        let results = await query;
-
-        // Filtrage côté client pour l'instant (ajoutez côté serveur si vous souhaitez)
-        if (selectedGenre) {
-          results = results.filter(m => (m.genre || '').toLowerCase().includes(selectedGenre.toLowerCase()));
-        }
-        if (showVIP === 'true') {
-          results = results.filter(m => !!m.isVIP);
-        } else if (showVIP === 'false') {
-          results = results.filter(m => !m.isVIP);
-        }
-        if (debouncedTerm) {
-          const term = debouncedTerm.toLowerCase();
-          results = results.filter(m => m.title.toLowerCase().includes(term));
-        }
-
-        setMovies(results);
+        const offset = (page - 1) * pageSize;
+        // getFilms doit accepter { limit, offset, filters }
+        const filters: any = {};
+        if (selectedGenre) filters.genre = selectedGenre;
+        if (showVIP === 'true') filters.isVIP = true;
+        else if (showVIP === 'false') filters.isVIP = false;
+        if (debouncedTerm) filters.q = debouncedTerm;
+        const { data, count } = await getFilms({
+          limit: pageSize,
+          offset,
+          filters
+        });
+        setMovies(data || []);
+        setTotalCount(count || 0);
       } catch (err) {
         setError("Erreur lors du chargement des films. Veuillez réessayer.");
         setMovies([]);
@@ -90,7 +92,7 @@ export default function FilmsPage() {
       }
     };
     fetchMovies();
-  }, [selectedGenre, showVIP, debouncedTerm]);
+  }, [selectedGenre, showVIP, debouncedTerm, page]);
 
   // Update URL
   useEffect(() => {
@@ -106,23 +108,17 @@ export default function FilmsPage() {
     setSelectedGenre('');
     setSearchTerm('');
     setShowVIP('');
+    setPage(1);
   };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
         <Film className="w-7 h-7 text-primary" /> Catalogue des Films
       </h1>
-
-      <div className="bg-gray-800 rounded-lg p-4 mb-6 shadow">
-        <form
-          onSubmit={e => e.preventDefault()}
-          className="flex flex-col md:flex-row gap-4"
-        >
-          <div className="relative flex-1">
-            <Input
-              type="search"
-              placeholder="Rechercher un film..."
+      ..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -175,7 +171,7 @@ export default function FilmsPage() {
 
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {[...Array(10)].map((_, i) => (
+          {[...Array(pageSize)].map((_, i) => (
             <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-72"></div>
           ))}
         </div>
@@ -195,11 +191,34 @@ export default function FilmsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {movies.map((movie) => (
-            <FilmCard key={movie.id} movie={movie} isUserVIP={isVIP} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {movies.map((movie) => (
+              <FilmCard key={movie.id} movie={movie} isUserVIP={isVIP} />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Précédent
+              </Button>
+              <span className="text-sm text-gray-400">
+                Page {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                Suivant
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
