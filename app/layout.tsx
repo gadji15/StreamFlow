@@ -97,8 +97,7 @@ export default function RootLayout({
                 <Header />
               </LayoutVisibility>
               <main
-                className="bg-[#18181c] max-w-[1440px] mx-auto px-2 sm:px-4 md:px-8 py-8 min-h-[calc(100vh-160px)]"
-                // padding et largeur responsive avec Tailwind
+                className="bg-[#18181c] max-w-[1440px] mx-auto px-1 xs:px-2 sm:px-4 md:px-8 py-4 sm:py-8 min-h-[calc(100vh-160px)]"
               >
                 {children}
               </main>

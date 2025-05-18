@@ -81,7 +81,7 @@ function HeroSection() {
   const currentMovie = featuredMovies[currentIndex];
   
   return (
-    <section className="relative h-[46vh] xs:h-[54vh] sm:h-[62vh] md:h-[70vh] lg:h-[80vh] overflow-hidden bg-muted">
+    <section className="relative h-[36vh] xs:h-[44vh] sm:h-[52vh] md:h-[60vh] lg:h-[70vh] overflow-hidden bg-muted">
       {/* Background avec effet parallaxe */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -101,7 +101,7 @@ function HeroSection() {
       </AnimatePresence>
       
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-2 sm:px-4 flex flex-col justify-end py-8 sm:py-12 md:py-16">
+      <div className="relative h-full container mx-auto px-1 xs:px-2 sm:px-4 flex flex-col justify-end py-4 sm:py-8 md:py-12">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -111,7 +111,7 @@ function HeroSection() {
             transition={{ duration: 0.5 }}
             className="max-w-3xl"
           >
-            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 break-words">{currentMovie.title}</h1>
+            <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 break-words">{currentMovie.title}</h1>
             
             <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
               <span>{currentMovie.year}</span>
@@ -137,7 +137,7 @@ function HeroSection() {
               ))}
             </div>
             
-            <p className="text-sm xs:text-base sm:text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
+            <p className="text-xs xs:text-sm sm:text-base text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
             
             <div className="flex flex-wrap gap-4">
               <Link href={`/films/${currentMovie.id}`}>
