@@ -152,7 +152,7 @@ function HeroSection() {
         relative z-20 flex flex-col
         justify-end
         h-full w-full
-        px-3 sm:px-6 md:px-12
+        px-1.5 sm:px-3 md:px-6
         pb-6 md:pb-10
       ">
         <AnimatePresence initial={false} mode="wait">
