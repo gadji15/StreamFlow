@@ -45,7 +45,7 @@ export default function EpisodesPage() {
     );
   }
   console.log("EpisodesPage seriesId (ALWAYS DEFINED, robust extraction)", seriesId, "params", params);
-  const [episodes, setEpisodes] = useState([]);
+  const [episodes, setEpisodes] = useState<any[]>([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -141,7 +141,7 @@ export default function EpisodesPage() {
   }, [seriesId, seasonId]);
 
   // Sélecteur de saison
-  const handleSeasonChange = (e) => {
+  const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = seasons.find(s => s.id === e.target.value);
     setSeasonId(selected?.id || "");
     setSeasonNumber(selected?.season_number || "");
