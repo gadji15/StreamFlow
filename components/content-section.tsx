@@ -79,9 +79,12 @@ export function ContentSection({
 
     if (loading) {
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
+            <div
+              key={i}
+              className="bg-gray-800 rounded-lg animate-pulse h-44 w-28 min-w-[112px] sm:h-56 sm:w-36 sm:min-w-[144px] md:h-64 md:w-40 md:min-w-[160px]"
+            ></div>
           ))}
         </div>
       );
@@ -101,15 +104,19 @@ export function ContentSection({
       <CarouselRail
         items={items}
         slidesToShow={7}
-        minSlideWidth={110}
+        minSlideWidth={100}
         maxSlideWidth={130}
         ariaLabel={title}
         renderItem={(item, idx) => (
           <Link
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
-            style={{ minWidth: 100, maxWidth: 130 }}
+            className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 active:scale-98 group w-full shadow-md focus:ring-2 focus:ring-fuchsia-400"
+            style={{
+              minWidth: 100,
+              maxWidth: 130,
+            }}
+            tabIndex={0}
           >
             <div className="relative aspect-[2/3]">
               <img
@@ -119,28 +126,28 @@ export function ContentSection({
                   '/placeholder-poster.png'
                 }
                 alt={item.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                 onError={e => {
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
-                style={{ maxHeight: 180, minHeight: 130 }}
+                style={{ maxHeight: 180, minHeight: 112 }}
               />
               {'isVIP' in item && item.isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold shadow">
                   VIP
                 </div>
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 {isMovie ? (
-                  <Film className="w-7 h-7 text-white" />
+                  <Film className="w-7 h-7 text-white drop-shadow" />
                 ) : (
-                  <Tv className="w-7 h-7 text-white" />
+                  <Tv className="w-7 h-7 text-white drop-shadow" />
                 )}
               </div>
             </div>
             <div className="p-2">
-              <h3 className="text-xs font-medium truncate">{item.title}</h3>
+              <h3 className="text-xs sm:text-sm font-medium truncate text-white">{item.title}</h3>
               <p className="text-[11px] text-gray-400">
                 {isMovie
                   ? (item as Movie).year
@@ -157,8 +164,8 @@ export function ContentSection({
 
   return (
     <section className={`mb-8 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
+      <div className="flex flex-col xs:flex-row xs:justify-between xs:items-center gap-2 xs:gap-0 mb-2 sm:mb-4">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">{title}</h2>
         {!hideViewAllButton && (
           <Link
             href={
@@ -171,14 +178,8 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
-            style={{ background: "transparent", padding: 0, border: "none" }}
-            onMouseEnter={e => {
-              e.currentTarget.classList.add('gradient-text');
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.classList.remove('gradient-text');
-            }}
+            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-300 font-medium transition-colors bg-clip-text hover:text-pink-400 focus:text-pink-400"
+            tabIndex={0}
           >
             <span className="voir-tout-gradient">
               Voir tout
