@@ -25,6 +25,17 @@ function HeroSection() {
 
   const imageRef = useRef<HTMLImageElement>(null);
 
+  // Fonction utilitaire pour charger dynamiquement les dimensions d'une image (poster ou backdrop)
+  const getImageSize = (url: string): Promise<{ width: number; height: number }> =>
+    new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.src = url;
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = reject;
+    });
+
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -43,6 +54,36 @@ function HeroSection() {
       });
     return () => { isMounted = false };
   }, []);
+
+  // Charger dynamiquement les dimensions de l'image affichée
+  useEffect(() => {
+    // On attend que le film courant soit chargé
+    if (!currentMovie) return;
+    // On détermine l'image à afficher (backdrop > poster > placeholder)
+    let candidateUrl = '';
+    if ((currentMovie as any).backdropUrl || (currentMovie as any).backdrop) {
+      candidateUrl =
+        (currentMovie as any).backdropUrl ||
+        (currentMovie as any).backdrop;
+    } else if ((currentMovie as any).posterUrl || (currentMovie as any).poster) {
+      candidateUrl =
+        (currentMovie as any).posterUrl ||
+        (currentMovie as any).poster;
+    } else {
+      candidateUrl = '/placeholder-backdrop.jpg';
+    }
+    // Si TMDB, améliorer la résolution
+    if (candidateUrl.startsWith('https://image.tmdb.org/t/p/')) {
+      candidateUrl = candidateUrl.replace(/\/w\d+\//, '/w1280/').replace(/\/w\d+\//, '/original/');
+    }
+    getImageSize(candidateUrl)
+      .then(meta => {
+        setImageMeta(meta);
+      })
+      .catch(() => {
+        setImageMeta(null);
+      });
+  }, [currentIndex, featuredMovies]);
 
   // Auto rotation
   useEffect(() => {
@@ -101,34 +142,50 @@ function HeroSection() {
   // Gestion de la durée (minutes) si disponible
   const duration = (currentMovie as any).duration || null;
 
-  // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
-  // Utiliser uniquement des images horizontales de qualité pour le HERO (jamais le poster vertical)
-  const rawBackdrop =
+  // Nouvelle gestion dynamique : backdrop > poster > placeholder, dimensions automatiques
+  let rawBackdrop =
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
     '';
+  let fallbackPoster =
+    (currentMovie as any).posterUrl ||
+    (currentMovie as any).poster ||
+    '';
 
   // Si c'est un backdrop TMDB, essayer de le remplacer par le format original/w1280 pour plus de netteté
-  let backdropUrl = '';
   if (rawBackdrop.startsWith('https://image.tmdb.org/t/p/')) {
-    // Remplacer /w780/ ou /w300/ par /w1280/ ou /original/
-    backdropUrl = rawBackdrop.replace(/\/w\d+\//, '/w1280/').replace(/\/w\d+\//, '/original/');
-  } else if (rawBackdrop) {
-    backdropUrl = rawBackdrop;
-  } else {
-    backdropUrl = '/placeholder-backdrop.jpg';
+    rawBackdrop = rawBackdrop.replace(/\/w\d+\//, '/w1280/').replace(/\/w\d+\//, '/original/');
+  }
+  if (fallbackPoster.startsWith('https://image.tmdb.org/t/p/')) {
+    fallbackPoster = fallbackPoster.replace(/\/w\d+\//, '/w500/').replace(/\/w\d+\//, '/original/');
   }
 
-  // Ratio compact et dynamique
-  const ratio = 16 / 5; // Garder ratio cinéma, la hauteur prime ici
+  // Choisir l'image à afficher
+  let heroImgUrl = rawBackdrop || fallbackPoster || '/placeholder-backdrop.jpg';
+
+  // Calcul du ratio dynamique (sinon fallback 21/9)
+  const dynamicRatio =
+    imageMeta && imageMeta.width && imageMeta.height
+      ? imageMeta.width / imageMeta.height
+      : 21 / 9;
+
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
     <section
-      className="relative w-full h-[52vh] md:h-[60vh] min-h-[270px] max-h-[540px] overflow-hidden flex items-center"
-      style={{ aspectRatio: `${ratio}` }}
+      className="relative w-full overflow-hidden flex items-center transition-all duration-300"
+      style={{
+        aspectRatio: dynamicRatio,
+        minHeight: "270px",
+        maxHeight: "540px",
+        height: "52vh",
+        // Pour éviter les bandes noires avec des posters verticaux, on ajuste la hauteur minimale
+        ...(imageMeta && dynamicRatio < 1.6
+          ? { minHeight: "400px", maxHeight: "650px", height: "64vh" }
+          : {}),
+      }}
     >
-      {/* Image de fond nette et compacte */}
+      {/* Image de fond parfaitement affichée quelle que soit son orientation */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
@@ -140,16 +197,21 @@ function HeroSection() {
         >
           <div className="w-full h-full relative">
             <Image
-              src={backdropUrl}
+              ref={imageRef}
+              src={heroImgUrl}
               alt={currentMovie.title}
               fill
               priority
               quality={100}
               sizes="100vw"
               style={{
-                objectFit: 'cover',
+                objectFit:
+                  imageMeta && dynamicRatio < 1.6
+                    ? 'contain' // Pour les posters verticaux
+                    : 'cover', // Pour les backdrop classiques
                 objectPosition: 'center',
-                filter: 'brightness(1.05) contrast(1.04)'
+                filter: 'brightness(1.05) contrast(1.04)',
+                background: "#18181b"
               }}
             />
             {/* Overlay subtile pour la lisibilité */}
