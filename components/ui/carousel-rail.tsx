@@ -90,11 +90,12 @@ export function CarouselRail<T>({
         <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       <div
-        className="overflow-hidden"
+        className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
         ref={emblaRef}
         aria-label={ariaLabel}
         tabIndex={0}
         role="region"
+        style={{ WebkitOverflowScrolling: "touch" }}  // pour une inertie fluide sur iOS
       >
         <div
           className="flex gap-4 py-1"
