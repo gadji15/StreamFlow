@@ -202,28 +202,36 @@ function HeroSection() {
                   }}
                 />
                 <Image
-                  src={backdropUrl}
-                  alt={currentMovie.title}
-                  fill
-                  priority
-                  quality={100}
-                  sizes="100vw"
-                  style={{
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    filter: 'brightness(1.05) contrast(1.04)'
-                  }}
-                />
-                {/* Overlay subtile pour la lisibilité */}
-                <div
-                  className="absolute inset-0 z-10"
-                  style={{
-                    background: overlayGradient,
-                  }}
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
+              src={backdropUrl}
+              alt={currentMovie.title}
+              fill
+              priority
+              quality={100}
+              sizes="100vw"
+              style={{
+                objectFit: 'cover',
+                objectPosition: 'center',
+                filter: 'brightness(1.05) contrast(1.04)'
+              }}
+            />
+            {/* Overlay vignette cinéma sur les bords */}
+            <div
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{
+                background: 
+                  'linear-gradient(90deg, rgba(10,10,10,0.80) 0%, rgba(10,10,10,0.00) 18%, rgba(10,10,10,0.00) 82%, rgba(10,10,10,0.80) 100%)'
+              }}
+            />
+            {/* Overlay subtile pour la lisibilité */}
+            <div
+              className="absolute inset-0 z-20"
+              style={{
+                background: overlayGradient,
+              }}
+            />
+          </div>
+        </motion.div>
+      </AnimatePresence>
 
           {/* Contenu compact et dynamique */}
           <div className="relative z-20 flex flex-col justify-center md:justify-end h-full w-full px-3 md:px-10">
