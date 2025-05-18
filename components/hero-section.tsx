@@ -229,16 +229,6 @@ function HeroSection() {
                   Regarder
                 </Button>
               </Link>
-              <Link href={`/films/${currentMovie.id}#details`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 md:gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-3 py-1.5 md:px-5 md:py-2 rounded-lg shadow-md text-[11px] md:text-base transition-transform hover:scale-105"
-                >
-                  <Info className="h-4 w-4" />
-                  Détails
-                </Button>
-              </Link>
             </div>
           </motion.div>
         </AnimatePresence>
