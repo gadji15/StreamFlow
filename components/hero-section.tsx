@@ -125,7 +125,8 @@ function HeroSection() {
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
               background:
-                'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.7) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.7) 78%, rgba(0,0,0,0.95) 86%, rgba(0,0,0,1) 100%)'
+                // Diminution de la vignette : moins opaque, plus de visibilité de l'image
+                'linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 14%, rgba(0,0,0,0.25) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.25) 78%, rgba(0,0,0,0.45) 86%, rgba(0,0,0,0.65) 100%)'
             }}
           />
           <div
