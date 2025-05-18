@@ -76,9 +76,9 @@ export function ContentSection({
 
     if (loading) {
       return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64"></div>
+            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 min-w-[160px] md:min-w-[180px]"></div>
           ))}
         </div>
       );
@@ -93,14 +93,14 @@ export function ContentSection({
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
         {items.map((item) => {
           const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
           return (
             <Link
               key={item.id}
               href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-              className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group"
+              className="flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group min-w-[160px] md:min-w-[180px]"
             >
               <div className="relative aspect-[2/3]">
                 <img
