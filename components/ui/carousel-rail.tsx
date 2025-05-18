@@ -7,12 +7,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface CarouselRailProps<T> {
   items: T[];
   renderItem: (item: T, idx: number) => React.ReactNode;
-  slidesToShow?: number; // default 6
+  slidesToShow?: number; // default 6, DOIT être géré dynamiquement par le parent pour une responsivité parfaite
   minSlideWidth?: number; // px, default 160
   maxSlideWidth?: number; // px, default 200
   className?: string;
   ariaLabel?: string;
-  // Si tu veux ajouter lazyLoad, tu peux prévoir un callback ici
 }
 
 export function CarouselRail<T>({
@@ -24,21 +23,8 @@ export function CarouselRail<T>({
   className = '',
   ariaLabel = 'Liste de contenus défilante',
 }: CarouselRailProps<T>) {
-  // Responsive: adapte slidesToShow selon la taille écran
-  // (Gardé pour fallback JS, mais breakpoints Tailwind privilégiés)
-  const [slides, setSlides] = useState(slidesToShow);
-
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth < 480) setSlides(2);
-      else if (window.innerWidth < 768) setSlides(3);
-      else if (window.innerWidth < 1024) setSlides(4);
-      else setSlides(slidesToShow);
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [slidesToShow]);
+  // La responsivité est maintenant entièrement contrôlée par la prop slidesToShow passée par le parent.
+  const slides = slidesToShow;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
@@ -100,22 +86,16 @@ export function CarouselRail<T>({
             minHeight: `${maxSlideWidth * 1.3}px`,
           }}
         >
-          {items.map((item, idx) => (
+          {items.slice(0, slides).map((item, idx) => (
             <div
               key={idx}
-              className={`flex-shrink-0`}
-              tabIndex={-1}
+              className="flex-shrink-0"
               style={{
-                minWidth: '48vw',
-                maxWidth: 180,
-                width: '48vw',
-                // Responsive widths
-                ...(window?.innerWidth >= 480 && { minWidth: 120, width: 120 }),
-                ...(window?.innerWidth >= 640 && { minWidth: 130, width: 130 }),
-                ...(window?.innerWidth >= 768 && { minWidth: 140, width: 140 }),
-                ...(window?.innerWidth >= 1024 && { minWidth: 150, width: 150 }),
-                ...(window?.innerWidth >= 1280 && { minWidth: maxSlideWidth, width: maxSlideWidth }),
+                minWidth: minSlideWidth,
+                maxWidth: maxSlideWidth,
+                width: `calc(100vw / ${slides} - 1.2rem)`,
               }}
+              tabIndex={-1}
             >
               {renderItem(item, idx)}
             </div>

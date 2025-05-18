@@ -33,9 +33,10 @@ export function ContentSection({
   type = 'custom',
   genreId = '',
   count = 6,
+  slidesToShow = 6,
   hideViewAllButton = false,
   ...props
-}: ContentSectionProps & { [key:string]: any }) {
+}: ContentSectionProps & { slidesToShow?: number; [key:string]: any }) {
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
@@ -115,7 +116,7 @@ export function ContentSection({
     return (
       <CarouselRail
         items={items}
-        slidesToShow={count}
+        slidesToShow={slidesToShow}
         minSlideWidth={110}
         maxSlideWidth={130}
         ariaLabel={title}

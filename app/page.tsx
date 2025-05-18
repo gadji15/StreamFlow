@@ -13,7 +13,7 @@ import { useResponsiveCount } from '@/hooks/useResponsiveCount';
 
 export default function HomePage() {
   const { isVIP } = useSupabaseAuth();
-  const count = useResponsiveCount();
+  const { count, slidesToShow } = useResponsiveCount();
 
   // Animation pour le titre de section
   const container = {
@@ -52,6 +52,7 @@ export default function HomePage() {
           title="Films populaires"
           type="popular_movies"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -61,6 +62,7 @@ export default function HomePage() {
           title="Séries populaires"
           type="popular_series"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -71,6 +73,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="thriller"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -81,6 +84,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="sci-fi"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -91,6 +95,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="action"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -101,6 +106,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="animation"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -111,6 +117,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="comedy"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -121,6 +128,7 @@ export default function HomePage() {
           type="movies_by_genre"
           genreId="documentary"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -131,6 +139,7 @@ export default function HomePage() {
           type="series_by_genre"
           genreId="sci-fi"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -141,6 +150,7 @@ export default function HomePage() {
           type="series_by_genre"
           genreId="thriller"
           count={count}
+          slidesToShow={slidesToShow}
         />
       </section>
 
@@ -181,6 +191,7 @@ export default function HomePage() {
                 type={Math.random() > 0.5 ? "movies" : "series"}
                 filter="vip"
                 limit={count}
+                slidesToShow={slidesToShow}
                 showHeader={false}
                 hideViewAllButton={true}
               />
