@@ -102,11 +102,22 @@ function HeroSection() {
   const duration = (currentMovie as any).duration || null;
 
   // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
-  // Toujours utiliser le backdrop horizontal TMDB (jamais le poster vertical)
-  const backdropUrl =
+  // Utiliser uniquement des images horizontales de qualité pour le HERO (jamais le poster vertical)
+  const rawBackdrop =
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
-    '/placeholder-backdrop.jpg';
+    '';
+
+  // Si c'est un backdrop TMDB, essayer de le remplacer par le format original/w1280 pour plus de netteté
+  let backdropUrl = '';
+  if (rawBackdrop.startsWith('https://image.tmdb.org/t/p/')) {
+    // Remplacer /w780/ ou /w300/ par /w1280/ ou /original/
+    backdropUrl = rawBackdrop.replace(/\/w\d+\//, '/w1280/').replace(/\/w\d+\//, '/original/');
+  } else if (rawBackdrop) {
+    backdropUrl = rawBackdrop;
+  } else {
+    backdropUrl = '/placeholder-backdrop.jpg';
+  }
 
   // Ratio compact et dynamique
   const ratio = 16 / 5; // Garder ratio cinéma, la hauteur prime ici
@@ -166,37 +177,39 @@ function HeroSection() {
             <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white/90 mb-1 drop-shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
-                  <span className="h-1 w-1 rounded-full bg-white/30"></span>
+                  <span className="h-1 w-1 rounded-full bg-white/50"></span>
                   <span>
                     {Math.floor((duration || (currentMovie as any).duration)/60)}h {(duration || (currentMovie as any).duration)%60}min
                   </span>
                 </>
               )}
-              <span className="h-1 w-1 rounded-full bg-white/30"></span>
               {(currentMovie as any).rating && (
-                <span className="flex items-center font-bold">
-                  <svg className="w-3 h-3 text-yellow-400 mr-1 drop-shadow" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  {(currentMovie as any).rating}
-                </span>
+                <>
+                  <span className="h-1 w-1 rounded-full bg-white/50"></span>
+                  <span className="flex items-center font-bold">
+                    <svg className="w-3 h-3 text-yellow-400 mr-1 drop-shadow" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {(currentMovie as any).rating}
+                  </span>
+                </>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 mb-2 drop-shadow">
+            <div className="flex flex-wrap gap-2 mb-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.92)]">
               {genres.slice(0, 2).map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-0.5 text-xs rounded-full border border-white/20 text-white/95"
+                  className="px-3 py-0.5 text-xs rounded-full border border-white/25 text-white/95"
                 >
                   {genre}
                 </span>
               ))}
             </div>
-            <p className="text-xs md:text-sm text-white/90 mb-4 line-clamp-2 drop-shadow">{currentMovie.description}</p>
+            <p className="text-xs md:text-sm text-white mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">{currentMovie.description}</p>
             <div className="flex gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
