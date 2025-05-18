@@ -121,6 +121,15 @@ function HeroSection() {
             sizes="100vw"
             className="object-cover object-center brightness-105 contrast-105"
           />
+          {/* Overlay gradient pour fondre les côtés */}
+          <div
+            className="absolute inset-0 z-30 pointer-events-none"
+            style={{
+              background:
+                // Adapter la couleur à votre background global (par exemple #111827 pour bg-gray-900 de Tailwind)
+                'linear-gradient(to right, #111827 0%, transparent 12%, transparent 88%, #111827 100%)'
+            }}
+          />
           <div
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
