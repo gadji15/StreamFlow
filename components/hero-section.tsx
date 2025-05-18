@@ -92,29 +92,61 @@ function HeroSection() {
   // Gestion de la durée (minutes) si disponible
   const duration = (currentMovie as any).duration || null;
 
-  // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
-  const backdropUrl =
+  // Sélection dynamique d'une image 4K nette si disponible
+  let backdrop_4k =
+    (currentMovie as any).backdrop_4k ||
+    (currentMovie as any).backdrop4k ||
+    (currentMovie as any).backdrop_hd ||
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
+    (currentMovie as any).poster_hd ||
     (currentMovie as any).poster ||
     '/placeholder-backdrop.jpg';
 
+  // On prépare aussi des versions plus faibles pour le blur-up
+  let backdrop_blur =
+    (currentMovie as any).backdrop_blur ||
+    (currentMovie as any).poster_blur ||
+    '/placeholder-blur.jpg';
+
+  // State pour effet blur-up
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   return (
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-      {/* Background avec effet parallaxe */}
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={currentMovie.id}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${backdropUrl})` 
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+      {/* Background avec <img> 4K et effet blur-up */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        {/* Blur-up low-res background */}
+        <img
+          src={backdrop_blur}
+          alt=""
+          aria-hidden="true"
+          className={`w-full h-full object-cover absolute inset-0 blur-xl scale-105 transition-opacity duration-700 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
+          draggable={false}
         />
-      </AnimatePresence>
+        {/* Image 4K, net, progressive */}
+        <img
+          src={backdrop_4k}
+          alt={currentMovie.title}
+          aria-hidden="true"
+          className="w-full h-full object-cover absolute inset-0 transition-opacity duration-1000"
+          style={{ opacity: imgLoaded ? 1 : 0 }}
+          srcSet={
+            [backdrop_4k]
+              .concat(
+                (currentMovie as any).backdrop_hd ? [(currentMovie as any).backdrop_hd + ' 1280w'] : [],
+                (currentMovie as any).poster_hd ? [(currentMovie as any).poster_hd + ' 640w'] : []
+              )
+              .join(', ')
+          }
+          sizes="100vw"
+          onLoad={() => setImgLoaded(true)}
+          onError={() => setImgLoaded(true)}
+          draggable={false}
+        />
+        {/* Overlay dégradé pour contraste texte */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/90 pointer-events-none" />
+      </div>
       
       {/* Contenu principal */}
       <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
