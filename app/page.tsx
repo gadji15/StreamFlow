@@ -40,38 +40,7 @@ export default function HomePage() {
       {/* Section Hero avec carousel */}
       <HeroSection />
 
-      {/* Présentation du site */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto text-center max-w-3xl">
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="mb-8"
-          >
-            <motion.h2 variants={item} className="text-3xl md:text-4xl font-bold mb-6">
-              Découvrez StreamFlow, votre nouvelle plateforme de streaming
-            </motion.h2>
-            <motion.p variants={item} className="text-lg text-gray-300 mb-8">
-              Des milliers de films et séries à portée de clic. Profitez d'un catalogue riche et varié, mis à jour régulièrement pour vous offrir le meilleur du divertissement.
-            </motion.p>
-            <motion.div variants={item} className="flex flex-wrap justify-center gap-4">
-              <Link href="/films">
-                <Button size="lg" className="gap-2">
-                  <Film className="h-5 w-5" />
-                  Explorer les films
-                </Button>
-              </Link>
-              <Link href="/series">
-                <Button size="lg" variant="outline" className="gap-2">
-                  <Tv className="h-5 w-5" />
-                  Découvrir les séries
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      {/* Présentation du site supprimée */}
 
       {/* Films populaires */}
       <ContentSection 
@@ -177,6 +146,7 @@ export default function HomePage() {
                 filter="vip"
                 limit={4}
                 showHeader={false}
+                hideViewAllButton={true}
               />
             </div>
           </div>

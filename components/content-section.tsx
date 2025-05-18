@@ -6,6 +6,7 @@ import { ChevronRight, Film, Tv } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
 import { getPopularSeries, getSeriesByGenre, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import CarouselRail from '@/components/ui/carousel-rail';
 
 type SectionType = 'popular_movies' | 'popular_series' | 'movies_by_genre' | 'series_by_genre' | 'custom';
 
@@ -17,6 +18,7 @@ interface ContentSectionProps {
   type?: SectionType;
   genreId?: string;
   count?: number;
+  hideViewAllButton?: boolean;
 }
 
 export function ContentSection({
@@ -26,7 +28,8 @@ export function ContentSection({
   children,
   type = 'custom',
   genreId = '',
-  count = 6
+  count = 6,
+  hideViewAllButton = false,
 }: ContentSectionProps) {
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,9 +79,9 @@ export function ContentSection({
 
     if (loading) {
       return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-2">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64"></div>
+            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
           ))}
         </div>
       );
@@ -92,53 +95,61 @@ export function ContentSection({
       );
     }
 
+    const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
+
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.map((item) => {
-          const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
-          return (
-            <Link
-              key={item.id}
-              href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-              className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group"
-            >
-              <div className="relative aspect-[2/3]">
-                <img
-                  src={
-                    (item as Movie | Series).poster ||
-                    (item as any).posterUrl ||
-                    '/placeholder-poster.png'
-                  }
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-                {'isVIP' in item && item.isVIP && (
-                  <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    VIP
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {isMovie ? (
-                    <Film className="w-10 h-10 text-white" />
-                  ) : (
-                    <Tv className="w-10 h-10 text-white" />
-                  )}
+      <CarouselRail
+        items={items}
+        slidesToShow={7}
+        minSlideWidth={110}
+        maxSlideWidth={130}
+        ariaLabel={title}
+        renderItem={(item, idx) => (
+          <Link
+            key={item.id}
+            href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
+            className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
+          >
+            <div className="relative aspect-[2/3]">
+              <img
+                src={
+                  (item as Movie | Series).poster ||
+                  (item as any).posterUrl ||
+                  '/placeholder-poster.png'
+                }
+                alt={item.title}
+                className="w-full h-full object-cover max-h-[160px] min-h-[85px] sm:max-h-[180px] sm:min-h-[110px]"
+                onError={e => {
+                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
+                }}
+                loading="lazy"
+              />
+              {'isVIP' in item && item.isVIP && (
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                  VIP
                 </div>
+              )}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {isMovie ? (
+                  <Film className="w-7 h-7 text-white" />
+                ) : (
+                  <Tv className="w-7 h-7 text-white" />
+                )}
               </div>
-              <div className="p-2">
-                <h3 className="text-sm font-medium truncate">{item.title}</h3>
-                <p className="text-xs text-gray-400">
-                  {isMovie
-                    ? (item as Movie).year
-                    : `${(item as Series).startYear ?? ''}${
-                        (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                      }`}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+            </div>
+            <div className="p-2">
+              <h3 className="text-xs font-medium truncate">{item.title}</h3>
+              <p className="text-[11px] text-gray-400">
+                {isMovie
+                  ? (item as Movie).year
+                  : `${(item as Series).startYear ?? ''}${
+                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                    }`}
+              </p>
+            </div>
+          </Link>
+        )}
+      />
     );
   };
 
@@ -146,18 +157,34 @@ export function ContentSection({
     <section className={`mb-8 ${className}`}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{title}</h2>
-
-        {viewAllLink && (
+        {!hideViewAllButton && (
           <Link
-            href={viewAllLink}
-            className="text-sm text-gray-400 hover:text-primary flex items-center"
+            href={
+              viewAllLink ||
+              (
+                type === "popular_movies" ? "/films"
+                : type === "popular_series" ? "/series"
+                : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
+                : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
+                : "/"
+              )
+            }
+            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            style={{ background: "transparent", padding: 0, border: "none" }}
+            onMouseEnter={e => {
+              e.currentTarget.classList.add('gradient-text');
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.classList.remove('gradient-text');
+            }}
           >
-            Voir tout
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <span className="voir-tout-gradient">
+              Voir tout
+            </span>
+            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
           </Link>
         )}
       </div>
-
       {renderContent()}
     </section>
   );

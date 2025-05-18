@@ -81,14 +81,17 @@ function HeroSection() {
   const currentMovie = featuredMovies[currentIndex];
   
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
+    <section className="relative h-[36vh] xs:h-[44vh] sm:h-[52vh] md:h-[60vh] lg:h-[70vh] overflow-hidden bg-muted">
       {/* Background avec effet parallaxe */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-muted"
+          // On supprime le gradient noir, on peut garder une légère transparence si besoin
           style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${currentMovie.backdropUrl})` 
+            // backgroundColor: "rgba(24,24,28,0.92)", // Gris foncé, optionnel sinon via bg-muted
+            backgroundImage: `url(${currentMovie.backdropUrl})`,
+            opacity: 0.18, // Pour donner un effet subtil, à ajuster selon rendu souhaité
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -98,7 +101,7 @@ function HeroSection() {
       </AnimatePresence>
       
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
+      <div className="relative h-full container mx-auto px-1 xs:px-2 sm:px-4 flex flex-col justify-end py-4 sm:py-8 md:py-12">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -108,7 +111,7 @@ function HeroSection() {
             transition={{ duration: 0.5 }}
             className="max-w-3xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
+            <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 break-words">{currentMovie.title}</h1>
             
             <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
               <span>{currentMovie.year}</span>
@@ -134,7 +137,7 @@ function HeroSection() {
               ))}
             </div>
             
-            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
+            <p className="text-xs xs:text-sm sm:text-base text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
             
             <div className="flex flex-wrap gap-4">
               <Link href={`/films/${currentMovie.id}`}>
@@ -170,7 +173,7 @@ function HeroSection() {
       
       {/* Boutons de navigation */}
       <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-muted/80 text-white"
         onClick={goToPrevious}
         aria-label="Film précédent"
       >
@@ -178,7 +181,7 @@ function HeroSection() {
       </button>
       
       <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-muted/80 text-white"
         onClick={goToNext}
         aria-label="Film suivant"
       >
