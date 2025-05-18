@@ -29,9 +29,12 @@ export function CarouselRail<T>({
 
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth < 480) setSlides(2);
-      else if (window.innerWidth < 768) setSlides(3);
-      else if (window.innerWidth < 1024) setSlides(4);
+      if (window.innerWidth < 400) setSlides(1);
+      else if (window.innerWidth < 600) setSlides(2);
+      else if (window.innerWidth < 900) setSlides(3);
+      else if (window.innerWidth < 1080) setSlides(4);
+      else if (window.innerWidth < 1400) setSlides(5);
+      else if (window.innerWidth < 1800) setSlides(6);
       else setSlides(slidesToShow);
     }
     handleResize();
@@ -106,7 +109,8 @@ export function CarouselRail<T>({
               style={{
                 minWidth: minSlideWidth,
                 maxWidth: maxSlideWidth,
-                width: `calc(100vw / ${slides} - 1.2rem)`,
+                width: `calc((100vw - 4rem) / ${slides})`,
+                transition: 'width 0.3s, min-width 0.3s, max-width 0.3s',
               }}
               tabIndex={-1}
             >
