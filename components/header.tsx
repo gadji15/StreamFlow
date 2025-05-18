@@ -54,7 +54,7 @@ export default function Header() {
   };
 
   return (
-    <header className={`fixed w-full top-0 z-50 transition-colors duration-300 bg-[#18181c]`}>
+    <header className={`fixed w-full top-0 z-50 transition-colors duration-300 bg-black`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo dynamique */}

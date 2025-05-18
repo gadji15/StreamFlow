@@ -94,7 +94,7 @@ export default function RootLayout({
             <ThemeProvider>
               {/* Header et Footer cachés dans l'admin */}
               <LayoutVisibility>
-                <Header className="bg-[#18181c]" />
+                <Header />
               </LayoutVisibility>
               <main
                 className="bg-[#18181c]"
