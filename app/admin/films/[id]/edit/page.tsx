@@ -297,14 +297,14 @@ export default function AdminEditFilmPage() {
         description,
         year,
         duration,
-        director: director || null,
+        director: director || undefined,
         genres: selectedGenres,
         cast: formattedCast.length > 0 ? formattedCast : [],
-        trailer_url: trailerUrl || null,
+        trailer_url: trailerUrl || undefined,
         is_vip: isVIP,
         published: isPublished,
-        poster_url: posterUrl || null,
-        backdrop_url: backdropUrl || null,
+        poster_url: posterUrl || undefined,
+        backdrop_url: backdropUrl || undefined,
       };
 
       // Mettre à jour le film
