@@ -159,7 +159,8 @@ export function ContentSection({
         {/* Affiche toujours le bouton Voir tout pour chaque section */}
         <Link
           href={viewAllLink || "#"}
-          className="text-sm text-gray-400 hover:text-primary flex items-center"
+          className="text-sm flex items-center px-4 py-1 rounded-full bg-gradient-to-r from-fuchsia-600 to-blue-600 text-white font-semibold shadow hover:brightness-110 hover:scale-105 transition-all border border-fuchsia-400/40"
+          style={{ boxShadow: '0 2px 12px 0 rgba(124,58,237,0.15)' }}
         >
           Voir tout
           <ChevronRight className="h-4 w-4 ml-1" />
