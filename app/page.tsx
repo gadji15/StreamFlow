@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import HeroSection from '@/components/hero-section';
 import ContentSection from '@/components/content-section';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useResponsiveCount } from '@/hooks/useResponsiveCount';
 
 export default function HomePage() {
   const { isVIP } = useSupabaseAuth();
+  const count = useResponsiveCount();
 
   // Animation pour le titre de section
   const container = {
@@ -49,6 +51,7 @@ export default function HomePage() {
         <ContentSection 
           title="Films populaires"
           type="popular_movies"
+          count={count}
         />
       </section>
 
@@ -57,6 +60,7 @@ export default function HomePage() {
         <ContentSection 
           title="Séries populaires"
           type="popular_series"
+          count={count}
         />
       </section>
 
@@ -66,6 +70,7 @@ export default function HomePage() {
           title="Suspense"
           type="movies_by_genre"
           genreId="thriller"
+          count={count}
         />
       </section>
 
@@ -75,6 +80,7 @@ export default function HomePage() {
           title="Science Fiction"
           type="movies_by_genre"
           genreId="sci-fi"
+          count={count}
         />
       </section>
 
@@ -84,6 +90,7 @@ export default function HomePage() {
           title="Action"
           type="movies_by_genre"
           genreId="action"
+          count={count}
         />
       </section>
 
@@ -93,6 +100,7 @@ export default function HomePage() {
           title="Animation"
           type="movies_by_genre"
           genreId="animation"
+          count={count}
         />
       </section>
 
@@ -102,6 +110,7 @@ export default function HomePage() {
           title="Comédie"
           type="movies_by_genre"
           genreId="comedy"
+          count={count}
         />
       </section>
 
@@ -111,6 +120,7 @@ export default function HomePage() {
           title="Documentaire"
           type="movies_by_genre"
           genreId="documentary"
+          count={count}
         />
       </section>
 
@@ -120,6 +130,7 @@ export default function HomePage() {
           title="Séries Science Fiction"
           type="series_by_genre"
           genreId="sci-fi"
+          count={count}
         />
       </section>
 
@@ -129,6 +140,7 @@ export default function HomePage() {
           title="Séries Thriller"
           type="series_by_genre"
           genreId="thriller"
+          count={count}
         />
       </section>
 
@@ -168,7 +180,7 @@ export default function HomePage() {
                 title=""
                 type={Math.random() > 0.5 ? "movies" : "series"}
                 filter="vip"
-                limit={4}
+                limit={count}
                 showHeader={false}
                 hideViewAllButton={true}
               />
