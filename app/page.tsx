@@ -116,23 +116,29 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 50 }}
         animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
-        className="py-12 px-4 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 mt-12"
+        className="py-8 sm:py-10 md:py-12 px-2 sm:px-4 md:px-8 bg-gradient-to-r from-indigo-900/60 to-purple-900/60 mt-8 sm:mt-10 md:mt-12 rounded-lg shadow-lg"
       >
-        <div className="container mx-auto">
-          <div className="flex items-center mb-6">
-            <Sparkles className="h-6 w-6 text-yellow-400 mr-2" />
-            <h2 className="text-2xl font-bold">Exclusivités VIP</h2>
+        <div className="max-w-4xl mx-auto w-full">
+          <div className="flex flex-col sm:flex-row items-center sm:items-end mb-4 sm:mb-6 gap-2 sm:gap-4">
+            <Sparkles className="h-6 w-6 text-yellow-400 mr-0 sm:mr-2 animate-pulse" />
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-white drop-shadow">
+              Exclusivités VIP
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
             <div>
-              <h3 className="text-xl md:text-2xl font-bold mb-4">Accédez à du contenu exclusif</h3>
-              <p className="text-gray-300 mb-6">
+              <h3 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-4 text-white">
+                Accédez à du contenu exclusif
+              </h3>
+              <p className="text-gray-300 text-sm sm:text-base mb-4 sm:mb-6 leading-relaxed">
                 Débloquez des films et séries en avant-première, des contenus exclusifs et bien plus encore en devenant membre VIP.
               </p>
-              <Link href="/vip">
-                <Button className="gap-2">
-                  <Sparkles className="h-4 w-4" />
+              <Link href="/vip" className="block">
+                <Button
+                  className="w-full sm:w-auto gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 shadow hover:scale-105 active:scale-95"
+                >
+                  <Sparkles className="h-4 w-4 animate-bounce" />
                   Découvrir l'offre VIP
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
