@@ -125,7 +125,7 @@ function HeroSection() {
 
   return (
     <section
-      className="relative w-full h-[52vh] md:h-[60vh] min-h-[270px] max-h-[540px] overflow-hidden flex items-center"
+      className="relative w-full h-[65vh] md:h-[75vh] min-h-[320px] max-h-[850px] overflow-hidden flex items-center"
       style={{ aspectRatio: `${ratio}` }}
     >
       {/* Image de fond nette et compacte */}
