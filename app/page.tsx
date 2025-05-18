@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
@@ -38,16 +38,16 @@ export default function HomePage() {
   });
 
   return (
-    <main className="flex flex-col gap-8 sm:gap-10 w-full">
+    <main className="flex flex-col gap-0 w-full pt-6 md:pt-8">
       {/* Section Hero avec carousel */}
-      <section className="w-full px-3 sm:px-0">
+      <section className="w-full px-3 sm:px-0 mt-0 pt-0">
         <HeroSection />
       </section>
 
       {/* Présentation du site supprimée */}
 
       {/* Films populaires */}
-      <section className="w-full px-3 sm:px-0">
+      <section className="w-full px-3 sm:px-0 mt-1">
         <ContentSection 
           title="Films populaires"
           type="popular_movies"
