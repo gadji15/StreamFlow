@@ -414,7 +414,7 @@ export default function AdminAddFilmPage() {
             throw error;
           }
           const { data: urlData } = supabase.storage.from('film-videos').getPublicUrl(data.path);
-          finalVideoUrl = urlData?.publicUrl || null;
+          finalVideoUrl = urlData?.publicUrl || '';
           setVideoUploadLoading(false);
         } catch (videoErr) {
           setVideoUploadLoading(false);
