@@ -481,7 +481,7 @@ export default function AdminAddFilmPage() {
           console.error("[ERREUR INSERT films]", insertError);
           toast({
             title: "Erreur",
-            description: insertError.message || "Impossible d'ajouter le film.",
+            description: insertError?.message || "Impossible d'ajouter le film.",
             variant: "destructive",
           });
         }
