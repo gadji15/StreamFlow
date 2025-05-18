@@ -58,7 +58,7 @@ export default function Header() {
       scrolled ? 'bg-black/90 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
     }`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo dynamique */}
           <Link href="/" className="flex items-center group select-none">
             <Home className="w-7 h-7 mr-2 text-fuchsia-400 group-hover:animate-bounce group-hover:text-blue-400 transition-colors" />
