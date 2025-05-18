@@ -28,7 +28,13 @@ export default function AdminsPage() {
   const [loading, setLoading] = useState(true);
   const [openNewAdminDialog, setOpenNewAdminDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    user_id: string;
+    role_id: number | null;
+    full_name: string;
+    email: string;
+    avatar_url: string;
+  }>({
     user_id: "",
     role_id: null,
     full_name: "",
