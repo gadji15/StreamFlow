@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Film, Tv } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, Film, Tv } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
 import { getPopularSeries, getSeriesByGenre, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import useEmblaCarousel from 'embla-carousel-react';
 
 type SectionType = 'popular_movies' | 'popular_series' | 'movies_by_genre' | 'series_by_genre' | 'custom';
 
@@ -76,9 +77,9 @@ export function ContentSection({
 
     if (loading) {
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+        <div className="flex gap-4 overflow-x-auto pb-2">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 min-w-[160px] md:min-w-[180px]"></div>
+            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
           ))}
         </div>
       );
@@ -93,71 +94,107 @@ export function ContentSection({
     }
 
     return (
-      <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-        {items.map((item) => {
-          const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
-          return (
-            <Link
-              key={item.id}
-              href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-              className="flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group min-w-[160px] md:min-w-[180px]"
-            >
-              <div className="relative aspect-[2/3]">
-                <img
-                  src={
-                    (item as Movie | Series).poster ||
-                    (item as any).posterUrl ||
-                    '/placeholder-poster.png'
-                  }
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-                {'isVIP' in item && item.isVIP && (
-                  <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    VIP
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {isMovie ? (
-                    <Film className="w-10 h-10 text-white" />
-                  ) : (
-                    <Tv className="w-10 h-10 text-white" />
-                  )}
-                </div>
-              </div>
-              <div className="p-2">
-                <h3 className="text-sm font-medium truncate">{item.title}</h3>
-                <p className="text-xs text-gray-400">
-                  {isMovie
-                    ? (item as Movie).year
-                    : `${(item as Series).startYear ?? ''}${
-                        (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                      }`}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+      <EmblaRow items={items} type={type} />
     );
   };
+
+  // Embla carousel component for horizontal scroll
+  function EmblaRow({ items, type }: { items: (Movie | Series)[], type: SectionType }) {
+    const [emblaRef, emblaApi] = useEmblaCarousel({
+      dragFree: true,
+      containScroll: "trimSnaps",
+    });
+
+    const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+    const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+
+    return (
+      <div className="relative">
+        <button
+          onClick={scrollPrev}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary transition-colors rounded-full w-8 h-8 flex items-center justify-center"
+          aria-label="Précédent"
+          style={{ display: items.length > 2 ? undefined : 'none' }}
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </button>
+        <div
+          className="overflow-hidden px-2"
+          ref={emblaRef}
+        >
+          <div className="flex gap-4">
+            {items.map((item) => {
+              const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
+              return (
+                <Link
+                  key={item.id}
+                  href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
+                  className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group min-w-[160px] max-w-[180px] w-[170px] flex-shrink-0"
+                >
+                  <div className="relative aspect-[2/3]">
+                    <img
+                      src={
+                        (item as Movie | Series).poster ||
+                        (item as any).posterUrl ||
+                        '/placeholder-poster.png'
+                      }
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {'isVIP' in item && item.isVIP && (
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                        VIP
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      {isMovie ? (
+                        <Film className="w-10 h-10 text-white" />
+                      ) : (
+                        <Tv className="w-10 h-10 text-white" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <h3 className="text-sm font-medium truncate">{item.title}</h3>
+                    <p className="text-xs text-gray-400">
+                      {isMovie
+                        ? (item as Movie).year
+                        : `${(item as Series).startYear ?? ''}${
+                            (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                          }`}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+        <button
+          onClick={scrollNext}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary transition-colors rounded-full w-8 h-8 flex items-center justify-center"
+          aria-label="Suivant"
+          style={{ display: items.length > 2 ? undefined : 'none' }}
+        >
+          <ChevronRight className="w-5 h-5 text-white" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <section className={`mb-8 ${className}`}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{title}</h2>
 
-        {viewAllLink && (
-          <Link
-            href={viewAllLink}
-            className="text-sm text-gray-400 hover:text-primary flex items-center"
-          >
-            Voir tout
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Link>
-        )}
+        {/* Affiche toujours le bouton Voir tout pour chaque section */}
+        <Link
+          href={viewAllLink || "#"}
+          className="text-sm text-gray-400 hover:text-primary flex items-center"
+        >
+          Voir tout
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Link>
       </div>
-
       {renderContent()}
     </section>
   );
