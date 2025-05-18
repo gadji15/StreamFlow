@@ -55,9 +55,10 @@ export function CarouselRail<T>({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [selectedPage, setSelectedPage] = useState(0);
+  const [snapCount, setSnapCount] = useState(0);
   const totalPages = Math.ceil(items.length / slides);
 
-  // Scroll par "page" entière (autant d'éléments visibles que slides)
+  // Scroll par page entière
   const scrollPrev = useCallback(() => {
     if (emblaApi) {
       const current = emblaApi.selectedScrollSnap();
@@ -84,6 +85,7 @@ export function CarouselRail<T>({
       // Pagination
       const idx = emblaApi.selectedScrollSnap();
       setSelectedPage(idx);
+      setSnapCount(emblaApi.scrollSnapList().length);
     };
 
     emblaApi.on('select', onSelect);
@@ -99,7 +101,7 @@ export function CarouselRail<T>({
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         aria-label="Faire défiler à gauche"
-        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
         tabIndex={0}
         style={{ minWidth: 28, minHeight: 28 }}
       >
@@ -128,7 +130,8 @@ export function CarouselRail<T>({
                 width: `calc(100%/${slides})`,
                 transition: 'width 0.3s, min-width 0.3s, max-width 0.3s',
               }}
-              tabIndex={-1}
+              tabIndex={0}
+              aria-label={`Contenu ${idx + 1} sur ${items.length}`}
             >
               {renderItem(item, idx)}
             </div>
@@ -139,13 +142,26 @@ export function CarouselRail<T>({
         onClick={scrollNext}
         disabled={!canScrollNext}
         aria-label="Faire défiler à droite"
-        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
         tabIndex={0}
         style={{ minWidth: 28, minHeight: 28 }}
       >
         <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
-      {/* Indicateurs de pagination supprimés */}
+      {/* Pagination dots interactive */}
+      {snapCount > slides && (
+        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {Array.from({ length: snapCount - slides + 1 }).map((_, i) => (
+            <button
+              key={i}
+              className={`h-2 w-2 rounded-full border border-fuchsia-600 transition-all duration-200 ${selectedPage === i ? 'bg-fuchsia-400 scale-110' : 'bg-gray-500/40'}`}
+              onClick={() => emblaApi && emblaApi.scrollTo(i)}
+              aria-label={`Aller à la page ${i + 1}`}
+              tabIndex={0}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
