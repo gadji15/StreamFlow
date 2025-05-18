@@ -17,6 +17,11 @@ function getYoutubeTrailer(videos) {
 
 export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
+  // Initialisation du champ featured selon homepage_categories
+  function computeFeaturedFromCategories(init = {}) {
+    const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
+    return cats.includes('featured') || !!init.featured;
+  }
   const [form, setForm] = useState({
     title: initialData.title || "",
     original_title: initialData.original_title || "",
@@ -33,6 +38,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     vote_count: initialData.vote_count || "",
     published: !!initialData.published,
     isvip: !!initialData.isvip,
+    featured: computeFeaturedFromCategories(initialData), // Synchronisation
     poster: initialData.poster || "",
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
@@ -96,6 +102,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         vote_count: initialData.vote_count || "",
         published: !!initialData.published,
         isvip: !!initialData.isvip,
+        featured: !!initialData.featured, // NOUVEAU CHAMP
         poster: initialData.poster || "",
         backdrop: initialData.backdrop || "",
         tmdb_id,
@@ -124,7 +131,23 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   }, [open, initialData && initialData.id]);
 
   // --- HANDLERS ---
+  // Gestion spéciale pour la case "featured" liée à homepage_categories
   const handleChange = (field, value) => {
+    if (field === "featured") {
+      setForm((f) => {
+        const categories = Array.isArray(f.homepage_categories) ? [...f.homepage_categories] : [];
+        let newCats;
+        if (value) {
+          if (!categories.includes("featured")) newCats = [...categories, "featured"];
+          else newCats = categories;
+        } else {
+          newCats = categories.filter((cat) => cat !== "featured");
+        }
+        return { ...f, featured: value, homepage_categories: newCats };
+      });
+      setErrors((e) => ({ ...e, featured: undefined }));
+      return;
+    }
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
@@ -465,6 +488,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     const published = !!form.published;
     const no_video = !!form.no_video;
 
+    // Toujours synchroniser la catégorie "featured" selon le champ featured
+    let homepage_categories_sync = Array.isArray(form.homepage_categories)
+      ? [...form.homepage_categories]
+      : [];
+    if (form.featured && !homepage_categories_sync.includes("featured")) {
+      homepage_categories_sync.push("featured");
+    }
+    if (!form.featured && homepage_categories_sync.includes("featured")) {
+      homepage_categories_sync = homepage_categories_sync.filter((cat) => cat !== "featured");
+    }
+
     return {
       title: form.title?.trim() || "",
       original_title: form.original_title?.trim() || null,
@@ -477,6 +511,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       vote_count,
       published,
       isvip,
+      // featured: !!form.featured, // Optionnel, pour backward compat
       poster: form.poster || null,
       backdrop: form.backdrop || null,
       tmdb_id,
@@ -485,7 +520,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       trailer_url: form.trailer_url || null,
       video_url: no_video ? null : (form.video_url || localVideoUrl || null),
       language: form.language || null,
-      homepage_categories,
+      homepage_categories: homepage_categories_sync,
       popularity,
       cast,
       no_video,
@@ -1087,7 +1122,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               </div>
             )}
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
               <input
                 type="checkbox"
@@ -1107,6 +1142,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 aria-label="VIP"
               />
               VIP
+            </label>
+            {/* Ajout de la case à cocher "Mettre en avant dans le Hero" */}
+            <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => handleChange("featured", e.target.checked)}
+                className="accent-indigo-500"
+                aria-label="Mettre dans le Hero"
+              />
+              Mettre en avant dans le Hero
             </label>
             <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
               <input
