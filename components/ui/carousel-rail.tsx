@@ -90,16 +90,21 @@ export function CarouselRail<T>({
         <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       <div
-        className="overflow-hidden"
+        className="overflow-hidden md:overflow-hidden touch-pan-x md:touch-auto"
         ref={emblaRef}
         aria-label={ariaLabel}
         tabIndex={0}
         role="region"
+        // Ajout scroll horizontal natif sur mobile
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div
           className="flex gap-4 py-1"
           style={{
             minHeight: `${maxSlideWidth * 1.5}px`,
+            // Permettre le scroll natif horizontal sur mobile en fallback
+            overflowX: 'auto',
+            cursor: 'grab'
           }}
         >
           {items.map((item, idx) => (
