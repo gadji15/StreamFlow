@@ -159,9 +159,17 @@ function HeroSection() {
             transition={{ duration: 0.5 }}
             className="max-w-3xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
+            <h1
+              className="text-[clamp(2.5rem,7vw,5rem)] md:text-6xl font-extrabold tracking-tight text-white drop-shadow-lg md:drop-shadow-2xl font-sans mb-3"
+              style={{
+                fontFamily: `'Inter', 'Montserrat', 'DM Sans', Arial, sans-serif`,
+                letterSpacing: '-0.04em'
+              }}
+            >
+              {currentMovie.title}
+            </h1>
             
-            <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
+            <div className="flex flex-wrap items-center gap-3 text-base md:text-lg text-gray-200 mt-2 mb-4 font-medium drop-shadow-md">
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
@@ -193,7 +201,9 @@ function HeroSection() {
               ))}
             </div>
             
-            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
+            <p className="text-xl md:text-2xl text-gray-200 mb-6 line-clamp-3 md:line-clamp-none font-normal drop-shadow-md">
+              {currentMovie.description}
+            </p>
             
             <div className="flex flex-wrap gap-4">
               <Link href={`/films/${currentMovie.id}`}>
