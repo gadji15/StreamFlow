@@ -115,7 +115,7 @@ function HeroSection() {
   return (
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
       {/* Background avec <img> 4K et effet blur-up */}
-      <div className="absolute inset-0 w-full h-full z-0">
+      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
         {/* Blur-up low-res background */}
         <img
           src={backdrop_blur}
@@ -124,8 +124,9 @@ function HeroSection() {
           className={`w-full h-full object-cover absolute inset-0 blur-xl scale-105 transition-opacity duration-700 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
           draggable={false}
         />
-        {/* Image 4K, net, progressive */}
-        <img
+        {/* Image 4K, net, progressive, animée */}
+        <motion.img
+          key={backdrop_4k + currentMovie.id}
           src={backdrop_4k}
           alt={currentMovie.title}
           aria-hidden="true"
@@ -143,6 +144,9 @@ function HeroSection() {
           onLoad={() => setImgLoaded(true)}
           onError={() => setImgLoaded(true)}
           draggable={false}
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1.15 }}
+          transition={{ duration: 7, ease: "easeInOut" }}
         />
         {/* Overlay dégradé pour contraste texte */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/90 pointer-events-none" />
@@ -153,23 +157,31 @@ function HeroSection() {
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
             className="max-w-3xl"
           >
-            <h1
+            <motion.h1
               className="text-[clamp(2.5rem,7vw,5rem)] md:text-6xl font-extrabold tracking-tight text-white drop-shadow-lg md:drop-shadow-2xl font-sans mb-3"
               style={{
                 fontFamily: `'Inter', 'Montserrat', 'DM Sans', Arial, sans-serif`,
                 letterSpacing: '-0.04em'
               }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
             >
               {currentMovie.title}
-            </h1>
+            </motion.h1>
             
-            <div className="flex flex-wrap items-center gap-3 text-base md:text-lg text-gray-200 mt-2 mb-4 font-medium drop-shadow-md">
+            <motion.div
+              className="flex flex-wrap items-center gap-3 text-base md:text-lg text-gray-200 mt-2 mb-4 font-medium drop-shadow-md"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.37 }}
+            >
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
@@ -188,9 +200,14 @@ function HeroSection() {
                   {(currentMovie as any).rating}
                 </span>
               )}
-            </div>
+            </motion.div>
             
-            <div className="flex flex-wrap gap-2 mb-4">
+            <motion.div
+              className="flex flex-wrap gap-2 mb-4"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
               {genres.map((genre, index) => (
                 <span 
                   key={index} 
@@ -199,20 +216,33 @@ function HeroSection() {
                   {genre}
                 </span>
               ))}
-            </div>
+            </motion.div>
             
-            <p className="text-xl md:text-2xl text-gray-200 mb-6 line-clamp-3 md:line-clamp-none font-normal drop-shadow-md">
+            <motion.p
+              className="text-xl md:text-2xl text-gray-200 mb-6 line-clamp-3 md:line-clamp-none font-normal drop-shadow-md"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.62 }}
+            >
               {currentMovie.description}
-            </p>
+            </motion.p>
             
-            <div className="flex flex-wrap gap-4">
+            <motion.div
+              className="flex flex-wrap gap-4"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.75 }}
+            >
               <Link href={`/films/${currentMovie.id}`}>
-                <Button size="lg" className="gap-2">
+                <Button
+                  size="lg"
+                  className="gap-2 transition-transform transition-shadow duration-200 hover:scale-105 hover:shadow-[0_0_16px_4px_rgba(255,255,255,0.10)] focus-visible:scale-105 focus-visible:ring-2 focus-visible:ring-fuchsia-400"
+                >
                   <Play className="h-5 w-5" />
                   Regarder
                 </Button>
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
         
