@@ -168,12 +168,30 @@ export function ContentSection({
               : "/"
             )
           }
-          className="text-sm flex items-center underline underline-offset-4 text-blue-400 hover:text-fuchsia-400 transition-colors font-medium"
+          className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
           style={{ background: "transparent", padding: 0, border: "none" }}
+          onMouseEnter={e => {
+            e.currentTarget.classList.add('gradient-text');
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.classList.remove('gradient-text');
+          }}
         >
-          Voir tout
-          <ChevronRight className="h-4 w-4 ml-1" />
+          <span className="voir-tout-gradient">
+            Voir tout
+          </span>
+          <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
         </Link>
+        <style jsx global>{`
+          .gradient-text, .voir-tout-gradient {
+            background: linear-gradient(90deg, #d946ef, #a78bfa, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            transition: background 0.3s;
+          }
+        `}</style>
       </div>
       {renderContent()}
     </section>
