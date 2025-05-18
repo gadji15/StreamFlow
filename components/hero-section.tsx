@@ -6,80 +6,99 @@ import { ChevronLeft, ChevronRight, Play, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Données simulées pour le Hero (à remplacer par des données réelles)
-const featuredMovies = [
-  {
-    id: '1',
-    title: 'Inception',
-    description: 'Un voleur qui s\'infiltre dans les rêves des autres pour voler leurs secrets.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2010,
-    duration: 148,
-    rating: 8.8,
-    genres: ['Science-Fiction', 'Action', 'Thriller'],
-  },
-  {
-    id: '2',
-    title: 'The Dark Knight',
-    description: 'Batman s\'allie au procureur Harvey Dent pour démanteler le crime organisé à Gotham.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2008,
-    duration: 152,
-    rating: 9.0,
-    genres: ['Action', 'Crime', 'Drame'],
-  },
-  {
-    id: '3',
-    title: 'Interstellar',
-    description: 'Un groupe d\'explorateurs utilise un trou de ver pour atteindre des systèmes solaires distants.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2014,
-    duration: 169,
-    rating: 8.6,
-    genres: ['Aventure', 'Drame', 'Science-Fiction'],
-  },
-];
+// Données dynamiques pour le Hero : récupérées via Supabase
+import { getMoviesByHomepageCategory, Movie } from '@/lib/supabaseFilms';
 
 // Composant HeroSection
 function HeroSection() {
+  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    getMoviesByHomepageCategory('featured', 5)
+      .then((data) => {
+        if (isMounted) {
+          setFeaturedMovies(data || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setFeaturedMovies([]);
+          setLoading(false);
+        }
+      });
+    return () => { isMounted = false };
+  }, []);
+
   // Auto rotation
   useEffect(() => {
-    if (!isAutoPlaying) return;
-    
+    if (!isAutoPlaying || featuredMovies.length < 2) return;
     const interval = setInterval(() => {
       setCurrentIndex((current) => (current + 1) % featuredMovies.length);
     }, 8000);
-    
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
-  
+  }, [isAutoPlaying, featuredMovies.length]);
+
   // Pause autoplay when user interacts
   const handleManualNavigation = (index: number) => {
     setCurrentIndex(index);
     setIsAutoPlaying(false);
-    
-    // Resume autoplay after a delay
     setTimeout(() => {
       setIsAutoPlaying(true);
     }, 10000);
   };
-  
+
   // Navigation précédent/suivant
   const goToPrevious = () => {
     const newIndex = (currentIndex - 1 + featuredMovies.length) % featuredMovies.length;
     handleManualNavigation(newIndex);
   };
-  
+
   const goToNext = () => {
     const newIndex = (currentIndex + 1) % featuredMovies.length;
     handleManualNavigation(newIndex);
   };
-  
+
   const currentMovie = featuredMovies[currentIndex];
-  
+
+  // Gestion du chargement ou de l'absence de contenu
+  if (loading) {
+    return (
+      <section className="relative h-[70vh] md:h-[80vh] overflow-hidden flex items-center justify-center">
+        <div className="text-2xl text-gray-300 animate-pulse">Chargement du contenu en avant...</div>
+      </section>
+    );
+  }
+  if (!currentMovie) {
+    return (
+      <section className="relative h-[60vh] md:h-[75vh] overflow-hidden flex items-center justify-center">
+        <div className="text-2xl text-gray-400">Aucun contenu mis en avant pour le moment.</div>
+      </section>
+    );
+  }
+
+  // Extraction des genres (array ou string)
+  const genres = Array.isArray(currentMovie.genre)
+    ? currentMovie.genre
+    : typeof currentMovie.genre === 'string'
+      ? currentMovie.genre.split(',').map(g => g.trim()).filter(Boolean)
+      : [];
+
+  // Gestion de la durée (minutes) si disponible
+  const duration = (currentMovie as any).duration || null;
+
+  // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
+  const backdropUrl =
+    (currentMovie as any).backdropUrl ||
+    (currentMovie as any).backdrop ||
+    (currentMovie as any).poster ||
+    '/placeholder-backdrop.jpg';
+
   return (
     <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
       {/* Background avec effet parallaxe */}
@@ -88,7 +107,7 @@ function HeroSection() {
           key={currentMovie.id}
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${currentMovie.backdropUrl})` 
+            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${backdropUrl})` 
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -111,20 +130,28 @@ function HeroSection() {
             <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
             
             <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
-              <span>{currentMovie.year}</span>
+              {currentMovie.year && <span>{currentMovie.year}</span>}
+              {(duration || (currentMovie as any).duration) && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-gray-500"></span>
+                  <span>
+                    {Math.floor((duration || (currentMovie as any).duration)/60)}h {(duration || (currentMovie as any).duration)%60}min
+                  </span>
+                </>
+              )}
               <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-              <span>{Math.floor(currentMovie.duration / 60)}h {currentMovie.duration % 60}min</span>
-              <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-              <span className="flex items-center">
-                <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                {currentMovie.rating}
-              </span>
+              {(currentMovie as any).rating && (
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  {(currentMovie as any).rating}
+                </span>
+              )}
             </div>
             
             <div className="flex flex-wrap gap-2 mb-4">
-              {currentMovie.genres.map((genre, index) => (
+              {genres.map((genre, index) => (
                 <span 
                   key={index} 
                   className="px-3 py-1 bg-gray-700/50 text-sm rounded-full"
@@ -148,36 +175,42 @@ function HeroSection() {
         </AnimatePresence>
         
         {/* Pagination */}
-        <div className="flex justify-center mt-8">
-          {featuredMovies.map((_, index) => (
-            <button
-              key={index}
-              className={`h-1 mx-1 rounded-full transition-all ${
-                index === currentIndex ? 'w-8 bg-white' : 'w-4 bg-gray-600'
-              }`}
-              onClick={() => handleManualNavigation(index)}
-              aria-label={`Voir le film ${index + 1}`}
-            />
-          ))}
-        </div>
+        {featuredMovies.length > 1 && (
+          <div className="flex justify-center mt-8">
+            {featuredMovies.map((_, index) => (
+              <button
+                key={index}
+                className={`h-1 mx-1 rounded-full transition-all ${
+                  index === currentIndex ? 'w-8 bg-white' : 'w-4 bg-gray-600'
+                }`}
+                onClick={() => handleManualNavigation(index)}
+                aria-label={`Voir le film ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Boutons de navigation */}
-      <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
-        onClick={goToPrevious}
-        aria-label="Film précédent"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      
-      <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
-        onClick={goToNext}
-        aria-label="Film suivant"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
+      {featuredMovies.length > 1 && (
+        <>
+          <button
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            onClick={goToPrevious}
+            aria-label="Film précédent"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          
+          <button
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            onClick={goToNext}
+            aria-label="Film suivant"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
     </section>
   );
 }
