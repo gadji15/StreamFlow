@@ -143,12 +143,6 @@ function HeroSection() {
                   Regarder
                 </Button>
               </Link>
-              <Link href={`/films/${currentMovie.id}`}>
-                <Button variant="outline" size="lg" className="gap-2">
-                  <Info className="h-5 w-5" />
-                  Plus d'infos
-                </Button>
-              </Link>
             </div>
           </motion.div>
         </AnimatePresence>
