@@ -97,13 +97,8 @@ export default function RootLayout({
                 <Header />
               </LayoutVisibility>
               <main
-                className="bg-[#18181c]"
-                style={{
-                  maxWidth: 1440,
-                  margin: '0 auto',
-                  padding: '2.5rem 2rem',
-                  minHeight: 'calc(100vh - 160px)',
-                }}
+                className="bg-[#18181c] max-w-[1440px] mx-auto px-2 sm:px-4 md:px-8 py-8 min-h-[calc(100vh-160px)]"
+                // padding et largeur responsive avec Tailwind
               >
                 {children}
               </main>

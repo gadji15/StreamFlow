@@ -109,6 +109,7 @@ export function ContentSection({
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
             className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
+            style={{ minWidth: 100, maxWidth: 130 }}
           >
             <div className="relative aspect-[2/3]">
               <img
@@ -123,6 +124,7 @@ export function ContentSection({
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
+                style={{ maxHeight: 180, minHeight: 130 }}
               />
               {'isVIP' in item && item.isVIP && (
                 <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
@@ -131,9 +133,9 @@ export function ContentSection({
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 {isMovie ? (
-                  <Film className="w-8 h-8 text-white" />
+                  <Film className="w-7 h-7 text-white" />
                 ) : (
-                  <Tv className="w-8 h-8 text-white" />
+                  <Tv className="w-7 h-7 text-white" />
                 )}
               </div>
             </div>

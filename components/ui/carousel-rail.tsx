@@ -80,10 +80,11 @@ export function CarouselRail<T>({
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         aria-label="Faire défiler à gauche"
-        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
+        style={{ minWidth: 28, minHeight: 28 }}
       >
-        <ChevronLeft className="w-5 h-5 text-white" />
+        <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       <div
         className="overflow-hidden"
@@ -118,10 +119,11 @@ export function CarouselRail<T>({
         onClick={scrollNext}
         disabled={!canScrollNext}
         aria-label="Faire défiler à droite"
-        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
+        style={{ minWidth: 28, minHeight: 28 }}
       >
-        <ChevronRight className="w-5 h-5 text-white" />
+        <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       {/* Indicateurs de pagination supprimés */}
     </div>
