@@ -28,6 +28,14 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { useEffect } from 'react';
 
+type CastMember = {
+  name: string;
+  role: string;
+  photo: string | null;
+  file: File | null;
+  preview: string | null;
+};
+
 export default function AdminAddFilmPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -51,8 +59,8 @@ export default function AdminAddFilmPage() {
   const [isVIP, setIsVIP] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState('');
-  const [cast, setCast] = useState<{name: string, role: string}[]>([
-    { name: '', role: '' }
+  const [cast, setCast] = useState<CastMember[]>([
+    { name: '', role: '', photo: null, file: null, preview: null }
   ]);
 
   // États pour les catégories d’accueil (sections homepage)
