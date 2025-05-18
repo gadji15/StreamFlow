@@ -21,6 +21,10 @@ interface ContentSectionProps {
   hideViewAllButton?: boolean;
 }
 
+/**
+ * Section de contenu responsive qui adapte dynamiquement le nombre de contenus
+ * affichés selon la taille de la plateforme et le carrousel, pour une UX ultra professionnelle.
+ */
 export function ContentSection({
   title,
   viewAllLink,
@@ -29,8 +33,10 @@ export function ContentSection({
   type = 'custom',
   genreId = '',
   count = 6,
+  slidesToShow = 6,
   hideViewAllButton = false,
-}: ContentSectionProps) {
+  ...props
+}: ContentSectionProps & { slidesToShow?: number; [key:string]: any }) {
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
@@ -78,10 +84,21 @@ export function ContentSection({
     }
 
     if (loading) {
+      // Sécurise count pour éviter RangeError
+      const safeCount = Number.isFinite(Number(count)) && Number(count) > 0 ? Number(count) : 12;
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
+        <div className="flex gap-3 xs:gap-4 overflow-x-auto pb-2 px-2 xs:px-3 sm:px-0 snap-x snap-mandatory">
+          {[...Array(Math.max(safeCount, 12))].map((_, i) => (
+            <div
+              key={i}
+              className="bg-gray-800 rounded-lg animate-pulse aspect-[2/3] snap-start"
+              style={{
+                height: 160,
+                minWidth: 100,
+                maxWidth: 130,
+                width: 110
+              }}
+            ></div>
           ))}
         </div>
       );
@@ -100,7 +117,7 @@ export function ContentSection({
     return (
       <CarouselRail
         items={items}
-        slidesToShow={7}
+        slidesToShow={slidesToShow}
         minSlideWidth={110}
         maxSlideWidth={130}
         ariaLabel={title}
@@ -156,9 +173,11 @@ export function ContentSection({
   };
 
   return (
-    <section className={`mb-8 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
+    <section
+      className={`mb-6 xs:mb-7 sm:mb-8 px-2 xs:px-3 sm:px-0 w-full ${className}`}
+    >
+      <div className="flex flex-col gap-2 xs:flex-row xs:gap-0 xs:justify-between xs:items-center mb-3 xs:mb-4">
+        <h2 className="text-lg xs:text-xl font-bold">{title}</h2>
         {!hideViewAllButton && (
           <Link
             href={
@@ -171,7 +190,7 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            className="text-xs xs:text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text mt-1 xs:mt-0"
             style={{ background: "transparent", padding: 0, border: "none" }}
             onMouseEnter={e => {
               e.currentTarget.classList.add('gradient-text');
@@ -183,7 +202,7 @@ export function ContentSection({
             <span className="voir-tout-gradient">
               Voir tout
             </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            <ChevronRight className="h-3 w-3 xs:h-4 xs:w-4 ml-0.5 xs:ml-1 voir-tout-gradient" />
           </Link>
         )}
       </div>

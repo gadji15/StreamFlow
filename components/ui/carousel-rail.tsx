@@ -7,12 +7,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface CarouselRailProps<T> {
   items: T[];
   renderItem: (item: T, idx: number) => React.ReactNode;
-  slidesToShow?: number; // default 6
+  slidesToShow?: number; // default 6, DOIT être géré dynamiquement par le parent pour une responsivité parfaite
   minSlideWidth?: number; // px, default 160
   maxSlideWidth?: number; // px, default 200
   className?: string;
   ariaLabel?: string;
-  // Si tu veux ajouter lazyLoad, tu peux prévoir un callback ici
 }
 
 export function CarouselRail<T>({
@@ -24,20 +23,8 @@ export function CarouselRail<T>({
   className = '',
   ariaLabel = 'Liste de contenus défilante',
 }: CarouselRailProps<T>) {
-  // Responsive: adapte slidesToShow selon la taille écran
-  const [slides, setSlides] = useState(slidesToShow);
-
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth < 480) setSlides(2);
-      else if (window.innerWidth < 768) setSlides(3);
-      else if (window.innerWidth < 1024) setSlides(4);
-      else setSlides(slidesToShow);
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [slidesToShow]);
+  // La responsivité est maintenant entièrement contrôlée par la prop slidesToShow passée par le parent.
+  const slides = slidesToShow;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
@@ -80,29 +67,29 @@ export function CarouselRail<T>({
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         aria-label="Faire défiler à gauche"
-        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
-        style={{ minWidth: 28, minHeight: 28 }}
+        style={{ minWidth: 24, minHeight: 24 }}
       >
         <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       <div
-        className="overflow-hidden"
+        className="overflow-x-auto scrollbar-hide -mx-2 xs:-mx-3 sm:mx-0"
         ref={emblaRef}
         aria-label={ariaLabel}
         tabIndex={0}
         role="region"
       >
         <div
-          className="flex gap-4 py-1"
+          className="flex gap-3 xs:gap-4 py-1 px-2 xs:px-3 sm:px-0 snap-x snap-mandatory overflow-x-auto"
           style={{
-            minHeight: `${maxSlideWidth * 1.5}px`,
+            minHeight: `${maxSlideWidth * 1.3}px`,
           }}
         >
           {items.map((item, idx) => (
             <div
               key={idx}
-              className="flex-shrink-0"
+              className="flex-shrink-0 snap-start"
               style={{
                 minWidth: minSlideWidth,
                 maxWidth: maxSlideWidth,
@@ -119,9 +106,9 @@ export function CarouselRail<T>({
         onClick={scrollNext}
         disabled={!canScrollNext}
         aria-label="Faire défiler à droite"
-        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
-        style={{ minWidth: 28, minHeight: 28 }}
+        style={{ minWidth: 24, minHeight: 24 }}
       >
         <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
