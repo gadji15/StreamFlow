@@ -693,7 +693,7 @@ export default function AdminFilmsPage() {
                         <td className="py-4 text-center">
                           <Button
                             type="button"
-                            variant={movie.published ? "success" : "ghost"}
+                            variant={movie.published ? "default" : "ghost"}
                             aria-label={movie.published ? "Dépublier" : "Publier"}
                             className={cn(
                               "px-2 py-1 rounded-full text-xs font-semibold",
