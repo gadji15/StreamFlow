@@ -141,7 +141,7 @@ export default function EpisodesPage() {
   }, [seriesId, seasonId]);
 
   // Sélecteur de saison
-  const handleSeasonChange = (e) => {
+  const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = seasons.find(s => s.id === e.target.value);
     setSeasonId(selected?.id || "");
     setSeasonNumber(selected?.season_number || "");
