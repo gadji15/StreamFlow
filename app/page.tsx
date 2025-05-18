@@ -38,7 +38,7 @@ export default function HomePage() {
   });
 
   return (
-    <main className="flex flex-col gap-2 sm:gap-3 w-full">
+    <main className="flex flex-col gap-0 w-full">
       {/* Section Hero avec carousel */}
       <section className="w-full px-3 sm:px-0 mt-0 pt-0">
         <HeroSection />
@@ -47,7 +47,7 @@ export default function HomePage() {
       {/* Présentation du site supprimée */}
 
       {/* Films populaires */}
-      <section className="w-full px-3 sm:px-0">
+      <section className="w-full px-3 sm:px-0 mt-1">
         <ContentSection 
           title="Films populaires"
           type="popular_movies"
