@@ -21,6 +21,10 @@ interface ContentSectionProps {
   hideViewAllButton?: boolean;
 }
 
+/**
+ * Section de contenu responsive qui adapte dynamiquement le nombre de contenus
+ * affichés selon la taille de la plateforme et le carrousel, pour une UX ultra professionnelle.
+ */
 export function ContentSection({
   title,
   viewAllLink,
@@ -30,7 +34,8 @@ export function ContentSection({
   genreId = '',
   count = 6,
   hideViewAllButton = false,
-}: ContentSectionProps) {
+  ...props
+}: ContentSectionProps & { [key:string]: any }) {
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
@@ -78,10 +83,20 @@ export function ContentSection({
     }
 
     if (loading) {
+      // Affichage d'un nombre de skeletons égal au count (responsive)
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex gap-3 xs:gap-4 overflow-x-auto pb-2 px-2 xs:px-3 sm:px-0">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
+            <div
+              key={i}
+              className="bg-gray-800 rounded-lg animate-pulse aspect-[2/3]"
+              style={{
+                height: 160,
+                minWidth: 100,
+                maxWidth: 130,
+                width: window?.innerWidth && window.innerWidth < 480 ? '48vw' : 110
+              }}
+            ></div>
           ))}
         </div>
       );
@@ -100,7 +115,7 @@ export function ContentSection({
     return (
       <CarouselRail
         items={items}
-        slidesToShow={7}
+        slidesToShow={count}
         minSlideWidth={110}
         maxSlideWidth={130}
         ariaLabel={title}
