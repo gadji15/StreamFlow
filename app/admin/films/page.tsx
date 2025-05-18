@@ -1044,7 +1044,7 @@ export default function AdminFilmsPage() {
           setEditModalMovie(null);
         }}
         initialData={editModalMovie || {}}
-        onSave={async (updatedFilm) => {
+        onSave={async (updatedFilm: MovieDB) => {
           if (!editModalMovie) return;
           setFilmModalLoading(true);
           try {
