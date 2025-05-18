@@ -47,7 +47,7 @@ export default function EpisodesPage() {
   console.log("EpisodesPage seriesId (ALWAYS DEFINED, robust extraction)", seriesId, "params", params);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Pour le header
