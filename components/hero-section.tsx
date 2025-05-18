@@ -121,11 +121,21 @@ function HeroSection() {
             sizes="100vw"
             className="object-cover object-center brightness-105 contrast-105"
           />
+          {/* Overlay gradient pour fondre les côtés */}
+          <div
+            className="absolute inset-0 z-30 pointer-events-none"
+            style={{
+              background:
+                // Adapter la couleur à votre background global (par exemple #111827 pour bg-gray-900 de Tailwind)
+                'linear-gradient(to right, #111827 0%, transparent 12%, transparent 88%, #111827 100%)'
+            }}
+          />
           <div
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
               background:
-                'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.7) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.7) 78%, rgba(0,0,0,0.95) 86%, rgba(0,0,0,1) 100%)'
+                // Diminution de la vignette : moins opaque, plus de visibilité de l'image
+                'linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 14%, rgba(0,0,0,0.25) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.25) 78%, rgba(0,0,0,0.45) 86%, rgba(0,0,0,0.65) 100%)'
             }}
           />
           <div
@@ -142,7 +152,7 @@ function HeroSection() {
         relative z-20 flex flex-col
         justify-end
         h-full w-full
-        px-3 sm:px-6 md:px-12
+        px-1.5 sm:px-3 md:px-6
         pb-6 md:pb-10
       ">
         <AnimatePresence initial={false} mode="wait">
@@ -156,13 +166,13 @@ function HeroSection() {
               max-w-full sm:max-w-lg md:max-w-xl
               w-full
               bg-black/20 md:bg-transparent
-              backdrop-blur-[1px] md:backdrop-blur-0
+              backdrop-blur-0 md:backdrop-blur-0
               rounded-xl md:rounded-none
               p-4 sm:p-6 md:py-7 md:px-8
               mt-4 md:mt-0
             "
           >
-            <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
+            <h1 className="text-xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
@@ -206,27 +216,17 @@ function HeroSection() {
                 </span>
               ))}
             </div>
-            <p className="text-xs md:text-sm text-white mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+            <p className="text-[11px] md:text-sm text-white mb-3 md:mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
               {currentMovie.description}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 md:gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
                   size="sm"
-                  className="gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
+                  className="gap-1.5 md:gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 md:px-5 md:py-2 rounded-lg shadow-md text-[11px] md:text-base transition-transform hover:scale-105"
                 >
                   <Play className="h-4 w-4" />
                   Regarder
-                </Button>
-              </Link>
-              <Link href={`/films/${currentMovie.id}#details`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
-                >
-                  <Info className="h-4 w-4" />
-                  Détails
                 </Button>
               </Link>
             </div>
