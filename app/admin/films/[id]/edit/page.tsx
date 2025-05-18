@@ -293,7 +293,7 @@ export default function AdminEditFilmPage() {
       // Préparer les données à mettre à jour
       const updates: Partial<Movie> = {
         title,
-        original_title: originalTitle || null,
+        original_title: originalTitle || undefined,
         description,
         year,
         duration,
