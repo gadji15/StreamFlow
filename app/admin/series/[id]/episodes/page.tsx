@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import EpisodeList from "@/components/admin/series/EpisodeList";
 import { useToast } from "@/components/ui/use-toast";
-
 throw new Error("TEST ERROR -- DEV SERVER DOIT CRASHER !");
 // DEBUG MARKER
 if (typeof window !== "undefined") {
@@ -13,10 +12,12 @@ if (typeof window !== "undefined") {
 }
 throw new Error("DEBUG: Ceci est bien app/admin/series/[id]/episodes/page.tsx");
 
+
 export default function EpisodesPage() {
+  // ...
   const params = useParams();
   // Analyse défensive : log l’URL et les params côté client, à chaque rendu
-  import { useEffect } from "react";
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       console.log("DEBUG PATHNAME", window.location.pathname);
