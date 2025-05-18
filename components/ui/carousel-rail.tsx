@@ -81,15 +81,15 @@ export function CarouselRail<T>({
         role="region"
       >
         <div
-          className="flex gap-3 xs:gap-4 py-1 px-2 xs:px-3 sm:px-0"
+          className="flex gap-3 xs:gap-4 py-1 px-2 xs:px-3 sm:px-0 snap-x snap-mandatory overflow-x-auto"
           style={{
             minHeight: `${maxSlideWidth * 1.3}px`,
           }}
         >
-          {items.slice(0, slides).map((item, idx) => (
+          {items.map((item, idx) => (
             <div
               key={idx}
-              className="flex-shrink-0"
+              className="flex-shrink-0 snap-start"
               style={{
                 minWidth: minSlideWidth,
                 maxWidth: maxSlideWidth,

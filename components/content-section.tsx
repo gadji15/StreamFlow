@@ -84,18 +84,18 @@ export function ContentSection({
     }
 
     if (loading) {
-      // Affichage d'un nombre de skeletons égal au count (responsive)
+      // Affichage d'un nombre de skeletons élevé, toujours scrollable
       return (
-        <div className="flex gap-3 xs:gap-4 overflow-x-auto pb-2 px-2 xs:px-3 sm:px-0">
-          {[...Array(count)].map((_, i) => (
+        <div className="flex gap-3 xs:gap-4 overflow-x-auto pb-2 px-2 xs:px-3 sm:px-0 snap-x snap-mandatory">
+          {[...Array(Math.max(count, 12))].map((_, i) => (
             <div
               key={i}
-              className="bg-gray-800 rounded-lg animate-pulse aspect-[2/3]"
+              className="bg-gray-800 rounded-lg animate-pulse aspect-[2/3] snap-start"
               style={{
                 height: 160,
                 minWidth: 100,
                 maxWidth: 130,
-                width: window?.innerWidth && window.innerWidth < 480 ? '48vw' : 110
+                width: 110
               }}
             ></div>
           ))}

@@ -8,6 +8,11 @@ import { useMediaQuery } from "./use-media-query";
  * Retourne dynamiquement le nombre de contenus à charger et à afficher
  * (synchronise le parent et le carrousel pour une responsivité parfaite).
  */
+/**
+ * Retourne le nombre de contenus à CHARGER (ex: 24 pour expérience Xalaflix)
+ * et le nombre de slides à afficher dans le viewport (responsive).
+ * On charge toujours beaucoup, on adapte juste slidesToShow pour le viewport.
+ */
 export function useResponsiveCount() {
   const is2xl = useMediaQuery("(min-width: 1536px)");
   const isXl = useMediaQuery("(min-width: 1280px)");
@@ -15,10 +20,13 @@ export function useResponsiveCount() {
   const isMd = useMediaQuery("(min-width: 768px)");
   const isSm = useMediaQuery("(min-width: 640px)");
 
-  if (is2xl) return { count: 14, slidesToShow: 14 };
-  if (isXl)  return { count: 12, slidesToShow: 12 };
-  if (isLg)  return { count: 10, slidesToShow: 10 };
-  if (isMd)  return { count: 8, slidesToShow: 8 };
-  if (isSm)  return { count: 6, slidesToShow: 6 };
-  return { count: 4, slidesToShow: 4 }; // mobile
+  // Toujours charger beaucoup d'éléments !
+  const count = 24;
+
+  if (is2xl) return { count, slidesToShow: 14 };
+  if (isXl)  return { count, slidesToShow: 12 };
+  if (isLg)  return { count, slidesToShow: 10 };
+  if (isMd)  return { count, slidesToShow: 8 };
+  if (isSm)  return { count, slidesToShow: 6 };
+  return { count, slidesToShow: 3 }; // mobile : viewport 2–3, mais rail complet scrollable
 }
