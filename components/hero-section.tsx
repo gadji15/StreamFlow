@@ -11,10 +11,12 @@ import { getMoviesByHomepageCategory, Movie } from '@/lib/supabaseFilms';
 
 // Composant HeroSection
 function HeroSection() {
+  // TOUS les hooks doivent être ici en tout premier, AVANT tout return conditionnel :
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,50 +68,21 @@ function HeroSection() {
 
   const currentMovie = featuredMovies[currentIndex];
 
-  // Gestion du chargement ou de l'absence de contenu
-  if (loading) {
-    return (
-      <section className="relative h-[70vh] md:h-[80vh] overflow-hidden flex items-center justify-center">
-        <div className="text-2xl text-gray-300 animate-pulse">Chargement du contenu en avant...</div>
-      </section>
-    );
-  }
-  if (!currentMovie) {
-    return (
-      <section className="relative h-[60vh] md:h-[75vh] overflow-hidden flex items-center justify-center">
-        <div className="text-2xl text-gray-400">Aucun contenu mis en avant pour le moment.</div>
-      </section>
-    );
-  }
-
-  // Extraction des genres (array ou string)
-  const genres = Array.isArray(currentMovie.genre)
-    ? currentMovie.genre
-    : typeof currentMovie.genre === 'string'
-      ? currentMovie.genre.split(',').map(g => g.trim()).filter(Boolean)
-      : [];
-
-  // Gestion de la durée (minutes) si disponible
-  const duration = (currentMovie as any).duration || null;
-
-  // State pour effet blur-up
-  const [imgLoaded, setImgLoaded] = useState(false);
-
   // Sélection dynamique d'une image 4K nette si disponible
   let backdrop_4k =
-    (currentMovie as any).backdrop_4k ||
-    (currentMovie as any).backdrop4k ||
-    (currentMovie as any).backdrop_hd ||
-    (currentMovie as any).backdropUrl ||
-    (currentMovie as any).backdrop ||
-    (currentMovie as any).poster_hd ||
-    (currentMovie as any).poster ||
+    (currentMovie as any)?.backdrop_4k ||
+    (currentMovie as any)?.backdrop4k ||
+    (currentMovie as any)?.backdrop_hd ||
+    (currentMovie as any)?.backdropUrl ||
+    (currentMovie as any)?.backdrop ||
+    (currentMovie as any)?.poster_hd ||
+    (currentMovie as any)?.poster ||
     '/placeholder-backdrop.jpg';
 
   // On prépare aussi des versions plus faibles pour le blur-up
   let backdrop_blur =
-    (currentMovie as any).backdrop_blur ||
-    (currentMovie as any).poster_blur ||
+    (currentMovie as any)?.backdrop_blur ||
+    (currentMovie as any)?.poster_blur ||
     '/placeholder-blur.jpg';
 
   return (
