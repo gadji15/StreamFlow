@@ -7,12 +7,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 interface CarouselRailProps<T> {
   items: T[];
   renderItem: (item: T, idx: number) => React.ReactNode;
-  slidesToShow?: number; // default 6
-  minSlideWidth?: number; // px, default 160
-  maxSlideWidth?: number; // px, default 200
+  slidesToShow?: number;
+  minSlideWidth?: number;
+  maxSlideWidth?: number;
   className?: string;
   ariaLabel?: string;
-  // Si tu veux ajouter lazyLoad, tu peux prévoir un callback ici
 }
 
 export function CarouselRail<T>({
@@ -42,9 +41,10 @@ export function CarouselRail<T>({
     return () => window.removeEventListener('resize', handleResize);
   }, [slidesToShow]);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({
+  // --- Embla Carousel pattern éprouvé ---
+  const [viewportRef, emblaApi] = useEmblaCarousel({
     align: 'start',
-    slidesToScroll: 1,
+    slidesToScroll: slides,
     containScroll: 'trimSnaps',
     dragFree: true,
     skipSnaps: false,
@@ -52,67 +52,44 @@ export function CarouselRail<T>({
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
-  const [selectedPage, setSelectedPage] = useState(0);
-  const totalPages = Math.ceil(items.length / slides);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => {
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    };
+    emblaApi.on('select', onSelect);
+    onSelect();
+    return () => emblaApi.off('select', onSelect);
+  }, [emblaApi]);
 
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
-  // Gère l'état des boutons de navigation et la pagination
-  useEffect(() => {
-    if (!emblaApi) return;
-
-    const onSelect = () => {
-      setCanScrollPrev(emblaApi.canScrollPrev());
-      setCanScrollNext(emblaApi.canScrollNext());
-      // Pagination
-      const idx = emblaApi.selectedScrollSnap();
-      setSelectedPage(idx);
-    };
-
-    emblaApi.on('select', onSelect);
-    onSelect();
-
-    return () => emblaApi.off('select', onSelect);
-  }, [emblaApi]);
-
   return (
-    <div className={`relative ${className}`}>
-      {/* Boutons navigation */}
+    <div className={`relative w-full ${className}`}>
       <button
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         aria-label="Faire défiler à gauche"
-        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
-        style={{ minWidth: 28, minHeight: 28 }}
       >
-        <ChevronLeft className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
+        <ChevronLeft className="text-white" />
       </button>
-      <div
-        className="overflow-hidden"
-        ref={emblaRef}
-        aria-label={ariaLabel}
-        tabIndex={0}
-        role="region"
-      >
-        <div
-          className="flex gap-4 py-1"
-          style={{
-            minHeight: `${maxSlideWidth * 1.5}px`,
-          }}
-        >
+      <div className="overflow-hidden" ref={viewportRef} aria-label={ariaLabel} tabIndex={0} role="region">
+        <div className="flex">
           {items.map((item, idx) => (
             <div
               key={idx}
-              className="flex-shrink-0"
+              className="flex-shrink-0 px-2"
               style={{
+                width: `calc(100% / ${slides})`,
                 minWidth: minSlideWidth,
                 maxWidth: maxSlideWidth,
-                width: `calc((100vw - 4rem) / ${slides})`,
-                transition: 'width 0.3s, min-width 0.3s, max-width 0.3s',
+                boxSizing: 'border-box',
               }}
-              tabIndex={-1}
             >
               {renderItem(item, idx)}
             </div>
@@ -123,13 +100,11 @@ export function CarouselRail<T>({
         onClick={scrollNext}
         disabled={!canScrollNext}
         aria-label="Faire défiler à droite"
-        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-black/70 hover:bg-primary/80 transition-colors rounded-full w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center disabled:opacity-30"
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 rounded-full w-8 h-8 flex items-center justify-center disabled:opacity-30"
         tabIndex={0}
-        style={{ minWidth: 28, minHeight: 28 }}
       >
-        <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
+        <ChevronRight className="text-white" />
       </button>
-      {/* Indicateurs de pagination supprimés */}
     </div>
   );
 }
