@@ -38,9 +38,9 @@ export default function HomePage() {
   });
 
   return (
-    <main className="flex flex-col gap-8 sm:gap-10 w-full">
+    <main className="flex flex-col gap-2 sm:gap-3 w-full">
       {/* Section Hero avec carousel */}
-      <section className="w-full px-3 sm:px-0">
+      <section className="w-full px-3 sm:px-0 mt-0 pt-0">
         <HeroSection />
       </section>
 

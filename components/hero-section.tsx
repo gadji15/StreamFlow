@@ -27,7 +27,7 @@ function HeroSection() {
   const imageRef = useRef<HTMLImageElement>(null);
 
   // Valeur de scale (zoom out) - modifiable selon le besoin
-  const HERO_SCALE = 0.8;
+  const HERO_SCALE = 0.9;
 
   useEffect(() => {
     let isMounted = true;
@@ -159,7 +159,7 @@ function HeroSection() {
       <div
         className="flex justify-center items-center w-full"
         style={{
-          transform: `scale(${0.8})`,
+          transform: `scale(${HERO_SCALE})`,
           transformOrigin: 'center',
           transition: 'transform 0.4s'
         }}
