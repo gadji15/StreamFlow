@@ -414,7 +414,7 @@ export default function AdminAddFilmPage() {
             throw error;
           }
           const { data: urlData } = supabase.storage.from('film-videos').getPublicUrl(data.path);
-          finalVideoUrl = urlData?.publicUrl || null;
+          finalVideoUrl = urlData?.publicUrl || '';
           setVideoUploadLoading(false);
         } catch (videoErr) {
           setVideoUploadLoading(false);
@@ -481,7 +481,7 @@ export default function AdminAddFilmPage() {
           console.error("[ERREUR INSERT films]", insertError);
           toast({
             title: "Erreur",
-            description: insertError.message || "Impossible d'ajouter le film.",
+            description: insertError?.message || "Impossible d'ajouter le film.",
             variant: "destructive",
           });
         }
@@ -514,7 +514,14 @@ export default function AdminAddFilmPage() {
       console.error('Erreur lors de l\'ajout du film:', error);
       toast({
         title: 'Erreur',
-        description: error?.message || String(error) || 'Impossible d\'ajouter le film.',
+        description:
+          (typeof error === "object" &&
+            error !== null &&
+            "message" in error &&
+            typeof (error as any).message === "string"
+              ? (error as any).message
+              : String(error)
+          ) || "Impossible d'ajouter le film.",
         variant: 'destructive',
       });
     } finally {
@@ -978,7 +985,7 @@ export default function AdminAddFilmPage() {
                         <div className="flex items-center mt-2">
                           {member.preview || member.photo ? (
                             <img
-                              src={member.preview || member.photo}
+                              src={member.preview || member.photo || undefined}
                               alt={member.name}
                               className="h-14 w-10 object-cover rounded border mr-3"
                             />
