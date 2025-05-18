@@ -125,7 +125,7 @@ function HeroSection() {
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
               background:
-                'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.7) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.7) 78%, rgba(0,0,0,0.95) 86%, rgba(0,0,0,1) 100%)'
+                'linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 12%, rgba(0,0,0,0.18) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.18) 78%, rgba(0,0,0,0.4) 88%, rgba(0,0,0,0.6) 100%)'
             }}
           />
           <div
