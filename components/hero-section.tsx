@@ -215,7 +215,7 @@ function HeroSection() {
               {genres.map((genre, index) => (
                 <span 
                   key={index} 
-                  className="px-3 py-1 bg-gray-700/50 text-sm rounded-full"
+                  className="px-3 py-1 bg-gray-700/60 text-sm rounded-full shadow-sm backdrop-blur-sm border border-gray-500/20"
                 >
                   {genre}
                 </span>
@@ -223,7 +223,8 @@ function HeroSection() {
             </motion.div>
             
             <motion.p
-              className="text-xl md:text-2xl text-gray-200 mb-6 line-clamp-3 md:line-clamp-none font-normal drop-shadow-md"
+              className="text-base sm:text-lg md:text-2xl text-gray-200 mb-6 font-normal drop-shadow-md px-1 sm:px-0
+                line-clamp-3 sm:line-clamp-4 md:line-clamp-none"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.62 }}
@@ -253,15 +254,25 @@ function HeroSection() {
         
         {/* Pagination */}
         {featuredMovies.length > 1 && (
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-8 gap-1.5">
             {featuredMovies.map((_, index) => (
               <button
                 key={index}
-                className={`h-1 mx-1 rounded-full transition-all ${
-                  index === currentIndex ? 'w-8 bg-white' : 'w-4 bg-gray-600'
-                }`}
+                className={`h-2 rounded-full outline-none border-none transition-all duration-300
+                  ${index === currentIndex
+                    ? 'w-8 bg-white shadow-md'
+                    : 'w-4 bg-gray-500/70 hover:bg-fuchsia-400/70'}
+                  focus-visible:ring-2 focus-visible:ring-fuchsia-400`}
+                style={{
+                  minWidth: index === currentIndex ? 32 : 16,
+                  minHeight: 8,
+                  outline: "none",
+                  boxShadow: index === currentIndex ? "0 0 8px 2px rgba(255,255,255,0.22)" : undefined,
+                  border: "none"
+                }}
                 onClick={() => handleManualNavigation(index)}
-                aria-label={`Voir le film ${index + 1}`}
+                aria-label={`Afficher le contenu mis en avant numéro ${index + 1}`}
+                tabIndex={0}
               />
             ))}
           </div>
