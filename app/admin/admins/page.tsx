@@ -423,10 +423,11 @@ export default function AdminsPage() {
       </div>
     </div>
   );
-}profile,
-          user_id: user.id,
-          roles: userRoles?.map(ur => ur.role_id) || [],
-        });
+}
+// ---
+// Correction : 
+// Supprimez tout ce qui suit la fin de la fonction React (tout ce qui est après le dernier "return (...)" et la fermeture de la fonction par "}").
+// Les lignes `}profile, user_id: user.id, ...` sont du code mort et doivent être supprimées.);
       }
     }
     fetchCurrentUser();

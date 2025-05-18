@@ -13,7 +13,18 @@ if (typeof window !== "undefined") {
 }
 throw new Error("DEBUG: Ceci est bien app/admin/series/[id]/episodes/page.tsx");
 
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+
 export default function EpisodesPage() {
+  const params = useParams();
+  // Analyse défensive : log l’URL et les params côté client, à chaque rendu
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("DEBUG PATHNAME", window.location.pathname);
+    }
+  }, []);
+  // ...
   const params = useParams();
   // Analyse défensive : log l’URL et les params côté client, à chaque rendu
   import { useEffect } from "react";
