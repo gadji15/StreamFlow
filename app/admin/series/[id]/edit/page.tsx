@@ -453,7 +453,7 @@ export default function AdminEditSeriesPage() {
                   <Label htmlFor="poster">Affiche de la série</Label>
                   <ImageUpload
                     onImageSelected={(file) => setPosterFile(file)}
-                    previewUrl={series.posterUrl}
+                    previewUrl={series.poster_url}
                     aspectRatio="2:3"
                     label="Modifier l'affiche"
                   />
@@ -466,7 +466,7 @@ export default function AdminEditSeriesPage() {
                   <Label htmlFor="backdrop">Image de fond</Label>
                   <ImageUpload
                     onImageSelected={(file) => setBackdropFile(file)}
-                    previewUrl={series.backdropUrl}
+                    previewUrl={series.backdrop_url}
                     aspectRatio="16:9"
                     label="Modifier l'image de fond"
                   />
