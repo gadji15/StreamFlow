@@ -54,45 +54,59 @@ export function CarouselRail<T>({
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [pageIndexes, setPageIndexes] = useState<number[]>([]);
   const [selectedPage, setSelectedPage] = useState(0);
-  const [snapCount, setSnapCount] = useState(0);
-  const totalPages = Math.ceil(items.length / slides);
+
+  // Génère les index de début de "page"
+  useEffect(() => {
+    // Si moins de slides que la vue, une seule page
+    if (items.length <= slides) {
+      setPageIndexes([0]);
+      return;
+    }
+    const idxs = [];
+    for (let i = 0; i < items.length; i += slides) {
+      idxs.push(i);
+    }
+    setPageIndexes(idxs);
+  }, [items.length, slides]);
 
   // Scroll par page entière
   const scrollPrev = useCallback(() => {
-    if (emblaApi) {
-      const current = emblaApi.selectedScrollSnap();
-      const to = Math.max(current - slides, 0);
-      emblaApi.scrollTo(to);
+    if (emblaApi && pageIndexes.length > 0) {
+      const currentSnap = emblaApi.selectedScrollSnap();
+      const currentPage = pageIndexes.findIndex(idx => idx === currentSnap);
+      const prevPage = Math.max(currentPage - 1, 0);
+      emblaApi.scrollTo(pageIndexes[prevPage]);
     }
-  }, [emblaApi, slides]);
+  }, [emblaApi, pageIndexes]);
   const scrollNext = useCallback(() => {
-    if (emblaApi) {
-      const current = emblaApi.selectedScrollSnap();
-      const max = emblaApi.scrollSnapList().length - 1;
-      const to = Math.min(current + slides, max);
-      emblaApi.scrollTo(to);
+    if (emblaApi && pageIndexes.length > 0) {
+      const currentSnap = emblaApi.selectedScrollSnap();
+      const currentPage = pageIndexes.findIndex(idx => idx === currentSnap);
+      const nextPage = Math.min(currentPage + 1, pageIndexes.length - 1);
+      emblaApi.scrollTo(pageIndexes[nextPage]);
     }
-  }, [emblaApi, slides]);
+  }, [emblaApi, pageIndexes]);
 
   // Gère l'état des boutons de navigation et la pagination
   useEffect(() => {
-    if (!emblaApi) return;
+    if (!emblaApi || pageIndexes.length === 0) return;
 
     const onSelect = () => {
-      setCanScrollPrev(emblaApi.canScrollPrev());
-      setCanScrollNext(emblaApi.canScrollNext());
-      // Pagination
-      const idx = emblaApi.selectedScrollSnap();
-      setSelectedPage(idx);
-      setSnapCount(emblaApi.scrollSnapList().length);
+      setCanScrollPrev(emblaApi.selectedScrollSnap() > 0);
+      setCanScrollNext(emblaApi.selectedScrollSnap() < items.length - slides);
+      // Trouve la page active
+      const snap = emblaApi.selectedScrollSnap();
+      const page = pageIndexes.findIndex(idx => idx === snap);
+      setSelectedPage(page === -1 ? 0 : page);
     };
 
     emblaApi.on('select', onSelect);
     onSelect();
 
     return () => emblaApi.off('select', onSelect);
-  }, [emblaApi]);
+  }, [emblaApi, items.length, slides, pageIndexes]);
 
   return (
     <div className={`relative ${className}`}>
@@ -149,13 +163,13 @@ export function CarouselRail<T>({
         <ChevronRight className="w-4 h-4 xs:w-5 xs:h-5 text-white" />
       </button>
       {/* Pagination dots interactive */}
-      {snapCount > slides && (
+      {pageIndexes.length > 1 && (
         <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {Array.from({ length: snapCount - slides + 1 }).map((_, i) => (
+          {pageIndexes.map((idx, i) => (
             <button
               key={i}
               className={`h-2 w-2 rounded-full border border-fuchsia-600 transition-all duration-200 ${selectedPage === i ? 'bg-fuchsia-400 scale-110' : 'bg-gray-500/40'}`}
-              onClick={() => emblaApi && emblaApi.scrollTo(i)}
+              onClick={() => emblaApi && emblaApi.scrollTo(idx)}
               aria-label={`Aller à la page ${i + 1}`}
               tabIndex={0}
             />
