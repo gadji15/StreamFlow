@@ -21,7 +21,7 @@ function HeroSection() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [imageMeta, setImageMeta] = useState<{width: number, height: number} | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
 
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -41,7 +41,9 @@ function HeroSection() {
           setLoading(false);
         }
       });
-    return () => { isMounted = false };
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Auto rotation
@@ -78,14 +80,14 @@ function HeroSection() {
   // Gestion du chargement ou de l'absence de contenu
   if (loading) {
     return (
-      <section className="relative aspect-[21/9] md:aspect-[21/8] overflow-hidden flex items-center justify-center">
+      <section className="relative aspect-[21/9] overflow-hidden flex items-center justify-center min-h-[240px] max-h-[500px]">
         <div className="text-2xl text-gray-300 animate-pulse">Chargement du contenu en avant...</div>
       </section>
     );
   }
   if (!currentMovie) {
     return (
-      <section className="relative aspect-[21/9] md:aspect-[21/8] overflow-hidden flex items-center justify-center">
+      <section className="relative aspect-[21/9] overflow-hidden flex items-center justify-center min-h-[240px] max-h-[500px]">
         <div className="text-2xl text-gray-400">Aucun contenu mis en avant pour le moment.</div>
       </section>
     );
@@ -95,7 +97,7 @@ function HeroSection() {
   const genres = Array.isArray(currentMovie.genre)
     ? currentMovie.genre
     : typeof currentMovie.genre === 'string'
-      ? currentMovie.genre.split(',').map(g => g.trim()).filter(Boolean)
+      ? currentMovie.genre.split(',').map((g) => g.trim()).filter(Boolean)
       : [];
 
   // Gestion de la durée (minutes) si disponible
@@ -119,16 +121,44 @@ function HeroSection() {
     backdropUrl = '/placeholder-backdrop.jpg';
   }
 
-  // Ratio compact et dynamique
-  const ratio = 16 / 5; // Garder ratio cinéma, la hauteur prime ici
-  const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
+  // Fixer le ratio du Hero Section à 21/9, ce qui convient à la grande majorité des backdrops TMDB
+  // Overlay plus doux, ajustements pour conserver lisibilité
+  const overlayGradient =
+    'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
+
+  // Détection dynamique du ratio de l'image pour ajuster l'object-fit si besoin
+  // Si l'image TMDB n'a pas le bon ratio, on peut switcher entre cover/contain pour éviter la coupure
+  const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    setImgLoaded(false);
+    setFitMode('cover');
+  }, [backdropUrl, currentMovie.id]);
+
+  function handleImageLoad(e: any) {
+    setImgLoaded(true);
+
+    // Si possible, ajuster l'object-fit selon le ratio réel de l'image
+    const img = e.target as HTMLImageElement;
+    if (img && img.naturalWidth && img.naturalHeight) {
+      const actualRatio = img.naturalWidth / img.naturalHeight;
+      // Si le ratio est très éloigné de 21/9 (genre 16/9 ou plus carré), switcher sur contain
+      // Ex: 21/9 = 2.33, 16/9 = 1.77
+      if (actualRatio < 2.05) {
+        setFitMode('contain'); // moins large que 18/9 → risque de crop important
+      } else {
+        setFitMode('cover');
+      }
+    }
+  }
 
   return (
     <section
-      className="relative w-full h-[52vh] md:h-[60vh] min-h-[270px] max-h-[540px] overflow-hidden flex items-center"
-      style={{ aspectRatio: `${ratio}` }}
+      className="relative w-full aspect-[21/9] min-h-[240px] max-h-[500px] overflow-hidden flex items-center"
+      // aspect-[21/9] force le ratio sur tous les écrans
     >
-      {/* Image de fond nette et compacte */}
+      {/* Image de fond nette et parfaitement cadrée */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
@@ -140,6 +170,7 @@ function HeroSection() {
         >
           <div className="w-full h-full relative">
             <Image
+              ref={imageRef}
               src={backdropUrl}
               alt={currentMovie.title}
               fill
@@ -147,14 +178,19 @@ function HeroSection() {
               quality={100}
               sizes="100vw"
               style={{
-                objectFit: 'cover',
+                objectFit: fitMode,
                 objectPosition: 'center',
-                filter: 'brightness(1.05) contrast(1.04)'
+                filter: imgLoaded
+                  ? 'brightness(1.05) contrast(1.04)'
+                  : 'brightness(0.8) grayscale(0.1)',
+                transition: 'filter 0.6s cubic-bezier(.4,0,.2,1)',
+                background: '#1a1a1a'
               }}
+              onLoad={handleImageLoad}
             />
             {/* Overlay subtile pour la lisibilité */}
             <div
-              className="absolute inset-0 z-10"
+              className="absolute inset-0 z-10 pointer-events-none"
               style={{
                 background: overlayGradient,
               }}
