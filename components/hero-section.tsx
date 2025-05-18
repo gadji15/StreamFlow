@@ -163,7 +163,7 @@ function HeroSection() {
               mt-4 md:mt-0
             "
           >
-            <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
+            <h1 className="text-xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
@@ -207,14 +207,14 @@ function HeroSection() {
                 </span>
               ))}
             </div>
-            <p className="text-xs md:text-sm text-white mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+            <p className="text-[11px] md:text-sm text-white mb-3 md:mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
               {currentMovie.description}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 md:gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
                   size="sm"
-                  className="gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
+                  className="gap-1.5 md:gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 md:px-5 md:py-2 rounded-lg shadow-md text-[11px] md:text-base transition-transform hover:scale-105"
                 >
                   <Play className="h-4 w-4" />
                   Regarder
@@ -224,7 +224,7 @@ function HeroSection() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-5 py-2 rounded-lg shadow-md text-xs md:text-base transition-transform hover:scale-105"
+                  className="gap-1.5 md:gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20 px-3 py-1.5 md:px-5 md:py-2 rounded-lg shadow-md text-[11px] md:text-base transition-transform hover:scale-105"
                 >
                   <Info className="h-4 w-4" />
                   Détails
