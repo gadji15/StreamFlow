@@ -33,6 +33,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     vote_count: initialData.vote_count || "",
     published: !!initialData.published,
     isvip: !!initialData.isvip,
+    featured: !!initialData.featured, // NOUVEAU CHAMP pour mise en avant Hero Section
     poster: initialData.poster || "",
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
@@ -96,6 +97,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         vote_count: initialData.vote_count || "",
         published: !!initialData.published,
         isvip: !!initialData.isvip,
+        featured: !!initialData.featured, // NOUVEAU CHAMP
         poster: initialData.poster || "",
         backdrop: initialData.backdrop || "",
         tmdb_id,
@@ -477,6 +479,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       vote_count,
       published,
       isvip,
+      featured: !!form.featured, // NOUVEAU CHAMP lié à la case Hero
       poster: form.poster || null,
       backdrop: form.backdrop || null,
       tmdb_id,
@@ -1087,7 +1090,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               </div>
             )}
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
               <input
                 type="checkbox"
@@ -1107,6 +1110,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 aria-label="VIP"
               />
               VIP
+            </label>
+            {/* Ajout de la case à cocher "Mettre en avant dans le Hero" */}
+            <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => handleChange("featured", e.target.checked)}
+                className="accent-indigo-500"
+                aria-label="Mettre dans le Hero"
+              />
+              Mettre en avant dans le Hero
             </label>
             <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
               <input
