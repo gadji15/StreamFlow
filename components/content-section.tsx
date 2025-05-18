@@ -156,9 +156,11 @@ export function ContentSection({
   };
 
   return (
-    <section className={`mb-8 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
+    <section
+      className={`mb-6 xs:mb-7 sm:mb-8 px-2 xs:px-3 sm:px-0 w-full ${className}`}
+    >
+      <div className="flex flex-col gap-2 xs:flex-row xs:gap-0 xs:justify-between xs:items-center mb-3 xs:mb-4">
+        <h2 className="text-lg xs:text-xl font-bold">{title}</h2>
         {!hideViewAllButton && (
           <Link
             href={
@@ -171,7 +173,7 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            className="text-xs xs:text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text mt-1 xs:mt-0"
             style={{ background: "transparent", padding: 0, border: "none" }}
             onMouseEnter={e => {
               e.currentTarget.classList.add('gradient-text');
@@ -183,7 +185,7 @@ export function ContentSection({
             <span className="voir-tout-gradient">
               Voir tout
             </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            <ChevronRight className="h-3 w-3 xs:h-4 xs:w-4 ml-0.5 xs:ml-1 voir-tout-gradient" />
           </Link>
         )}
       </div>
