@@ -168,8 +168,8 @@ export function ContentSection({
               : "/"
             )
           }
-          className="text-sm flex items-center px-4 py-1 rounded-full border border-white text-white font-normal hover:bg-white/10 transition-colors duration-150"
-          style={{ background: "transparent" }}
+          className="text-sm flex items-center underline underline-offset-4 text-blue-400 hover:text-fuchsia-400 transition-colors font-medium"
+          style={{ background: "transparent", padding: 0, border: "none" }}
         >
           Voir tout
           <ChevronRight className="h-4 w-4 ml-1" />
