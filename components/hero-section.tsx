@@ -109,12 +109,12 @@ function HeroSection() {
     '/placeholder-backdrop.jpg';
 
   // Ratio compact et dynamique
-  const ratio = 16 / 5; // Plus petit que 21/9
+  const ratio = 16 / 5; // Garder ratio cinéma, la hauteur prime ici
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
     <section
-      className="relative w-full h-[38vh] md:h-[48vh] min-h-[210px] max-h-[460px] overflow-hidden flex items-center"
+      className="relative w-full h-[52vh] md:h-[60vh] min-h-[270px] max-h-[540px] overflow-hidden flex items-center"
       style={{ aspectRatio: `${ratio}` }}
     >
       {/* Image de fond nette et compacte */}
@@ -161,7 +161,7 @@ function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
-            className="bg-black/60 backdrop-blur-md rounded-xl max-w-xl w-full md:w-[380px] px-4 py-4 md:py-7 shadow-xl mt-6 md:mt-0"
+            className="bg-black/60 backdrop-blur-md rounded-xl max-w-md w-full md:w-[340px] px-4 py-4 md:py-7 shadow-xl mt-6 md:mt-0"
           >
             <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-lg leading-snug">
               {currentMovie.title}
