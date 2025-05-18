@@ -6,178 +6,274 @@ import { ChevronLeft, ChevronRight, Play, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Données simulées pour le Hero (à remplacer par des données réelles)
-const featuredMovies = [
-  {
-    id: '1',
-    title: 'Inception',
-    description: 'Un voleur qui s\'infiltre dans les rêves des autres pour voler leurs secrets.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2010,
-    duration: 148,
-    rating: 8.8,
-    genres: ['Science-Fiction', 'Action', 'Thriller'],
-  },
-  {
-    id: '2',
-    title: 'The Dark Knight',
-    description: 'Batman s\'allie au procureur Harvey Dent pour démanteler le crime organisé à Gotham.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2008,
-    duration: 152,
-    rating: 9.0,
-    genres: ['Action', 'Crime', 'Drame'],
-  },
-  {
-    id: '3',
-    title: 'Interstellar',
-    description: 'Un groupe d\'explorateurs utilise un trou de ver pour atteindre des systèmes solaires distants.',
-    backdropUrl: '/placeholder-backdrop.jpg',
-    year: 2014,
-    duration: 169,
-    rating: 8.6,
-    genres: ['Aventure', 'Drame', 'Science-Fiction'],
-  },
-];
+// Données dynamiques pour le Hero : récupérées via Supabase
+import { getMoviesByHomepageCategory, Movie } from '@/lib/supabaseFilms';
 
 // Composant HeroSection
 function HeroSection() {
+  // TOUS les hooks doivent être ici en tout premier, AVANT tout return conditionnel :
+  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    getMoviesByHomepageCategory('featured', 5)
+      .then((data) => {
+        if (isMounted) {
+          setFeaturedMovies(data || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setFeaturedMovies([]);
+          setLoading(false);
+        }
+      });
+    return () => { isMounted = false };
+  }, []);
+
   // Auto rotation
   useEffect(() => {
-    if (!isAutoPlaying) return;
-    
+    if (!isAutoPlaying || featuredMovies.length < 2) return;
     const interval = setInterval(() => {
       setCurrentIndex((current) => (current + 1) % featuredMovies.length);
     }, 8000);
-    
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
-  
+  }, [isAutoPlaying, featuredMovies.length]);
+
   // Pause autoplay when user interacts
   const handleManualNavigation = (index: number) => {
     setCurrentIndex(index);
     setIsAutoPlaying(false);
-    
-    // Resume autoplay after a delay
     setTimeout(() => {
       setIsAutoPlaying(true);
     }, 10000);
   };
-  
+
   // Navigation précédent/suivant
   const goToPrevious = () => {
     const newIndex = (currentIndex - 1 + featuredMovies.length) % featuredMovies.length;
     handleManualNavigation(newIndex);
   };
-  
+
   const goToNext = () => {
     const newIndex = (currentIndex + 1) % featuredMovies.length;
     handleManualNavigation(newIndex);
   };
-  
+
   const currentMovie = featuredMovies[currentIndex];
-  
+
+  // Sélection dynamique d'une image 4K nette si disponible
+  let backdrop_4k =
+    (currentMovie as any)?.backdrop_4k ||
+    (currentMovie as any)?.backdrop4k ||
+    (currentMovie as any)?.backdrop_hd ||
+    (currentMovie as any)?.backdropUrl ||
+    (currentMovie as any)?.backdrop ||
+    (currentMovie as any)?.poster_hd ||
+    (currentMovie as any)?.poster ||
+    '/placeholder-backdrop.jpg';
+
+  // On prépare aussi des versions plus faibles pour le blur-up
+  let backdrop_blur =
+    (currentMovie as any)?.backdrop_blur ||
+    (currentMovie as any)?.poster_blur ||
+    '/placeholder-blur.jpg';
+
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-      {/* Background avec effet parallaxe */}
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={currentMovie.id}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${currentMovie.backdropUrl})` 
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+    <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden">
+      {/* Background avec <img> 4K et effet blur-up */}
+      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+        {/* Blur-up low-res background */}
+        <img
+          src={backdrop_blur}
+          alt=""
+          aria-hidden="true"
+          className={`w-full h-full object-cover absolute inset-0 blur-xl scale-105 transition-opacity duration-700 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`}
+          draggable={false}
         />
-      </AnimatePresence>
+        {/* Image 4K, net, progressive, animée */}
+        <motion.img
+          key={backdrop_4k + currentMovie.id}
+          src={backdrop_4k}
+          alt={currentMovie.title}
+          aria-hidden="true"
+          className="w-full h-full object-cover absolute inset-0 transition-opacity duration-1000"
+          style={{ opacity: imgLoaded ? 1 : 0 }}
+          srcSet={
+            [backdrop_4k]
+              .concat(
+                (currentMovie as any).backdrop_hd ? [(currentMovie as any).backdrop_hd + ' 1280w'] : [],
+                (currentMovie as any).poster_hd ? [(currentMovie as any).poster_hd + ' 640w'] : []
+              )
+              .join(', ')
+          }
+          sizes="100vw"
+          onLoad={() => setImgLoaded(true)}
+          onError={e => {
+            setImgLoaded(true);
+            // Affiche un placeholder si l'image échoue
+            (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg';
+          }}
+          draggable={false}
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1.15 }}
+          transition={{ duration: 7, ease: "easeInOut" }}
+        />
+        {/* Overlay dégradé pour contraste texte */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/90 pointer-events-none" />
+      </div>
       
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
+      <div className="relative h-full container mx-auto px-2 sm:px-4 flex flex-col justify-end pb-8 sm:pb-12 md:pb-16">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
             className="max-w-3xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
+            <motion.h1
+              className="text-[clamp(2.5rem,7vw,5rem)] md:text-6xl font-extrabold tracking-tight text-white drop-shadow-lg md:drop-shadow-2xl font-sans mb-3"
+              style={{
+                fontFamily: `'Inter', 'Montserrat', 'DM Sans', Arial, sans-serif`,
+                letterSpacing: '-0.04em'
+              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+            >
+              {currentMovie.title}
+            </motion.h1>
             
-            <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
-              <span>{currentMovie.year}</span>
+            <motion.div
+              className="flex flex-wrap items-center gap-3 text-base md:text-lg text-gray-200 mt-2 mb-4 font-medium drop-shadow-md"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.37 }}
+            >
+              {currentMovie.year && <span>{currentMovie.year}</span>}
+              {(duration || (currentMovie as any).duration) && (
+                <>
+                  <span className="h-1 w-1 rounded-full bg-gray-500"></span>
+                  <span>
+                    {Math.floor((duration || (currentMovie as any).duration)/60)}h {(duration || (currentMovie as any).duration)%60}min
+                  </span>
+                </>
+              )}
               <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-              <span>{Math.floor(currentMovie.duration / 60)}h {currentMovie.duration % 60}min</span>
-              <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-              <span className="flex items-center">
-                <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                {currentMovie.rating}
-              </span>
-            </div>
+              {(currentMovie as any).rating && (
+                <span className="flex items-center">
+                  <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  {(currentMovie as any).rating}
+                </span>
+              )}
+            </motion.div>
             
-            <div className="flex flex-wrap gap-2 mb-4">
-              {currentMovie.genres.map((genre, index) => (
+            <motion.div
+              className="flex flex-wrap gap-2 mb-4"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              {genres.map((genre, index) => (
                 <span 
                   key={index} 
-                  className="px-3 py-1 bg-gray-700/50 text-sm rounded-full"
+                  className="px-3 py-1 bg-gray-700/60 text-sm rounded-full shadow-sm backdrop-blur-sm border border-gray-500/20"
                 >
                   {genre}
                 </span>
               ))}
-            </div>
+            </motion.div>
             
-            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
+            <motion.p
+              className="text-base sm:text-lg md:text-2xl text-gray-200 mb-6 font-normal drop-shadow-md px-1 sm:px-0
+                line-clamp-3 sm:line-clamp-4 md:line-clamp-none"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.62 }}
+            >
+              {currentMovie.description}
+            </motion.p>
             
-            <div className="flex flex-wrap gap-4">
+            <motion.div
+              className="flex flex-wrap gap-4"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.75 }}
+            >
               <Link href={`/films/${currentMovie.id}`}>
-                <Button size="lg" className="gap-2">
+                <Button
+                  size="lg"
+                  className="gap-2 px-5 py-3 sm:px-7 sm:py-4 text-lg sm:text-xl font-bold rounded-xl transition-transform transition-shadow duration-200 hover:scale-105 hover:shadow-[0_0_16px_4px_rgba(255,255,255,0.10)] focus-visible:scale-105 focus-visible:ring-2 focus-visible:ring-fuchsia-400"
+                  aria-label={`Regarder ${currentMovie.title}`}
+                >
                   <Play className="h-5 w-5" />
                   Regarder
                 </Button>
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
         
         {/* Pagination */}
-        <div className="flex justify-center mt-8">
-          {featuredMovies.map((_, index) => (
-            <button
-              key={index}
-              className={`h-1 mx-1 rounded-full transition-all ${
-                index === currentIndex ? 'w-8 bg-white' : 'w-4 bg-gray-600'
-              }`}
-              onClick={() => handleManualNavigation(index)}
-              aria-label={`Voir le film ${index + 1}`}
-            />
-          ))}
-        </div>
+        {featuredMovies.length > 1 && (
+          <div className="flex justify-center mt-8 gap-1.5">
+            {featuredMovies.map((_, index) => (
+              <button
+                key={index}
+                className={`h-2 rounded-full outline-none border-none transition-all duration-300
+                  ${index === currentIndex
+                    ? 'w-8 bg-white shadow-md'
+                    : 'w-4 bg-gray-500/70 hover:bg-fuchsia-400/70'}
+                  focus-visible:ring-2 focus-visible:ring-fuchsia-400`}
+                style={{
+                  minWidth: index === currentIndex ? 32 : 16,
+                  minHeight: 8,
+                  outline: "none",
+                  boxShadow: index === currentIndex ? "0 0 8px 2px rgba(255,255,255,0.22)" : undefined,
+                  border: "none"
+                }}
+                onClick={() => handleManualNavigation(index)}
+                aria-label={`Afficher le contenu mis en avant numéro ${index + 1}`}
+                tabIndex={0}
+              />
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Boutons de navigation */}
-      <button
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
-        onClick={goToPrevious}
-        aria-label="Film précédent"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      
-      <button
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
-        onClick={goToNext}
-        aria-label="Film suivant"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
+      {featuredMovies.length > 1 && (
+        <>
+          <button
+            className="absolute left-1 sm:left-4 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/60 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 transition-all duration-150 hover:bg-black/80"
+            onClick={goToPrevious}
+            aria-label="Aller au film précédent"
+            tabIndex={0}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          
+          <button
+            className="absolute right-1 sm:right-4 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/60 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 transition-all duration-150 hover:bg-black/80"
+            onClick={goToNext}
+            aria-label="Aller au film suivant"
+            tabIndex={0}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </>
+      )}
     </section>
   );
 }

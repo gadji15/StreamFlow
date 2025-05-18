@@ -1,6 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+// Responsive hook pour choisir dynamiquement le nombre de contenus à afficher selon la largeur d'écran
+function useResponsiveCount() {
+  const [count, setCount] = useState(7);
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth < 400) setCount(1);
+      else if (window.innerWidth < 600) setCount(2);
+      else if (window.innerWidth < 900) setCount(3);
+      else if (window.innerWidth < 1080) setCount(4);
+      else if (window.innerWidth < 1400) setCount(5);
+      else if (window.innerWidth < 1800) setCount(6);
+      else setCount(7);
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return count;
+}
 import Link from 'next/link';
 import { ChevronRight, Film, Tv } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
@@ -28,9 +48,13 @@ export function ContentSection({
   children,
   type = 'custom',
   genreId = '',
-  count = 6,
+  count: countProp = 6,
   hideViewAllButton = false,
 }: ContentSectionProps) {
+  // Utilise un count responsive si le composant n'est pas en mode custom
+  const responsiveCount = useResponsiveCount();
+  const count = type === 'custom' ? countProp : responsiveCount;
+
   const [items, setItems] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
@@ -81,7 +105,15 @@ export function ContentSection({
       return (
         <div className="flex gap-4 overflow-x-auto pb-2">
           {[...Array(count)].map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-64 w-40 min-w-[160px]"></div>
+            <div
+              key={i}
+              className={`bg-gray-800 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'} animate-pulse`}
+              style={{
+                height: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
+                width: count <= 2 ? 190 : 130,
+                minWidth: count <= 2 ? 160 : 100,
+              }}
+            ></div>
           ))}
         </div>
       );
@@ -100,16 +132,24 @@ export function ContentSection({
     return (
       <CarouselRail
         items={items}
-        slidesToShow={7}
-        minSlideWidth={110}
-        maxSlideWidth={130}
+        slidesToShow={count}
+        // Tailles adaptatives : plus petit sur mobile, plus large sur desktop
+        minSlideWidth={
+          count <= 2 ? 160 : count === 3 ? 140 : count === 4 ? 130 : count === 5 ? 120 : 110
+        }
+        maxSlideWidth={
+          count <= 2 ? 260 : count === 3 ? 200 : count === 4 ? 170 : count === 5 ? 150 : 130
+        }
         ariaLabel={title}
         renderItem={(item, idx) => (
           <Link
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
             className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
-            style={{ minWidth: 100, maxWidth: 130 }}
+            style={{
+              minWidth: count <= 2 ? 160 : 100,
+              maxWidth: count <= 2 ? 260 : 130,
+            }}
           >
             <div className="relative aspect-[2/3]">
               <img
@@ -119,12 +159,15 @@ export function ContentSection({
                   '/placeholder-poster.png'
                 }
                 alt={item.title}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
                 onError={e => {
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
-                style={{ maxHeight: 180, minHeight: 130 }}
+                style={{
+                  maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
+                  minHeight: count <= 2 ? 180 : 130,
+                }}
               />
               {'isVIP' in item && item.isVIP && (
                 <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
@@ -140,7 +183,7 @@ export function ContentSection({
               </div>
             </div>
             <div className="p-2">
-              <h3 className="text-xs font-medium truncate">{item.title}</h3>
+              <h3 className={`truncate font-medium ${count <= 2 ? 'text-base' : count === 3 ? 'text-sm' : 'text-xs'}`}>{item.title}</h3>
               <p className="text-[11px] text-gray-400">
                 {isMovie
                   ? (item as Movie).year
