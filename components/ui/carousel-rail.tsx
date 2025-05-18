@@ -57,8 +57,22 @@ export function CarouselRail<T>({
   const [selectedPage, setSelectedPage] = useState(0);
   const totalPages = Math.ceil(items.length / slides);
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+  // Scroll par "page" entière (autant d'éléments visibles que slides)
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) {
+      const current = emblaApi.selectedScrollSnap();
+      const to = Math.max(current - slides, 0);
+      emblaApi.scrollTo(to);
+    }
+  }, [emblaApi, slides]);
+  const scrollNext = useCallback(() => {
+    if (emblaApi) {
+      const current = emblaApi.selectedScrollSnap();
+      const max = emblaApi.scrollSnapList().length - 1;
+      const to = Math.min(current + slides, max);
+      emblaApi.scrollTo(to);
+    }
+  }, [emblaApi, slides]);
 
   // Gère l'état des boutons de navigation et la pagination
   useEffect(() => {
