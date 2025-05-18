@@ -214,17 +214,17 @@ function HeroSection() {
                 filter: 'brightness(1.05) contrast(1.04)'
               }}
             />
-            {/* Overlay vignette cinéma sur les bords, plus intense */}
+            {/* Overlay vignette cinéma sur les bords, très intense, debug visible */}
             <div
-              className="absolute inset-0 z-20 pointer-events-none"
+              className="absolute inset-0 z-50 pointer-events-none"
               style={{
-                background: 
-                  'linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 8%, rgba(0,0,0,0.16) 28%, rgba(0,0,0,0.00) 38%, rgba(0,0,0,0.00) 62%, rgba(0,0,0,0.16) 72%, rgba(0,0,0,0.65) 92%, rgba(0,0,0,0.92) 100%)'
+                background:
+                  'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 14%, rgba(0,0,0,0.7) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.7) 78%, rgba(0,0,0,0.95) 86%, rgba(0,0,0,1) 100%)'
               }}
             />
             {/* Overlay subtile pour la lisibilité */}
             <div
-              className="absolute inset-0 z-30"
+              className="absolute inset-0 z-40"
               style={{
                 background: overlayGradient,
               }}
