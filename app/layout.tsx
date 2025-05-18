@@ -87,19 +87,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen flex flex-col bg-background text-foreground`}>
+      <body className={`${inter.className} min-h-screen flex flex-col bg-[#18181c] text-foreground`}>
         <AuthProvider>
           <ErrorBoundary>
             <GlobalErrorLogger />
             <ThemeProvider>
               {/* Header et Footer cachés dans l'admin */}
-              <LayoutVisibility><Header /></LayoutVisibility>
-              <main style={{
-                maxWidth: 1440,
-                margin: '0 auto',
-                padding: '2.5rem 2rem',
-                minHeight: 'calc(100vh - 160px)',
-              }}>
+              <LayoutVisibility>
+                <Header />
+              </LayoutVisibility>
+              <main
+                className="bg-[#18181c] max-w-[1440px] mx-auto px-1 xs:px-2 sm:px-4 md:px-8 py-4 sm:py-8 min-h-[calc(100vh-160px)]"
+              >
                 {children}
               </main>
               <LayoutVisibility><Footer /></LayoutVisibility>
