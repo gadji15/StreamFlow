@@ -1,20 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image'; // Utilisation de Next/Image pour l'optimisation
 
-// Données dynamiques pour le Hero : récupérées via Supabase
 import { getMoviesByHomepageCategory, Movie } from '@/lib/supabaseFilms';
 
-// Composant HeroSection
+// Helpers pour ratio et fallback
+function getImageRatio(width?: number, height?: number) {
+  if (width && height) return width / height;
+  return 21 / 9; // ratio large par défaut
+}
+
+// Composant HeroSection robuste et dynamique
 function HeroSection() {
   const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [imageMeta, setImageMeta] = useState<{width: number, height: number} | null>(null);
+
+  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,14 +78,14 @@ function HeroSection() {
   // Gestion du chargement ou de l'absence de contenu
   if (loading) {
     return (
-      <section className="relative h-[70vh] md:h-[80vh] overflow-hidden flex items-center justify-center">
+      <section className="relative aspect-[21/9] md:aspect-[21/8] overflow-hidden flex items-center justify-center">
         <div className="text-2xl text-gray-300 animate-pulse">Chargement du contenu en avant...</div>
       </section>
     );
   }
   if (!currentMovie) {
     return (
-      <section className="relative h-[60vh] md:h-[75vh] overflow-hidden flex items-center justify-center">
+      <section className="relative aspect-[21/9] md:aspect-[21/8] overflow-hidden flex items-center justify-center">
         <div className="text-2xl text-gray-400">Aucun contenu mis en avant pour le moment.</div>
       </section>
     );
@@ -93,31 +102,73 @@ function HeroSection() {
   const duration = (currentMovie as any).duration || null;
 
   // Utilisation d'une image backdrop si disponible, sinon poster, sinon placeholder
+  // On va essayer d'extraire width/height si disponibles pour le ratio dynamique
   const backdropUrl =
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
     (currentMovie as any).poster ||
     '/placeholder-backdrop.jpg';
 
+  const imageWidth = (currentMovie as any).backdropWidth || (currentMovie as any).posterWidth || 3840;
+  const imageHeight = (currentMovie as any).backdropHeight || (currentMovie as any).posterHeight || 1640;
+  const ratio = getImageRatio(imageWidth, imageHeight);
+
+  // Overlay dégradé
+  const overlayGradient = 'linear-gradient(to bottom, rgba(10,10,10,0.25) 40%, rgba(15,15,15,0.90) 95%)';
+
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-      {/* Background avec effet parallaxe */}
+    <section
+      className={`relative w-full 
+        aspect-[${ratio.toFixed(4)}]
+        md:aspect-[${ratio.toFixed(4)}]
+        overflow-hidden`}
+      style={{ minHeight: 340 }}
+    >
+      {/* Image d'arrière-plan ultra nette */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.9)), url(${backdropUrl})` 
-          }}
+          className="absolute inset-0 pointer-events-none z-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1 }}
-        />
+        >
+          <div className="w-full h-full relative">
+            <Image
+              src={backdropUrl}
+              alt={currentMovie.title}
+              fill
+              priority
+              quality={100}
+              // sizes : responsive
+              sizes="100vw"
+              style={{
+                objectFit: 'cover',
+                objectPosition: 'center',
+                filter: 'brightness(1.07) contrast(1.05)'
+              }}
+              onLoadingComplete={(img) => {
+                // Optionnel : on pourrait récupérer width/height dynamiquement ici
+                setImageMeta({
+                  width: img.naturalWidth,
+                  height: img.naturalHeight,
+                });
+              }}
+            />
+            {/* Overlay dégradé pour la lisibilité */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: overlayGradient
+              }}
+            />
+          </div>
+        </motion.div>
       </AnimatePresence>
-      
+
       {/* Contenu principal */}
-      <div className="relative h-full container mx-auto px-4 flex flex-col justify-end py-16">
+      <div className="relative h-full z-20 container mx-auto px-4 flex flex-col justify-end py-16">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -127,8 +178,7 @@ function HeroSection() {
             transition={{ duration: 0.5 }}
             className="max-w-3xl"
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">{currentMovie.title}</h1>
-            
+            <h1 className="text-4xl md:text-6xl font-bold mb-2 drop-shadow-lg">{currentMovie.title}</h1>
             <div className="flex flex-wrap items-center gap-3 text-sm md:text-base text-gray-300 mt-2 mb-4">
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
@@ -149,7 +199,6 @@ function HeroSection() {
                 </span>
               )}
             </div>
-            
             <div className="flex flex-wrap gap-2 mb-4">
               {genres.map((genre, index) => (
                 <span 
@@ -160,12 +209,10 @@ function HeroSection() {
                 </span>
               ))}
             </div>
-            
-            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none">{currentMovie.description}</p>
-            
+            <p className="text-lg text-gray-300 mb-6 line-clamp-3 md:line-clamp-none drop-shadow-md">{currentMovie.description}</p>
             <div className="flex flex-wrap gap-4">
               <Link href={`/films/${currentMovie.id}`}>
-                <Button size="lg" className="gap-2">
+                <Button size="lg" className="gap-2 shadow-xl">
                   <Play className="h-5 w-5" />
                   Regarder
                 </Button>
@@ -173,7 +220,6 @@ function HeroSection() {
             </div>
           </motion.div>
         </AnimatePresence>
-        
         {/* Pagination */}
         {featuredMovies.length > 1 && (
           <div className="flex justify-center mt-8">
@@ -190,20 +236,18 @@ function HeroSection() {
           </div>
         )}
       </div>
-      
       {/* Boutons de navigation */}
       {featuredMovies.length > 1 && (
         <>
           <button
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white z-30"
             onClick={goToPrevious}
             aria-label="Film précédent"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
-          
           <button
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 text-white z-30"
             onClick={goToNext}
             aria-label="Film suivant"
           >
@@ -215,5 +259,4 @@ function HeroSection() {
   );
 }
 
-// Assurez-vous d'exporter le composant en tant qu'export par défaut
 export default HeroSection;
