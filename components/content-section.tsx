@@ -84,10 +84,11 @@ export function ContentSection({
     }
 
     if (loading) {
-      // Affichage d'un nombre de skeletons élevé, toujours scrollable
+      // Sécurise count pour éviter RangeError
+      const safeCount = Number.isFinite(Number(count)) && Number(count) > 0 ? Number(count) : 12;
       return (
         <div className="flex gap-3 xs:gap-4 overflow-x-auto pb-2 px-2 xs:px-3 sm:px-0 snap-x snap-mandatory">
-          {[...Array(Math.max(count, 12))].map((_, i) => (
+          {[...Array(Math.max(safeCount, 12))].map((_, i) => (
             <div
               key={i}
               className="bg-gray-800 rounded-lg animate-pulse aspect-[2/3] snap-start"
