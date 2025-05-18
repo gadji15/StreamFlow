@@ -1014,7 +1014,7 @@ export default function AdminFilmsPage() {
       <FilmModal
         open={filmModalOpen}
         onClose={() => setFilmModalOpen(false)}
-        onSave={async (newFilm) => {
+        onSave={async (newFilm: Movie) => {
           setFilmModalLoading(true);
           try {
             // Ajoute le film dans la base et dans la liste locale
