@@ -1014,7 +1014,7 @@ export default function AdminFilmsPage() {
       <FilmModal
         open={filmModalOpen}
         onClose={() => setFilmModalOpen(false)}
-        onSave={async (newFilm) => {
+        onSave={async (newFilm: MovieDB) => {
           setFilmModalLoading(true);
           try {
             // Ajoute le film dans la base et dans la liste locale
@@ -1044,7 +1044,7 @@ export default function AdminFilmsPage() {
           setEditModalMovie(null);
         }}
         initialData={editModalMovie || {}}
-        onSave={async (updatedFilm) => {
+        onSave={async (updatedFilm: MovieDB) => {
           if (!editModalMovie) return;
           setFilmModalLoading(true);
           try {
