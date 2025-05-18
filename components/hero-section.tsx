@@ -92,6 +92,9 @@ function HeroSection() {
   // Gestion de la durée (minutes) si disponible
   const duration = (currentMovie as any).duration || null;
 
+  // State pour effet blur-up
+  const [imgLoaded, setImgLoaded] = useState(false);
+
   // Sélection dynamique d'une image 4K nette si disponible
   let backdrop_4k =
     (currentMovie as any).backdrop_4k ||
@@ -108,9 +111,6 @@ function HeroSection() {
     (currentMovie as any).backdrop_blur ||
     (currentMovie as any).poster_blur ||
     '/placeholder-blur.jpg';
-
-  // State pour effet blur-up
-  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <section className="relative h-[60vh] sm:h-[70vh] md:h-[80vh] xl:h-[90vh] overflow-hidden">
