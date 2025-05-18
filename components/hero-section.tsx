@@ -155,21 +155,20 @@ function HeroSection() {
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
-    <div className="w-full flex justify-center items-center" style={{ minHeight: 200, position: 'relative' }}>
-      {/* Effet background bleed/flou coloré cinéma */}
+    <div className="fixed left-0 top-0 w-screen h-[120vh] -z-10" aria-hidden="true">
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 w-full h-full"
+        className="w-full h-full"
         style={{
           backgroundImage: `url('${backdropUrl}')`,
           backgroundPosition: 'center',
           backgroundSize: 'cover',
-          filter: 'blur(60px) brightness(0.9) saturate(1.4)',
-          transform: 'scale(1.25)',
-          opacity: 0.56,
+          filter: 'blur(80px) brightness(0.8) saturate(1.3)',
+          opacity: 0.65,
           transition: 'background-image 0.5s'
         }}
       />
+    </div>
+    <div className="w-full flex justify-center items-center" style={{ minHeight: 200, position: 'relative' }}>
       <div
         className="flex justify-center items-center w-full relative z-10"
         style={{
