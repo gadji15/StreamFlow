@@ -154,7 +154,7 @@ function HeroSection() {
             />
             {/* Overlay subtile pour la lisibilité */}
             <div
-              className="absolute inset-0 z-10 backdrop-blur-[2px]"
+              className="absolute inset-0 z-10"
               style={{
                 background: overlayGradient,
               }}
@@ -172,7 +172,7 @@ function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
-            className="bg-black/60 backdrop-blur-md rounded-xl max-w-md w-full md:w-[340px] px-4 py-4 md:py-7 shadow-xl mt-6 md:mt-0"
+            className="max-w-md w-full md:w-[340px] px-4 py-4 md:py-7 mt-6 md:mt-0"
           >
             <h1 className="text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
