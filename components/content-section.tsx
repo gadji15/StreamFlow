@@ -142,8 +142,12 @@ export function ContentSection({
       <div
         className={`
           w-full
-          flex flex-row flex-nowrap gap-4
-          overflow-hidden
+          grid gap-3
+          grid-cols-2
+          sm:grid-cols-3
+          md:grid-cols-4
+          lg:grid-cols-5
+          xl:grid-cols-6
         `}
       >
         {items.slice(0, count).map((item, idx) => (
@@ -151,63 +155,23 @@ export function ContentSection({
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
             className={`
-              block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-              w-full
+              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
+              flex flex-col items-center
               rounded-md
               sm:rounded-lg md:rounded-xl
+              h-full
             `}
             style={{
-              minWidth: '90px',
-              maxWidth: '110px',
+              // On retire w-full pour laisser le grid gérer la largeur
+              minWidth: 0,
               minHeight: '130px',
-              maxHeight: '210px',
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center"
+              maxHeight: '210px'
             }}
           >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-                `}
-              style={{
-                minWidth: '90px',
-                maxWidth: '110px',
-                minHeight: '130px',
-                maxHeight: '170px',
-              }}
-            >
-              <img
-                src={
-                  (item as Movie | Series).poster ||
-                  (item as any).posterUrl ||
-                  '/placeholder-poster.png'
-                }
-                alt={item.title}
-                className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
-                `}
-                onError={e => {
-                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                }}
-                loading="lazy"
-                style={{
-                  minWidth: '90px',
-                  maxWidth: '110px',
-                  minHeight: '130px',
-                  maxHeight: '170px',
-                }}
-              />
-              {'isVIP' in item && item.isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
+            ...
+          </Link>
+        ))}
+      </div>
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 {isMovie ? (
