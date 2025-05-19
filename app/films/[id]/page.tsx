@@ -304,7 +304,7 @@ export default function FilmDetailPage() {
                   <div>
                     <p className="font-medium mb-1">Casting:</p>
                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-300 text-sm">
-                      {movie.cast.map((person, index) => (
+                      {movie.cast.map((person: any, index: number) => (
                         <div key={index} className="flex items-center">
                           {person.photoUrl ? (
                             <img 
