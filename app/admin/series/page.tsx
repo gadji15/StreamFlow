@@ -606,21 +606,21 @@ export default function AdminSeriesPage() {
       <EpisodeModal
         open={modal.open && modal.type === "edit-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={async (values: any) => {
           await supabase.from("episodes").update(values).eq("id", values.id);
           if (modal.parentId) {/* refresh episodes */}
         }}
-        initial={modal.payload}
+        initialData={modal.payload}
         seasonId={modal.parentId}
       />
       <EpisodeModal
         open={modal.open && modal.type === "add-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={async (values: any) => {
           // S'assurer que series_id est injecté dans l'épisode ajouté
           const series_id = modal.payload && modal.payload.seriesId
             ? modal.payload.seriesId
-            : (modal.seriesId || null);
+            : (modal.parentId || null);
 
           if (!series_id) {
             alert("Erreur : series_id manquant pour l'ajout d'un épisode !");
@@ -629,6 +629,7 @@ export default function AdminSeriesPage() {
           await supabase.from("episodes").insert([{ ...values, series_id }]);
           if (modal.parentId) {/* refresh episodes */}
         }}
+        initialData={undefined}
         seasonId={modal.parentId}
       />
     </div>
