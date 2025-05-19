@@ -620,7 +620,7 @@ export default function AdminSeriesPage() {
           // S'assurer que series_id est injecté dans l'épisode ajouté
           const series_id = modal.payload && modal.payload.seriesId
             ? modal.payload.seriesId
-            : (modal.seriesId || null);
+            : (modal.parentId || null);
 
           if (!series_id) {
             alert("Erreur : series_id manquant pour l'ajout d'un épisode !");
