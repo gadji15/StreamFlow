@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play } from "lucide-react";
+import { Play, AlertTriangle } from "lucide-react";
 
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
@@ -23,12 +23,14 @@ interface RelatedMoviesProps {
 export default function RelatedMovies({ tmdbId, excludeMovieId }: RelatedMoviesProps) {
   const [movies, setMovies] = useState<RelatedMovie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tmdbId || !TMDB_API_KEY) return;
 
     const fetchRelated = async () => {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch(
           `${TMDB_BASE_URL}/movie/${tmdbId}/similar?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`
@@ -40,7 +42,8 @@ export default function RelatedMovies({ tmdbId, excludeMovieId }: RelatedMoviesP
         } else {
           setMovies([]);
         }
-      } catch {
+      } catch (err) {
+        setError("Erreur lors du chargement des films similaires.");
         setMovies([]);
       } finally {
         setLoading(false);
@@ -50,7 +53,16 @@ export default function RelatedMovies({ tmdbId, excludeMovieId }: RelatedMoviesP
   }, [tmdbId, excludeMovieId]);
 
   if (loading) {
-    return <div className="text-gray-400 text-center">Chargement...</div>;
+    return <div className="text-gray-400 text-center animate-pulse">Chargement…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center text-red-500 py-8">
+        <AlertTriangle className="w-7 h-7 mb-2" />
+        <span>{error}</span>
+      </div>
+    );
   }
 
   if (!movies.length) {
@@ -58,12 +70,17 @@ export default function RelatedMovies({ tmdbId, excludeMovieId }: RelatedMoviesP
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+      aria-label="Films similaires"
+    >
       {movies.map(movie => (
         <Link
           key={movie.id}
           href={`/films/${movie.id}`}
-          className="group relative bg-gray-900 rounded-lg shadow-md overflow-hidden hover:scale-105 transition"
+          className="group relative bg-gray-900 rounded-lg shadow-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-500 hover:scale-105 transition"
+          tabIndex={0}
+          aria-label={`Voir la fiche de ${movie.title}`}
         >
           <Image
             src={
@@ -76,10 +93,11 @@ export default function RelatedMovies({ tmdbId, excludeMovieId }: RelatedMoviesP
             height={330}
             className="object-cover w-full h-64"
             loading="lazy"
+            draggable={false}
           />
           <div className="absolute inset-0 flex flex-col justify-end p-2 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
             <div className="flex items-center mb-1">
-              <Play className="h-4 w-4 text-purple-400 mr-1" />
+              <Play className="h-4 w-4 text-purple-400 mr-1" aria-hidden="true" />
               <span className="font-bold text-white text-xs truncate">{movie.title}</span>
             </div>
             {movie.release_date && (
