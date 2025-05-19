@@ -353,7 +353,7 @@ export default function AdminAddSeriesPage() {
           throw error;
         }
         const { data: urlData } = supabase.storage.from('series-videos').getPublicUrl(data.path);
-        finalVideoUrl = urlData?.publicUrl || null;
+        finalVideoUrl = urlData?.publicUrl || "";
       }
       // Vérification préalable pour éviter les doublons (titre + année de début)
       const { data: existingSeries, error: checkErr } = await supabase
