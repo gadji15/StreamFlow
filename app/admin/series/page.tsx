@@ -606,7 +606,7 @@ export default function AdminSeriesPage() {
       <EpisodeModal
         open={modal.open && modal.type === "edit-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: any) => {
           await supabase.from("episodes").update(values).eq("id", values.id);
           if (modal.parentId) {/* refresh episodes */}
         }}
@@ -616,7 +616,7 @@ export default function AdminSeriesPage() {
       <EpisodeModal
         open={modal.open && modal.type === "add-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: any) => {
           // S'assurer que series_id est injecté dans l'épisode ajouté
           const series_id = modal.payload && modal.payload.seriesId
             ? modal.payload.seriesId
