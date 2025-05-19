@@ -6,6 +6,18 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useSeasons } from "@/hooks/useSeasons";
 
+// Définition du type Season pour TypeScript
+type Season = {
+  id: string;
+  season_number: number;
+  title?: string | null;
+  description?: string | null;
+  poster?: string | null;
+  air_date?: string | null;
+  tmdb_id?: number | null;
+  episode_count?: number | null;
+};
+
 export default function AdminSeriesSeasonsPage() {
   const params = useParams();
   const seriesId = params?.id as string;
@@ -198,6 +210,8 @@ export default function AdminSeriesSeasonsPage() {
       air_date: season.air_date || "",
       tmdb_id: season.tmdb_id?.toString() || "",
       episode_count: season.episode_count?.toString() || "",
+      tmdb_series_id: "", // valeur par défaut ou issue de l'objet season si dispo
+      series_autocomplete: "", // valeur par défaut ou issue de l'objet season si dispo
     });
   };
 
