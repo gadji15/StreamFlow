@@ -52,8 +52,8 @@ export function CommentsSection({
       const { data, error, count } = await supabase
         .from("comments")
         .select("*", { count: "exact" })
-        .eq("content_id", contentId)
-        .eq("content_type", contentType)
+        // Use film_id or series_id for filtering, not content_id/content_type
+        .eq(contentType === "movie" ? "film_id" : contentType === "series" ? "series_id" : "film_id", contentId)
         .order("created_at", { ascending: false })
         .range(from, to);
       if (!error && data) {
@@ -63,12 +63,12 @@ export function CommentsSection({
             author: {
               name: c.author_name || "Utilisateur",
               avatar: c.author_avatar,
-              id: c.author_id,
+              id: c.user_id,
             },
             content: c.content,
             rating: c.rating,
             createdAt: c.created_at,
-            canDelete: user && (user.id === c.author_id || user.role === "admin"),
+            canDelete: user && (user.id === c.user_id || user.role === "admin"),
           }))
         );
         setHasMore(count !== null ? (to + 1) < count : data.length === PAGE_SIZE);
@@ -123,13 +123,13 @@ export function CommentsSection({
     try {
       const { error } = await supabase.from("comments").insert([
         {
-          content_id: contentId,
-          content_type: contentType,
-          author_id: user.id,
-          author_name: user.user_metadata?.name || user.email || "Utilisateur",
-          author_avatar: user.user_metadata?.avatar_url || null,
+          user_id: user.id,
+          // set the correct foreign key based on content type
+          film_id: contentType === "movie" ? contentId : null,
+          series_id: contentType === "series" ? contentId : null,
           content: newComment,
           rating: rating,
+          author_avatar: user.user_metadata?.avatar_url || null,
         },
       ]);
       if (error) {
