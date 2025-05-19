@@ -210,6 +210,8 @@ export default function AdminSeriesSeasonsPage() {
       air_date: season.air_date || "",
       tmdb_id: season.tmdb_id?.toString() || "",
       episode_count: season.episode_count?.toString() || "",
+      tmdb_series_id: "", // valeur par défaut ou issue de l'objet season si dispo
+      series_autocomplete: "", // valeur par défaut ou issue de l'objet season si dispo
     });
   };
 
