@@ -145,16 +145,16 @@ export function ContentSection({
           flex flex-row flex-nowrap gap-4
           overflow-hidden
         `}
-        style={{
-          // On limite le nombre d’éléments à afficher par ligne à 5 sur desktop, 2-3 sur mobile/tablette
-          // (plus si vous souhaitez, ajustez les breakpoints ci-dessous)
-        }}
       >
         {items.slice(0, count).map((item, idx) => (
           <Link
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full max-w-[160px] min-w-[100px]"
+            className="block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group w-full"
+            style={{
+              minWidth: count <= 2 ? 160 : 100,
+              maxWidth: count <= 2 ? 260 : 130,
+            }}
           >
             <div className="relative aspect-[2/3]">
               <img
@@ -164,14 +164,14 @@ export function ContentSection({
                   '/placeholder-poster.png'
                 }
                 alt={item.title}
-                className="w-full h-full object-cover transition-all duration-300 rounded-lg"
+                className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
                 onError={e => {
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
                 style={{
-                  maxHeight: 180,
-                  minHeight: 130,
+                  maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
+                  minHeight: count <= 2 ? 180 : 130,
                 }}
               />
               {'isVIP' in item && item.isVIP && (
@@ -188,7 +188,7 @@ export function ContentSection({
               </div>
             </div>
             <div className="p-2">
-              <h3 className="truncate font-medium text-xs sm:text-sm md:text-base">{item.title}</h3>
+              <h3 className={`truncate font-medium ${count <= 2 ? 'text-base' : count === 3 ? 'text-sm' : 'text-xs'}`}>{item.title}</h3>
               <p className="text-[11px] text-gray-400">
                 {isMovie
                   ? (item as Movie).year
