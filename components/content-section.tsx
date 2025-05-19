@@ -150,13 +150,20 @@ export function ContentSection({
           <Link
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className="block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group w-full"
+            className={`
+              block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group w-full
+              rounded-lg sm:rounded-lg md:rounded-xl
+              `}
             style={{
-              minWidth: count <= 2 ? 160 : 100,
-              maxWidth: count <= 2 ? 260 : 130,
+              minWidth: count <= 2 ? 160 : count === 3 ? 120 : 100,
+              maxWidth: count <= 2 ? 260 : count === 3 ? 160 : 130,
             }}
           >
-            <div className="relative aspect-[2/3]">
+            <div
+              className={`
+                relative aspect-[2/3]
+                `}
+            >
               <img
                 src={
                   (item as Movie | Series).poster ||
@@ -164,14 +171,41 @@ export function ContentSection({
                   '/placeholder-poster.png'
                 }
                 alt={item.title}
-                className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
+                className={`
+                  w-full h-full object-cover transition-all duration-300
+                  rounded-md
+                  sm:rounded-lg
+                  md:rounded-xl
+                `}
                 onError={e => {
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
                 style={{
-                  maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
-                  minHeight: count <= 2 ? 180 : 130,
+                  maxHeight:
+                    count <= 2
+                      ? 320
+                      : count === 3
+                      ? 220
+                      : 170, // desktop, tablet, mobile
+                  minHeight:
+                    count <= 2
+                      ? 180
+                      : count === 3
+                      ? 150
+                      : 130,
+                  minWidth:
+                    count <= 2
+                      ? 120
+                      : count === 3
+                      ? 100
+                      : 90,
+                  maxWidth:
+                    count <= 2
+                      ? 170
+                      : count === 3
+                      ? 130
+                      : 110,
                 }}
               />
               {'isVIP' in item && item.isVIP && (
@@ -188,7 +222,12 @@ export function ContentSection({
               </div>
             </div>
             <div className="p-2">
-              <h3 className={`truncate font-medium ${count <= 2 ? 'text-base' : count === 3 ? 'text-sm' : 'text-xs'}`}>{item.title}</h3>
+              <h3 className={`
+                truncate font-medium
+                text-xs
+                sm:text-sm
+                md:text-base
+              `}>{item.title}</h3>
               <p className="text-[11px] text-gray-400">
                 {isMovie
                   ? (item as Movie).year
