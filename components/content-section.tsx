@@ -240,13 +240,19 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            className={`
+              text-sm flex items-center underline underline-offset-4 font-medium
+              bg-gradient-to-r from-pink-400 via-fuchsia-500 to-indigo-500
+              text-transparent bg-clip-text
+              transition-all duration-200
+              hover:bg-none hover:text-violet-500
+            `}
             style={{ background: "transparent", padding: 0, border: "none" }}
           >
-            <span className="voir-tout-gradient">
+            <span>
               Voir tout
             </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            <ChevronRight className="h-4 w-4 ml-1" />
           </Link>
         )}
       </div>
