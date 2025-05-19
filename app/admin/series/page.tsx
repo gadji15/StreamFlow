@@ -629,6 +629,7 @@ export default function AdminSeriesPage() {
           await supabase.from("episodes").insert([{ ...values, series_id }]);
           if (modal.parentId) {/* refresh episodes */}
         }}
+        initialData={undefined}
         seasonId={modal.parentId}
       />
     </div>
