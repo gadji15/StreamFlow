@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 export default function AdminSeriesPage() {
   const router = useRouter();
   // --- State principal
-  const [series, setSeries] = useState([]);
+  const [series, setSeries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<string[]>([]);
   const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
