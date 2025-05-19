@@ -411,7 +411,7 @@ export default function AdminSeriesDetailPage() {
         open={seasonModal.open}
         onClose={() => setSeasonModal({ open: false })}
         onSave={handleSaveSeason}
-        initial={seasonModal.initial}
+        initialData={seasonModal.initial}
         seriesId={seriesId}
         tmdbSeriesId={serie.tmdb_id}
       />
