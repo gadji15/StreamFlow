@@ -162,7 +162,7 @@ export default function MovieDetailPage() {
             title={movieData.title}
             onClose={() => setIsMoviePlaying(false)}
             autoPlay={true}
-            nextEpisode={null}
+            nextEpisode={undefined}
           />
         </div>
       )}
