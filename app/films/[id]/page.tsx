@@ -10,8 +10,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { CommentsSection } from '@/components/comments-section';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import dynamic from "next/dynamic";
+import RelatedMovies from '@/components/RelatedMovies';
+import Image from 'next/image';
 
-// TMDB API config
+const VideoPlayer = dynamic(() => import('@/components/VideoPlayer'), { ssr: false });
+
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -94,7 +98,7 @@ export default function FilmDetailPage() {
             }]);
           }
 
-          checkIfFavorite(id);
+          syncFavoriteServer(id);
 
           // Fetch cast from TMDB
           if (normalizedMovie.tmdb_id) {
@@ -118,7 +122,6 @@ export default function FilmDetailPage() {
   // Fetch cast from TMDB
   const fetchCastFromTMDB = async (tmdbId: number) => {
     if (!TMDB_API_KEY) return;
-
     setIsFetchingCast(true);
     try {
       const res = await fetch(
@@ -142,14 +145,19 @@ export default function FilmDetailPage() {
     }
   };
 
-  const checkIfFavorite = async (movieId: string) => {
-    if (typeof window !== "undefined" && user) {
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      setIsFavorite(favorites.includes(movieId));
+  // FAVORITES: server-side robust
+  const syncFavoriteServer = async (movieId: string) => {
+    if (!user) return setIsFavorite(false);
+    try {
+      const res = await fetch(`/api/favorites?userId=${user.id}`);
+      const json = await res.json();
+      setIsFavorite(Array.isArray(json.favorites) && json.favorites.some((fav: any) => String(fav.movie_id) === movieId));
+    } catch {
+      setIsFavorite(false);
     }
   };
 
-  const toggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     if (!user) {
       toast({
         title: "Connexion requise",
@@ -159,43 +167,55 @@ export default function FilmDetailPage() {
       return;
     }
     if (!movie) return;
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    if (isFavorite) {
-      const updatedFavorites = favorites.filter((fav: string) => fav !== id);
-      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-      setIsFavorite(false);
-      toast({
-        title: "Retiré des favoris",
-        description: `"${movie.title}" a été retiré de vos favoris.`
-      });
-      if (user) {
-        supabase.from('activities').insert([{
-          user_id: user.id,
-          action: "favorite_remove",
-          content_type: "movie",
-          content_id: id,
-          details: { title: movie.title },
-          timestamp: new Date().toISOString()
-        }]);
+    try {
+      if (isFavorite) {
+        await fetch('/api/favorites', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, movieId: id }),
+        });
+        setIsFavorite(false);
+        toast({
+          title: "Retiré des favoris",
+          description: `"${movie.title}" a été retiré de vos favoris.`
+        });
+      } else {
+        await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, movieId: id }),
+        });
+        setIsFavorite(true);
+        toast({
+          title: "Ajouté aux favoris",
+          description: `"${movie.title}" a été ajouté à vos favoris.`
+        });
       }
-    } else {
-      favorites.push(id);
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      setIsFavorite(true);
+    } catch {
       toast({
-        title: "Ajouté aux favoris",
-        description: `"${movie.title}" a été ajouté à vos favoris.`
+        title: "Erreur",
+        description: "Impossible de modifier vos favoris.",
+        variant: "destructive"
       });
-      if (user) {
-        supabase.from('activities').insert([{
-          user_id: user.id,
-          action: "favorite_add",
-          content_type: "movie",
-          content_id: id,
-          details: { title: movie.title },
-          timestamp: new Date().toISOString()
-        }]);
+    }
+  };
+
+  // Partage avancé (Web Share API)
+  const handleShare = () => {
+    try {
+      const url = typeof window !== "undefined" ? window.location.href : "";
+      if (navigator.share) {
+        navigator.share({
+          title: movie?.title,
+          text: "Découvrez ce film sur la plateforme !",
+          url,
+        });
+      } else {
+        navigator.clipboard.writeText(url);
+        toast({ title: "Lien copié !", description: "Lien du film copié dans le presse-papiers." });
       }
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de partager le lien.", variant: "destructive" });
     }
   };
 
@@ -219,27 +239,32 @@ export default function FilmDetailPage() {
       {/* Backdrop */}
       {movie.backdropUrl && (
         <div className="relative w-full h-[40vh] md:h-[55vh] z-0">
-          <img
+          <Image
             src={movie.backdropUrl}
             alt={`Backdrop de ${movie.title}`}
-            className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
-            onError={(e) => { e.currentTarget.src = '/placeholder-backdrop.jpg'; }}
+            fill
+            className="object-cover object-top pointer-events-none select-none"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
             draggable={false}
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent backdrop-blur-sm"></div>
         </div>
       )}
 
       <div className="container max-w-6xl mx-auto px-4 relative z-10 -mt-24 flex flex-col md:flex-row gap-8">
-        {/* Poster - floating above the backdrop */}
+        {/* Poster */}
         <div className="flex flex-col items-center md:items-start flex-shrink-0 w-full md:w-[240px] lg:w-[280px]">
           <div className="relative -mt-32 md:-mt-36">
-            <img
+            <Image
               src={movie.posterUrl || '/placeholder-poster.png'}
               alt={`Affiche de ${movie.title}`}
+              width={240}
+              height={360}
               className="w-48 md:w-60 aspect-[2/3] rounded-2xl shadow-2xl border-[3px] border-white/10 bg-gray-900 object-cover"
-              onError={(e) => { e.currentTarget.src = '/placeholder-poster.png'; }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder-poster.png'; }}
               draggable={false}
+              priority
             />
           </div>
           {/* VIP badge */}
@@ -293,13 +318,19 @@ export default function FilmDetailPage() {
               size="lg"
               disabled={!canWatch || !movie.videoUrl}
               className={!canWatch || !movie.videoUrl ? "opacity-50 cursor-not-allowed" : ""}
-              onClick={() => {
-                if (canWatch && movie.videoUrl) {
-                  window.open(movie.videoUrl, '_blank', 'noopener,noreferrer');
-                }
-              }}
+              onClick={() => {}}
             >
               <Play className="mr-2 h-5 w-5" /> Regarder
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="hidden md:inline-flex"
+              onClick={() => {
+                document.getElementById("player-section")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Voir le player
             </Button>
 
             {movie.trailerUrl && (
@@ -319,7 +350,7 @@ export default function FilmDetailPage() {
             <Button
               variant="ghost"
               size="lg"
-              onClick={toggleFavorite}
+              onClick={handleToggleFavorite}
             >
               <Heart
                 className={`mr-2 h-5 w-5 ${isFavorite ? 'fill-current text-red-500' : ''}`}
@@ -327,7 +358,7 @@ export default function FilmDetailPage() {
               {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
             </Button>
 
-            <Button variant="ghost" size="lg">
+            <Button variant="ghost" size="lg" onClick={handleShare}>
               <Share className="mr-2 h-5 w-5" /> Partager
             </Button>
           </div>
@@ -351,11 +382,13 @@ export default function FilmDetailPage() {
               ) : cast.length > 0 ? (
                 cast.map((person) => (
                   <div key={person.id} className="flex flex-col items-center bg-gray-800/70 rounded-xl p-3 shadow hover:scale-105 transition">
-                    <img
+                    <Image
                       src={person.profile_path
                         ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
                         : '/placeholder-cast.png'}
                       alt={person.name}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 rounded-full object-cover mb-2 border-2 border-gray-700"
                     />
                     <span className="font-semibold text-white text-xs text-center">{person.name}</span>
@@ -368,6 +401,18 @@ export default function FilmDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Video Section */}
+      <div id="player-section" className="container max-w-4xl mx-auto px-4 mt-10">
+        <h2 className="text-xl font-bold text-white mb-4">Lecteur vidéo</h2>
+        <VideoPlayer
+          src={movie.videoUrl}
+          poster={movie.posterUrl}
+          title={movie.title}
+          canWatch={canWatch}
+          fallbackMessage={!canWatch ? "Vous n'avez pas accès à ce contenu (VIP requis)." : undefined}
+        />
       </div>
 
       {/* Tabs section */}
@@ -405,12 +450,13 @@ export default function FilmDetailPage() {
 
           <TabsContent value="related" className="pt-6">
             <h2 className="text-xl font-semibold mb-4 text-white">Films similaires</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {/* TODO: Afficher les films similaires ici */}
+            {movie.tmdb_id ? (
+              <RelatedMovies tmdbId={movie.tmdb_id} excludeMovieId={id} />
+            ) : (
               <div className="col-span-full text-center p-8 text-gray-400">
-                Pas de films similaires disponibles pour le moment.
+                Films similaires non disponibles.
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="comments" className="pt-6">
