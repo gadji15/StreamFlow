@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import LoadingScreen from "@/components/loading-screen";
