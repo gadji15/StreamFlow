@@ -109,7 +109,8 @@ const similarMovies = [
 ];
 
 export default function MovieDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const [isMoviePlaying, setIsMoviePlaying] = useState(false);
