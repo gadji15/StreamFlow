@@ -214,12 +214,16 @@ export default function MovieDetailPage() {
                 <button
                   onClick={() => setIsTrailerPlaying(true)}
                   className="btn-secondary"
+                  aria-label="Voir la bande annonce"
+                  title="Voir la bande annonce"
                 >
                   <Film className="w-5 h-5" />
                 </button>
                 <button
                   onClick={toggleFavorite}
                   className="btn-secondary"
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                 >
                   {isFavorite ? (
                     <HeartOff className="w-5 h-5" />
@@ -230,6 +234,8 @@ export default function MovieDetailPage() {
                 <button
                   onClick={shareMovie}
                   className="btn-secondary"
+                  aria-label="Partager"
+                  title="Partager"
                 >
                   <Share2 className="w-5 h-5" />
                 </button>
@@ -469,9 +475,33 @@ export default function MovieDetailPage() {
             <ContentSection
               title="Films similaires"
               subtitle="Vous aimerez aussi ces films"
-              items={similarMovies}
-              layout="large"
-            />
+              // layout="large" // Remove or adjust if not a valid prop
+            >
+              {/* Pass similarMovies as children */}
+              {similarMovies.map((movie) => (
+                <div key={movie.id} className="w-40 flex-shrink-0">
+                  <Link href={`/films/${movie.id}`}>
+                    <div className="aspect-[2/3] relative rounded-lg overflow-hidden shadow-lg mb-2">
+                      <Image
+                        src={movie.posterImage}
+                        alt={movie.title}
+                        fill
+                        className="object-cover"
+                      />
+                      {movie.isTop && (
+                        <span className="absolute top-2 left-2 bg-yellow-400 text-black px-2 py-0.5 rounded text-xs font-bold">TOP</span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-medium truncate">{movie.title}</h3>
+                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <span>{movie.year}</span>
+                      <span>•</span>
+                      <span>{movie.rating}★</span>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </ContentSection>
           </div>
         )}
         

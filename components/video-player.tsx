@@ -215,10 +215,12 @@ export function VideoPlayer({
           onClick={e => { e.stopPropagation(); onClose(); }}
           className="absolute top-4 right-4 z-20 bg-black/70 rounded-full p-2 hover:bg-black/90 transition"
           aria-label="Fermer le lecteur"
+          title="Fermer le lecteur"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M5 5L15 15M15 5L5 15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
           </svg>
+          <span className="sr-only">Fermer</span>
         </button>
       )}
       <video
@@ -283,6 +285,8 @@ export function VideoPlayer({
             <button 
               onClick={togglePlay}
               className="text-white hover:text-gray-300 transition-colors"
+              aria-label={isPlaying ? "Pause" : "Lecture"}
+              title={isPlaying ? "Pause" : "Lecture"}
             >
               {isPlaying ? <Pause size={20} /> : <Play size={20} />}
             </button>
@@ -290,6 +294,8 @@ export function VideoPlayer({
             <button 
               onClick={skipBackward}
               className="text-white hover:text-gray-300 transition-colors"
+              aria-label="Reculer de 10 secondes"
+              title="Reculer de 10 secondes"
             >
               <SkipBack size={20} />
             </button>
@@ -297,6 +303,8 @@ export function VideoPlayer({
             <button 
               onClick={skipForward}
               className="text-white hover:text-gray-300 transition-colors"
+              aria-label="Avancer de 10 secondes"
+              title="Avancer de 10 secondes"
             >
               <SkipForward size={20} />
             </button>
@@ -305,6 +313,8 @@ export function VideoPlayer({
               <button 
                 onClick={toggleMute}
                 className="text-white hover:text-gray-300 transition-colors"
+                aria-label={isMuted ? "Activer le son" : "Couper le son"}
+                title={isMuted ? "Activer le son" : "Couper le son"}
               >
                 {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
               </button>
@@ -324,6 +334,8 @@ export function VideoPlayer({
             <button 
               onClick={toggleFullscreen}
               className="text-white hover:text-gray-300 transition-colors"
+              aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+              title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
             >
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </button>
