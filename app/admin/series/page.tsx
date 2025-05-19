@@ -564,7 +564,7 @@ export default function AdminSeriesPage() {
             }
           }
         }}
-        initial={modal.payload}
+        initialData={modal.payload}
         seriesId={modal.parentId}
       />
       <SeasonModal
