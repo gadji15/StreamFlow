@@ -51,15 +51,6 @@ export default function HomePage() {
     threshold: 0.1
   });
 
-  // Hook pour détecter le mobile côté client (largeur < 640px)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   return (
     <main className="flex flex-col gap-0 w-full pt-6 md:pt-8">
       {/* Section Hero responsive */}
