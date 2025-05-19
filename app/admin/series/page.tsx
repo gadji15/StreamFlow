@@ -549,7 +549,8 @@ export default function AdminSeriesPage() {
             episode_count: values.episode_count ? Number(values.episode_count) : null,
           };
           Object.keys(updateObj).forEach(k => {
-            if (updateObj[k] === "" || updateObj[k] === undefined) updateObj[k] = null;
+            const obj = updateObj as Record<string, any>;
+            if (obj[k] === "" || obj[k] === undefined) obj[k] = null;
           });
           console.log('Payload envoyé à Supabase (update):', updateObj);
           const { error } = await supabase.from("seasons").update(updateObj).eq("id", values.id);
@@ -585,7 +586,8 @@ export default function AdminSeriesPage() {
             episode_count: values.episode_count ? Number(values.episode_count) : null,
           };
           Object.keys(insertObj).forEach(k => {
-            if (insertObj[k] === "" || insertObj[k] === undefined) insertObj[k] = null;
+            const obj = insertObj as Record<string, any>;
+            if (obj[k] === "" || obj[k] === undefined) obj[k] = null;
           });
           console.log('Payload envoyé à Supabase (insert):', insertObj);
           const { error } = await supabase.from("seasons").insert([insertObj]);
