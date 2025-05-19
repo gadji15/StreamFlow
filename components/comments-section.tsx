@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface Comment {
   id: string;
@@ -33,39 +35,96 @@ export function CommentsSection({
   const [hoveredStar, setHoveredStar] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  
+  const [loading, setLoading] = useState(true);
+
+  const { user } = useCurrentUser();
+
+  // Fetch comments from Supabase
+  useEffect(() => {
+    async function fetchComments() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("content_id", contentId)
+        .eq("content_type", contentType)
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setComments(
+          data.map((c: any) => ({
+            id: c.id,
+            author: {
+              name: c.author_name || "Utilisateur",
+              avatar: c.author_avatar,
+            },
+            content: c.content,
+            rating: c.rating,
+            createdAt: c.created_at,
+          }))
+        );
+      } else {
+        setComments([]);
+      }
+      setLoading(false);
+    }
+    if (contentId && contentType) fetchComments();
+  }, [contentId, contentType]);
+
   const handleSubmitComment = async () => {
+    if (!user) {
+      setErrorMessage("Vous devez être connecté pour commenter.");
+      return;
+    }
     if (!newComment.trim()) {
       setErrorMessage("Veuillez entrer un commentaire");
       return;
     }
-    
     if (rating === 0) {
       setErrorMessage("Veuillez attribuer une note");
       return;
     }
-    
     setErrorMessage("");
     setIsSubmitting(true);
-    
+
     try {
-      // Simuler l'ajout d'un commentaire
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const newCommentItem: Comment = {
-        id: `comment-${Date.now()}`,
-        author: {
-          name: "Utilisateur",
-          avatar: undefined
+      const { error } = await supabase.from("comments").insert([
+        {
+          content_id: contentId,
+          content_type: contentType,
+          author_id: user.id,
+          author_name: user.user_metadata?.name || user.email || "Utilisateur",
+          author_avatar: user.user_metadata?.avatar_url || null,
+          content: newComment,
+          rating: rating,
         },
-        content: newComment,
-        rating,
-        createdAt: new Date().toISOString()
-      };
-      
-      setComments(prev => [newCommentItem, ...prev]);
-      setNewComment("");
-      setRating(0);
+      ]);
+      if (error) {
+        setErrorMessage("Erreur lors de l'ajout du commentaire");
+      } else {
+        // Refresh comments
+        const { data } = await supabase
+          .from("comments")
+          .select("*")
+          .eq("content_id", contentId)
+          .eq("content_type", contentType)
+          .order("created_at", { ascending: false });
+        if (data) {
+          setComments(
+            data.map((c: any) => ({
+              id: c.id,
+              author: {
+                name: c.author_name || "Utilisateur",
+                avatar: c.author_avatar,
+              },
+              content: c.content,
+              rating: c.rating,
+              createdAt: c.created_at,
+            }))
+          );
+        }
+        setNewComment("");
+        setRating(0);
+      }
     } catch (error) {
       setErrorMessage("Une erreur est survenue lors de l'ajout du commentaire");
     } finally {
@@ -112,9 +171,14 @@ export function CommentsSection({
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder={`Partagez votre avis sur ce ${contentType === "movie" ? "film" : "série"}...`}
+          placeholder={
+            !user
+              ? "Connectez-vous pour commenter..."
+              : `Partagez votre avis sur ce ${contentType === "movie" ? "film" : "série"}...`
+          }
           className="bg-gray-700 border border-gray-600 rounded-lg p-3 mb-4"
           rows={4}
+          disabled={!user}
         />
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -128,16 +192,16 @@ export function CommentsSection({
                       ? "text-yellow-400 fill-current"
                       : "text-gray-400"
                   }`}
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoveredStar(star)}
-                  onMouseLeave={() => setHoveredStar(0)}
+                  onClick={() => user && setRating(star)}
+                  onMouseEnter={() => user && setHoveredStar(star)}
+                  onMouseLeave={() => user && setHoveredStar(0)}
                 />
               ))}
             </div>
           </div>
           <Button 
             onClick={handleSubmitComment} 
-            disabled={isSubmitting}
+            disabled={isSubmitting || !user}
           >
             {isSubmitting ? "Envoi en cours..." : "Publier"}
           </Button>
@@ -148,13 +212,15 @@ export function CommentsSection({
         )}
       </div>
       
-      {comments.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-gray-400">Chargement…</div>
+      ) : comments.length > 0 ? (
         <div className="space-y-6">
           {comments.map((comment) => (
             <div key={comment.id} className="bg-gray-800 p-6 rounded-lg">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center overflow-hidden">
                     {comment.author.avatar ? (
                       <img 
                         src={comment.author.avatar} 
