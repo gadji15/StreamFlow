@@ -11,8 +11,9 @@ import { useToast } from "@/components/ui/use-toast";
  * - onSave (fn(payload)) : callback sauvegarde
  * - initialData (object) : données d'édition
  * - existingSeries (array) : liste des séries existantes [{title, tmdb_id, id}]
+ * - tmdbSearch (function, optional): fonction asynchrone pour rechercher une série TMDB par query
  */
-export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [] }) {
+export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [], tmdbSearch }) {
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
