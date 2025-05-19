@@ -32,6 +32,7 @@ type SectionType = 'popular_movies' | 'popular_series' | 'movies_by_genre' | 'se
 
 interface ContentSectionProps {
   title: string;
+  subtitle?: string;
   viewAllLink?: string;
   className?: string;
   children?: React.ReactNode;
@@ -43,6 +44,7 @@ interface ContentSectionProps {
 
 export function ContentSection({
   title,
+  subtitle,
   viewAllLink,
   className = '',
   children,
@@ -208,7 +210,12 @@ export function ContentSection({
   return (
     <section className={`mb-8 ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
+        <div>
+          <h2 className="text-xl font-bold">{title}</h2>
+          {subtitle && (
+            <p className="text-gray-400 text-sm mt-1">{subtitle}</p>
+          )}
+        </div>
         {!hideViewAllButton && (
           <Link
             href={
