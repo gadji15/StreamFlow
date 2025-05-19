@@ -497,7 +497,7 @@ export default function AdminSeriesPage() {
               poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
               start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : "",
               end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : "",
-              genres: data.genres ? data.genres.map((g) => g.name) : [],
+              genres: data.genres ? data.genres.map((g: { name: string }) => g.name) : [],
               tmdb_id: data.id,
             };
           } else {
@@ -525,7 +525,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: any) => {
           // Correction : typage strict et nettoyage pour l'édition
           const season_number = values.season_number ? Number(values.season_number) : null;
           const series_id = modal.parentId;
