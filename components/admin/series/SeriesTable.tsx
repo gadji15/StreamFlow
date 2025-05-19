@@ -1,7 +1,23 @@
 import React from "react";
 import SeriesRow from "./SeriesRow";
 
-// Props: series, selectedIds, onSelect, onSelectAll, allSelected, onAction, page, totalPages, setPage, loading, seasonCounts, genres, deletingId, bulkDeleting
+interface SeriesTableProps {
+  series: any[];
+  selectedIds: string[];
+  onSelect: (id: string) => void;
+  onSelectAll: () => void;
+  allSelected: boolean;
+  onAction: (action: string, serie: any) => void;
+  page: number;
+  totalPages: number;
+  setPage: (p: number) => void;
+  loading: boolean;
+  seasonCounts?: { [seriesId: string]: number };
+  genres: string[];
+  deletingId?: string | null;
+  bulkDeleting?: boolean;
+}
+
 export default function SeriesTable({
   series,
   selectedIds,
@@ -17,7 +33,7 @@ export default function SeriesTable({
   genres = [],
   deletingId,
   bulkDeleting,
-}) {
+}: SeriesTableProps) {
   // Mobile "card" view for <sm screens
   return (
     <>
