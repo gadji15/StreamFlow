@@ -12,6 +12,17 @@ function isValidImageUrl(url: string): boolean {
   }
 }
 
+/**
+ * Modal de création/édition d'un épisode.
+ * @param open - Ouverture de la modale
+ * @param onClose - Callback fermeture
+ * @param onSave - Callback sauvegarde (submit)
+ * @param initialData - Données initiales de l'épisode
+ * @param seriesTitle - Titre de la série (optionnel)
+ * @param tmdbSeriesId - ID TMDB de la série (optionnel)
+ * @param parentSeasonNumber - Numéro de la saison parente (optionnel)
+ * @param seasonId - ID de la saison parente (optionnel)
+ */
 export default function EpisodeModal({
   open,
   onClose,
@@ -20,6 +31,7 @@ export default function EpisodeModal({
   seriesTitle = "",
   tmdbSeriesId = "",
   parentSeasonNumber = "",
+  seasonId,
 }) {
   // Protection : si initialData est null ou undefined, on force un objet vide
   initialData = initialData || {};

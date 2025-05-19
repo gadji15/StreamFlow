@@ -451,8 +451,8 @@ export default function AdminSeriesDetailPage() {
         open={episodeModal.open}
         onClose={() => setEpisodeModal({ open: false })}
         seasonId={episodeModal.seasonId}
-        initial={episodeModal.initial}
-        onSubmit={values => {
+        initialData={episodeModal.initial}
+        onSave={values => {
           if (episodeModal.seasonId)
             return handleSaveEpisode(values, episodeModal.seasonId);
         }}
