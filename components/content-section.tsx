@@ -142,8 +142,9 @@ export function ContentSection({
       <div
         className={`
           w-full
-          grid gap-3
-          [grid-template-columns:repeat(auto-fit,minmax(90px,1fr))]
+          [display:grid]
+          gap-3
+          [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
         `}
       >
         {items.slice(0, count).map((item, idx) => (
@@ -183,13 +184,6 @@ export function ContentSection({
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
                 loading="lazy"
-                style={{
-                  minWidth: '90px',
-                  maxWidth: '170px',
-                  minHeight: '130px',
-                  maxHeight: '210px',
-                  margin: "0 auto"
-                }}
               />
               {'isVIP' in item && item.isVIP && (
                 <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
