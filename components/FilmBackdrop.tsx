@@ -19,7 +19,9 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
         }`}
         style={{
           objectPosition: "center 35%",
-          filter: "brightness(0.94) contrast(1.13) saturate(1.13)",
+          filter:
+            "brightness(1.06) contrast(1.26) saturate(1.18) drop-shadow(0 1px 3px rgba(0,0,0,0.12))",
+          imageRendering: "auto", // Prevents unwanted pixelation
         }}
         loading="eager"
         aria-hidden="true"
@@ -29,15 +31,25 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           setLoaded(true);
         }}
       />
+      {/* Subtle noise overlay for filmic look */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "url('data:image/svg+xml;utf8,<svg width=\"150\" height=\"150\" xmlns=\"http://www.w3.org/2000/svg\"><filter id=\"noiseFilter\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.6\" numOctaves=\"3\" stitchTiles=\"stitch\"/></filter><rect width=\"100%\" height=\"100%\" filter=\"url(%23noiseFilter)\" opacity=\"0.09\"/></svg>')",
+          zIndex: 2,
+        }}
+      />
       {/* Vignette overlay */}
       <div className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
         style={{
           background: `
-            linear-gradient(to bottom, rgba(20,20,20,0.75) 0%, rgba(20,20,20,0.34) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.58) 100%),
-            radial-gradient(ellipse at center, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.14) 85%, rgba(0,0,0,0.28) 100%)
+            linear-gradient(to bottom, rgba(20,20,20,0.64) 0%, rgba(20,20,20,0.22) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.37) 100%),
+            radial-gradient(ellipse at center, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.09) 85%, rgba(0,0,0,0.17) 100%)
           `,
-          zIndex: 2,
+          zIndex: 3,
         }}
       />
       {/* Glass blur effect at the bottom for main card */}
