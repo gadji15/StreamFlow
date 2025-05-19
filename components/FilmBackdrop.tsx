@@ -17,6 +17,10 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
         className={`w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out ${
           loaded ? "opacity-100" : "opacity-0"
         }`}
+        style={{
+          objectPosition: "center 35%",
+          filter: "brightness(0.82) contrast(1.07) saturate(1.08)",
+        }}
         loading="eager"
         aria-hidden="true"
         onLoad={() => setLoaded(true)}
@@ -24,17 +28,14 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           e.currentTarget.src = "/placeholder-backdrop.jpg";
           setLoaded(true);
         }}
-        style={{
-          filter: "brightness(0.72) saturate(1.1)",
-        }}
       />
       {/* Vignette overlay */}
       <div className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
         style={{
           background: `
-            linear-gradient(to bottom, rgba(20,20,20,0.96) 0%, rgba(20,20,20,0.7) 10%, rgba(20,20,20,0.0) 33%, rgba(20,20,20,0.0) 70%, rgba(20,20,20,0.87) 100%),
-            radial-gradient(ellipse at center, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.44) 85%, rgba(0,0,0,0.65) 100%)
+            linear-gradient(to bottom, rgba(20,20,20,0.92) 0%, rgba(20,20,20,0.6) 13%, rgba(20,20,20,0.0) 35%, rgba(20,20,20,0.0) 66%, rgba(20,20,20,0.76) 100%),
+            radial-gradient(ellipse at center, rgba(0,0,0,0.13) 0%, rgba(0,0,0,0.29) 85%, rgba(0,0,0,0.48) 100%)
           `,
           zIndex: 2,
         }}
