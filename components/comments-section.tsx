@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
@@ -36,19 +36,26 @@ export function CommentsSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const { user } = useCurrentUser();
+  const subscriptionRef = useRef<any>(null);
 
-  // Fetch comments from Supabase
+  // Fetch comments from Supabase (pagination)
   useEffect(() => {
     async function fetchComments() {
       setLoading(true);
-      const { data, error } = await supabase
+      const PAGE_SIZE = 10;
+      const from = 0;
+      const to = page * PAGE_SIZE - 1;
+      const { data, error, count } = await supabase
         .from("comments")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("content_id", contentId)
         .eq("content_type", contentType)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (!error && data) {
         setComments(
           data.map((c: any) => ({
@@ -56,18 +63,45 @@ export function CommentsSection({
             author: {
               name: c.author_name || "Utilisateur",
               avatar: c.author_avatar,
+              id: c.author_id,
             },
             content: c.content,
             rating: c.rating,
             createdAt: c.created_at,
+            canDelete: user && (user.id === c.author_id || user.role === "admin"),
           }))
         );
+        setHasMore(count !== null ? (to + 1) < count : data.length === PAGE_SIZE);
       } else {
         setComments([]);
+        setHasMore(false);
       }
       setLoading(false);
     }
     if (contentId && contentType) fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, contentType, page]);
+
+  // Live updates (Supabase Realtime, insert/update/delete)
+  useEffect(() => {
+    if (!contentId || !contentType) return;
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+    }
+    const channel = supabase
+      .channel("comments-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "comments", filter: `content_id=eq.${contentId}` },
+        (payload) => {
+          setPage(1); // always reload first page
+        }
+      )
+      .subscribe();
+    subscriptionRef.current = channel;
+    return () => {
+      channel.unsubscribe();
+    };
   }, [contentId, contentType]);
 
   const handleSubmitComment = async () => {
@@ -101,27 +135,7 @@ export function CommentsSection({
       if (error) {
         setErrorMessage("Erreur lors de l'ajout du commentaire");
       } else {
-        // Refresh comments
-        const { data } = await supabase
-          .from("comments")
-          .select("*")
-          .eq("content_id", contentId)
-          .eq("content_type", contentType)
-          .order("created_at", { ascending: false });
-        if (data) {
-          setComments(
-            data.map((c: any) => ({
-              id: c.id,
-              author: {
-                name: c.author_name || "Utilisateur",
-                avatar: c.author_avatar,
-              },
-              content: c.content,
-              rating: c.rating,
-              createdAt: c.created_at,
-            }))
-          );
-        }
+        setPage(1); // force reload comments
         setNewComment("");
         setRating(0);
       }
@@ -130,6 +144,13 @@ export function CommentsSection({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Modération : suppression d'un commentaire (auteur ou admin)
+  const handleDelete = async (commentId: string) => {
+    if (!window.confirm("Supprimer ce commentaire ?")) return;
+    await supabase.from("comments").delete().eq("id", commentId);
+    setPage(1);
   };
   
   const formatDate = (dateString: string) => {
@@ -217,7 +238,7 @@ export function CommentsSection({
       ) : comments.length > 0 ? (
         <div className="space-y-6">
           {comments.map((comment) => (
-            <div key={comment.id} className="bg-gray-800 p-6 rounded-lg">
+            <div key={comment.id} className="bg-gray-800 p-6 rounded-lg group relative">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center overflow-hidden">
@@ -236,18 +257,35 @@ export function CommentsSection({
                     <p className="text-xs text-gray-400">{formatDate(comment.createdAt)}</p>
                   </div>
                 </div>
-                <div className="flex">
+                <div className="flex items-center gap-3">
                   {[1, 2, 3, 4, 5].map((star, i) => (
                     <Star
                       key={i}
                       className={`h-4 w-4 ${i < comment.rating ? "text-yellow-400 fill-current" : "text-gray-400"}`}
                     />
                   ))}
+                  {/* Suppression par auteur ou admin */}
+                  {user && (user.id === comment.author.id || user.role === "admin") && (
+                    <button
+                      onClick={() => handleDelete(comment.id)}
+                      className="text-xs text-red-400 underline opacity-0 group-hover:opacity-100 transition-opacity ml-3"
+                      title="Supprimer"
+                    >
+                      Supprimer
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="text-gray-300">{comment.content}</p>
             </div>
           ))}
+          {hasMore && (
+            <div className="text-center pt-4">
+              <Button variant="outline" onClick={() => setPage(page + 1)}>
+                Afficher plus de commentaires
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-12 text-gray-400">
