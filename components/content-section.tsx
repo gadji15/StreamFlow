@@ -156,15 +156,15 @@ export function ContentSection({
               rounded-md
               sm:rounded-lg md:rounded-xl
             `}
-            style={
-              // MOBILE: tailles réduites et synchrone poster/carte
-              {
-                minWidth: '90px',
-                maxWidth: '110px',
-                minHeight: '130px',
-                maxHeight: '170px',
-              }
-            }
+            style={{
+              minWidth: '90px',
+              maxWidth: '110px',
+              minHeight: '130px',
+              maxHeight: '210px',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center"
+            }}
           >
             <div
               className={`
@@ -217,19 +217,21 @@ export function ContentSection({
                 )}
               </div>
             </div>
-            <h3 className={`
-              truncate font-medium w-full text-center mt-1
-              text-xs
-              sm:text-sm
-              md:text-base
-            `}>{item.title}</h3>
-            <p className="text-[11px] text-gray-400 w-full text-center mb-2">
-              {isMovie
-                ? (item as Movie).year
-                : `${(item as Series).startYear ?? ''}${
-                    (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                  }`}
-            </p>
+            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
+              <h3 className={`
+                truncate font-medium w-full text-center
+                text-xs
+                sm:text-sm
+                md:text-base
+              `}>{item.title}</h3>
+              <p className="text-[11px] text-gray-400 w-full text-center">
+                {isMovie
+                  ? (item as Movie).year
+                  : `${(item as Series).startYear ?? ''}${
+                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                    }`}
+              </p>
+            </div>
           </Link>
         ))}
       </div>
