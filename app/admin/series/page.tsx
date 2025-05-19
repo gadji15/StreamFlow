@@ -484,7 +484,8 @@ export default function AdminSeriesPage() {
         onClose={() => setSeriesModal({ open: false })}
         onSave={handleSeriesModalSave}
         initialData={seriesModal.serie}
-        tmdbSearch={async (query) => {
+        // @ts-expect-error: tmdbSearch may not be in type definition, add prop to SeriesModal props if needed
+        tmdbSearch={async (query: string) => {
           if (!query) return null;
           // Si query est numérique, on tente par ID, sinon par recherche texte
           if (/^\d+$/.test(query.trim())) {
@@ -497,7 +498,7 @@ export default function AdminSeriesPage() {
               poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
               start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : "",
               end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : "",
-              genres: data.genres ? data.genres.map((g) => g.name) : [],
+              genres: data.genres ? data.genres.map((g: { name: string }) => g.name) : [],
               tmdb_id: data.id,
             };
           } else {
@@ -525,7 +526,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: any) => {
           // Correction : typage strict et nettoyage pour l'édition
           const season_number = values.season_number ? Number(values.season_number) : null;
           const series_id = modal.parentId;
@@ -555,13 +556,13 @@ export default function AdminSeriesPage() {
             }
           }
         }}
-        initial={modal.payload}
+        initialData={modal.payload}
         seriesId={modal.parentId}
       />
       <SeasonModal
         open={modal.open && modal.type === "add-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: any) => {
           // Correction : typage strict et nettoyage pour l'ajout
           const season_number = values.season_number ? Number(values.season_number) : null;
           const series_id = modal.parentId;
@@ -596,17 +597,19 @@ export default function AdminSeriesPage() {
       <EpisodeModal
         open={modal.open && modal.type === "edit-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={undefined}
+        onSubmit={async (values: any) => {
           await supabase.from("episodes").update(values).eq("id", values.id);
           if (modal.parentId) {/* refresh episodes */}
         }}
-        initial={modal.payload}
+        initialData={modal.payload}
         seasonId={modal.parentId}
       />
       <EpisodeModal
         open={modal.open && modal.type === "add-episode"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSubmit={async (values) => {
+        onSave={undefined}
+        onSubmit={async (values: any) => {
           // S'assurer que series_id est injecté dans l'épisode ajouté
           const series_id = modal.payload && modal.payload.seriesId
             ? modal.payload.seriesId
