@@ -1,6 +1,6 @@
  'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { motion } from 'framer-motion';
 import { Sparkles, Film, Tv, ArrowRight } from 'lucide-react';
@@ -10,10 +10,24 @@ import HeroSection from '@/components/hero-section';
 import ContentSection from '@/components/content-section';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useResponsiveCount } from '@/hooks/useResponsiveCount';
+import dynamic from "next/dynamic";
+const MobileHero = dynamic(() => import('@/components/mobile/mobile-hero'), { ssr: false });
+// Ajout hero mobile
+import dynamic from "next/dynamic";
+const MobileHero = dynamic(() => import('@/components/mobile/mobile-hero'), { ssr: false });
 
 export default function HomePage() {
   const { isVIP } = useSupabaseAuth();
   const count = useResponsiveCount();
+
+  // Hook pour détecter le mobile côté client (largeur < 640px)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Animation pour le titre de section
   const container = {
@@ -39,9 +53,9 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-col gap-0 w-full pt-6 md:pt-8">
-      {/* Section Hero avec carousel */}
-      <section className="w-full px-3 sm:px-0 mt-0 pt-0">
-        <HeroSection />
+      {/* Section Hero responsive */}
+      <section className="w-full px-0 mt-0 pt-0">
+        {isMobile ? <MobileHero /> : <HeroSection />}
       </section>
 
       {/* Présentation du site supprimée */}
