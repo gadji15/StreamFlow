@@ -46,10 +46,21 @@ export default function FilmDetailPage() {
           notFound();
         } else {
           // Mapper snake_case vers camelCase pour l'affichage
+          // Backdrop HD logic (TMDB or custom)
+          let backdropUrl = fetchedMovie.backdrop || "/placeholder-backdrop.jpg";
+          if (
+            typeof backdropUrl === "string" &&
+            backdropUrl.startsWith("/") &&
+            !backdropUrl.startsWith("/placeholder")
+          ) {
+            // TMDB path: use HD
+            backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
+          }
+
           const normalizedMovie = {
             ...fetchedMovie,
             posterUrl: fetchedMovie.poster || "/placeholder-poster.png",
-            backdropUrl: fetchedMovie.backdrop || "/placeholder-backdrop.jpg",
+            backdropUrl,
             trailerUrl: fetchedMovie.trailer_url || "",
             videoUrl: fetchedMovie.video_url || "",
             // fallback duration for legacy
