@@ -39,7 +39,7 @@ export default function MobileHero() {
 
   if (loading) {
     return (
-      <section className="w-full flex items-center justify-center aspect-[16/9] max-h-[60vw] sm:max-h-[320px] bg-gray-900/60">
+      <section className="w-full flex items-center justify-center aspect-[16/9] bg-gray-900/60">
         <div className="text-lg text-gray-300 animate-pulse">
           Chargement du contenu en avant...
         </div>
@@ -49,7 +49,7 @@ export default function MobileHero() {
 
   if (!featuredMovies.length) {
     return (
-      <section className="w-full flex items-center justify-center aspect-[16/9] max-h-[60vw] sm:max-h-[320px] bg-gray-900/60">
+      <section className="w-full flex items-center justify-center aspect-[16/9] bg-gray-900/60">
         <div className="text-lg text-gray-400">
           Aucun contenu mis en avant pour le moment.
         </div>
@@ -58,11 +58,11 @@ export default function MobileHero() {
   }
 
   return (
-    <div className="relative w-full aspect-[16/9] max-h-[60vw] sm:max-h-[320px] overflow-hidden">
+    <section className="relative w-full aspect-[16/9] overflow-hidden max-w-full">
       <Swiper
         modules={[Pagination, Autoplay]}
         pagination={{ clickable: true }}
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        autoplay={{ delay: 6000, disableOnInteraction: false }}
         loop={true}
         className="w-full h-full"
       >
@@ -91,6 +91,7 @@ export default function MobileHero() {
 
           return (
             <SwiperSlide key={movie.id} className="relative w-full h-full">
+              {/* Image de fond et overlays */}
               <div className="absolute inset-0 w-full h-full">
                 <Image
                   src={backdropUrl}
@@ -99,64 +100,79 @@ export default function MobileHero() {
                   priority
                   quality={90}
                   sizes="100vw"
-                  className="object-cover object-center transition-opacity duration-1000"
+                  className="object-cover object-center brightness-105 transition-opacity duration-1000"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/70 to-transparent pointer-events-none" />
+                {/* Overlay pro */}
+                <div
+                  className="absolute inset-0 z-30 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(to right, #111827 0%, transparent 12%, transparent 88%, #111827 100%)"
+                  }}
+                />
+                <div
+                  className="absolute inset-0 z-40"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)"
+                  }}
+                />
               </div>
 
-              <div className="relative z-10 flex flex-col justify-end w-full h-full px-3 pb-8">
+              {/* Contenu pro */}
+              <div className="relative z-50 flex flex-col justify-end w-full h-full px-2 pb-6">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.4 }}
+                  className="max-w-full w-full bg-black/20 rounded-xl p-3 mt-4"
                 >
-                  <h1 className="text-base sm:text-xl font-bold text-white mb-1" style={{ fontFamily: "var(--font-poppins)" }}>
+                  <h1 className="text-lg font-bold mb-1 text-white drop-shadow-xl leading-snug">
                     {movie.title}
                   </h1>
-
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {movie.year && <span className="text-gray-300 text-xs">{movie.year}</span>}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
+                    {movie.year && <span>{movie.year}</span>}
                     {duration && (
                       <>
-                        <span className="text-gray-300 text-xs">•</span>
-                        <span className="text-gray-300 text-xs">
+                        <span className="h-1 w-1 rounded-full bg-white/50"></span>
+                        <span>
                           {Math.floor(duration / 60)}h {duration % 60}min
                         </span>
                       </>
                     )}
                     {(movie as any).rating && (
                       <>
-                        <span className="text-gray-300 text-xs">•</span>
-                        <span className="text-yellow-500 text-xs flex items-center">
-                          <Star className="h-4 w-4 mr-1 fill-yellow-500 stroke-yellow-500" />
+                        <span className="h-1 w-1 rounded-full bg-white/50"></span>
+                        <span className="flex items-center font-bold">
+                          <Star className="w-3 h-3 text-yellow-400 mr-1 drop-shadow" fill="currentColor" />
                           {(movie as any).rating}
                         </span>
                       </>
                     )}
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mb-2">
+                  <div className="flex flex-wrap gap-2 mb-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.92)]">
                     {genres.slice(0, 2).map((genre, index) => (
-                      <span key={index} className="bg-white/10 rounded px-2 py-0.5 text-xs text-white border border-white/20">
+                      <span
+                        key={index}
+                        className="px-3 py-0.5 text-xs rounded-full border border-white/25 text-white/95"
+                      >
                         {genre}
                       </span>
                     ))}
                   </div>
-
-                  <p className="text-gray-300 mb-2 line-clamp-2 text-xs">{movie.description}</p>
-
-                  <div className="flex gap-2">
-                    <Button asChild className="btn-primary flex-1 text-xs px-2 py-1">
-                      <Link href={`/films/${movie.id}`} className="flex items-center justify-center">
-                        <Play className="h-4 w-4 mr-1" />
+                  <p className="text-[11px] text-white mb-3 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+                    {movie.description}
+                  </p>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      className="gap-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-md text-[11px] transition-transform hover:scale-105"
+                      asChild
+                    >
+                      <Link href={`/films/${movie.id}`} className="flex items-center">
+                        <Play className="h-4 w-4" />
                         Regarder
                       </Link>
-                    </Button>
-                    <Button variant="outline" className="btn-secondary px-2 py-1">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" className="btn-secondary px-2 py-1">
-                      <Info className="h-4 w-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -165,7 +181,7 @@ export default function MobileHero() {
           );
         })}
       </Swiper>
-    </div>
+    </section>
   );
 }
       </Swiper>
