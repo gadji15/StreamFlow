@@ -101,7 +101,20 @@ function HeroSection() {
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
-    <section className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[60vw] md:max-h-[540px] flex items-center overflow-hidden">
+    <section
+      className="
+        relative w-full
+        aspect-[9/16] sm:aspect-[16/9] md:aspect-[21/9]
+        max-h-[430px] sm:max-h-[60vw] md:max-h-[540px]
+        flex items-end sm:items-center overflow-hidden
+        min-h-[230px] sm:min-h-[320px]
+        bg-black
+      "
+      style={{
+        // fallback min height for very small screens
+        minHeight: 200
+      }}
+    >
       {/* Image de fond et overlays */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -119,23 +132,23 @@ function HeroSection() {
             priority
             quality={100}
             sizes="100vw"
-            className="object-cover object-center brightness-105 contrast-105"
+            className="object-cover object-center brightness-105 contrast-105 select-none"
+            draggable={false}
+            unselectable="on"
           />
           {/* Overlay gradient pour fondre les côtés */}
           <div
             className="absolute inset-0 z-30 pointer-events-none"
             style={{
               background:
-                // Adapter la couleur à votre background global (par exemple #111827 pour bg-gray-900 de Tailwind)
-                'linear-gradient(to right, #111827 0%, transparent 12%, transparent 88%, #111827 100%)'
+                'linear-gradient(to right, #111827 0%, transparent 18%, transparent 82%, #111827 100%)'
             }}
           />
           <div
             className="absolute inset-0 z-50 pointer-events-none"
             style={{
               background:
-                // Diminution de la vignette : moins opaque, plus de visibilité de l'image
-                'linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 14%, rgba(0,0,0,0.25) 22%, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.25) 78%, rgba(0,0,0,0.45) 86%, rgba(0,0,0,0.65) 100%)'
+                'linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 16%, rgba(0,0,0,0.25) 24%, rgba(0,0,0,0.0) 44%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.22) 78%, rgba(0,0,0,0.45) 86%, rgba(0,0,0,0.65) 100%)'
             }}
           />
           <div
@@ -148,13 +161,16 @@ function HeroSection() {
       </AnimatePresence>
 
       {/* Contenu */}
-      <div className="
-        relative z-20 flex flex-col
-        justify-end
-        h-full w-full
-        px-1.5 sm:px-3 md:px-6
-        pb-6 md:pb-10
-      ">
+      <div
+        className="
+          relative z-20 flex flex-col
+          justify-end
+          h-full w-full
+          px-3 sm:px-6 md:px-12
+          pb-4 sm:pb-8 md:pb-10
+          items-start
+        "
+      >
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={currentMovie.id}
@@ -163,19 +179,21 @@ function HeroSection() {
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
             className="
-              max-w-full sm:max-w-lg md:max-w-xl
+              max-w-[95vw] sm:max-w-md md:max-w-xl
               w-full
-              bg-black/20 md:bg-transparent
-              backdrop-blur-0 md:backdrop-blur-0
-              rounded-xl md:rounded-none
-              p-4 sm:p-6 md:py-7 md:px-8
-              mt-4 md:mt-0
+              bg-black/55 sm:bg-black/20 md:bg-transparent
+              backdrop-blur-[2px] sm:backdrop-blur-0 md:backdrop-blur-0
+              rounded-lg sm:rounded-xl md:rounded-none
+              p-3 sm:p-6 md:py-7 md:px-8
+              mt-2 sm:mt-0
+              shadow-lg shadow-black/20
+              text-left
             "
           >
-            <h1 className="text-xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
+            <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug line-clamp-1 sm:line-clamp-2">
               {currentMovie.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
@@ -197,12 +215,11 @@ function HeroSection() {
                 </>
               )}
             </div>
-            <div className="flex flex-wrap gap-2 mb-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.92)]">
-              {/* Sur mobile, n'affiche qu'1 genre, sur desktop 2 */}
+            <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.92)]">
               {genres.slice(0, 1).map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-0.5 text-xs rounded-full border border-white/25 text-white/95 block sm:hidden"
+                  className="px-2 sm:px-3 py-0.5 text-[11px] sm:text-xs rounded-full border border-white/25 text-white/95 block sm:hidden"
                 >
                   {genre}
                 </span>
@@ -210,20 +227,28 @@ function HeroSection() {
               {genres.slice(0, 2).map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-0.5 text-xs rounded-full border border-white/25 text-white/95 hidden sm:block"
+                  className="px-2 sm:px-3 py-0.5 text-[11px] sm:text-xs rounded-full border border-white/25 text-white/95 hidden sm:block"
                 >
                   {genre}
                 </span>
               ))}
             </div>
-            <p className="text-[11px] md:text-sm text-white mb-3 md:mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+            <p className="text-[12px] sm:text-[13px] md:text-sm text-white mb-2 sm:mb-3 md:mb-4 line-clamp-2 sm:line-clamp-3 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
               {currentMovie.description}
             </p>
-            <div className="flex gap-1.5 md:gap-2">
+            <div className="flex gap-1 sm:gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
                   size="sm"
-                  className="gap-1.5 md:gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 md:px-5 md:py-2 rounded-lg shadow-md text-[11px] md:text-base transition-transform hover:scale-105"
+                  className="
+                    gap-1 sm:gap-2
+                    bg-red-600 hover:bg-red-700
+                    text-white font-semibold
+                    px-4 py-1.5 sm:px-5 sm:py-2
+                    rounded-md shadow
+                    text-[12px] sm:text-base
+                    transition-transform hover:scale-105
+                  "
                 >
                   <Play className="h-4 w-4" />
                   Regarder
@@ -234,7 +259,7 @@ function HeroSection() {
         </AnimatePresence>
         {/* Pagination compacte */}
         {featuredMovies.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2 z-30">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-30">
             {featuredMovies.map((_, index) => (
               <button
                 key={index}
@@ -252,18 +277,34 @@ function HeroSection() {
       {featuredMovies.length > 1 && (
         <>
           <button
-            className="absolute left-3 sm:left-6 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/40 text-white z-40 shadow-md transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white"
+            className="
+              absolute left-2 sm:left-6
+              bottom-16 sm:bottom-auto sm:top-1/2
+              sm:transform sm:-translate-y-1/2
+              w-8 sm:w-10 h-8 sm:h-10
+              flex items-center justify-center
+              rounded-full bg-black/40 text-white z-40 shadow-md
+              transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white
+            "
             onClick={goToPrevious}
             aria-label="Film précédent"
           >
-            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+            <ChevronLeft className="h-5 sm:h-6 w-5 sm:w-6" />
           </button>
           <button
-            className="absolute right-3 sm:right-6 top-1/2 transform -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-black/40 text-white z-40 shadow-md transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white"
+            className="
+              absolute right-2 sm:right-6
+              bottom-16 sm:bottom-auto sm:top-1/2
+              sm:transform sm:-translate-y-1/2
+              w-8 sm:w-10 h-8 sm:h-10
+              flex items-center justify-center
+              rounded-full bg-black/40 text-white z-40 shadow-md
+              transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white
+            "
             onClick={goToNext}
             aria-label="Film suivant"
           >
-            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+            <ChevronRight className="h-5 sm:h-6 w-5 sm:w-6" />
           </button>
         </>
       )}
