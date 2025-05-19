@@ -107,51 +107,90 @@ export default function FilmDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  const { user } = useCurrentUser();
-  const [isVIP, setIsVIP] = useState(false);
-  const { toast } = useToast();
+  // Vérifier si le film est dans les favoris de l'utilisateur (Supabase)
+  const checkIfFavorite = async (movieId: string) => {
+    if (user && movieId) {
+      setFavoriteLoading(true);
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("film_id", movieId)
+        .maybeSingle();
+      setIsFavorite(!!data);
+      setFavoriteLoading(false);
+    }
+  };
 
-  useEffect(() => {
-    if (!id) return;
+  // Ajouter/retirer des favoris (Supabase)
+  const toggleFavorite = async () => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour ajouter ce film à vos favoris.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!movie) return;
 
-    const fetchMovie = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const { data: fetchedMovie, error: movieError } = await supabase
-          .from("films")
-          .select("*")
-          .eq("id", id)
-          .single();
+    setFavoriteLoading(true);
 
-        if (movieError || !fetchedMovie) {
-          setError("Film non trouvé.");
-          notFound();
-        } else {
-          // Mapper snake_case vers camelCase pour l'affichage
-          // Backdrop HD logic (TMDB or custom)
-          let backdropUrl = fetchedMovie.backdrop || "/placeholder-backdrop.jpg";
-          if (
-            typeof backdropUrl === "string" &&
-            backdropUrl.startsWith("/") &&
-            !backdropUrl.startsWith("/placeholder")
-          ) {
-            // TMDB path: use HD
-            backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
-          }
+    if (isFavorite) {
+      // Remove from favorites
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("film_id", id);
+      setIsFavorite(false);
 
-          const normalizedMovie = {
-            ...fetchedMovie,
-            posterUrl: fetchedMovie.poster || "/placeholder-poster.png",
-            backdropUrl,
-            trailerUrl: fetchedMovie.trailer_url || "",
-            videoUrl: fetchedMovie.video_url || "",
-            // fallback duration for legacy
-            duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
-            rating: fetchedMovie.vote_average ?? null,
-            tmdbId: fetchedMovie.tmdb_id || "",
-          };
+      toast({
+        title: "Retiré des favoris",
+        description: `"${movie.title}" a été retiré de vos favoris.`,
+      });
+
+      await supabase.from("activities").insert([
+        {
+          user_id: user.id,
+          action: "favorite_remove",
+          content_type: "movie",
+          content_id: id,
+          details: { title: movie.title },
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } else {
+      // Add to favorites
+      const { error } = await supabase.from("favorites").insert([
+        {
+          user_id: user.id,
+          film_id: id,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setIsFavorite(true);
+
+      toast({
+        title: "Ajouté aux favoris",
+        description: `"${movie.title}" a été ajouté à vos favoris.`,
+      });
+
+      await supabase.from("activities").insert([
+        {
+          user_id: user.id,
+          action: "favorite_add",
+          content_type: "movie",
+          content_id: id,
+          details: { title: movie.title },
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+    setFavoriteLoading(false);
+  };
           setMovie(normalizedMovie);
 
           // Incrémenter le nombre de vues (côté serveur)
@@ -356,6 +395,7 @@ export default function FilmDetailPage() {
               onToggleFavorite={toggleFavorite}
               onShare={handleShare}
               onPlay={handlePlay}
+              favoriteLoading={favoriteLoading}
             />
 
             {/* Synopsis court */}
