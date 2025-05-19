@@ -74,7 +74,7 @@ export default function AdminSeriesPage() {
       let filteredSeries: any[] = data || [];
       if (genreFilter !== 'all') {
         filteredSeries = filteredSeries.filter((serie: any) =>
-          serie.genre?.split(',').map(g => g.trim().toLowerCase()).includes(genreFilter.toLowerCase())
+          serie.genre?.split(',').map((g: string) => g.trim().toLowerCase()).includes(genreFilter.toLowerCase())
         );
       }
       setSeries(filteredSeries);
