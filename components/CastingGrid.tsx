@@ -46,6 +46,7 @@ export default function CastingGrid({
           <div
             key={i}
             className="h-28 bg-gray-800 rounded-xl animate-pulse"
+            aria-hidden="true"
           ></div>
         ))}
       </div>
@@ -58,17 +59,25 @@ export default function CastingGrid({
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {cast.map((person) => (
+      {cast.map((person, idx) => (
         <div
           key={person.id}
-          className="flex flex-col items-center bg-gray-800 rounded-xl p-4 shadow hover:scale-105 hover:shadow-lg transition-all duration-200"
+          className="flex flex-col items-center bg-gray-800 rounded-xl p-4 shadow transition-transform duration-300 hover:scale-[1.045] hover:shadow-xl"
+          style={{
+            opacity: 0,
+            animation: `fadeInUp 0.58s cubic-bezier(.23,1.02,.25,1) forwards`,
+            animationDelay: `${idx * 0.06}s`
+          }}
         >
           <img
             src={getTMDBImageUrl(person.profile_path, "w185")}
             alt={person.name}
-            className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700"
+            className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 transition-transform duration-200 hover:scale-110"
             onError={(e) => {
               e.currentTarget.src = "/placeholder-avatar.png";
+            }}
+            style={{
+              boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
             }}
           />
           <span className="font-medium text-gray-100 text-sm text-center">
@@ -79,6 +88,18 @@ export default function CastingGrid({
           )}
         </div>
       ))}
+      <style>{`
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(24px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

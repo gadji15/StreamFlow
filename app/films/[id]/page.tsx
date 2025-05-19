@@ -274,15 +274,7 @@ export default function FilmDetailPage() {
               </p>
             )}
 
-            {/* Casting dynamique */}
-            <div className="mb-6">
-              <h3 className="font-semibold mb-2">Casting</h3>
-              {movie.tmdbId ? (
-                <CastingGrid tmdbId={movie.tmdbId} fallbackCast={movie.cast} />
-              ) : (
-                <div className="text-gray-400">Aucun casting disponible.</div>
-              )}
-            </div>
+            {/* Casting dynamique déplacé dans l'onglet Synopsis */}
           </div>
         </div>
 
@@ -317,6 +309,14 @@ export default function FilmDetailPage() {
                   </div>
                 </div>
               )}
+              <div className="mb-8 mt-8">
+                <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                {movie.tmdbId ? (
+                  <CastingGrid tmdbId={movie.tmdbId} fallbackCast={movie.cast} />
+                ) : (
+                  <div className="text-gray-400">Aucun casting disponible.</div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="related" className="pt-6">
