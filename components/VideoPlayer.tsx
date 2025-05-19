@@ -29,11 +29,13 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize HLS.js if needed
   useEffect(() => {
     const video = videoRef.current;
+    setVideoError(null);
     if (!video) return;
     let hls: Hls | null = null;
 
@@ -42,8 +44,12 @@ export default function VideoPlayer({
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => setIsLoaded(true));
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        setVideoError("Erreur de chargement du flux vidéo.");
+      });
     } else {
       video.onloadedmetadata = () => setIsLoaded(true);
+      video.onerror = () => setVideoError("Impossible de lire la vidéo.");
     }
 
     return () => {
@@ -80,6 +86,7 @@ export default function VideoPlayer({
       if (!canWatch) return;
       switch (e.key) {
         case " ":
+          e.preventDefault();
           togglePlay();
           break;
         case "ArrowRight":
@@ -163,6 +170,16 @@ export default function VideoPlayer({
     }, 3000);
   };
 
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    const target = e.currentTarget;
+    if (!video || !duration) return;
+    const rect = target.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    video.currentTime = pos * duration;
+    setCurrentTime(video.currentTime);
+  };
+
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -173,8 +190,12 @@ export default function VideoPlayer({
   return (
     <div
       id="video-container"
-      className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg"
+      className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg group"
+      role="region"
+      aria-label={title ? `Lecteur vidéo: ${title}` : "Lecteur vidéo"}
+      tabIndex={0}
       onMouseMove={handleMouseMove}
+      onTouchStart={handleMouseMove}
       onClick={() => isLoaded && canWatch && togglePlay()}
     >
       {!canWatch ? (
@@ -182,21 +203,41 @@ export default function VideoPlayer({
           <span className="text-xl text-red-400 font-semibold">{fallbackMessage}</span>
         </div>
       ) : (
-        <video
-          ref={videoRef}
-          src={!src.endsWith(".m3u8") ? src : undefined}
-          poster={poster}
-          className="w-full h-full object-contain"
-          preload="metadata"
-          controls={false}
-          muted={isMuted}
-        ></video>
+        <>
+          <video
+            ref={videoRef}
+            src={!src.endsWith(".m3u8") ? src : undefined}
+            poster={poster}
+            className="w-full h-full object-contain"
+            preload="metadata"
+            controls={false}
+            muted={isMuted}
+            tabIndex={-1}
+            aria-label={title ? `Vidéo: ${title}` : "Vidéo"}
+          ></video>
+          {videoError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+              <span className="text-lg text-red-400 font-semibold">{videoError}</span>
+            </div>
+          )}
+        </>
       )}
 
-      {showControls && canWatch && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent z-20" onClick={e => e.stopPropagation()}>
+      {showControls && canWatch && !videoError && (
+        <div
+          className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent z-20"
+          onClick={e => e.stopPropagation()}
+        >
           {/* ProgressBar */}
-          <div className="mb-4 cursor-pointer relative h-2 rounded-lg bg-gray-700">
+          <div
+            className="mb-4 cursor-pointer relative h-2 rounded-lg bg-gray-700"
+            onClick={handleProgressBarClick}
+            aria-label="Barre de progression"
+            role="progressbar"
+            aria-valuenow={currentTime}
+            aria-valuemin={0}
+            aria-valuemax={duration}
+          >
             <div
               className="absolute top-0 left-0 h-2 bg-purple-500 rounded-lg"
               style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
@@ -204,17 +245,17 @@ export default function VideoPlayer({
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" onClick={togglePlay} disabled={!isLoaded}>
+              <Button variant="ghost" size="icon" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Lecture"} disabled={!isLoaded}>
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => skip(-10)} disabled={!isLoaded}>
+              <Button variant="ghost" size="icon" onClick={() => skip(-10)} aria-label="Reculer de 10 secondes" disabled={!isLoaded}>
                 <SkipBack className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => skip(10)} disabled={!isLoaded}>
+              <Button variant="ghost" size="icon" onClick={() => skip(10)} aria-label="Avancer de 10 secondes" disabled={!isLoaded}>
                 <SkipForward className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon" onClick={toggleMute} disabled={!isLoaded}>
+                <Button variant="ghost" size="icon" onClick={toggleMute} aria-label={isMuted ? "Activer le son" : "Couper le son"} disabled={!isLoaded}>
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
                 <input
@@ -225,19 +266,20 @@ export default function VideoPlayer({
                   value={volume}
                   onChange={handleVolumeChange}
                   className="w-20 accent-purple-500"
+                  aria-label="Volume"
                 />
               </div>
-              <div>
+              <div className="text-xs tabular-nums text-white" aria-label="Durée">
                 <span>{formatTime(currentTime)}</span>
                 <span className="mx-1">/</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+              <Button variant="ghost" size="icon" onClick={toggleFullscreen} aria-label="Plein écran">
                 <Maximize className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Paramètres">
                 <Settings className="h-5 w-5" />
               </Button>
             </div>
