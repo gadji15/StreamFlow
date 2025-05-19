@@ -14,6 +14,14 @@ import EpisodeModal from "@/components/admin/series/EpisodeModal";
 
 import { useRouter } from "next/navigation";
 
+interface SeasonFormValues {
+  id?: string;
+  season_number?: number | string | null;
+  tmdb_id?: number | string | null;
+  episode_count?: number | string | null;
+  [key: string]: any; // for other dynamic fields, add specifics as needed
+}
+
 export default function AdminSeriesPage() {
   const router = useRouter();
   // --- State principal
@@ -525,7 +533,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "edit-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: SeasonFormValues) => {
           // Correction : typage strict et nettoyage pour l'édition
           const season_number = values.season_number ? Number(values.season_number) : null;
           const series_id = modal.parentId;
@@ -561,7 +569,7 @@ export default function AdminSeriesPage() {
       <SeasonModal
         open={modal.open && modal.type === "add-season"}
         onClose={() => setModal({ open: false, type: "" })}
-        onSave={async (values) => {
+        onSave={async (values: SeasonFormValues) => {
           // Correction : typage strict et nettoyage pour l'ajout
           const season_number = values.season_number ? Number(values.season_number) : null;
           const series_id = modal.parentId;
