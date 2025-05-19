@@ -14,6 +14,16 @@ export interface TMDBCastMember {
   profile_path: string | null;
 }
 
+export interface TMDBMovie {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string;
+  release_date: string;
+  vote_average: number;
+}
+
 export async function fetchTMDBCredits(tmdbId: string): Promise<TMDBCastMember[]> {
   if (!TMDB_API_KEY) {
     throw new Error("TMDB API key manquante.");
@@ -32,9 +42,32 @@ export async function fetchTMDBCredits(tmdbId: string): Promise<TMDBCastMember[]
 }
 
 /**
+ * Récupère les films similaires via TMDB.
+ */
+export async function fetchTMDBSimilarMovies(tmdbId: string): Promise<TMDBMovie[]> {
+  if (!TMDB_API_KEY) {
+    throw new Error("TMDB API key manquante.");
+  }
+  const res = await fetch(
+    `${TMDB_BASE_URL}/movie/${tmdbId}/similar?api_key=${TMDB_API_KEY}&language=fr-FR`
+  );
+  if (!res.ok) throw new Error('Erreur TMDB (similar)');
+  const data = await res.json();
+  return (data.results || []).map((movie: any) => ({
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    backdrop_path: movie.backdrop_path,
+    overview: movie.overview,
+    release_date: movie.release_date,
+    vote_average: movie.vote_average,
+  }));
+}
+
+/**
  * Helper pour construire l'URL d'une image TMDB (HD ou placeholder).
  */
 export function getTMDBImageUrl(path: string | null, size: 'w185' | 'w300' | 'original' = 'w185') {
-  if (!path) return '/placeholder-avatar.png';
+  if (!path) return '/placeholder-poster.png';
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }

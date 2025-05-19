@@ -13,6 +13,7 @@ import FilmPosterCard from "@/components/FilmPosterCard";
 import FilmInfo from "@/components/FilmInfo";
 import ActionButtons from "@/components/ActionButtons";
 import CastingGrid from "@/components/CastingGrid";
+import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -334,12 +335,23 @@ export default function FilmDetailPage() {
 
             <TabsContent value="related" className="pt-6">
               <h2 className="text-xl font-semibold mb-4">Films similaires</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {/* Films similaires dynamiques TMDB à intégrer ici */}
-                <div className="text-center p-8 text-gray-400">
-                  Pas de films similaires disponibles pour le moment.
-                </div>
-              </div>
+              {movie.tmdbId ? (
+                <React.Suspense fallback={
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-64 bg-gray-800 rounded-xl animate-pulse"
+                        aria-hidden="true"
+                      ></div>
+                    ))}
+                  </div>
+                }>
+                  <SimilarMoviesGrid tmdbId={movie.tmdbId} />
+                </React.Suspense>
+              ) : (
+                <div className="text-gray-400">Aucun film similaire disponible.</div>
+              )}
             </TabsContent>
 
             <TabsContent value="comments" className="pt-6">
