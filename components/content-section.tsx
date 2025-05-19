@@ -240,17 +240,29 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
-            style={{ background: "transparent", padding: 0, border: "none" }}
+            className={`
+              text-sm flex items-center font-medium
+              bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+              bg-clip-text text-transparent
+              underline underline-offset-4
+              transition-all duration-300
+              hover:bg-none hover:text-violet-400 hover:scale-105
+              focus:outline-none
+            `}
+            style={{
+              WebkitTextFillColor: 'transparent',
+              background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              padding: 0,
+              border: "none"
+            }}
           >
-            <span className="voir-tout-gradient">
+            <span>
               Voir tout
             </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            <ChevronRight className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         )}
-      </div>
-      {renderContent()}
     </section>
   );
 }
