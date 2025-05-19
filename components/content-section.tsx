@@ -216,6 +216,40 @@ export function ContentSection({
           </Link>
         ))}
       </div>
+    );
+  };
+
+  return (
+    <section className={`mb-8 ${className}`}>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-bold">{title}</h2>
+          {subtitle && (
+            <p className="text-gray-400 text-sm mt-1">{subtitle}</p>
+          )}
+        </div>
+        {!hideViewAllButton && (
+          <Link
+            href={
+              viewAllLink ||
+              (
+                type === "popular_movies" ? "/films"
+                : type === "popular_series" ? "/series"
+                : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
+                : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
+                : "/"
+              )
+            }
+            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+            style={{ background: "transparent", padding: 0, border: "none" }}
+          >
+            <span className="voir-tout-gradient">
+              Voir tout
+            </span>
+            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+          </Link>
+        )}
+      </div>
       {renderContent()}
     </section>
   );
