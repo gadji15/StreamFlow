@@ -7,6 +7,8 @@ import { Sparkles, Film, Tv, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import HeroSection from '@/components/hero-section';
+import dynamic from "next/dynamic";
+const MobileHero = dynamic(() => import("@/components/mobile/mobile-hero"), { ssr: false });
 import ContentSection from '@/components/content-section';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useResponsiveCount } from '@/hooks/useResponsiveCount';
@@ -39,9 +41,16 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-col gap-0 w-full pt-6 md:pt-8">
-      {/* Section Hero avec carousel */}
-      <section className="w-full px-3 sm:px-0 mt-0 pt-0">
-        <HeroSection />
+      {/* Section Hero responsive */}
+      <section className="w-full px-0 mt-0 pt-0">
+        {/* Mobile */}
+        <div className="block sm:hidden">
+          <MobileHero />
+        </div>
+        {/* Tablet and up */}
+        <div className="hidden sm:block">
+          <HeroSection />
+        </div>
       </section>
 
       {/* Présentation du site supprimée */}
