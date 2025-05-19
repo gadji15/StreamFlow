@@ -171,6 +171,7 @@ export function ContentSection({
                 relative aspect-[2/3]
                 w-full
                 h-full
+                flex flex-col items-center
                 `}
               style={{
                 minWidth: '90px',
@@ -216,21 +217,19 @@ export function ContentSection({
                 )}
               </div>
             </div>
-            <div className="p-2">
-              <h3 className={`
-                truncate font-medium
-                text-xs
-                sm:text-sm
-                md:text-base
-              `}>{item.title}</h3>
-              <p className="text-[11px] text-gray-400">
-                {isMovie
-                  ? (item as Movie).year
-                  : `${(item as Series).startYear ?? ''}${
-                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                    }`}
-              </p>
-            </div>
+            <h3 className={`
+              truncate font-medium w-full text-center mt-1
+              text-xs
+              sm:text-sm
+              md:text-base
+            `}>{item.title}</h3>
+            <p className="text-[11px] text-gray-400 w-full text-center mb-2">
+              {isMovie
+                ? (item as Movie).year
+                : `${(item as Series).startYear ?? ''}${
+                    (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                  }`}
+            </p>
           </Link>
         ))}
       </div>
