@@ -11,8 +11,16 @@ import { useToast } from "@/components/ui/use-toast";
  * - onSave (fn(payload)) : callback sauvegarde
  * - initialData (object) : données d'édition
  * - existingSeries (array) : liste des séries existantes [{title, tmdb_id, id}]
+ * - tmdbSearch (function, optional): recherche TMDB personnalisée (query: any) => Promise<{...} | null>
  */
-export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [] }) {
+export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [], tmdbSearch }: {
+  open: boolean,
+  onClose: () => void,
+  onSave: (payload: any) => Promise<void>,
+  initialData?: any,
+  existingSeries?: any[],
+  tmdbSearch?: (query: any) => Promise<any | null>
+}) {
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
