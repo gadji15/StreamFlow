@@ -437,9 +437,15 @@ export default function AdminAddSeriesPage() {
       // Redirige vers la gestion des séries pour cohérence UX
       router.push(`/admin/series`);
     } catch (error) {
+      let errorMessage: string;
+      if (typeof error === "object" && error !== null && "message" in error && typeof (error as any).message === "string") {
+        errorMessage = (error as any).message;
+      } else {
+        errorMessage = String(error) || "Impossible d'ajouter la série.";
+      }
       toast({
         title: 'Erreur',
-        description: error?.message || String(error) || "Impossible d'ajouter la série.",
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
