@@ -8,7 +8,7 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
   const imgRef = useRef<HTMLImageElement>(null);
 
   return (
-    <div className="fixed top-0 left-0 right-0 w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-[-1] transition-all duration-500">
+    <div className="absolute top-0 left-0 w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 transition-all duration-500">
       {/* Backdrop image */}
       <img
         ref={imgRef}
