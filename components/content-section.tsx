@@ -151,18 +151,33 @@ export function ContentSection({
             key={item.id}
             href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
             className={`
-              block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group w-full
-              rounded-lg sm:rounded-lg md:rounded-xl
-              `}
-            style={{
-              minWidth: count <= 2 ? 160 : count === 3 ? 120 : 100,
-              maxWidth: count <= 2 ? 260 : count === 3 ? 160 : 130,
-            }}
+              block bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
+              w-full
+              rounded-md
+              sm:rounded-lg md:rounded-xl
+            `}
+            style={
+              // MOBILE: tailles réduites et synchrone poster/carte
+              {
+                minWidth: '90px',
+                maxWidth: '110px',
+                minHeight: '130px',
+                maxHeight: '170px',
+              }
+            }
           >
             <div
               className={`
                 relative aspect-[2/3]
+                w-full
+                h-full
                 `}
+              style={{
+                minWidth: '90px',
+                maxWidth: '110px',
+                minHeight: '130px',
+                maxHeight: '170px',
+              }}
             >
               <img
                 src={
@@ -182,30 +197,10 @@ export function ContentSection({
                 }}
                 loading="lazy"
                 style={{
-                  maxHeight:
-                    count <= 2
-                      ? 320
-                      : count === 3
-                      ? 220
-                      : 170, // desktop, tablet, mobile
-                  minHeight:
-                    count <= 2
-                      ? 180
-                      : count === 3
-                      ? 150
-                      : 130,
-                  minWidth:
-                    count <= 2
-                      ? 120
-                      : count === 3
-                      ? 100
-                      : 90,
-                  maxWidth:
-                    count <= 2
-                      ? 170
-                      : count === 3
-                      ? 130
-                      : 110,
+                  minWidth: '90px',
+                  maxWidth: '110px',
+                  minHeight: '130px',
+                  maxHeight: '170px',
                 }}
               />
               {'isVIP' in item && item.isVIP && (
