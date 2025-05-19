@@ -40,6 +40,8 @@ interface ContentSectionProps {
   genreId?: string;
   count?: number;
   hideViewAllButton?: boolean;
+  items?: any[];
+  layout?: string;
 }
 
 export function ContentSection({
@@ -56,7 +58,8 @@ export function ContentSection({
   const responsiveCount = useResponsiveCount();
   const count = type === 'custom' ? countProp : responsiveCount;
 
-  const [items, setItems] = useState<(Movie | Series)[]>([]);
+  // itemsState will still be used for non-custom types
+  const [itemsState, setItemsState] = useState<(Movie | Series)[]>([]);
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
 
@@ -85,10 +88,10 @@ export function ContentSection({
             }
             break;
         }
-        setItems(data || []);
+        setItemsState(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement du contenu:', error);
-        setItems([]);
+        setItemsState([]);
       } finally {
         setLoading(false);
       }
@@ -98,8 +101,8 @@ export function ContentSection({
   }, [type, genreId, count]);
 
   const renderContent = () => {
+    // If children are provided, render as before
     if (children) {
-      // Si ce sont des enfants, on force le scroll horizontal aussi
       return (
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           {children}
@@ -107,7 +110,10 @@ export function ContentSection({
       );
     }
 
-    if (loading) {
+    // If custom items prop is provided, use it
+    const customItems = type === 'custom' && Array.isArray(items) ? items : null;
+    const listToRender = customItems || itemsState;
+    if (loading && !customItems) {
       return (
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           {[...Array(count)].map((_, i) => (
@@ -125,7 +131,7 @@ export function ContentSection({
       );
     }
 
-    if (items.length === 0) {
+    if (!listToRender || listToRender.length === 0) {
       return (
         <div className="text-center py-10">
           <p className="text-gray-400">Aucun contenu disponible</p>
@@ -133,19 +139,43 @@ export function ContentSection({
       );
     }
 
-    const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
+    // For custom, default to isMovie=true, or infer from items if needed
+    const isMovie =
+      type === 'popular_movies' ||
+      type === 'movies_by_genre' ||
+      (type === 'custom' && listToRender.length && (listToRender[0]?.type === "movie"));
 
-    // Ajout d'une enveloppe scrollable autour de CarouselRail
+    // Use layout for styling if needed
     return (
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+      <div className={`overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900${layout === "large" ? " py-2" : ""}`}>
         <CarouselRail
-          items={items}
+          items={listToRender}
           slidesToShow={count}
           minSlideWidth={
-            count <= 2 ? 160 : count === 3 ? 140 : count === 4 ? 130 : count === 5 ? 120 : 110
+            layout === "large"
+              ? 180
+              : count <= 2
+              ? 160
+              : count === 3
+              ? 140
+              : count === 4
+              ? 130
+              : count === 5
+              ? 120
+              : 110
           }
           maxSlideWidth={
-            count <= 2 ? 260 : count === 3 ? 200 : count === 4 ? 170 : count === 5 ? 150 : 130
+            layout === "large"
+              ? 240
+              : count <= 2
+              ? 260
+              : count === 3
+              ? 200
+              : count === 4
+              ? 170
+              : count === 5
+              ? 150
+              : 130
           }
           ariaLabel={title}
           renderItem={(item, idx) => (
@@ -154,13 +184,24 @@ export function ContentSection({
               href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
               className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
               style={{
-                minWidth: count <= 2 ? 160 : 100,
-                maxWidth: count <= 2 ? 260 : 130,
+                minWidth:
+                  layout === "large"
+                    ? 180
+                    : count <= 2
+                    ? 160
+                    : 100,
+                maxWidth:
+                  layout === "large"
+                    ? 240
+                    : count <= 2
+                    ? 260
+                    : 130,
               }}
             >
               <div className="relative aspect-[2/3]">
                 <img
                   src={
+                    (item as Movie | Series).posterImage ||
                     (item as Movie | Series).poster ||
                     (item as any).posterUrl ||
                     '/placeholder-poster.png'
@@ -172,8 +213,22 @@ export function ContentSection({
                   }}
                   loading="lazy"
                   style={{
-                    maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
-                    minHeight: count <= 2 ? 180 : 130,
+                    maxHeight:
+                      layout === "large"
+                        ? 340
+                        : count <= 2
+                        ? 320
+                        : count === 3
+                        ? 260
+                        : count === 4
+                        ? 200
+                        : 180,
+                    minHeight:
+                      layout === "large"
+                        ? 240
+                        : count <= 2
+                        ? 180
+                        : 130,
                   }}
                 />
                 {'isVIP' in item && item.isVIP && (
@@ -193,7 +248,7 @@ export function ContentSection({
                 <h3 className={`truncate font-medium ${count <= 2 ? 'text-base' : count === 3 ? 'text-sm' : 'text-xs'}`}>{item.title}</h3>
                 <p className="text-[11px] text-gray-400">
                   {isMovie
-                    ? (item as Movie).year
+                    ? (item as Movie).year ?? (item as any).year
                     : `${(item as Series).startYear ?? ''}${
                         (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
                       }`}
