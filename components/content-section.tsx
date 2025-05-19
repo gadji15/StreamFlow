@@ -40,6 +40,7 @@ interface ContentSectionProps {
   genreId?: string;
   count?: number;
   hideViewAllButton?: boolean;
+  // items?: never; // Document: items is not a supported prop
 }
 
 export function ContentSection({
@@ -97,6 +98,7 @@ export function ContentSection({
 
     loadContent();
   }, [type, genreId, count]);
+  // Document: items is loaded internally except for custom type, use children for custom content
 
   const renderContent = () => {
     if (children) {

@@ -81,7 +81,7 @@ function HeroSection() {
   const genres = Array.isArray(currentMovie.genre)
     ? currentMovie.genre
     : typeof currentMovie.genre === 'string'
-    ? currentMovie.genre.split(',').map((g) => g.trim()).filter(Boolean)
+    ? currentMovie.genre.split(',').map((g: string) => g.trim()).filter(Boolean)
     : [];
   const duration = (currentMovie as any).duration || null;
 

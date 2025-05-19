@@ -100,7 +100,7 @@ export default function MobileHero() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {movie.genres.map((genre, index) => (
+                  {movie.genres.map((genre: string, index: number) => (
                     <span key={index} className="badge badge-primary text-xs">
                       {genre}
                     </span>
