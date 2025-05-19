@@ -484,7 +484,7 @@ export default function AdminSeriesPage() {
         onClose={() => setSeriesModal({ open: false })}
         onSave={handleSeriesModalSave}
         initialData={seriesModal.serie}
-        tmdbSearch={async (query) => {
+        tmdbSearch={async (query: string) => {
           if (!query) return null;
           // Si query est numérique, on tente par ID, sinon par recherche texte
           if (/^\d+$/.test(query.trim())) {
@@ -497,7 +497,7 @@ export default function AdminSeriesPage() {
               poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : "",
               start_year: data.first_air_date ? data.first_air_date.slice(0, 4) : "",
               end_year: data.last_air_date ? data.last_air_date.slice(0, 4) : "",
-              genres: data.genres ? data.genres.map((g) => g.name) : [],
+              genres: data.genres ? data.genres.map((g: { name: string }) => g.name) : [],
               tmdb_id: data.id,
             };
           } else {
