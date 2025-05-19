@@ -44,7 +44,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
   const [cast, setCast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
-  const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
+  const [tmdbSearchInput, setTmdbSearchInput] = useState(initialData.title || "");
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
 
@@ -94,7 +94,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         description: initialData.description || "",
       };
     });
-    setTmdbSearch(initialData.title || "");
+    setTmdbSearchInput(initialData.title || "");
     setCast([]); // Réinitialise le cast à chaque ouverture ou changement de série
     if (initialData.tmdb_id) {
       fetchCast(initialData.tmdb_id);
@@ -257,7 +257,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
   // Suggestion temps réel
   const handleSerieSearchInput = async (e) => {
     const value = e.target.value;
-    setTmdbSearch(value);
+    setTmdbSearchInput(value);
     setShowSerieSuggestions(true);
     setSerieSuggestions([]);
     setActiveSerieSuggestion(-1);
@@ -459,7 +459,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
             <input
               id="tmdb_search"
               autoComplete="off"
-              value={tmdbSearch}
+              value={tmdbSearchInput}
               onChange={handleSerieSearchInput}
               onFocus={() => setShowSerieSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSerieSuggestions(false), 150)}
@@ -475,7 +475,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                   e.preventDefault();
                   if (activeSerieSuggestion >= 0 && activeSerieSuggestion < serieSuggestions.length) {
                     const suggestion = serieSuggestions[activeSerieSuggestion];
-                    setTmdbSearch(suggestion.name);
+                    setTmdbSearchInput(suggestion.name);
                     setShowSerieSuggestions(false);
                     setSerieSuggestions([]);
                     // NE PAS IMPORT AUTOMATIQUE, attendre bouton
@@ -486,7 +486,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
               placeholder="Titre de la série"
               disabled={loading}
             />
-            {showSerieSuggestions && tmdbSearch && (
+            {showSerieSuggestions && tmdbSearchInput && (
               <ul
                 className="absolute z-30 w-full bg-gray-900 border border-gray-700 mt-1 rounded shadow max-h-44 overflow-y-auto"
                 role="listbox"
@@ -506,7 +506,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                     onMouseDown={e => {
                       e.preventDefault();
                       setActiveSerieSuggestion(idx);
-                      setTmdbSearch(suggestion.name);
+                      setTmdbSearchInput(suggestion.name);
                       setShowSerieSuggestions(false);
                     }}
                   >
@@ -536,11 +536,11 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
               }
               if (toImport) {
                 await importSerieFromTMDB(toImport);
-              } else if (tmdbSearch.trim().length > 0) {
+              } else if (tmdbSearchInput.trim().length > 0) {
                 // Recherche directe si aucun résultat de suggestion
                 setLoading(true);
                 try {
-                  const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbSearch.trim())}`);
+                  const resp = await fetch(`/api/tmdb/tv-search?query=${encodeURIComponent(tmdbSearchInput.trim())}`);
                   const data = await resp.json();
                   if (data.results && data.results.length > 0) {
                     await importSerieFromTMDB(data.results[0]);
@@ -561,7 +561,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                 setLoading(false);
               }
             }}
-            disabled={loading || !tmdbSearch.trim()}
+            disabled={loading || !tmdbSearchInput.trim()}
             aria-label="Chercher et importer depuis TMDB"
           >
             {loading ? (
