@@ -127,7 +127,7 @@ function MobileHero() {
   return (
     <section
       className="
-        relative w-full
+        relative w-full max-w-[100vw] overflow-x-hidden
         aspect-[9/16] sm:aspect-[16/9]
         max-h-[75vw] sm:max-h-[430px]
         flex items-end sm:items-center overflow-hidden
