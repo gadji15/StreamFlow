@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   title?: string
   autoPlay?: boolean
   onEnded?: () => void
+  onClose?: () => void
   nextEpisode?: {
     title: string
     onPlay: () => void
@@ -208,6 +209,18 @@ export function VideoPlayer({
       onMouseMove={handleMouseMove}
       onClick={togglePlay}
     >
+      {/* Close button (top-right) */}
+      {onClose && (
+        <button
+          onClick={e => { e.stopPropagation(); onClose(); }}
+          className="absolute top-4 right-4 z-20 bg-black/70 rounded-full p-2 hover:bg-black/90 transition"
+          aria-label="Fermer le lecteur"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M5 5L15 15M15 5L5 15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      )}
       <video
         ref={videoRef}
         src={src}
