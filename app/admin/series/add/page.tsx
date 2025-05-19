@@ -855,7 +855,7 @@ export default function AdminAddSeriesPage() {
                         <div className="flex items-center mt-2">
                           {member.preview || member.photo ? (
                             <img
-                              src={member.preview || member.photo}
+                              src={member.preview || member.photo || ""}
                               alt={member.name}
                               className="h-14 w-10 object-cover rounded border mr-3"
                             />
