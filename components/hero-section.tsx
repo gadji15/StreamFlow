@@ -89,9 +89,10 @@ function HeroSection() {
     (currentMovie as any).backdropUrl ||
     (currentMovie as any).backdrop ||
     '';
+  // Utilisation stricte d'une image HD, fallback propre
   let backdropUrl = '';
   if (rawBackdrop.startsWith('https://image.tmdb.org/t/p/')) {
-    backdropUrl = rawBackdrop.replace(/\/w\d+\//, '/w1280/').replace(/\/w\d+\//, '/original/');
+    backdropUrl = rawBackdrop.replace(/\/w\d+\//g, '/original/');
   } else if (rawBackdrop) {
     backdropUrl = rawBackdrop;
   } else {
@@ -104,22 +105,21 @@ function HeroSection() {
     <section
       className="
         relative w-full
-        aspect-[9/16] sm:aspect-[16/9] md:aspect-[21/9]
-        max-h-[430px] sm:max-h-[60vw] md:max-h-[540px]
+        aspect-[9/16] xs:aspect-[16/9] md:aspect-[21/9]
+        min-h-[240px] xs:min-h-[300px] sm:min-h-[360px] md:min-h-[440px]
+        max-h-[78vw] xs:max-h-[60vw] md:max-h-[540px]
         flex items-end sm:items-center overflow-hidden
-        min-h-[230px] sm:min-h-[320px]
         bg-black
       "
       style={{
-        // fallback min height for very small screens
-        minHeight: 200
+        minHeight: 180
       }}
     >
       {/* Image de fond et overlays */}
       <AnimatePresence initial={false}>
         <motion.div
           key={currentMovie.id}
-          className="absolute inset-0 pointer-events-none z-0"
+          className="absolute inset-0 z-0 pointer-events-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -132,9 +132,10 @@ function HeroSection() {
             priority
             quality={100}
             sizes="100vw"
-            className="object-cover object-center brightness-105 contrast-105 select-none"
+            className="object-cover object-center brightness-110 contrast-105 select-none"
             draggable={false}
             unselectable="on"
+            style={{ imageRendering: 'auto' }}
           />
           {/* Overlay gradient pour fondre les côtés */}
           <div
@@ -166,8 +167,8 @@ function HeroSection() {
           relative z-20 flex flex-col
           justify-end
           h-full w-full
-          px-3 sm:px-6 md:px-12
-          pb-4 sm:pb-8 md:pb-10
+          px-3 xs:px-4 sm:px-8 md:px-12
+          pb-4 xs:pb-6 sm:pb-8 md:pb-10
           items-start
         "
       >
@@ -179,18 +180,18 @@ function HeroSection() {
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
             className="
-              max-w-[95vw] sm:max-w-md md:max-w-xl
+              max-w-[98vw] xs:max-w-lg sm:max-w-xl md:max-w-2xl
               w-full
-              bg-black/55 sm:bg-black/20 md:bg-transparent
-              backdrop-blur-[2px] sm:backdrop-blur-0 md:backdrop-blur-0
-              rounded-lg sm:rounded-xl md:rounded-none
-              p-3 sm:p-6 md:py-7 md:px-8
-              mt-2 sm:mt-0
+              bg-black/60 xs:bg-black/30 md:bg-transparent
+              backdrop-blur-[2px] xs:backdrop-blur-[1px] md:backdrop-blur-0
+              rounded-xl xs:rounded-2xl md:rounded-none
+              p-3 xs:p-5 sm:py-7 sm:px-9 md:py-10 md:px-12
+              mt-2 xs:mt-0
               shadow-lg shadow-black/20
               text-left
             "
           >
-            <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug line-clamp-1 sm:line-clamp-2">
+            <h1 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-bold mb-2 text-white drop-shadow-xl leading-tight line-clamp-2">
               {currentMovie.title}
             </h1>
             <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
@@ -233,24 +234,24 @@ function HeroSection() {
                 </span>
               ))}
             </div>
-            <p className="text-[12px] sm:text-[13px] md:text-sm text-white mb-2 sm:mb-3 md:mb-4 line-clamp-2 sm:line-clamp-3 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+            <p className="text-[13px] xs:text-sm sm:text-base md:text-lg text-white mb-3 sm:mb-4 md:mb-5 line-clamp-2 sm:line-clamp-3 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
               {currentMovie.description}
             </p>
-            <div className="flex gap-1 sm:gap-2">
+            <div className="flex gap-2 sm:gap-4">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
-                  size="sm"
+                  size="lg"
                   className="
-                    gap-1 sm:gap-2
+                    gap-2 sm:gap-3
                     bg-red-600 hover:bg-red-700
                     text-white font-semibold
-                    px-4 py-1.5 sm:px-5 sm:py-2
-                    rounded-md shadow
-                    text-[12px] sm:text-base
+                    px-4 py-2 sm:px-6 sm:py-3
+                    rounded-lg shadow
+                    text-base sm:text-lg
                     transition-transform hover:scale-105
                   "
                 >
-                  <Play className="h-4 w-4" />
+                  <Play className="h-5 w-5 sm:h-6 sm:w-6" />
                   Regarder
                 </Button>
               </Link>
