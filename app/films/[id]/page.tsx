@@ -283,6 +283,7 @@ export default function FilmDetailPage() {
           <Tabs defaultValue="overview">
             <TabsList className="w-full md:w-auto border-b border-gray-700">
               <TabsTrigger value="overview">Synopsis</TabsTrigger>
+              <TabsTrigger value="casting">Casting</TabsTrigger>
               <TabsTrigger value="related">Films similaires</TabsTrigger>
               <TabsTrigger value="comments">Commentaires</TabsTrigger>
             </TabsList>
@@ -309,14 +310,15 @@ export default function FilmDetailPage() {
                   </div>
                 </div>
               )}
-              <div className="mb-8 mt-8">
-                <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                {movie.tmdbId ? (
-                  <CastingGrid tmdbId={movie.tmdbId} fallbackCast={movie.cast} />
-                ) : (
-                  <div className="text-gray-400">Aucun casting disponible.</div>
-                )}
-              </div>
+            </TabsContent>
+
+            <TabsContent value="casting" className="pt-6">
+              <h2 className="text-xl font-semibold mb-4">Casting</h2>
+              {movie.tmdbId ? (
+                <CastingGrid tmdbId={movie.tmdbId} fallbackCast={movie.cast} />
+              ) : (
+                <div className="text-gray-400">Aucun casting disponible.</div>
+              )}
             </TabsContent>
 
             <TabsContent value="related" className="pt-6">
