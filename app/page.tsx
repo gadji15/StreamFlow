@@ -53,7 +53,7 @@ export default function HomePage() {
     <main className="flex flex-col gap-0 w-full pt-6 md:pt-8">
       {/* Section Hero avec carousel */}
       <section className="w-full px-0 mt-0 pt-0">
-        {isMobile ? <MobileHero /> : <HeroSection />}
+        <HeroSection />
       </section>
 
       {/* Présentation du site supprimée */}
