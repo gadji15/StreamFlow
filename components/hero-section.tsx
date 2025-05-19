@@ -101,7 +101,7 @@ function HeroSection() {
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
-    <section className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[60vw] md:max-h-[540px] flex items-center overflow-hidden">
+    <section className="relative w-full aspect-[16/9] max-h-[60vw] md:max-h-[540px] flex items-center overflow-hidden">
       {/* Image de fond et overlays */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -152,8 +152,8 @@ function HeroSection() {
         relative z-20 flex flex-col
         justify-end
         h-full w-full
-        px-1.5 sm:px-3 md:px-6
-        pb-6 md:pb-10
+        px-2 sm:px-4 md:px-8
+        pb-4 md:pb-10
       ">
         <AnimatePresence initial={false} mode="wait">
           <motion.div
@@ -172,10 +172,10 @@ function HeroSection() {
               mt-4 md:mt-0
             "
           >
-            <h1 className="text-xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
+            <h1 className="text-base sm:text-2xl md:text-4xl font-bold mb-1 text-white drop-shadow-xl leading-snug">
               {currentMovie.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
+            <div className="flex flex-wrap items-center gap-1 text-xs md:text-sm text-white mb-1 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.82)]">
               {currentMovie.year && <span>{currentMovie.year}</span>}
               {(duration || (currentMovie as any).duration) && (
                 <>
@@ -216,10 +216,10 @@ function HeroSection() {
                 </span>
               ))}
             </div>
-            <p className="text-[11px] md:text-sm text-white mb-3 md:mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
+            <p className="text-[10px] sm:text-xs md:text-sm text-white mb-2 md:mb-4 line-clamp-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.73)]">
               {currentMovie.description}
             </p>
-            <div className="flex gap-1.5 md:gap-2">
+            <div className="flex gap-1 md:gap-2">
               <Link href={`/films/${currentMovie.id}`}>
                 <Button
                   size="sm"
