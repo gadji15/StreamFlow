@@ -26,7 +26,6 @@ import { ChevronRight, Film, Tv } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
 import { getPopularSeries, getSeriesByGenre, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import CarouselRail from '@/components/ui/carousel-rail';
 
 type SectionType = 'popular_movies' | 'popular_series' | 'movies_by_genre' | 'series_by_genre' | 'custom';
 
@@ -100,25 +99,27 @@ export function ContentSection({
 
   const renderContent = () => {
     if (children) {
-      // Si ce sont des enfants, on force le scroll horizontal aussi
+      // Affichage classique en ligne unique, sans scroll horizontal
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+        <div className="flex gap-4 flex-nowrap w-full">
           {children}
         </div>
       );
     }
 
     if (loading) {
+      // Skeletons responsives sur une seule ligne
       return (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+        <div className="flex gap-4 flex-nowrap w-full">
           {[...Array(count)].map((_, i) => (
             <div
               key={i}
-              className={`bg-gray-800 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'} animate-pulse`}
+              className={`bg-gray-800 rounded-lg animate-pulse`}
               style={{
-                height: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
-                width: count <= 2 ? 190 : 130,
-                minWidth: count <= 2 ? 160 : 100,
+                width: '100%',
+                minWidth: 100,
+                height: 180,
+                maxWidth: 160,
               }}
             ></div>
           ))}
@@ -136,73 +137,84 @@ export function ContentSection({
 
     const isMovie = type === 'popular_movies' || type === 'movies_by_genre';
 
-    // Ajout d'une enveloppe scrollable autour de CarouselRail
+    // Affichage en une seule ligne, responsive, sans scroll
     return (
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-        <CarouselRail
-          items={items}
-          slidesToShow={count}
-          minSlideWidth={
-            count <= 2 ? 160 : count === 3 ? 140 : count === 4 ? 130 : count === 5 ? 120 : 110
-          }
-          maxSlideWidth={
-            count <= 2 ? 260 : count === 3 ? 200 : count === 4 ? 170 : count === 5 ? 150 : 130
-          }
-          ariaLabel={title}
-          renderItem={(item, idx) => (
-            <Link
-              key={item.id}
-              href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-              className="block bg-gray-800 rounded-lg overflow-hidden transition-transform hover:scale-105 group w-full"
-              style={{
-                minWidth: count <= 2 ? 160 : 100,
-                maxWidth: count <= 2 ? 260 : 130,
-              }}
+      <div
+        className={`
+          w-full
+          [display:grid]
+          gap-3
+          [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
+        `}
+      >
+        {items.slice(0, count).map((item, idx) => (
+          <Link
+            key={item.id}
+            href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
+            className={`
+              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
+              flex flex-col items-center
+              rounded-md
+              sm:rounded-lg md:rounded-xl
+              h-full
+            `}
+          >
+            <div
+              className={`
+                relative aspect-[2/3]
+                w-full
+                h-full
+                flex flex-col items-center
+              `}
             >
-              <div className="relative aspect-[2/3]">
-                <img
-                  src={
-                    (item as Movie | Series).poster ||
-                    (item as any).posterUrl ||
-                    '/placeholder-poster.png'
-                  }
-                  alt={item.title}
-                  className={`w-full h-full object-cover transition-all duration-300 ${count <= 2 ? 'rounded-xl' : 'rounded-lg'}`}
-                  onError={e => {
-                    (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                  }}
-                  loading="lazy"
-                  style={{
-                    maxHeight: count <= 2 ? 320 : count === 3 ? 260 : count === 4 ? 200 : 180,
-                    minHeight: count <= 2 ? 180 : 130,
-                  }}
-                />
-                {'isVIP' in item && item.isVIP && (
-                  <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                    VIP
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {isMovie ? (
-                    <Film className="w-7 h-7 text-white" />
-                  ) : (
-                    <Tv className="w-7 h-7 text-white" />
-                  )}
+              <img
+                src={
+                  (item as Movie | Series).poster ||
+                  (item as any).posterUrl ||
+                  '/placeholder-poster.png'
+                }
+                alt={item.title}
+                className={`
+                  w-full h-full object-cover transition-all duration-300
+                  rounded-md
+                  sm:rounded-lg
+                  md:rounded-xl
+                `}
+                onError={e => {
+                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
+                }}
+                loading="lazy"
+              />
+              {'isVIP' in item && item.isVIP && (
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                  VIP
                 </div>
+              )}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {isMovie ? (
+                  <Film className="w-7 h-7 text-white" />
+                ) : (
+                  <Tv className="w-7 h-7 text-white" />
+                )}
               </div>
-              <div className="p-2">
-                <h3 className={`truncate font-medium ${count <= 2 ? 'text-base' : count === 3 ? 'text-sm' : 'text-xs'}`}>{item.title}</h3>
-                <p className="text-[11px] text-gray-400">
-                  {isMovie
-                    ? (item as Movie).year
-                    : `${(item as Series).startYear ?? ''}${
-                        (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                      }`}
-                </p>
-              </div>
-            </Link>
-          )}
-        />
+            </div>
+            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
+              <h3 className={`
+                truncate font-medium w-full text-center
+                text-xs
+                sm:text-sm
+                md:text-base
+              `}>{item.title}</h3>
+              <p className="text-[11px] text-gray-400 w-full text-center">
+                {isMovie
+                  ? (item as Movie).year
+                  : `${(item as Series).startYear ?? ''}${
+                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
+                    }`}
+              </p>
+            </div>
+          </Link>
+        ))}
       </div>
     );
   };
@@ -228,23 +240,29 @@ export function ContentSection({
                 : "/"
               )
             }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
-            style={{ background: "transparent", padding: 0, border: "none" }}
-            onMouseEnter={e => {
-              e.currentTarget.classList.add('gradient-text');
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.classList.remove('gradient-text');
+            className={`
+              text-sm flex items-center font-medium
+              bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+              bg-clip-text text-transparent
+              underline underline-offset-4
+              transition-all duration-300
+              hover:bg-none hover:text-violet-400 hover:scale-105
+              focus:outline-none
+            `}
+            style={{
+              WebkitTextFillColor: 'transparent',
+              background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              padding: 0,
+              border: "none"
             }}
           >
-            <span className="voir-tout-gradient">
+            <span>
               Voir tout
             </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            <ChevronRight className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         )}
-      </div>
-      {renderContent()}
     </section>
   );
 }
