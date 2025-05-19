@@ -10,7 +10,6 @@ import HeroSection from '@/components/hero-section';
 import ContentSection from '@/components/content-section';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useResponsiveCount } from '@/hooks/useResponsiveCount';
-// Import dynamique du Hero mobile (sans SSR)
 import dynamic from "next/dynamic";
 const MobileHero = dynamic(() => import('@/components/mobile/mobile-hero'), { ssr: false });
 // Ajout hero mobile
