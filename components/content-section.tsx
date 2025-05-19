@@ -32,6 +32,7 @@ type SectionType = 'popular_movies' | 'popular_series' | 'movies_by_genre' | 'se
 
 interface ContentSectionProps {
   title: string;
+  subtitle?: string;
   viewAllLink?: string;
   className?: string;
   children?: React.ReactNode;
@@ -207,34 +208,39 @@ export function ContentSection({
 
   return (
     <section className={`mb-8 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
-        {!hideViewAllButton && (
-          <Link
-            href={
-              viewAllLink ||
-              (
-                type === "popular_movies" ? "/films"
-                : type === "popular_series" ? "/series"
-                : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
-                : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
-                : "/"
-              )
-            }
-            className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
-            style={{ background: "transparent", padding: 0, border: "none" }}
-            onMouseEnter={e => {
-              e.currentTarget.classList.add('gradient-text');
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.classList.remove('gradient-text');
-            }}
-          >
-            <span className="voir-tout-gradient">
-              Voir tout
-            </span>
-            <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
-          </Link>
+      <div className="flex flex-col gap-1 mb-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold">{title}</h2>
+          {!hideViewAllButton && (
+            <Link
+              href={
+                viewAllLink ||
+                (
+                  type === "popular_movies" ? "/films"
+                  : type === "popular_series" ? "/series"
+                  : type === "movies_by_genre" && genreId ? `/films?genre=${genreId}`
+                  : type === "series_by_genre" && genreId ? `/series?genre=${genreId}`
+                  : "/"
+                )
+              }
+              className="text-sm flex items-center underline underline-offset-4 text-fuchsia-400 font-medium transition-colors bg-clip-text"
+              style={{ background: "transparent", padding: 0, border: "none" }}
+              onMouseEnter={e => {
+                e.currentTarget.classList.add('gradient-text');
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.classList.remove('gradient-text');
+              }}
+            >
+              <span className="voir-tout-gradient">
+                Voir tout
+              </span>
+              <ChevronRight className="h-4 w-4 ml-1 voir-tout-gradient" />
+            </Link>
+          )}
+        </div>
+        {subtitle && (
+          <p className="text-gray-400 text-sm mt-1">{subtitle}</p>
         )}
       </div>
       {renderContent()}
