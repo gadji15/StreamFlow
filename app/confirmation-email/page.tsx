@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function ConfirmationEmailPage() {
   const searchParams = useSearchParams();
-  const emailFromUrl = searchParams.get("email") || "";
+  const emailFromUrl = searchParams?.get("email") || "";
   const [email, setEmail] = useState(emailFromUrl);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string>("");
