@@ -412,7 +412,7 @@ export default function AdminAddSeriesPage() {
         } else {
           toast({
             title: 'Erreur',
-            description: insertError.message || "Impossible d'ajouter la série.",
+            description: insertError?.message || "Impossible d'ajouter la série.",
             variant: 'destructive',
           });
         }
