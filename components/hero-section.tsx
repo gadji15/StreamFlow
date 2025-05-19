@@ -101,7 +101,7 @@ function HeroSection() {
   const overlayGradient = 'linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.28) 60%, rgba(10,10,10,0.03) 100%)';
 
   return (
-    <section className="relative w-full aspect-[16/9] max-h-[60vw] sm:max-h-[380px] md:max-h-[540px] flex items-center overflow-hidden">
+    <section className="relative w-full aspect-[16/9] max-h-[60vw] md:max-h-[540px] flex items-center overflow-hidden">
       {/* Image de fond et overlays */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -152,7 +152,7 @@ function HeroSection() {
         relative z-20 flex flex-col
         justify-end
         h-full w-full
-        px-2 sm:px-3 md:px-6
+        px-2 sm:px-4 md:px-8
         pb-4 md:pb-10
       ">
         <AnimatePresence initial={false} mode="wait">
