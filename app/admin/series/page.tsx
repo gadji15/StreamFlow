@@ -484,7 +484,7 @@ export default function AdminSeriesPage() {
         onClose={() => setSeriesModal({ open: false })}
         onSave={handleSeriesModalSave}
         initialData={seriesModal.serie}
-        tmdbSearch={async (query) => {
+        tmdbSearch={async (query: string) => {
           if (!query) return null;
           // Si query est numérique, on tente par ID, sinon par recherche texte
           if (/^\d+$/.test(query.trim())) {
