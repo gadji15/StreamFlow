@@ -7,7 +7,8 @@ export default function SeriesHierarchyTree({
   fetchSeasonsForSeries, 
   fetchEpisodesForSeason, 
   seasonEpisodes = {}, 
-  seasonEpisodesLoading = {}
+  seasonEpisodesLoading = {},
+  setModal
 }) {
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export default function SeriesHierarchyTree({
                 expandedSeason={expandedSeason}
                 setExpandedSeason={setExpandedSeason}
                 refreshSeasons={() => fetchSeasonsForSeries(serie.id)}
+                setModal={setModal}
               />
             </div>
           )}

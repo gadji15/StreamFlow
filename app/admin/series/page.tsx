@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 export default function AdminSeriesPage() {
   const router = useRouter();
   // --- State principal
-  const [series, setSeries] = useState([]);
+  const [series, setSeries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<string[]>([]);
   const [seasonCounts, setSeasonCounts] = useState<{ [seriesId: string]: number }>({});
@@ -74,7 +74,7 @@ export default function AdminSeriesPage() {
       let filteredSeries: any[] = data || [];
       if (genreFilter !== 'all') {
         filteredSeries = filteredSeries.filter((serie: any) =>
-          serie.genre?.split(',').map(g => g.trim().toLowerCase()).includes(genreFilter.toLowerCase())
+          serie.genre?.split(',').map((g: string) => g.trim().toLowerCase()).includes(genreFilter.toLowerCase())
         );
       }
       setSeries(filteredSeries);
@@ -404,7 +404,7 @@ export default function AdminSeriesPage() {
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={allSelected}
-            onAction={async (action, serie) => {
+            onAction={async (action: string, serie) => {
               console.log("[AdminSeriesPage] ACTION:", action, serie && serie.id);
               if (action === "preview") {
                 window.open(`/series/${serie.id}`, "_blank");
