@@ -19,7 +19,7 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
         }`}
         style={{
           objectPosition: "center 35%",
-          filter: "brightness(0.82) contrast(1.07) saturate(1.08)",
+          filter: "brightness(0.94) contrast(1.13) saturate(1.13)",
         }}
         loading="eager"
         aria-hidden="true"
@@ -34,8 +34,8 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
         aria-hidden="true"
         style={{
           background: `
-            linear-gradient(to bottom, rgba(20,20,20,0.92) 0%, rgba(20,20,20,0.6) 13%, rgba(20,20,20,0.0) 35%, rgba(20,20,20,0.0) 66%, rgba(20,20,20,0.76) 100%),
-            radial-gradient(ellipse at center, rgba(0,0,0,0.13) 0%, rgba(0,0,0,0.29) 85%, rgba(0,0,0,0.48) 100%)
+            linear-gradient(to bottom, rgba(20,20,20,0.75) 0%, rgba(20,20,20,0.34) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.58) 100%),
+            radial-gradient(ellipse at center, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.14) 85%, rgba(0,0,0,0.28) 100%)
           `,
           zIndex: 2,
         }}
