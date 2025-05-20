@@ -99,39 +99,21 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Adapté de la logique film : préfixe TMDB si nécessaire (et gère les placeholders)
-function normalizedPosterUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) {
-    if (raw.startsWith("/") && !raw.startsWith("/placeholder")) {
-      return `https://image.tmdb.org/t/p/w500${raw}`;
-    }
-    return raw.trim();
-  }
-  return "/placeholder-poster.jpg";
-}
-function normalizedBackdropUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) {
-    if (raw.startsWith("/") && !raw.startsWith("/placeholder")) {
-      return `https://image.tmdb.org/t/p/original${raw}`;
-    }
-    return raw.trim();
-  }
-  return "/placeholder-backdrop.jpg";
-}
-const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
-const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
+        // --- Mapping images robuste (admin/Supabase : TMDB, local, ou URL) ---
+        function normalizedImgUrl(raw: any, fallback: string, tmdbSize: string = "original") {
+          if (typeof raw !== "string" || raw.trim().length === 0) return fallback;
+          if (raw.startsWith("http")) return raw.trim();
+          if (raw.startsWith("/")) return `https://image.tmdb.org/t/p/${tmdbSize}${raw}`;
+          return raw.trim(); // Cas Supabase storage ou autre
+        }
+        const posterUrl = normalizedImgUrl(fetchedSeries.poster, "/placeholder-poster.jpg", "w500");
+        const backdropUrl = normalizedImgUrl(fetchedSeries.backdrop, "/placeholder-backdrop.jpg", "original");
 
-// (DEV) Log pour débogage
-if (typeof window !== "undefined") {
-  console.log("[TMDB poster url]", posterUrl);
-  console.log("[TMDB backdrop url]", backdropUrl);
-}
-
-setSeries({
-  ...fetchedSeries,
-  posterUrl,
-  backdropUrl,
-});
+        setSeries({
+          ...fetchedSeries,
+          posterUrl,
+          backdropUrl,
+        });
 
         // Fetch episodes
         const { data: fetchedEpisodes, error: episodesError } = await supabase
@@ -278,8 +260,8 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
+      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10 max-w-6xl">
+        <div className="flex flex-col md:flex-row gap-10 items-start">
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
@@ -429,21 +411,50 @@ setSeries({
                 {/* Casting */}
                 <TabsContent value="casting" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdbId ? (
-                    <CastingGrid tmdbId={series.tmdbId} type="tv" fallbackCast={series.cast} />
-                  ) : series.cast && series.cast.length > 0 ? (
-                    <ul className="space-y-3">
-                      {series.cast.map((actor, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="font-medium">{actor.name}</span>
+                  {series.cast && series.cast.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" aria-label="Grille du casting">
+                      {series.cast.map((actor, idx) => (
+                        <div
+                          key={idx}
+                          className="flex flex-col items-center bg-gray-800 rounded-xl p-4 shadow transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+                          tabIndex={0}
+                        >
+                          <img
+                            src={
+                              actor.photoUrl && actor.photoUrl.length > 0
+                                ? (actor.photoUrl.startsWith("http")
+                                    ? actor.photoUrl
+                                    : actor.photoUrl.startsWith("/")
+                                      ? `https://image.tmdb.org/t/p/w185${actor.photoUrl}`
+                                      : actor.photoUrl)
+                                : "/placeholder-avatar.jpg"
+                            }
+                            alt={actor.name}
+                            className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700"
+                            onError={(e) => {
+                              if (!e.currentTarget.src.endsWith("/placeholder-avatar.jpg")) {
+                                e.currentTarget.src = "/placeholder-avatar.jpg";
+                              }
+                            }}
+                          />
+                          <span className="font-medium text-gray-100 text-sm text-center">{actor.name}</span>
                           {actor.role && (
-                            <span className="text-gray-400">{actor.role}</span>
+                            <span className="text-xs text-gray-400 text-center">{actor.role}</span>
                           )}
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   ) : (
-                    <div className="text-gray-400">Aucun casting disponible.</div>
+                    <div className="flex flex-col items-center bg-gray-900/70 rounded-xl px-7 py-6 shadow-inner border border-gray-800 max-w-xs mx-auto">
+                      <img
+                        src="/placeholder-avatar.jpg"
+                        alt="Aucun membre du casting"
+                        className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 opacity-60"
+                        aria-hidden="true"
+                      />
+                      <span className="font-semibold text-gray-300 text-base mb-0.5">Casting indisponible</span>
+                      <span className="text-xs text-gray-400 text-center">Aucun membre du casting n’a été trouvé pour cette œuvre.</span>
+                    </div>
                   )}
                 </TabsContent>
 
