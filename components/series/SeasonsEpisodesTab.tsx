@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import EpisodeCard from "./EpisodeCard";
+import MiniEpisodePoster from "./MiniEpisodePoster";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
