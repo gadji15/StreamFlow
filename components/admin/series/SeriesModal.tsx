@@ -32,10 +32,14 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
+    casting: Array.isArray(initialData.casting) ? initialData.casting : [],
   });
 
   // Nouvel état pour le cast importé depuis TMDB
   const [cast, setCast] = useState([]);
+  // Etat pour la gestion du casting UI (persistant)
+  const [editingActor, setEditingActor] = useState(null); // {index, name, role, image}
+  const [newActor, setNewActor] = useState({ name: "", role: "", image: "" });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearchValue, setTmdbSearchValue] = useState(initialData.title || "");
@@ -87,10 +91,13 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         backdrop: initialData.backdrop || "",
         tmdb_id,
         description: initialData.description || "",
+        casting: Array.isArray(initialData.casting) ? initialData.casting : [],
       };
     });
     setTmdbSearchValue(initialData.title || "");
     setCast([]); // Réinitialise le cast à chaque ouverture ou changement de série
+    setEditingActor(null);
+    setNewActor({ name: "", role: "", image: "" });
     if (initialData.tmdb_id) {
       fetchCast(initialData.tmdb_id);
     }
@@ -212,8 +219,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         backdrop: clean(form.backdrop),
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         description: clean(form.description),
-        // Optionnels
-        // cast: Array.isArray(cast) && cast.length > 0 ? cast : null, // seulement si tu veux stocker le cast
+        casting: Array.isArray(form.casting) ? form.casting : [],
       };
 
       // On retire les champs qui n'existent pas en base (ex: genres, genresInput, etc.)
@@ -601,6 +607,146 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
             </div>
           </div>
         )}
+        {/* Gestion du casting (AJOUT/EDITION/SUPPRESSION) */}
+        <div className="px-3 pt-2 pb-1">
+          <label className="block text-[11px] font-medium text-white/80 mb-1">
+            Casting <span className="text-[10px] text-gray-400">(nom, rôle, image)</span>
+          </label>
+          <div className="space-y-1">
+            {Array.isArray(form.casting) && form.casting.length > 0 ? (
+              <ul className="space-y-1">
+                {form.casting.map((actor, idx) => (
+                  <li key={idx} className="flex items-center gap-2 bg-gray-900/60 rounded px-2 py-1">
+                    {actor.image && (
+                      <img
+                        src={actor.image}
+                        alt={actor.name}
+                        className="w-8 h-8 object-cover rounded-full border border-gray-700"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-semibold text-white/90 text-xs">{actor.name}</div>
+                      <div className="truncate text-[11px] text-gray-400">{actor.role}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-indigo-400 hover:text-indigo-300 text-xs px-1"
+                      onClick={() => setEditingActor({ ...actor, index: idx })}
+                      aria-label="Modifier acteur"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className="text-red-400 hover:text-red-300 text-xs px-1"
+                      onClick={() => {
+                        const next = form.casting.slice();
+                        next.splice(idx, 1);
+                        setForm(f => ({ ...f, casting: next }));
+                      }}
+                      aria-label="Supprimer acteur"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-xs text-gray-400">Aucun acteur ajouté.</div>
+            )}
+          </div>
+          {/* Ajout d'un acteur */}
+          <div className="flex mt-2 gap-1">
+            <input
+              type="text"
+              placeholder="Nom"
+              value={newActor.name}
+              onChange={e => setNewActor(a => ({ ...a, name: e.target.value }))}
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+            />
+            <input
+              type="text"
+              placeholder="Rôle"
+              value={newActor.role}
+              onChange={e => setNewActor(a => ({ ...a, role: e.target.value }))}
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+            />
+            <input
+              type="text"
+              placeholder="URL image"
+              value={newActor.image}
+              onChange={e => setNewActor(a => ({ ...a, image: e.target.value }))}
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+            />
+            <button
+              type="button"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-2 py-1 text-xs"
+              onClick={() => {
+                if (!newActor.name.trim()) return;
+                setForm(f => ({ ...f, casting: [...(f.casting || []), { ...newActor }] }));
+                setNewActor({ name: "", role: "", image: "" });
+              }}
+              aria-label="Ajouter acteur"
+              title="Ajouter"
+            >
+              +
+            </button>
+          </div>
+          {/* Edition d'un acteur */}
+          {editingActor && (
+            <div className="flex mt-2 gap-1 bg-gray-800/80 p-2 rounded border border-indigo-700">
+              <input
+                type="text"
+                placeholder="Nom"
+                value={editingActor.name}
+                onChange={e => setEditingActor(a => ({ ...a, name: e.target.value }))}
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              />
+              <input
+                type="text"
+                placeholder="Rôle"
+                value={editingActor.role}
+                onChange={e => setEditingActor(a => ({ ...a, role: e.target.value }))}
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              />
+              <input
+                type="text"
+                placeholder="URL image"
+                value={editingActor.image}
+                onChange={e => setEditingActor(a => ({ ...a, image: e.target.value }))}
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              />
+              <button
+                type="button"
+                className="bg-green-600 hover:bg-green-700 text-white rounded px-2 py-1 text-xs"
+                onClick={() => {
+                  const next = form.casting.slice();
+                  next[editingActor.index] = {
+                    name: editingActor.name,
+                    role: editingActor.role,
+                    image: editingActor.image,
+                  };
+                  setForm(f => ({ ...f, casting: next }));
+                  setEditingActor(null);
+                }}
+                aria-label="Valider modification"
+                title="Valider"
+              >
+                ✓
+              </button>
+              <button
+                type="button"
+                className="bg-gray-600 hover:bg-gray-700 text-white rounded px-2 py-1 text-xs"
+                onClick={() => setEditingActor(null)}
+                aria-label="Annuler modification"
+                title="Annuler"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Content scrollable */}
         <form
           onSubmit={handleSubmit}
