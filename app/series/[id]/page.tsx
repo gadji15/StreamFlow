@@ -361,12 +361,12 @@ const isMobile = useMobile();
             {/* --- Sticky Tabs Bar --- */}
             <div className="sticky top-0 z-30 bg-background bg-opacity-80 backdrop-blur border-b border-gray-700">
               <Tabs defaultValue="overview">
-                <TabsList className="flex w-full overflow-x-auto border-b border-gray-700">
-                  <TabsTrigger value="overview">Synopsis</TabsTrigger>
-                  <TabsTrigger value="seasons">Saisons</TabsTrigger>
-                  <TabsTrigger value="casting">Casting</TabsTrigger>
-                  <TabsTrigger value="similar">Similaires</TabsTrigger>
-                  <TabsTrigger value="comments">Commentaires</TabsTrigger>
+                <TabsList className="flex w-full flex-nowrap gap-2 overflow-x-auto scrollbar-none border-b border-gray-700">
+                  <TabsTrigger value="overview" className="flex-shrink-0">Synopsis</TabsTrigger>
+                  <TabsTrigger value="seasons" className="flex-shrink-0">Saisons</TabsTrigger>
+                  <TabsTrigger value="casting" className="flex-shrink-0">Casting</TabsTrigger>
+                  <TabsTrigger value="similar" className="flex-shrink-0">Similaires</TabsTrigger>
+                  <TabsTrigger value="comments" className="flex-shrink-0">Commentaires</TabsTrigger>
                 </TabsList>
 
                 {/* --- Synopsis --- */}
