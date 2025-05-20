@@ -103,7 +103,6 @@ export default function SeriesDetailPage() {
         .from("episodes")
         .select("*")
         .eq("series_id", seriesId)
-        .order("season_number")
         .order("episode_number");
       // Log de debug pour vérifier la récupération des épisodes
       console.log("[DEBUG] fetchedEpisodes :", fetchedEpisodes, "error :", episodesError);
