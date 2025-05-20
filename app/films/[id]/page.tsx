@@ -386,7 +386,7 @@ export default function FilmDetailPage() {
         {/* Onglets premium */}
         <div className="mt-12">
           <Tabs defaultValue="overview">
-            <TabsList className="max-w-full flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-none">
+            <TabsList className="w-full flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
               <TabsTrigger value="overview" className="flex-shrink-0">
                 Synopsis
               </TabsTrigger>
