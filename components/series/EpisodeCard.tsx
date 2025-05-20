@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Lock, Check } from 'lucide-react';
+import { Play, Lock, Check, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
 
