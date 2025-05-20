@@ -25,7 +25,7 @@ type Series = {
   end_year?: number | null;
   creator?: string;
   genres: string[];
-  cast?: { name: string; role: string }[];
+  cast?: { name: string; role?: string }[];
   trailer_url?: string;
   is_vip?: boolean;
   published?: boolean;
@@ -34,6 +34,7 @@ type Series = {
   seasons?: number;
   rating?: number;
   views?: number;
+  tmdb_id?: string | number;
 };
 
 type Episode = {
@@ -93,7 +94,23 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        setSeries(seriesData);
+        // Reconstruire les URLs images TMDB si besoin
+        let posterUrl = seriesData.poster_url || "/placeholder-poster.png";
+        if (typeof posterUrl === "string" && posterUrl.startsWith("/") && !posterUrl.startsWith("/placeholder")) {
+          posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
+        }
+        let backdropUrl = seriesData.backdrop_url || "/placeholder-backdrop.png";
+        if (typeof backdropUrl === "string" && backdropUrl.startsWith("/") && !backdropUrl.startsWith("/placeholder")) {
+          backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
+        }
+
+        // Normalisation + enrichissement
+        setSeries({
+          ...seriesData,
+          poster_url: posterUrl,
+          backdrop_url: backdropUrl,
+          tmdb_id: seriesData.tmdb_id || "",
+        });
 
         // VIP : statut utilisateur
         let userIsVIP = false;
@@ -220,7 +237,7 @@ export default function SeriesDetailPage() {
       <section
         className="relative w-full h-[50vh] md:h-[60vh] bg-cover bg-center bg-no-repeat mb-6"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.95)), url(${series.backdrop_url || "/placeholder-backdrop.png"})`,
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.95)), url(${series.backdrop_url})`,
         }}
         aria-label="Image de fond série"
       >
@@ -229,9 +246,10 @@ export default function SeriesDetailPage() {
             {/* Poster */}
             <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl border-4 border-amber-600/30">
               <img
-                src={series.poster_url || "/placeholder-poster.png"}
+                src={series.poster_url}
                 alt={`Affiche de ${series.title}`}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
             {/* Détails */}
@@ -470,10 +488,14 @@ export default function SeriesDetailPage() {
                   </ul>
                 </div>
 
-                {/* Casting */}
-                {series.cast && series.cast.length > 0 && (
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                {/* Casting dynamique TMDB */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                  {series.tmdb_id ? (
+                    <import('components/CastingGrid').then(mod => mod.default) && (
+                      <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
+                    )
+                  ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
                         <li key={index} className="flex justify-between">
@@ -484,8 +506,10 @@ export default function SeriesDetailPage() {
                         </li>
                       ))}
                     </ul>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-gray-400">Aucun casting disponible.</div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>
