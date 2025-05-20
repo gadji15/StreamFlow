@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { useEffect, useState } from "react";
-import { useParams, notFound } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams, notFound, useRouter } from "next/navigation";
 import LoadingScreen from "@/components/loading-screen";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,10 +13,26 @@ import FilmPosterCard from "@/components/FilmPosterCard";
 import FilmInfo from "@/components/FilmInfo";
 import ActionButtons from "@/components/ActionButtons";
 import CastingGrid from "@/components/CastingGrid";
-import { fetchTMDBSimilarMovies } from "@/lib/tmdb";
+import { fetchTMDBSimilarMovies, getTMDBImageUrl } from "@/lib/tmdb";
 import FilmCard from "@/components/FilmCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+function normalizePosterUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (/^https?:\/\//.test(raw)) return raw.trim();
+    return getTMDBImageUrl(raw, "w300");
+  }
+  return "/placeholder-poster.png";
+}
+function normalizeBackdropUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (/^https?:\/\//.test(raw)) return raw.trim();
+    return getTMDBImageUrl(raw, "original");
+  }
+  return "/placeholder-backdrop.jpg";
+}
 
 function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string; tmdbId: string }) {
   const [similarLocal, setSimilarLocal] = useState<any[]>([]);
@@ -40,7 +55,7 @@ function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string
         const { data: localFilms, error } = await supabase
           .from("films")
           .select("*")
-          .neq("id", currentMovieId); // don't include current movie
+          .neq("id", currentMovieId);
 
         if (error || !localFilms) {
           setSimilarLocal([]);
@@ -61,7 +76,6 @@ function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string
       }
     }
     fetchSimilar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tmdbId, currentMovieId]);
 
   if (loading) {
@@ -93,7 +107,7 @@ function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string
           key={film.id}
           title={film.title}
           description={film.description}
-          imageUrl={film.poster || "/placeholder-poster.png"}
+          imageUrl={normalizePosterUrl(film.poster)}
         />
       ))}
     </div>
@@ -111,6 +125,7 @@ export default function FilmDetailPage() {
   const { user } = useCurrentUser();
   const [isVIP, setIsVIP] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (!id) return;
@@ -129,38 +144,24 @@ export default function FilmDetailPage() {
           setError("Film non trouvé.");
           notFound();
         } else {
-          // Mapper snake_case vers camelCase pour l'affichage
-          // Backdrop HD logic (TMDB or custom)
-          let backdropUrl = fetchedMovie.backdrop || "/placeholder-backdrop.jpg";
-          if (
-            typeof backdropUrl === "string" &&
-            backdropUrl.startsWith("/") &&
-            !backdropUrl.startsWith("/placeholder")
-          ) {
-            // TMDB path: use HD
-            backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
-          }
-
           const normalizedMovie = {
             ...fetchedMovie,
-            posterUrl: fetchedMovie.poster || "/placeholder-poster.png",
-            backdropUrl,
+            posterUrl: normalizePosterUrl(fetchedMovie.poster),
+            backdropUrl: normalizeBackdropUrl(fetchedMovie.backdrop),
             trailerUrl: fetchedMovie.trailer_url || "",
             videoUrl: fetchedMovie.video_url || "",
-            // fallback duration for legacy
             duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
             rating: fetchedMovie.vote_average ?? null,
             tmdbId: fetchedMovie.tmdb_id || "",
+            isVIP: fetchedMovie.is_vip,
           };
           setMovie(normalizedMovie);
 
-          // Incrémenter le nombre de vues (côté serveur)
           supabase
             .from("films")
             .update({ views: (fetchedMovie.views || 0) + 1 })
             .eq("id", id);
 
-          // Récupérer le statut VIP de l'utilisateur (si besoin)
           if (user) {
             const { data: profile } = await supabase
               .from("profiles")
@@ -169,7 +170,6 @@ export default function FilmDetailPage() {
               .single();
             setIsVIP(profile?.is_vip || false);
 
-            // Journaliser l'activité
             supabase.from("activities").insert([
               {
                 user_id: user.id,
@@ -182,11 +182,9 @@ export default function FilmDetailPage() {
             ]);
           }
 
-          // Vérifier si le film est dans les favoris
           checkIfFavorite(id);
         }
       } catch (err) {
-        console.error("Erreur de chargement du film:", err);
         setError("Impossible de charger les détails du film.");
       } finally {
         setIsLoading(false);
@@ -196,7 +194,6 @@ export default function FilmDetailPage() {
     fetchMovie();
   }, [id, user]);
 
-  // Vérifier si le film est dans les favoris de l'utilisateur (Supabase)
   const checkIfFavorite = async (movieId: string) => {
     if (user && movieId) {
       const { data, error } = await supabase
@@ -209,7 +206,6 @@ export default function FilmDetailPage() {
     }
   };
 
-  // Ajouter/retirer des favoris dans Supabase
   const toggleFavorite = async () => {
     if (!user) {
       toast({
@@ -222,7 +218,6 @@ export default function FilmDetailPage() {
     if (!movie) return;
 
     if (isFavorite) {
-      // Supprimer le favori
       const { error } = await supabase
         .from("favorites")
         .delete()
@@ -235,7 +230,6 @@ export default function FilmDetailPage() {
           title: "Retiré des favoris",
           description: `"${movie.title}" a été retiré de vos favoris.`,
         });
-        // Historique d'activité
         supabase.from("activities").insert([
           {
             user_id: user.id,
@@ -254,7 +248,6 @@ export default function FilmDetailPage() {
         });
       }
     } else {
-      // Ajouter le favori
       const { error } = await supabase.from("favorites").insert([
         {
           user_id: user.id,
@@ -286,7 +279,6 @@ export default function FilmDetailPage() {
         });
       }
     }
-    // Rafraîchir la vérification pour garder l’UI à jour
     checkIfFavorite(id);
   };
 
@@ -325,7 +317,6 @@ export default function FilmDetailPage() {
     return notFound();
   }
 
-  // Vérifier si l'utilisateur peut voir ce film (VIP)
   const canWatch = !movie.isVIP || isVIP;
 
   return (
@@ -339,7 +330,6 @@ export default function FilmDetailPage() {
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
-            {/* VIP Badge/Card */}
             {movie.isVIP && (
               <div className="mt-4 w-full flex flex-col items-center">
                 <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
@@ -364,7 +354,6 @@ export default function FilmDetailPage() {
             )}
           </div>
 
-          {/* Bloc infos */}
           <div className="flex-1 flex flex-col gap-5">
             <FilmInfo
               title={movie.title}
@@ -384,31 +373,38 @@ export default function FilmDetailPage() {
               onPlay={handlePlay}
             />
 
-            {/* Synopsis court */}
             <p className="text-gray-300 text-base mt-2 mb-3">{movie.description}</p>
-
-            {/* Réalisateur */}
             {movie.director && (
               <p className="mb-3">
                 <span className="font-medium">Réalisateur :</span>{" "}
                 <span className="text-gray-300">{movie.director}</span>
               </p>
             )}
-
-            {/* Casting dynamique déplacé dans l'onglet Synopsis */}
           </div>
         </div>
 
         {/* Onglets premium */}
         <div className="mt-12">
           <Tabs defaultValue="overview">
-            <TabsList className="w-full md:w-auto border-b border-gray-700">
-              <TabsTrigger value="overview">Synopsis</TabsTrigger>
-              <TabsTrigger value="casting">Casting</TabsTrigger>
-              <TabsTrigger value="related">Films similaires</TabsTrigger>
-              <TabsTrigger value="comments">Commentaires</TabsTrigger>
+            <TabsList className="max-w-full flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-none">
+              <TabsTrigger value="overview" className="flex-shrink-0">
+                Synopsis
+              </TabsTrigger>
+              <TabsTrigger value="casting" className="flex-shrink-0">
+                Casting
+              </TabsTrigger>
+              <TabsTrigger value="related" className="flex-shrink-0">
+                Films similaires
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="flex-shrink-0">
+                Commentaires
+              </TabsTrigger>
             </TabsList>
-
+            {/* 
+              Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :
+              .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+              .scrollbar-none::-webkit-scrollbar { display: none; }
+            */}
             <TabsContent value="overview" className="pt-6">
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
