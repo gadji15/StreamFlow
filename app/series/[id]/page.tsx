@@ -74,6 +74,7 @@ function tmdbBackdropUrl(raw: any) {
   if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
   return "/placeholder-backdrop.jpg";
 }
+// On rend ces fonctions accessibles dans tout le composant pour les utiliser dans le render.
 const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
 const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
 
@@ -403,15 +404,8 @@ setSeries({
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {similarSeries.length > 0 ? (
   similarSeries.map((serie) => {
-    // Normalisation de l'image pour chaque carte série similaire (exactement comme pour le film)
-    let posterUrl = serie.poster_url || "/placeholder-poster.jpg";
-    if (
-      typeof posterUrl === "string" &&
-      posterUrl.startsWith("/") &&
-      !posterUrl.startsWith("/placeholder")
-    ) {
-      posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
-    }
+    // Utilise la même normalisation TMDB que pour l'affiche principale
+    const posterUrl = tmdbPosterUrl(serie.poster_url);
     return (
       <SeriesCard
         key={serie.id}
