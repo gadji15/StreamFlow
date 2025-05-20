@@ -84,13 +84,13 @@ export default function SeasonsEpisodesTab({
           {seasonAriaMessage}
         </div>
         {!noSeasons ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-y-6 gap-x-8">
             {seasons.map((season) => (
               <button
                 key={season.id}
                 onClick={() => setSelectedSeasonId(season.id)}
                 className={cn(
-                  "group flex flex-col items-center bg-gray-900/80 rounded-lg p-2 transition-all outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary hover:bg-gray-800",
+                  "group flex flex-col items-center bg-gray-900/80 rounded-lg px-4 py-2 transition-all outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary hover:bg-gray-800",
                   season.id === selectedSeasonId
                     ? "ring-2 ring-primary"
                     : ""
