@@ -4,6 +4,9 @@ import { Layers, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import EpisodeCard from "./EpisodeCard";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
 export default function SeasonsEpisodesTab({
   seasons,
@@ -15,6 +18,14 @@ export default function SeasonsEpisodesTab({
   setSelectedSeasonId,
 }) {
   const router = useRouter();
+  const { user } = useCurrentUser();
+  const {
+    watchedIds,
+    loading: loadingWatched,
+    markWatched,
+    unmarkWatched,
+    isWatched,
+  } = useWatchedEpisodes(id, user?.id);
 
   // UX: aucun saison/épisode
   const noSeasons = !seasons || seasons.length === 0;
@@ -145,101 +156,20 @@ export default function SeasonsEpisodesTab({
               </h3>
               <div className="space-y-4">
                 {seasonEpisodes.map((ep) => (
-                  <div
+                  <EpisodeCard
                     key={ep.id}
-                    className={cn(
-                      "flex items-start gap-4 rounded-xl bg-gray-900/80 border border-gray-800 shadow-sm hover:border-primary transition-all focus-within:ring-2 focus-within:ring-primary/60 outline-none",
-                      expandedEpisodeId === ep.id ? "ring-2 ring-primary/70 bg-gray-900/90" : ""
-                    )}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Accéder à l'épisode ${ep.episode_number} : ${ep.title}`}
-                    onClick={() => router.push(`/series/${id}/watch/${ep.id}`)}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Enter" ||
-                        e.key === " " ||
-                        e.key === "Spacebar"
-                      ) {
-                        router.push(`/series/${id}/watch/${ep.id}`);
-                      }
+                    episode={{
+                      ...ep,
+                      thumbnail_url: ep.poster || ep.thumbnail_url, // compatibilité poster ou thumbnail
                     }}
-                  >
-                    {/* Poster ou miniature de l'épisode */}
-                    {ep.poster || ep.thumbnail_url ? (
-                      <img
-                        src={ep.poster || ep.thumbnail_url}
-                        alt={`Affiche épisode ${ep.episode_number}`}
-                        className="w-28 h-20 object-cover rounded-md border border-gray-700 bg-black flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-28 h-20 flex items-center justify-center bg-gray-800 rounded-md border border-gray-700 flex-shrink-0">
-                        <Play className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0 py-3 pr-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-primary">
-                          Épisode {ep.episode_number}
-                        </span>
-                        {ep.title && (
-                          <span className="text-gray-100 font-medium truncate">
-                            {ep.title}
-                          </span>
-                        )}
-                        {ep.isvip && (
-                          <span className="ml-2 px-2 py-0.5 bg-amber-700/80 text-amber-200 text-xs rounded font-semibold">
-                            VIP
-                          </span>
-                        )}
-                      </div>
-                      {/* Description tronquée + voir plus/moins */}
-                      {ep.description && (
-                        <div className="relative">
-                          <span className={cn(
-                            "block text-gray-400 text-sm",
-                            expandedEpisodeId === ep.id ? "" : "line-clamp-2"
-                          )}>
-                            {ep.description}
-                          </span>
-                          {ep.description.length > 120 && (
-                            <button
-                              type="button"
-                              onClick={e => {
-                                e.stopPropagation();
-                                setExpandedEpisodeId(expandedEpisodeId === ep.id ? null : ep.id);
-                              }}
-                              className="absolute right-0 top-0 text-xs text-primary font-semibold underline bg-gray-900/80 px-1 rounded focus:outline-none"
-                              tabIndex={0}
-                              aria-label={expandedEpisodeId === ep.id ? "Réduire la description" : "Voir plus de description"}
-                            >
-                              {expandedEpisodeId === ep.id ? "Voir moins" : "Voir plus"}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {/* Durée */}
-                      {ep.runtime && (
-                        <div className="text-xs text-gray-400 mt-2">
-                          Durée : {ep.runtime} min
-                        </div>
-                      )}
-                    </div>
-                    {/* Bouton regarder */}
-                    <Button
-                      size="sm"
-                      className="ml-auto mt-4"
-                      variant="default"
-                      onClick={e => {
-                        e.stopPropagation();
-                        router.push(`/series/${id}/watch/${ep.id}`);
-                      }}
-                      aria-label={`Regarder l'épisode ${ep.episode_number}`}
-                    >
-                      <Play className="w-4 h-4 mr-1" />
-                      Regarder
-                    </Button>
-                  </div>
+                    watched={isWatched(ep.id)}
+                    loadingWatched={loadingWatched}
+                    isVIP={isVIP}
+                    user={user}
+                    onMarkWatched={markWatched}
+                    onUnmarkWatched={unmarkWatched}
+                    onWatch={() => router.push(`/series/${id}/watch/${ep.id}`)}
+                  />
                 ))}
               </div>
             </div>
