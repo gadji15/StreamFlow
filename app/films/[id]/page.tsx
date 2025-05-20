@@ -196,16 +196,21 @@ export default function FilmDetailPage() {
     fetchMovie();
   }, [id, user]);
 
-  // Vérifier si le film est dans les favoris de l'utilisateur
+  // Vérifier si le film est dans les favoris de l'utilisateur (Supabase)
   const checkIfFavorite = async (movieId: string) => {
-    if (typeof window !== "undefined" && user) {
-      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-      setIsFavorite(favorites.includes(movieId));
+    if (user && movieId) {
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("film_id", movieId)
+        .maybeSingle();
+      setIsFavorite(!!data && !error);
     }
   };
 
-  // Ajouter/retirer des favoris
-  const toggleFavorite = () => {
+  // Ajouter/retirer des favoris dans Supabase
+  const toggleFavorite = async () => {
     if (!user) {
       toast({
         title: "Connexion requise",
@@ -215,19 +220,22 @@ export default function FilmDetailPage() {
       return;
     }
     if (!movie) return;
-    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
     if (isFavorite) {
-      const updatedFavorites = favorites.filter((fav: string) => fav !== id);
-      localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-      setIsFavorite(false);
+      // Supprimer le favori
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("film_id", id);
 
-      toast({
-        title: "Retiré des favoris",
-        description: `"${movie.title}" a été retiré de vos favoris.`,
-      });
-
-      if (user) {
+      if (!error) {
+        setIsFavorite(false);
+        toast({
+          title: "Retiré des favoris",
+          description: `"${movie.title}" a été retiré de vos favoris.`,
+        });
+        // Historique d'activité
         supabase.from("activities").insert([
           {
             user_id: user.id,
@@ -238,18 +246,28 @@ export default function FilmDetailPage() {
             timestamp: new Date().toISOString(),
           },
         ]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de retirer ce film des favoris.",
+          variant: "destructive",
+        });
       }
     } else {
-      favorites.push(id);
-      localStorage.setItem("favorites", JSON.stringify(favorites));
-      setIsFavorite(true);
-
-      toast({
-        title: "Ajouté aux favoris",
-        description: `"${movie.title}" a été ajouté à vos favoris.`,
-      });
-
-      if (user) {
+      // Ajouter le favori
+      const { error } = await supabase.from("favorites").insert([
+        {
+          user_id: user.id,
+          film_id: id,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (!error) {
+        setIsFavorite(true);
+        toast({
+          title: "Ajouté aux favoris",
+          description: `"${movie.title}" a été ajouté à vos favoris.`,
+        });
         supabase.from("activities").insert([
           {
             user_id: user.id,
@@ -260,8 +278,16 @@ export default function FilmDetailPage() {
             timestamp: new Date().toISOString(),
           },
         ]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter ce film aux favoris.",
+          variant: "destructive",
+        });
       }
     }
+    // Rafraîchir la vérification pour garder l’UI à jour
+    checkIfFavorite(id);
   };
 
   const handleShare = () => {
