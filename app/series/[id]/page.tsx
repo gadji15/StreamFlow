@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import SeasonEpisodeList from '@/components/series/season-episode-list';
 import CastingGrid from "@/components/CastingGrid";
+import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
 import { 
   Dialog,
   DialogContent,
