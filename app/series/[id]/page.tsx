@@ -361,13 +361,28 @@ const isMobile = useMobile();
             {/* --- Sticky Tabs Bar --- */}
             <div className="sticky top-0 z-30 bg-background bg-opacity-80 backdrop-blur border-b border-gray-700">
               <Tabs defaultValue="overview">
-                <TabsList className="flex w-full flex-nowrap gap-2 overflow-x-auto scrollbar-none border-b border-gray-700">
-                  <TabsTrigger value="overview" className="flex-shrink-0">Synopsis</TabsTrigger>
-                  <TabsTrigger value="seasons" className="flex-shrink-0">Saisons</TabsTrigger>
-                  <TabsTrigger value="casting" className="flex-shrink-0">Casting</TabsTrigger>
-                  <TabsTrigger value="similar" className="flex-shrink-0">Similaires</TabsTrigger>
-                  <TabsTrigger value="comments" className="flex-shrink-0">Commentaires</TabsTrigger>
+                <TabsList className="max-w-full flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-none">
+                  <TabsTrigger value="overview" className="flex-shrink-0">
+                    Synopsis
+                  </TabsTrigger>
+                  <TabsTrigger value="seasons" className="flex-shrink-0">
+                    Saisons
+                  </TabsTrigger>
+                  <TabsTrigger value="casting" className="flex-shrink-0">
+                    Casting
+                  </TabsTrigger>
+                  <TabsTrigger value="similar" className="flex-shrink-0">
+                    Similaires
+                  </TabsTrigger>
+                  <TabsTrigger value="comments" className="flex-shrink-0">
+                    Commentaires
+                  </TabsTrigger>
                 </TabsList>
+                {/* 
+                  Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :
+                  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+                  .scrollbar-none::-webkit-scrollbar { display: none; }
+                */}
 
                 {/* --- Synopsis --- */}
                 <TabsContent value="overview" className="pt-6">
