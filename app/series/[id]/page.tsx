@@ -270,7 +270,7 @@ setSeries({
       )}
 
       <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 md:items-start">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
