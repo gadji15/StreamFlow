@@ -11,7 +11,7 @@ export default function SeriesPosterCard({
   alt: string;
 }) {
   return (
-    <div className="relative -mt-24 md:mt-0 w-40 md:w-56 lg:w-64 mx-auto md:mx-0 z-10 drop-shadow-xl">
+    <div className="relative w-40 md:w-56 lg:w-64 mx-auto md:mx-0 z-10 drop-shadow-xl">
       <img
         src={src}
         alt={alt}
