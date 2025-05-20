@@ -41,6 +41,15 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           zIndex: 2,
         }}
       />
+      {/* Strong black overlay for maximum readability at the top */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background: "linear-gradient(to bottom, rgba(10,10,10,0.80) 0%, rgba(10,10,10,0.55) 30%, rgba(10,10,10,0.00) 70%)",
+          zIndex: 3,
+        }}
+      />
       {/* Vignette overlay */}
       <div className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
@@ -49,14 +58,14 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
             linear-gradient(to bottom, rgba(20,20,20,0.64) 0%, rgba(20,20,20,0.22) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.37) 100%),
             radial-gradient(ellipse at center, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.09) 85%, rgba(0,0,0,0.17) 100%)
           `,
-          zIndex: 3,
+          zIndex: 4,
         }}
       />
       {/* Glass blur effect at the bottom for main card */}
       <div
         className="absolute left-0 right-0 bottom-0 h-28 md:h-44 backdrop-blur-xl bg-black/30"
         aria-hidden="true"
-        style={{ zIndex: 3 }}
+        style={{ zIndex: 5 }}
       />
     </div>
   );
