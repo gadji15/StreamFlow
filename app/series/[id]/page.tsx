@@ -399,41 +399,37 @@ export default function SeriesDetailPage() {
               rating={series.vote_average}
             />
 
-            {/* Barre d'onglets (comme sur la page film) */}
-            <div className="mt-8">
-              <Tabs defaultValue="overview">
-                <TabsList className="flex w-full min-w-0 flex-nowrap gap-1 overflow-x-auto scrollbar-hide border-b border-gray-700">
-                  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <BookText className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Synopsis</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <Layers className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Saisons</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <Users className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Casting</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <CopyPlus className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Similaires</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <MessageSquare className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Commentaires</span>
-                  </TabsTrigger>
-                </TabsList>
+            <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
 
-                {/* --- Synopsis --- */}
-                <TabsContent value="overview" className="pt-6">
-                  <div className="mb-4">
-                    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
-                    <p className="text-gray-300 whitespace-pre-line">
-                      {series.description}
-                    </p>
-                  </div>
-                  {series.trailer_url && (
+            {/* Barre d’onglets harmonisée */}
+            <div className="mt-8">
+  <Tabs defaultValue="overview">
+    <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
+                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                    <BookText className="w-5 h-5 inline sm:hidden" />
+                    <span className="hidden sm:inline">Bande-annonce</span>
+                  </TabsTrigger>
+      <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+        <Layers className="w-5 h-5 inline sm:hidden" />
+        <span className="hidden sm:inline">Saisons</span>
+      </TabsTrigger>
+      <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+        <Users className="w-5 h-5 inline sm:hidden" />
+        <span className="hidden sm:inline">Casting</span>
+      </TabsTrigger>
+      <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+        <CopyPlus className="w-5 h-5 inline sm:hidden" />
+        <span className="hidden sm:inline">Séries similaires</span>
+      </TabsTrigger>
+      <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+        <MessageSquare className="w-5 h-5 inline sm:hidden" />
+        <span className="hidden sm:inline">Commentaires</span>
+      </TabsTrigger>
+    </TabsList>
+
+    {/* --- Bande-annonce --- */}
+                <TabsContent value="trailer" className="pt-6">
+                  {series.trailer_url ? (
                     <div>
                       <h2 className="text-base font-semibold mb-2">
                         Bande-annonce
@@ -442,10 +438,7 @@ export default function SeriesDetailPage() {
                         <iframe
                           src={
                             series.trailer_url.includes("youtube.com/watch")
-                              ? series.trailer_url.replace(
-                                  "watch?v=",
-                                  "embed/"
-                                )
+                              ? series.trailer_url.replace("watch?v=", "embed/")
                               : series.trailer_url
                           }
                           title={`Bande-annonce de ${series.title}`}
@@ -454,74 +447,102 @@ export default function SeriesDetailPage() {
                         ></iframe>
                       </div>
                     </div>
+                  ) : (
+                    <div className="text-gray-400">Aucune bande-annonce disponible.</div>
                   )}
                 </TabsContent>
 
-                {/* --- Saisons & Episodes --- */}
-                <TabsContent value="seasons" className="pt-6">
-                  <div
-                    className={cn(
-                      "flex gap-8",
-                      isMobile ? "flex-col" : "flex-row"
-                    )}
-                  >
-                    {/* Sidebar (desktop) / Accordion (mobile) */}
-                    <div className={cn(isMobile ? "w-full" : "w-1/4 min-w-[11rem]")}>
-                      {isMobile
-                        ? renderSeasonsNavMobile()
-                        : renderSeasonsNavDesktop()}
-                    </div>
-                    {/* Episodes */}
-                    <div className="flex-1">
-                      <SeasonEpisodeList
-                        episodes={seasonEpisodes}
-                        seriesId={id as string}
-                        isVIP={isVIP}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
+    {/* --- Saisons & Episodes --- */}
+    <TabsContent value="seasons" className="pt-6">
+      <div
+        className={cn(
+          "flex gap-8",
+          isMobile ? "flex-col" : "flex-row"
+        )}
+      >
+        {/* Sidebar (desktop) / Accordion (mobile) */}
+        <div className={cn(isMobile ? "w-full" : "w-1/4 min-w-[11rem]")}>
+          {isMobile
+            ? renderSeasonsNavMobile()
+            : renderSeasonsNavDesktop()}
+        </div>
+        {/* Episodes */}
+        <div className="flex-1">
+          <SeasonEpisodeList
+            episodes={seasonEpisodes}
+            seriesId={id as string}
+            isVIP={isVIP}
+          />
+        </div>
+      </div>
+    </TabsContent>
 
-                {/* --- Casting --- */}
-                <TabsContent value="casting" className="pt-6">
-                  <h2 className="text-base font-semibold mb-2">Casting</h2>
-                  {series.tmdb_id ? (
-                    <CastingGrid
-                      tmdbId={series.tmdb_id}
-                      type="tv"
-                      fallbackCast={series.cast}
-                    />
-                  ) : series.cast && series.cast.length > 0 ? (
-                    <ul className="space-y-2">
-                      {series.cast.map((actor: any, idx: number) => {
-                        let imgUrl = null;
-                        if (actor.image) {
-                          if (/^https?:\/\//.test(actor.image)) {
-                            imgUrl = actor.image;
-                          } else {
-                            imgUrl = getTMDBImageUrl(actor.image, "w185");
-                          }
-                        } else if (actor.profile_path) {
-                          imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
-                        }
-                        return (
-                          <li key={idx} className="flex items-center gap-3">
-                            {imgUrl && (
-                              <img
-                                src={imgUrl}
-                                alt={actor.name}
-                                className="w-10 h-10 object-cover rounded-full border border-gray-600"
-                                loading="lazy"
-                              />
-                            )}
-                            <div className="flex-1 flex justify-between items-center">
-                              <span className="font-medium text-sm">{actor.name}</span>
-                              {actor.role && (
-                                <span className="text-gray-400 text-xs">
-                                  {actor.role}
-                                </span>
-                              )}
-                            </div>
+    {/* --- Casting --- */}
+    <TabsContent value="casting" className="pt-6">
+      <h2 className="text-base font-semibold mb-2">Casting</h2>
+      {series.tmdb_id ? (
+        <CastingGrid
+          tmdbId={series.tmdb_id}
+          type="tv"
+          fallbackCast={series.cast}
+        />
+      ) : series.cast && series.cast.length > 0 ? (
+        <ul className="space-y-2">
+          {series.cast.map((actor: any, idx: number) => {
+            let imgUrl = null;
+            if (actor.image) {
+              if (/^https?:\/\//.test(actor.image)) {
+                imgUrl = actor.image;
+              } else {
+                imgUrl = getTMDBImageUrl(actor.image, "w185");
+              }
+            } else if (actor.profile_path) {
+              imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
+            }
+            return (
+              <li key={idx} className="flex items-center gap-3">
+                {imgUrl && (
+                  <img
+                    src={imgUrl}
+                    alt={actor.name}
+                    className="w-10 h-10 object-cover rounded-full border border-gray-600"
+                    loading="lazy"
+                  />
+                )}
+                <div className="flex-1 flex justify-between items-center">
+                  <span className="font-medium text-sm">{actor.name}</span>
+                  {actor.role && (
+                    <span className="text-gray-400 text-xs">
+                      {actor.role}
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="text-gray-400">
+          Aucun casting disponible.
+        </div>
+      )}
+    </TabsContent>
+
+    {/* --- Séries similaires (onglet harmonisé) --- */}
+    <TabsContent value="related" className="pt-6">
+      <h2 className="text-base font-semibold mb-2">
+        Séries similaires
+      </h2>
+      <SimilarSeriesGrid tmdbId={series.tmdb_id} />
+    </TabsContent>
+
+    {/* --- Commentaires --- */}
+    <TabsContent value="comments" className="pt-6">
+      <h2 className="text-base font-semibold mb-2">Commentaires</h2>
+      <CommentsSection contentId={id as string} contentType="series" />
+    </TabsContent>
+  </Tabs>
+</div>
                           </li>
                         );
                       })}
