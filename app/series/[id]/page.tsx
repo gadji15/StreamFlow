@@ -14,6 +14,7 @@ import SeasonEpisodeList from "@/components/series/season-episode-list";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFavoriteSeries } from "@/hooks/useFavoriteSeries";
 import Head from "next/head";
+import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
 // Typage strict
 type Series = {
@@ -67,6 +68,28 @@ export default function SeriesDetailPage() {
 
   // Hook favoris via Supabase
   const { isFavorite, loading: loadingFavorite, toggleFavorite } = useFavoriteSeries(id, user?.id);
+
+  // Gestion progression épisodes vus
+  const {
+    watchedIds,
+    loading: loadingWatched,
+    markWatched,
+    unmarkWatched,
+    isWatched,
+  } = useWatchedEpisodes(id, user?.id);
+
+  // Détection offline
+  const [isOffline, setIsOffline] = useState(false);
+  useEffect(() => {
+    const handle = () => setIsOffline(!navigator.onLine);
+    window.addEventListener("online", handle);
+    window.addEventListener("offline", handle);
+    handle();
+    return () => {
+      window.removeEventListener("online", handle);
+      window.removeEventListener("offline", handle);
+    };
+  }, []);
 
   // Chargement de la série et de ses épisodes
   useEffect(() => {
@@ -208,6 +231,15 @@ export default function SeriesDetailPage() {
     );
   }
 
+  if (isOffline) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <div className="text-2xl mb-4">🚫 Mode hors connexion</div>
+        <p className="text-gray-400">Certaines fonctionnalités (favoris, progression, lecture) sont désactivées jusqu'à rétablissement de la connexion.</p>
+      </div>
+    );
+  }
+
   // Erreur
   if (error || !series) {
     return (
@@ -231,6 +263,12 @@ export default function SeriesDetailPage() {
       <Head>
         <title>{series.title} | Détail Série</title>
         <meta name="description" content={series.description?.slice(0, 150)} />
+        <meta property="og:title" content={series.title} />
+        <meta property="og:description" content={series.description?.slice(0, 150)} />
+        {series.poster_url && <meta property="og:image" content={series.poster_url} />}
+        {series.backdrop_url && <meta property="twitter:image" content={series.backdrop_url} />}
+        <meta property="og:type" content="video.tv_show" />
+        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
       </Head>
 
       {/* Header visuel */}
@@ -380,9 +418,17 @@ export default function SeriesDetailPage() {
           <TabsContent value="episodes" className="space-y-6">
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  Saison {selectedSeason}
-                </h2>
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Saison {selectedSeason}
+                  </h2>
+                  {/* Progression affichée ici aussi */}
+                  {user && seasonEpisodes.length > 0 && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      {seasonEpisodes.filter(ep => isWatched(ep.id)).length}/{seasonEpisodes.length} épisode{seasonEpisodes.length > 1 ? "s" : ""} vu{seasonEpisodes.length > 1 ? "s" : ""}
+                    </div>
+                  )}
+                </div>
                 <div className="relative">
                   <select
                     value={selectedSeason}
