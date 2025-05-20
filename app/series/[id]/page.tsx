@@ -395,19 +395,30 @@ setSeries({
                   <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {similarSeries.length > 0 ? (
-                      similarSeries.map((serie) => (
-                        <SeriesCard
-                          key={serie.id}
-                          title={serie.title}
-                          description={serie.description}
-                          imageUrl={serie.poster_url || "/placeholder-poster.png"}
-                        />
-                      ))
-                    ) : (
-                      <div className="text-gray-400 col-span-6 text-center">
-                        Aucune série similaire trouvée.
-                      </div>
-                    )}
+  similarSeries.map((serie) => {
+    // Normalisation de l'image pour chaque carte série similaire (exactement comme pour le film)
+    let posterUrl = serie.poster_url || "/placeholder-poster.png";
+    if (
+      typeof posterUrl === "string" &&
+      posterUrl.startsWith("/") &&
+      !posterUrl.startsWith("/placeholder")
+    ) {
+      posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
+    }
+    return (
+      <SeriesCard
+        key={serie.id}
+        title={serie.title}
+        description={serie.description}
+        imageUrl={posterUrl}
+      />
+    );
+  })
+) : (
+  <div className="text-gray-400 col-span-6 text-center">
+    Aucune série similaire trouvée.
+  </div>
+)}
                   </div>
                 </TabsContent>
 
