@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -65,102 +65,159 @@ export default function SeriesDetailPage() {
   const [isVIP, setIsVIP] = useState(false);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
 
+  // Pour éviter le refetch infini dans le realtime
+  const isInitialMount = useRef(true);
+
   // --- DATA FETCHING ---
+  // Fonction factorisée pour fetch toutes les données de la série
+  async function fetchAllSeriesData(seriesId: string, userId: string | null) {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Series details
+      const { data: fetchedSeries, error: seriesError } = await supabase
+        .from("series")
+        .select("*")
+        .eq("id", seriesId)
+        .single();
+
+      if (seriesError || !fetchedSeries) {
+        setError("Série non trouvée.");
+        setIsLoading(false);
+        return;
+      }
+
+      // All seasons for the series (ordered)
+      const { data: fetchedSeasons } = await supabase
+        .from("seasons")
+        .select("*")
+        .eq("series_id", seriesId)
+        .order("number", { ascending: true });
+
+      // All episodes for the series (ordered)
+      const { data: fetchedEpisodes } = await supabase
+        .from("episodes")
+        .select("*")
+        .eq("series_id", seriesId)
+        .order("season")
+        .order("episode_number");
+
+      // Map poster/backdrop/cast from admin
+      function normalizedPosterUrl(raw: any) {
+        if (typeof raw === "string" && raw.trim().length > 0) {
+          if (/^https?:\/\//.test(raw)) return raw.trim();
+          return getTMDBImageUrl(raw, "w300");
+        }
+        return "/placeholder-poster.jpg";
+      }
+      function normalizedBackdropUrl(raw: any) {
+        if (typeof raw === "string" && raw.trim().length > 0) {
+          if (/^https?:\/\//.test(raw)) return raw.trim();
+          return getTMDBImageUrl(raw, "original");
+        }
+        return "/placeholder-backdrop.jpg";
+      }
+
+      setSeries({
+        ...fetchedSeries,
+        posterUrl: normalizedPosterUrl(fetchedSeries.poster),
+        backdropUrl: normalizedBackdropUrl(fetchedSeries.backdrop),
+      });
+      setSeasons(fetchedSeasons || []);
+      setEpisodes(fetchedEpisodes || []);
+
+      // Set default selected season (last one)
+      if (fetchedSeasons && fetchedSeasons.length > 0) {
+        setSelectedSeasonId((prev) =>
+          prev && fetchedSeasons.find((s) => s.id === prev)
+            ? prev
+            : fetchedSeasons[fetchedSeasons.length - 1].id
+        );
+      } else {
+        setSelectedSeasonId(null);
+      }
+
+      // VIP logic (user profile)
+      if (userId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_vip")
+          .eq("id", userId)
+          .single();
+        setIsVIP(profile?.is_vip || false);
+      } else {
+        setIsVIP(false);
+      }
+
+      // Check favorite
+      if (userId) {
+        const { data } = await supabase
+          .from("favorites")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("series_id", seriesId)
+          .maybeSingle();
+        setIsFavorite(!!data);
+      }
+    } catch (err) {
+      setError("Impossible de charger les détails de la série.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Initial fetch + refresh on id/user
   useEffect(() => {
     if (!id) return;
-    setIsLoading(true);
-    setError(null);
+    fetchAllSeriesData(id as string, user?.id || null);
+    isInitialMount.current = false;
+    // eslint-disable-next-line
+  }, [id, user]);
 
-    async function fetchData() {
-      try {
-        // Get series details
-        const { data: fetchedSeries, error: seriesError } = await supabase
-          .from("series")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (seriesError || !fetchedSeries) {
-          setError("Série non trouvée.");
-          setIsLoading(false);
-          return;
+  // --- REALTIME : écoute dynamique des ajouts/suppressions/modifications de saisons/épisodes ---
+  useEffect(() => {
+    if (!id) return;
+    // S'abonner aux changements sur seasons
+    const seasonsSub = supabase
+      .channel("public:seasons")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "seasons",
+          filter: `series_id=eq.${id}`,
+        },
+        (payload) => {
+          // Refetch à chaque modification/ajout/suppression
+          if (!isInitialMount.current) fetchAllSeriesData(id as string, user?.id || null);
         }
+      )
+      .subscribe();
 
-        // Get all seasons for the series (ordered)
-        const { data: fetchedSeasons } = await supabase
-          .from("seasons")
-          .select("*")
-          .eq("series_id", id)
-          .order("number", { ascending: true });
-
-        // Get all episodes for the series (ordered)
-        const { data: fetchedEpisodes } = await supabase
-          .from("episodes")
-          .select("*")
-          .eq("series_id", id)
-          .order("season")
-          .order("episode_number");
-
-        // Map poster/backdrop/cast from admin
-        function normalizedPosterUrl(raw: any) {
-          if (typeof raw === "string" && raw.trim().length > 0) {
-            if (/^https?:\/\//.test(raw)) return raw.trim();
-            return getTMDBImageUrl(raw, "w300");
-          }
-          return "/placeholder-poster.jpg";
+    // S'abonner aux changements sur episodes
+    const episodesSub = supabase
+      .channel("public:episodes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "episodes",
+          filter: `series_id=eq.${id}`,
+        },
+        (payload) => {
+          if (!isInitialMount.current) fetchAllSeriesData(id as string, user?.id || null);
         }
-        function normalizedBackdropUrl(raw: any) {
-          if (typeof raw === "string" && raw.trim().length > 0) {
-            if (/^https?:\/\//.test(raw)) return raw.trim();
-            return getTMDBImageUrl(raw, "original");
-          }
-          return "/placeholder-backdrop.jpg";
-        }
+      )
+      .subscribe();
 
-        setSeries({
-          ...fetchedSeries,
-          posterUrl: normalizedPosterUrl(fetchedSeries.poster),
-          backdropUrl: normalizedBackdropUrl(fetchedSeries.backdrop),
-        });
-        setSeasons(fetchedSeasons || []);
-        setEpisodes(fetchedEpisodes || []);
-
-        // Set default selected season (last one)
-        if (fetchedSeasons && fetchedSeasons.length > 0) {
-          setSelectedSeasonId(fetchedSeasons[fetchedSeasons.length - 1].id);
-        } else {
-          setSelectedSeasonId(null);
-        }
-
-        // VIP logic (user profile)
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_vip")
-            .eq("id", user.id)
-            .single();
-          setIsVIP(profile?.is_vip || false);
-        } else {
-          setIsVIP(false);
-        }
-
-        // Check favorite
-        if (user) {
-          const { data } = await supabase
-            .from("favorites")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("series_id", id)
-            .maybeSingle();
-          setIsFavorite(!!data);
-        }
-      } catch (err) {
-        setError("Impossible de charger les détails de la série.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
+    return () => {
+      supabase.removeChannel(seasonsSub);
+      supabase.removeChannel(episodesSub);
+    };
+    // eslint-disable-next-line
   }, [id, user]);
 
   // --- EVENT HANDLERS ---
@@ -306,6 +363,9 @@ export default function SeriesDetailPage() {
       </div>
     );
   }
+  // UX: aucun saison/épisode
+  const noSeasons = !seasons || seasons.length === 0;
+  const noEpisodes = !seasonEpisodes || seasonEpisodes.length === 0;
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -467,17 +527,31 @@ export default function SeriesDetailPage() {
                   >
                     {/* Sidebar (desktop) / Accordion (mobile) */}
                     <div className={cn(isMobile ? "w-full" : "w-1/4 min-w-[11rem]")}>
-                      {isMobile
-                        ? renderSeasonsNavMobile()
-                        : renderSeasonsNavDesktop()}
+                      {!noSeasons ? (
+                        isMobile
+                          ? renderSeasonsNavMobile()
+                          : renderSeasonsNavDesktop()
+                      ) : (
+                        <div className="text-gray-400 italic p-4">
+                          Aucune saison disponible pour cette série.
+                        </div>
+                      )}
                     </div>
                     {/* Episodes */}
                     <div className="flex-1">
-                      <SeasonEpisodeList
-                        episodes={seasonEpisodes}
-                        seriesId={id as string}
-                        isVIP={isVIP}
-                      />
+                      {!noSeasons ? (
+                        !noEpisodes ? (
+                          <SeasonEpisodeList
+                            episodes={seasonEpisodes}
+                            seriesId={id as string}
+                            isVIP={isVIP}
+                          />
+                        ) : (
+                          <div className="text-gray-400 italic p-4">
+                            Aucun épisode disponible pour cette saison.
+                          </div>
+                        )
+                      ) : null}
                     </div>
                   </div>
                 </TabsContent>
