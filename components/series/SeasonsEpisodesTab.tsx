@@ -138,6 +138,12 @@ export default function SeasonsEpisodesTab({
           </div>
         )}
       </div>
+
+      {/* Séparateur professionnel */}
+      {!isMobile && (
+        <div className="w-px mx-1 bg-gradient-to-b from-transparent via-gray-700/60 to-transparent rounded-full shadow-lg self-stretch" />
+      )}
+
       {/* Episodes */}
       <div className="flex-1">
         {noSeasons ? null : (
@@ -162,6 +168,7 @@ export default function SeasonsEpisodesTab({
                     posterUrl={ep.poster || ep.thumbnail_url || "/placeholder-poster.jpg"}
                     number={ep.episode_number}
                     title={ep.title}
+                    onClick={() => router.push(`/series/${id}/watch/${ep.id}`)}
                   />
                 ))}
               </div>
