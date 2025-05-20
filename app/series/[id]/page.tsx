@@ -462,6 +462,7 @@ export default function SeriesDetailPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="episodes">Épisodes</TabsTrigger>
             <TabsTrigger value="details">Détails</TabsTrigger>
+            <TabsTrigger value="similar">Séries similaires</TabsTrigger>
             <TabsTrigger value="comments">Commentaires</TabsTrigger>
           </TabsList>
           
@@ -580,6 +581,18 @@ export default function SeriesDetailPage() {
             </div>
           </TabsContent>
           
+          <TabsContent value="similar">
+            {/* Séries similaires */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
+              {series.tmdb_id ? (
+                <SimilarSeriesGrid currentSeriesId={id} tmdbId={series.tmdb_id.toString()} />
+              ) : (
+                <div className="text-gray-400">Aucune suggestion disponible.</div>
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="comments">
             {/* Commentaires */}
             <div className="bg-gray-800 rounded-lg p-6">
