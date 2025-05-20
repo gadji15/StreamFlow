@@ -5,7 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   Sidebar,
   SidebarMenu,
@@ -399,13 +404,15 @@ export default function SeriesDetailPage() {
               rating={series.vote_average}
             />
 
-            {/* Barre d'onglets (comme sur la page film) */}
+            <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
+
+            {/* Barre d’onglets harmonisée */}
             <div className="mt-8">
-              <Tabs defaultValue="overview">
-                <TabsList className="flex w-full min-w-0 flex-nowrap gap-1 overflow-x-auto scrollbar-hide border-b border-gray-700">
-                  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+              <Tabs defaultValue="trailer">
+                <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
+                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <BookText className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Synopsis</span>
+                    <span className="hidden sm:inline">Bande-annonce</span>
                   </TabsTrigger>
                   <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <Layers className="w-5 h-5 inline sm:hidden" />
@@ -415,9 +422,9 @@ export default function SeriesDetailPage() {
                     <Users className="w-5 h-5 inline sm:hidden" />
                     <span className="hidden sm:inline">Casting</span>
                   </TabsTrigger>
-                  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                  <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <CopyPlus className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Similaires</span>
+                    <span className="hidden sm:inline">Séries similaires</span>
                   </TabsTrigger>
                   <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <MessageSquare className="w-5 h-5 inline sm:hidden" />
@@ -425,15 +432,9 @@ export default function SeriesDetailPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                {/* --- Synopsis --- */}
-                <TabsContent value="overview" className="pt-6">
-                  <div className="mb-4">
-                    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
-                    <p className="text-gray-300 whitespace-pre-line">
-                      {series.description}
-                    </p>
-                  </div>
-                  {series.trailer_url && (
+                {/* --- Bande-annonce --- */}
+                <TabsContent value="trailer" className="pt-6">
+                  {series.trailer_url ? (
                     <div>
                       <h2 className="text-base font-semibold mb-2">
                         Bande-annonce
@@ -442,10 +443,7 @@ export default function SeriesDetailPage() {
                         <iframe
                           src={
                             series.trailer_url.includes("youtube.com/watch")
-                              ? series.trailer_url.replace(
-                                  "watch?v=",
-                                  "embed/"
-                                )
+                              ? series.trailer_url.replace("watch?v=", "embed/")
                               : series.trailer_url
                           }
                           title={`Bande-annonce de ${series.title}`}
@@ -454,6 +452,8 @@ export default function SeriesDetailPage() {
                         ></iframe>
                       </div>
                     </div>
+                  ) : (
+                    <div className="text-gray-400">Aucune bande-annonce disponible.</div>
                   )}
                 </TabsContent>
 
@@ -533,8 +533,8 @@ export default function SeriesDetailPage() {
                   )}
                 </TabsContent>
 
-                {/* --- Similaires --- */}
-                <TabsContent value="similar" className="pt-6">
+                {/* --- Séries similaires --- */}
+                <TabsContent value="related" className="pt-6">
                   <h2 className="text-base font-semibold mb-2">
                     Séries similaires
                   </h2>
