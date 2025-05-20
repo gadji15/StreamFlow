@@ -16,7 +16,7 @@ import { useFavoriteSeries } from "@/hooks/useFavoriteSeries";
 // import Head from "next/head"; // ❌ À retirer : Next.js App Router ne supporte pas Head dans un composant "use client"
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 import dynamic from "next/dynamic";
-const CastingGrid = dynamic(() => import("components/CastingGrid"), { ssr: false });
+const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
 
 // Typage strict
 type Series = {
