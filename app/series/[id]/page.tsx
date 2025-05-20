@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useFavoriteSeries } from "@/hooks/useFavoriteSeries";
 // import Head from "next/head"; // ❌ À retirer : Next.js App Router ne supporte pas Head dans un composant "use client"
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
+import dynamic from "next/dynamic";
+const CastingGrid = dynamic(() => import("components/CastingGrid"), { ssr: false });
 
 // Typage strict
 type Series = {
@@ -533,9 +535,7 @@ export default function SeriesDetailPage() {
                 <div className="bg-gray-800 rounded-lg p-6">
                   <h2 className="text-xl font-semibold mb-4">Casting</h2>
                   {series.tmdb_id ? (
-                    <import('components/CastingGrid').then(mod => mod.default) && (
-                      <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
-                    )
+                    <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
                   ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
