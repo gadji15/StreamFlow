@@ -81,7 +81,10 @@ export default function CastingGrid({
             alt={person.name}
             className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 transition-transform duration-200 hover:scale-110"
             onError={(e) => {
-              e.currentTarget.src = "/placeholder-avatar.png";
+              // Empêche le fallback de reboucler
+              if (!e.currentTarget.src.endsWith("/placeholder-avatar.jpg")) {
+                e.currentTarget.src = "/placeholder-avatar.jpg";
+              }
             }}
             style={{
               boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
