@@ -127,6 +127,8 @@ export default function SeriesDetailPage() {
         posterUrl: normalizedPosterUrl(fetchedSeries.poster),
         backdropUrl: normalizedBackdropUrl(fetchedSeries.backdrop),
       });
+      // Debug log pour verifier les saisons fetchées
+      console.log("[DEBUG] Saisons fetchées depuis Supabase :", fetchedSeasons);
       setSeasons(fetchedSeasons || []);
       setEpisodes(fetchedEpisodes || []);
 
@@ -355,6 +357,10 @@ export default function SeriesDetailPage() {
   );
 
   // --- RENDER ---
+  // Debug log pour verifier la saison sélectionnée et la liste de saisons
+  console.log("[DEBUG] selectedSeasonId :", selectedSeasonId);
+  console.log("[DEBUG] tableau seasons :", seasons);
+
   if (isLoading) return <LoadingScreen />;
   if (error || !series) {
     return (
