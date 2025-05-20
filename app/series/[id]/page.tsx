@@ -159,8 +159,9 @@ setSeries({
           setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
         }
 
+        // Plus de setSimilarSeries ici : la grille des séries similaires TMDB est désormais découplée.
         // TODO: Fetch similar series logic (TMDB/local), placeholder for now
-        setSimilarSeries([]);
+        // setSimilarSeries([]);
 
         // Check favorite
         if (user) {
