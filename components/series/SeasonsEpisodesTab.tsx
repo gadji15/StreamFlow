@@ -130,11 +130,7 @@ export default function SeasonsEpisodesTab({
       {/* Episodes */}
       <div className="flex-1">
         {!noSeasons ? (
-          !noEpisodes ? (
-            <div className="text-gray-400 italic p-4 rounded-lg bg-gray-900/60 border border-gray-800 shadow-inner" role="status">
-              Aucun épisode disponible pour cette saison.
-            </div>
-          ) : (
+          seasonEpisodes.length > 0 ? (
             <div>
               <h3
                 className="text-lg font-semibold mb-3 text-gray-200 flex items-center gap-2"
