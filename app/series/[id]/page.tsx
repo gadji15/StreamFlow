@@ -368,11 +368,15 @@ export default function SeriesDetailPage() {
         <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8 relative z-10">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Poster */}
-            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl">
+            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl bg-gray-900/30">
               <img 
                 src={series.poster_url || '/placeholder-poster.png'} 
-                alt={series.title} 
+                alt={series.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder-poster.png";
+                }}
+                draggable={false}
               />
             </div>
             {/* Détails */}
