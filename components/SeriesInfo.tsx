@@ -2,8 +2,26 @@ import React from "react";
 import { Calendar, Film, Star } from "lucide-react";
 
 /**
- * Affiche les infos principales d'une série : titre, années, saisons, genres, note.
+ * Affiche les informations principales d'une série.
+ * Accessible, personnalisable, et robuste.
  */
+type SeriesInfoProps = {
+  title: string;
+  startYear?: number | string;
+  endYear?: number | string | null;
+  seasons?: number;
+  genres?: string[] | string;
+  rating?: number | null;
+  showTitle?: boolean;
+  showYears?: boolean;
+  showSeasons?: boolean;
+  showGenres?: boolean;
+  showRating?: boolean;
+  // Customisation avancée
+  genreBadgeClassName?: string;
+  ratingColorClassName?: string;
+};
+
 export default function SeriesInfo({
   title,
   startYear,
@@ -11,49 +29,69 @@ export default function SeriesInfo({
   seasons,
   genres,
   rating,
-}: {
-  title: string;
-  startYear?: number | string;
-  endYear?: number | string | null;
-  seasons?: number;
-  genres?: string[] | string;
-  rating?: number | null;
-}) {
+  showTitle = true,
+  showYears = true,
+  showSeasons = true,
+  showGenres = true,
+  showRating = true,
+  genreBadgeClassName = "px-3 py-1 bg-gray-700 text-xs rounded-full",
+  ratingColorClassName = "font-bold text-yellow-400 drop-shadow",
+}: SeriesInfoProps) {
+  // Nettoie et normalise le tableau des genres
+  let genreList: string[] = [];
+  if (showGenres && genres) {
+    if (Array.isArray(genres)) {
+      genreList = genres.map((g) => g.trim()).filter(Boolean);
+    } else {
+      genreList = genres.split(",").map((g) => g.trim()).filter(Boolean);
+    }
+  }
+
   return (
-    <>
-      <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white drop-shadow">{title}</h1>
-      <div className="flex flex-wrap items-center space-x-4 text-white drop-shadow font-semibold mb-3">
-        {startYear && (
-          <span className="flex items-center">
-            <Calendar className="mr-1 h-4 w-4" /> 
-            {startYear}{endYear ? ` - ${endYear}` : ' - Présent'}
+    <section aria-label="Informations principales sur la série" className="mb-3">
+      {showTitle && (
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white drop-shadow" tabIndex={0}>
+          {title}
+        </h1>
+      )}
+      <div
+        className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white drop-shadow font-semibold mb-3"
+        aria-label="Détails principaux"
+      >
+        {showYears && startYear && (
+          <span className="flex items-center" aria-label={`Années de diffusion : ${startYear}${endYear ? ` - ${endYear}` : " - Présent"}`}>
+            <Calendar className="mr-1 h-4 w-4" aria-hidden="true" />
+            {startYear}
+            {endYear ? ` - ${endYear}` : " - Présent"}
           </span>
         )}
-        {seasons && (
-          <span className="flex items-center">
-            <Film className="mr-1 h-4 w-4" /> 
+        {showSeasons && seasons !== undefined && seasons !== null && (
+          <span className="flex items-center" aria-label={`${seasons} saison${seasons > 1 ? "s" : ""}`}>
+            <Film className="mr-1 h-4 w-4" aria-hidden="true" />
             {seasons} Saison{seasons > 1 ? "s" : ""}
           </span>
         )}
-        {rating && (
-          <span className="flex items-center font-bold text-yellow-400 drop-shadow">
-            <Star className="mr-1 h-4 w-4 text-yellow-400" /> 
+        {showRating && rating !== undefined && rating !== null && (
+          <span className={`flex items-center ${ratingColorClassName}`} aria-label={`Note : ${rating.toFixed(1)}/10`}>
+            <Star className="mr-1 h-4 w-4 text-yellow-400" aria-hidden="true" />
             {rating.toFixed(1)}/10
           </span>
         )}
       </div>
-      {genres && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(Array.isArray(genres) ? genres : genres.split(",")).map((genre) => (
+      {showGenres && genreList.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4" aria-label="Genres">
+          {genreList.map((genre) => (
             <span
-              key={genre.trim()}
-              className="px-3 py-1 bg-gray-700 text-xs rounded-full"
+              key={genre}
+              className={genreBadgeClassName}
+              tabIndex={0}
+              aria-label={`Genre : ${genre}`}
             >
-              {genre.trim()}
+              {genre}
             </span>
           ))}
         </div>
       )}
-    </>
+    </section>
   );
 }
