@@ -23,6 +23,47 @@ import SeriesCard from "@/components/SeriesCard";
 
 const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
 
+import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
+
+function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
+  const [similar, setSimilar] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tmdbId) {
+      setSimilar([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchTMDBSimilarSeries(tmdbId)
+      .then((results) => setSimilar(results || []))
+      .catch(() => setSimilar([]))
+      .finally(() => setLoading(false));
+  }, [tmdbId]);
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {loading
+        ? Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-64 bg-gray-800 rounded-xl animate-pulse" aria-hidden="true"></div>
+          ))
+        : similar.length > 0 ? (
+            similar.map((serie) => (
+              <SeriesCard
+                key={serie.id}
+                title={serie.title}
+                description={serie.overview}
+                imageUrl={tmdbPosterUrl(serie.poster_path)}
+              />
+            ))
+          ) : (
+            <div className="text-gray-400 col-span-6 text-center">Aucune série similaire trouvée.</div>
+          )}
+    </div>
+  );
+}
+
 export default function SeriesDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -36,7 +77,7 @@ export default function SeriesDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isVIP, setIsVIP] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  const [similarSeries, setSimilarSeries] = useState<any[]>([]);
+  // On retire similarSeries du state local, il est géré par SimilarSeriesGrid
 
   useEffect(() => {
     if (!id) return;
@@ -59,23 +100,17 @@ export default function SeriesDetailPage() {
         }
 
         // Normalization (robuste, inspiré de la page film)
-// -- Normalisation TMDB ultra-robuste --
-function tmdbPosterUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-poster.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/w500${val}`;
+// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
+function normalizedPosterUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-poster.jpg";
 }
-function tmdbBackdropUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
+function normalizedBackdropUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-backdrop.jpg";
 }
-const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
-const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
+const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
+const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
 
 // (DEV) Log pour débogage
 if (typeof window !== "undefined") {
@@ -117,8 +152,9 @@ setSeries({
           setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
         }
 
+        // Plus de setSimilarSeries ici : la grille des séries similaires TMDB est désormais découplée.
         // TODO: Fetch similar series logic (TMDB/local), placeholder for now
-        setSimilarSeries([]);
+        // setSimilarSeries([]);
 
         // Check favorite
         if (user) {
@@ -131,6 +167,11 @@ setSeries({
           setIsFavorite(!!data);
         }
       } catch (err) {
+        // Ajout d'un log détaillé pour le debug
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line no-console
+          console.error("[ERREUR fetchSeries]", err);
+        }
         setError("Impossible de charger les détails de la série.");
       } finally {
         setIsLoading(false);
@@ -228,73 +269,119 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
-          {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
-            {/* VIP Badge/Card */}
-            {series.is_vip && (
-              <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
-                  Contenu VIP
-                </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
-                    {isVIP
-                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
-                      : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
-                  </p>
-                  {!isVIP && (
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                      onClick={() => router.push("/vip")}
-                    >
-                      Devenir VIP
-                    </Button>
-                  )}
+      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
+        {/* Affiche en haut UNIQUEMENT si Aperçu */}
+        {!selectedTab || selectedTab === "overview" ? (
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+            {/* Poster et VIP badge */}
+            <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
+              <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+              {/* VIP Badge/Card */}
+              {series.is_vip && (
+                <div className="mt-4 w-full flex flex-col items-center">
+                  <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+                    Contenu VIP
+                  </Badge>
+                  <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+                    <p className="text-amber-400 font-medium mb-1">
+                      {isVIP
+                        ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
+                        : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
+                    </p>
+                    {!isVIP && (
+                      <Button
+                        size="sm"
+                        className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                        onClick={() => router.push("/vip")}
+                      >
+                        Devenir VIP
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3 w-full mt-4">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatch}
-                disabled={!canWatch}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 w-full mt-4">
+                <Button
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleWatch}
+                  disabled={!canWatch}
+                  aria-label="Regarder la série"
+                >
+                  <Play className="h-5 w-5" />
+                  Regarder
+                </Button>
+                <Button
+                  variant={isFavorite ? "default" : "outline"}
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={toggleFavorite}
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleShare}
+                  aria-label="Partager"
+                >
+                  <Share2 className="h-5 w-5" />
+                  Partager
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col gap-6">
+              <SeriesInfo
+                title={series.title}
+                years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
+                seasons={series.seasons}
+                genres={series.genres}
+                rating={series.rating}
+              />
+              {/* Aperçu/Synopsis */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
+                <p className="text-gray-300 whitespace-pre-line">{series.description}</p>
+              </div>
+              {series.trailer_url && (
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={
+                        series.trailer_url.includes("youtube.com/watch")
+                          ? series.trailer_url.replace("watch?v=", "embed/")
+                          : series.trailer_url
+                      }
+                      title={`Bande-annonce de ${series.title}`}
+                      allowFullScreen
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          // Sinon, affichage principal sans poster en haut
+          <div className="flex flex-col gap-6">
+            <SeriesInfo
+              title={series.title}
+              years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
+              seasons={series.seasons}
+              genres={series.genres}
+              rating={series.rating}
+            />
+          </div>
+        )}
 
           {/* Main info & tabs */}
-          <div className="flex-1 flex flex-col gap-5">
+          <div className="flex-1 flex flex-col gap-6">
             <SeriesInfo
               title={series.title}
               years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
@@ -303,11 +390,11 @@ setSeries({
               rating={series.rating}
             />
 
-            {/* Tabs for overview, episodes, casting, similar, comments */}
-            <div className="mt-8">
-              <Tabs defaultValue="overview">
+            {/* Tabs pour le reste */}
+                <div className="mt-8">
+                  <Tabs defaultValue="episodes" onValueChange={setSelectedTab}>
                 <TabsList className="w-full md:w-auto border-b border-gray-700">
-                  <TabsTrigger value="overview">Aperçu</TabsTrigger>
+                  {/* On retire l'onglet Aperçu */}
                   <TabsTrigger value="episodes">Épisodes</TabsTrigger>
                   <TabsTrigger value="casting">Casting</TabsTrigger>
                   <TabsTrigger value="similar">Séries similaires</TabsTrigger>
@@ -374,13 +461,17 @@ setSeries({
                     seriesId={id}
                     isVIP={isVIP}
                   />
+                  {/* Affiche en bas sur tous les autres onglets */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
 
                 {/* Casting */}
                 <TabsContent value="casting" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdb_id ? (
-                    <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
+                  {series.tmdbId ? (
+                    <CastingGrid tmdbId={series.tmdbId} type="tv" fallbackCast={series.cast} />
                   ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
@@ -395,37 +486,19 @@ setSeries({
                   ) : (
                     <div className="text-gray-400">Aucun casting disponible.</div>
                   )}
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
 
                 {/* Séries similaires */}
                 <TabsContent value="similar" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {similarSeries.length > 0 ? (
-  similarSeries.map((serie) => {
-    // Normalisation de l'image pour chaque carte série similaire (exactement comme pour le film)
-    let posterUrl = serie.poster_url || "/placeholder-poster.jpg";
-    if (
-      typeof posterUrl === "string" &&
-      posterUrl.startsWith("/") &&
-      !posterUrl.startsWith("/placeholder")
-    ) {
-      posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
-    }
-    return (
-      <SeriesCard
-        key={serie.id}
-        title={serie.title}
-        description={serie.description}
-        imageUrl={posterUrl}
-      />
-    );
-  })
-) : (
-  <div className="text-gray-400 col-span-6 text-center">
-    Aucune série similaire trouvée.
-  </div>
-)}
+                  <SimilarSeriesGrid tmdbId={series.tmdbId} />
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
                   </div>
                 </TabsContent>
 
@@ -433,6 +506,10 @@ setSeries({
                 <TabsContent value="comments" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
                   <CommentsSection contentId={id} contentType="series" />
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
