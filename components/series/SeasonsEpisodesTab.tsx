@@ -96,28 +96,41 @@ export default function SeasonsEpisodesTab({
                 aria-label={`Saison ${season.season_number}${season.title ? " - " + season.title : ""}`}
               >
                 {/* Poster saison */}
-                {season.poster ? (
-                  <img
-                    src={season.poster}
-                    alt={`Affiche saison ${season.season_number}`}
-                    className="w-full h-36 object-cover bg-black"
-                  />
-                ) : (
-                  <div className="w-full h-36 flex items-center justify-center bg-gray-800">
-                    <Layers className="w-10 h-10 text-gray-400" />
-                  </div>
-                )}
-                {/* Overlay numéro et titre */}
-                <div className={cn(
-                  "absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-xs font-semibold text-primary shadow",
-                  season.id === selectedSeasonId ? "bg-primary/80 text-white" : ""
-                )}>
-                  S{season.season_number}
-                </div>
-                <div className="w-full px-2 py-2 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent absolute bottom-0 left-0">
-                  <div className="font-bold text-gray-100 text-sm truncate">
-                    {season.title || `Saison ${season.season_number}`}
-                  </div>
+<div className="w-full aspect-[2/3] min-h-[120px] max-h-[180px] rounded-lg overflow-hidden bg-gray-900 relative flex-shrink-0 transition-all group-hover:scale-105">
+  {season.poster ? (
+    <img
+      src={season.poster}
+      alt={`Affiche saison ${season.season_number}`}
+      className="w-full h-full object-cover transition-all"
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center bg-gray-800">
+      <Layers className="w-10 h-10 text-gray-400" />
+    </div>
+  )}
+  {/* Overlay numéro et titre */}
+  <div className={cn(
+    "absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-xs font-semibold text-primary shadow",
+    season.id === selectedSeasonId ? "bg-primary/80 text-white" : ""
+  )}>
+    S{season.season_number}
+  </div>
+  <div className="w-full px-2 py-2 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent absolute bottom-0 left-0">
+    <div className="font-bold text-gray-100 text-xs sm:text-sm truncate">
+      {season.title || `Saison ${season.season_number}`}
+    </div>
+    {season.episode_count && (
+      <div className="text-[11px] sm:text-xs text-gray-400">
+        {season.episode_count} épisode{season.episode_count > 1 ? "s" : ""}
+      </div>
+    )}
+    {season.air_date && (
+      <div className="text-[11px] sm:text-xs text-gray-500">
+        {season.air_date}
+      </div>
+    )}
+  </div>
+</div>
                   {season.episode_count && (
                     <div className="text-xs text-gray-400">
                       {season.episode_count} épisode{season.episode_count > 1 ? "s" : ""}
