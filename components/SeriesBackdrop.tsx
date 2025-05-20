@@ -27,7 +27,10 @@ export default function SeriesBackdrop({ src, alt }: { src: string; alt: string 
         aria-hidden="true"
         onLoad={() => setLoaded(true)}
         onError={(e) => {
-          e.currentTarget.src = "/placeholder-backdrop.png";
+          // Empêche le fallback de reboucler si le placeholder échoue
+          if (!e.currentTarget.src.endsWith("/placeholder-backdrop.jpg")) {
+            e.currentTarget.src = "/placeholder-backdrop.jpg";
+          }
           setLoaded(true);
         }}
       />
