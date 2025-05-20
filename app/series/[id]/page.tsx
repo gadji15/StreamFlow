@@ -7,8 +7,8 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Play, Sparkles, Share2, Star } from "lucide-react";
 import LoadingScreen from "@/components/loading-screen";
-import { Star, Play, Sparkles, Share2 } from "lucide-react";
 
 // Helpers
 function isFullUrl(str) {
@@ -17,123 +17,66 @@ function isFullUrl(str) {
 function getImageUrl(raw, fallback, size = "original") {
   if (!raw) return fallback;
   if (isFullUrl(raw)) return raw;
-  // If admin saves TMDB path, allow it
   if (raw.startsWith("/")) return `https://image.tmdb.org/t/p/${size}${raw}`;
   return raw;
 }
 
-export default function SeriesDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-  const { user } = useCurrentUser();
-  const { toast } = useToast();
+function Genres({ genre }) {
+  if (!genre) return null;
+  const genres = typeof genre === "string" ? genre.split(",").map(g => g.trim()).filter(Boolean) : [];
+  return (
+    <div className="flex flex-wrap gap-2 mt-2 mb-2">
+      {genres.map((g, i) => (
+        <span
+          key={g + i}
+          className="bg-amber-900/60 text-amber-300 px-3 py-0.5 rounded-full text-xs font-medium shadow"
+        >
+          {g}
+        </span>
+      ))}
+    </div>
+  );
+}
 
-  const [series, setSeries] = useState(null);
-  const [episodes, setEpisodes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [selectedSeason, setSelectedSeason] = useState(null);
-
-  useEffect(() => {
-    if (!id) return;
-    setIsLoading(true);
-    setError(null);
-    (async () => {
-      try {
-        // Fetch series details (all fields from admin)
-        const { data: fetchedSeries, error: seriesError } = await supabase
-          .from("series")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (seriesError || !fetchedSeries) {
-          setError("Série non trouvée.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch episodes (optional)
-        const { data: fetchedEpisodes } = await supabase
-          .from("episodes")
-          .select("*")
-          .eq("series_id", id)
-          .eq("published", true);
-
-        setEpisodes(fetchedEpisodes || []);
-        setSeries(fetchedSeries);
-
-        // Set default selected season
-        if (fetchedSeries.seasons && fetchedSeries.seasons > 0) {
-          setSelectedSeason(fetchedSeries.seasons);
-        } else if (fetchedEpisodes && fetchedEpisodes.length > 0) {
-          setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
-        }
-
-        // Check favorite
-        if (user) {
-          const { data } = await supabase
-            .from("favorites")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("series_id", id)
-            .maybeSingle();
-          setIsFavorite(!!data);
-        }
-      } catch (err) {
-        setError("Impossible de charger les détails de la série.");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [id, user]);
-
-  // Responsive casting grid
-  function CastingSection({ casting }) {
-    // Various fallback and normalization
-    const cast =
-      Array.isArray(casting) && casting.length > 0
-        ? casting
-        : [];
-
-    if (cast.length === 0) {
-      return (
-        <div className="text-gray-400 text-center py-4 text-sm italic">Aucun acteur renseigné pour cette série.</div>
-      );
-    }
+// Casting grid
+function CastingSection({ casting }) {
+  const cast = Array.isArray(casting) && casting.length > 0 ? casting : [];
+  if (cast.length === 0) {
     return (
-      <ul className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 py-3">
-        {cast.map((actor, idx) => (
-          <li
-            key={idx}
-            className="flex flex-col items-center bg-gray-900/80 rounded-lg shadow p-2 transition transform hover:scale-105 focus-within:ring-2 ring-amber-400 min-w-0"
-            tabIndex={0}
-            aria-label={`${actor.name}${actor.role ? ", " + actor.role : ""}`}
-          >
-            <img
-              src={getImageUrl(actor.image, "/no-image.png", "w185")}
-              alt={actor.name}
-              className="w-14 h-14 object-cover rounded-full border border-gray-700 shadow mb-1"
-              loading="lazy"
-              style={{ minWidth: "3.5rem", minHeight: "3.5rem" }}
-            />
-            <span className="text-white font-semibold text-[13px] truncate w-full text-center">{actor.name}</span>
-            {actor.role && (
-              <span className="text-gray-400 text-xs text-center truncate w-full">{actor.role}</span>
-            )}
-          </li>
-        ))}
-      </ul>
+      <div className="text-gray-400 text-center py-4 text-sm italic">Aucun acteur renseigné pour cette série.</div>
     );
   }
+  return (
+    <ul className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 py-3">
+      {cast.map((actor, idx) => (
+        <li
+          key={idx}
+          className="flex flex-col items-center bg-gray-900/80 rounded-lg shadow p-2 transition transform hover:scale-105 focus-within:ring-2 ring-amber-400 min-w-0"
+          tabIndex={0}
+          aria-label={`${actor.name}${actor.role ? ", " + actor.role : ""}`}
+        >
+          <img
+            src={getImageUrl(actor.image, "/no-image.png", "w185")}
+            alt={actor.name}
+            className="w-14 h-14 object-cover rounded-full border border-gray-700 shadow mb-1"
+            loading="lazy"
+            style={{ minWidth: "3.5rem", minHeight: "3.5rem" }}
+          />
+          <span className="text-white font-semibold text-[13px] truncate w-full text-center">{actor.name}</span>
+          {actor.role && (
+            <span className="text-gray-400 text-xs text-center truncate w-full">{actor.role}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-// Séries similaires (DB only)
+// Similar series
 function SimilarSeriesGrid({ currentId, genre }) {
   const [similar, setSimilar] = React.useState([]);
   React.useEffect(() => {
     const fetchSimilar = async () => {
-      // Fetch from DB: same genre(s), not same id, published only
       if (!genre) return setSimilar([]);
       const { data } = await supabase
         .from("series")
@@ -145,7 +88,6 @@ function SimilarSeriesGrid({ currentId, genre }) {
       setSimilar(data || []);
     };
     fetchSimilar();
-    // eslint-disable-next-line
   }, [currentId, genre]);
   if (!similar || similar.length === 0)
     return <div className="text-gray-400 text-center py-3 text-sm italic">Aucune série similaire trouvée.</div>;
@@ -167,23 +109,69 @@ function SimilarSeriesGrid({ currentId, genre }) {
   );
 }
 
-  // Responsive genres chips
-  function Genres({ genre }) {
-    if (!genre) return null;
-    const genres = typeof genre === "string" ? genre.split(",").map(g => g.trim()).filter(Boolean) : [];
-    return (
-      <div className="flex flex-wrap gap-2 mt-2 mb-2">
-        {genres.map((g, i) => (
-          <span
-            key={g + i}
-            className="bg-amber-900/60 text-amber-300 px-3 py-0.5 rounded-full text-xs font-medium shadow"
-          >
-            {g}
-          </span>
-        ))}
-      </div>
-    );
-  }
+export default function SeriesDetailPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const { toast } = useToast();
+
+  const [series, setSeries] = useState(null);
+  const [episodes, setEpisodes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setIsLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const { data: fetchedSeries, error: seriesError } = await supabase
+          .from("series")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (seriesError || !fetchedSeries) {
+          setError("Série non trouvée.");
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: fetchedEpisodes } = await supabase
+          .from("episodes")
+          .select("*")
+          .eq("series_id", id)
+          .eq("published", true);
+
+        setEpisodes(fetchedEpisodes || []);
+        setSeries(fetchedSeries);
+
+        // Default season logic
+        if (fetchedEpisodes && fetchedEpisodes.length > 0) {
+          const seasons = Array.from(new Set(fetchedEpisodes.map((ep) => ep.season))).sort((a, b) => a - b);
+          setSelectedSeason(seasons[0]);
+        }
+
+        // Favorite logic
+        if (user) {
+          const { data } = await supabase
+            .from("favorites")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("series_id", id)
+            .maybeSingle();
+          setIsFavorite(!!data);
+        }
+      } catch (err) {
+        setError("Impossible de charger les détails de la série.");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [id, user]);
 
   // Responsive seasons/episodes
   const availableSeasons = Array.from(
@@ -269,7 +257,7 @@ function SimilarSeriesGrid({ currentId, genre }) {
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-gray-950 via-gray-900/95 to-gray-950 text-white">
       {/* Backdrop header */}
-      <div className="relative h-[44vw] min-h-[170px] max-h-[340px] w-full overflow-hidden rounded-b-2xl shadow-xl">
+      <div className="relative h-[40vw] min-h-[160px] max-h-[360px] w-full overflow-hidden rounded-b-2xl shadow-xl">
         <img
           src={backdropUrl}
           alt={`Backdrop de ${series.title}`}
@@ -365,28 +353,31 @@ function SimilarSeriesGrid({ currentId, genre }) {
           </p>
         </section>
 
-        {/* Episodes */}
+        {/* Episodes: sticky/fixed season nav */}
         <section aria-labelledby="episodes-heading" className="mb-8">
-          <div className="flex flex-col xs:flex-row xs:items-center gap-2 mb-2">
+          <div className="sticky top-[64px] bg-gray-950/95 z-30 py-2 xs:py-0 mb-1 flex flex-col xs:flex-row xs:items-center gap-2 border-b border-gray-800">
             <h2 id="episodes-heading" className="text-lg md:text-xl font-bold">Épisodes</h2>
             {availableSeasons.length > 1 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto">
                 <label htmlFor="season-select" className="text-xs text-gray-400 font-medium">
                   Saison&nbsp;:
                 </label>
-                <select
-                  id="season-select"
-                  value={selectedSeason || ""}
-                  onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                  className="appearance-none bg-gray-800/80 rounded-md px-3 py-1 pr-7 focus:ring-2 focus:ring-amber-500 text-white border border-gray-700 text-xs"
-                  style={{ minWidth: 60 }}
-                >
+                <nav aria-label="Navigation des saisons" className="flex gap-1">
                   {availableSeasons.map((season) => (
-                    <option key={season} value={season}>
+                    <button
+                      key={season}
+                      onClick={() => setSelectedSeason(season)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition focus:outline-none focus:ring-2 ring-amber-400
+                        ${season === selectedSeason
+                          ? "bg-amber-600 text-black shadow"
+                          : "bg-gray-800/80 text-amber-200 hover:bg-amber-700/50"
+                        }`}
+                      aria-current={season === selectedSeason}
+                    >
                       Saison {season}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </nav>
               </div>
             )}
           </div>
@@ -435,7 +426,6 @@ function SimilarSeriesGrid({ currentId, genre }) {
         <section aria-labelledby="comments-heading" className="mb-12">
           <h2 id="comments-heading" className="text-lg md:text-xl font-bold mb-2">Commentaires</h2>
           <div className="rounded-lg bg-gray-900/80 p-4">
-            {/* Section commentaires dynamique ou CTA */}
             {typeof window !== "undefined" && window.StreamFlowComments ? (
               <window.StreamFlowComments contentId={series.id} contentType="series" />
             ) : (
