@@ -99,12 +99,14 @@ export default function SeriesDetailPage() {
         .order("season_number", { ascending: true });
 
       // All episodes for the series (ordered)
-      const { data: fetchedEpisodes } = await supabase
+      const { data: fetchedEpisodes, error: episodesError } = await supabase
         .from("episodes")
         .select("*")
         .eq("series_id", seriesId)
         .order("season_number")
         .order("episode_number");
+      // Log de debug pour vérifier la récupération des épisodes
+      console.log("[DEBUG] fetchedEpisodes :", fetchedEpisodes, "error :", episodesError);
 
       // Map poster/backdrop/cast from admin
       function normalizedPosterUrl(raw: any) {
@@ -351,8 +353,6 @@ export default function SeriesDetailPage() {
     </Collapsible>
   );
 
-  // Log de debug pour vérifier le contenu du tableau episodes avant filtrage
-  console.log("[DEBUG] episodes :", episodes);
   // Episodes for selected season
   const seasonEpisodes = episodes.filter(
     (ep) => ep.season_id === selectedSeasonId
