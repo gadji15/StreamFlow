@@ -21,6 +21,11 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import SeasonEpisodeList from '@/components/series/season-episode-list';
+import CastingGrid from "@/components/CastingGrid";
+import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
+import SeriesBackdrop from "@/components/SeriesBackdrop";
+import SeriesPosterCard from "@/components/SeriesPosterCard";
+import SeriesInfo from "@/components/SeriesInfo";
 import { 
   Dialog,
   DialogContent,
@@ -182,8 +187,8 @@ export default function SeriesDetailPage() {
     // eslint-disable-next-line
   }, [id, user]);
 
-  // Gérer l'ajout/suppression des favoris
-  const toggleFavorite = () => {
+  // Gérer l'ajout/suppression des favoris via Supabase (cloud)
+  const toggleFavorite = async () => {
     if (!user) {
       toast({
         title: "Connectez-vous",
@@ -193,41 +198,82 @@ export default function SeriesDetailPage() {
       return;
     }
 
-    const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
-    let newFavorites;
     if (isFavorite) {
-      newFavorites = favorites.filter((favId: string) => favId !== id);
-      toast({
-        title: "Retiré des favoris",
-        description: `"${series?.title}" a été retiré de vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_remove",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
+      // Supprimer le favori
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("series_id", id);
+
+      if (!error) {
+        setIsFavorite(false);
+        toast({
+          title: "Retiré des favoris",
+          description: `"${series?.title}" a été retiré de vos favoris.`,
+        });
+        // Log activity
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_remove",
+          content_type: "series",
+          content_id: id,
+          details: { title: series?.title },
+          timestamp: new Date().toISOString()
+        }]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de retirer cette série des favoris.",
+          variant: "destructive",
+        });
+      }
     } else {
-      newFavorites = [...favorites, id];
-      toast({
-        title: "Ajouté aux favoris",
-        description: `"${series?.title}" a été ajouté à vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_add",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
+      // Ajouter le favori
+      const { error } = await supabase.from("favorites").insert([
+        {
+          user_id: user.id,
+          series_id: id,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (!error) {
+        setIsFavorite(true);
+        toast({
+          title: "Ajouté aux favoris",
+          description: `"${series?.title}" a été ajouté à vos favoris.`,
+        });
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_add",
+          content_type: "series",
+          content_id: id,
+          details: { title: series?.title },
+          timestamp: new Date().toISOString()
+        }]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter cette série aux favoris.",
+          variant: "destructive",
+        });
+      }
     }
-    localStorage.setItem('favoritesSeries', JSON.stringify(newFavorites));
-    setIsFavorite(!isFavorite);
+    // Rafraîchir la vérification pour garder l’UI à jour
+    checkIfFavorite(id);
+  };
+
+  // Vérifier si la série est dans les favoris de l'utilisateur (Supabase)
+  const checkIfFavorite = async (seriesId: string) => {
+    if (user && seriesId) {
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("series_id", seriesId)
+        .maybeSingle();
+      setIsFavorite(!!data && !error);
+    }
   };
 
   // Obtenir les épisodes de la saison sélectionnée
@@ -282,66 +328,26 @@ export default function SeriesDetailPage() {
   return (
     <div className="pb-8">
       {/* Backdrop et informations principales */}
-      <div 
-        className="relative w-full h-[50vh] md:h-[60vh] bg-cover bg-center bg-no-repeat mb-6"
-        style={{ 
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url(${series.backdrop_url || '/placeholder-backdrop.png'})` 
-        }}
-      >
-        <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8">
+      {/* Backdrop premium avec composant dédié */}
+      <div className="relative w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 mb-6">
+        <SeriesBackdrop src={series.backdrop_url} alt={series.title} />
+        <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8 relative z-10">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Poster */}
-            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl">
-              <img 
-                src={series.poster_url || '/placeholder-poster.png'} 
-                alt={series.title} 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            
+            {/* Poster premium */}
+            <SeriesPosterCard src={series.poster_url} alt={series.title} />
             {/* Détails */}
             <div className="flex-1">
-              <div className="flex items-center">
-                <h1 className="text-2xl md:text-4xl font-bold">{series.title}</h1>
-                {series.is_vip && (
-                  <div className="ml-2">
-                    <VipBadge />
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300 mt-2">
-                <span className="flex items-center">
-                  <Calendar className="mr-1 h-4 w-4" /> 
-                  {series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}
-                </span>
-                <span className="flex items-center">
-                  <Film className="mr-1 h-4 w-4" /> 
-                  {series.seasons} Saison{series.seasons && series.seasons > 1 ? 's' : ''}
-                </span>
-                {series.rating && (
-                  <span className="flex items-center">
-                    <Star className="mr-1 h-4 w-4 text-yellow-400" /> 
-                    {series.rating.toFixed(1)}/10
-                  </span>
-                )}
-              </div>
-              
-              <div className="mt-2 flex flex-wrap gap-2">
-                {series.genres?.map(genreId => (
-                  <span 
-                    key={genreId} 
-                    className="px-3 py-1 bg-gray-700 text-xs rounded-full"
-                  >
-                    {genreId}
-                  </span>
-                ))}
-              </div>
-              
-              <p className="text-gray-300 my-4 line-clamp-4 md:line-clamp-none">
+              <SeriesInfo
+                title={series.title}
+                startYear={series.start_year}
+                endYear={series.end_year}
+                seasons={series.seasons}
+                genres={series.genres}
+                rating={series.rating}
+              />
+              <p className="text-gray-100 my-4 line-clamp-4 md:line-clamp-none drop-shadow">
                 {series.description}
               </p>
-              
               <div className="flex flex-wrap gap-3 mt-4">
                 <Button 
                   size="lg" 
@@ -362,7 +368,6 @@ export default function SeriesDetailPage() {
                   <Play className="h-5 w-5" /> 
                   Regarder
                 </Button>
-                
                 <Button
                   variant="outline"
                   size="lg"
@@ -393,6 +398,7 @@ export default function SeriesDetailPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="episodes">Épisodes</TabsTrigger>
             <TabsTrigger value="details">Détails</TabsTrigger>
+            <TabsTrigger value="similar">Séries similaires</TabsTrigger>
             <TabsTrigger value="comments">Commentaires</TabsTrigger>
           </TabsList>
           
@@ -496,24 +502,33 @@ export default function SeriesDetailPage() {
                   </ul>
                 </div>
                 
-                {/* Casting */}
-                {series.cast && series.cast.length > 0 && (
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                    <ul className="space-y-3">
-                      {series.cast.map((actor, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="font-medium">{actor.name}</span>
-                          {actor.role && <span className="text-gray-400">{actor.role}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {/* Casting dynamique via TMDB */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                  {series.tmdb_id ? (
+                    <CastingGrid tmdbId={series.tmdb_id.toString()} fallbackCast={series.cast} />
+                  ) : series.cast && series.cast.length > 0 ? (
+                    <CastingGrid tmdbId={""} fallbackCast={series.cast} />
+                  ) : (
+                    <div className="text-gray-400">Aucun casting disponible.</div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>
           
+          <TabsContent value="similar">
+            {/* Séries similaires */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
+              {series.tmdb_id ? (
+                <SimilarSeriesGrid currentSeriesId={id} tmdbId={series.tmdb_id.toString()} />
+              ) : (
+                <div className="text-gray-400">Aucune suggestion disponible.</div>
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="comments">
             {/* Commentaires */}
             <div className="bg-gray-800 rounded-lg p-6">

@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
+import { getTMDBImageUrl } from "@/lib/tmdb";
 
 /**
- * Affiche le backdrop en pleine largeur avec overlays premium, flou et animation.
+ * Affiche le backdrop premium d'une série (overlay, fallback, etc).
  */
-export default function FilmBackdrop({ src, alt }: { src: string; alt: string }) {
+export default function SeriesBackdrop({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -12,7 +13,7 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
       {/* Backdrop image */}
       <img
         ref={imgRef}
-        src={src}
+        src={getTMDBImageUrl(src, "original")}
         alt={alt}
         className={`w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out ${
           loaded ? "opacity-100" : "opacity-0"
@@ -21,27 +22,17 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           objectPosition: "center 35%",
           filter:
             "brightness(1.06) contrast(1.26) saturate(1.18) drop-shadow(0 1px 3px rgba(0,0,0,0.12))",
-          imageRendering: "auto", // Prevents unwanted pixelation
+          imageRendering: "auto",
         }}
         loading="eager"
         aria-hidden="true"
         onLoad={() => setLoaded(true)}
         onError={(e) => {
-          e.currentTarget.src = "/placeholder-backdrop.jpg";
+          e.currentTarget.src = "/placeholder-backdrop.png";
           setLoaded(true);
         }}
       />
-      {/* Subtle noise overlay for filmic look */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          background:
-            "url('data:image/svg+xml;utf8,<svg width=\"150\" height=\"150\" xmlns=\"http://www.w3.org/2000/svg\"><filter id=\"noiseFilter\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.6\" numOctaves=\"3\" stitchTiles=\"stitch\"/></filter><rect width=\"100%\" height=\"100%\" filter=\"url(%23noiseFilter)\" opacity=\"0.09\"/></svg>')",
-          zIndex: 2,
-        }}
-      />
-      {/* Strong black overlay for maximum readability at the top */}
+      {/* Overlay premium */}
       <div
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
@@ -50,7 +41,7 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           zIndex: 3,
         }}
       />
-      {/* Vignette overlay */}
+      {/* Vignette + blur */}
       <div className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
         style={{
@@ -61,7 +52,6 @@ export default function FilmBackdrop({ src, alt }: { src: string; alt: string })
           zIndex: 4,
         }}
       />
-      {/* Glass blur effect at the bottom for main card */}
       <div
         className="absolute left-0 right-0 bottom-0 h-28 md:h-44 backdrop-blur-xl bg-black/30"
         aria-hidden="true"
