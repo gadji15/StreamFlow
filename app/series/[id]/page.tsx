@@ -270,69 +270,115 @@ setSeries({
       )}
 
       <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-          {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
-            {/* VIP Badge/Card */}
-            {series.is_vip && (
-              <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
-                  Contenu VIP
-                </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
-                    {isVIP
-                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
-                      : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
-                  </p>
-                  {!isVIP && (
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                      onClick={() => router.push("/vip")}
-                    >
-                      Devenir VIP
-                    </Button>
-                  )}
+        {/* Affiche en haut UNIQUEMENT si Aperçu */}
+        {!selectedTab || selectedTab === "overview" ? (
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+            {/* Poster et VIP badge */}
+            <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
+              <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+              {/* VIP Badge/Card */}
+              {series.is_vip && (
+                <div className="mt-4 w-full flex flex-col items-center">
+                  <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+                    Contenu VIP
+                  </Badge>
+                  <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+                    <p className="text-amber-400 font-medium mb-1">
+                      {isVIP
+                        ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
+                        : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
+                    </p>
+                    {!isVIP && (
+                      <Button
+                        size="sm"
+                        className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                        onClick={() => router.push("/vip")}
+                      >
+                        Devenir VIP
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3 w-full mt-4">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatch}
-                disabled={!canWatch}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 w-full mt-4">
+                <Button
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleWatch}
+                  disabled={!canWatch}
+                  aria-label="Regarder la série"
+                >
+                  <Play className="h-5 w-5" />
+                  Regarder
+                </Button>
+                <Button
+                  variant={isFavorite ? "default" : "outline"}
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={toggleFavorite}
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full gap-2"
+                  onClick={handleShare}
+                  aria-label="Partager"
+                >
+                  <Share2 className="h-5 w-5" />
+                  Partager
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col gap-6">
+              <SeriesInfo
+                title={series.title}
+                years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
+                seasons={series.seasons}
+                genres={series.genres}
+                rating={series.rating}
+              />
+              {/* Aperçu/Synopsis */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
+                <p className="text-gray-300 whitespace-pre-line">{series.description}</p>
+              </div>
+              {series.trailer_url && (
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={
+                        series.trailer_url.includes("youtube.com/watch")
+                          ? series.trailer_url.replace("watch?v=", "embed/")
+                          : series.trailer_url
+                      }
+                      title={`Bande-annonce de ${series.title}`}
+                      allowFullScreen
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          // Sinon, affichage principal sans poster en haut
+          <div className="flex flex-col gap-6">
+            <SeriesInfo
+              title={series.title}
+              years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
+              seasons={series.seasons}
+              genres={series.genres}
+              rating={series.rating}
+            />
+          </div>
+        )}
 
           {/* Main info & tabs */}
           <div className="flex-1 flex flex-col gap-6">
@@ -344,11 +390,11 @@ setSeries({
               rating={series.rating}
             />
 
-            {/* Tabs for overview, episodes, casting, similar, comments */}
-            <div className="mt-8">
-              <Tabs defaultValue="overview">
+            {/* Tabs pour le reste */}
+                <div className="mt-8">
+                  <Tabs defaultValue="episodes" onValueChange={setSelectedTab}>
                 <TabsList className="w-full md:w-auto border-b border-gray-700">
-                  <TabsTrigger value="overview">Aperçu</TabsTrigger>
+                  {/* On retire l'onglet Aperçu */}
                   <TabsTrigger value="episodes">Épisodes</TabsTrigger>
                   <TabsTrigger value="casting">Casting</TabsTrigger>
                   <TabsTrigger value="similar">Séries similaires</TabsTrigger>
@@ -415,6 +461,10 @@ setSeries({
                     seriesId={id}
                     isVIP={isVIP}
                   />
+                  {/* Affiche en bas sur tous les autres onglets */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
 
                 {/* Casting */}
@@ -436,18 +486,30 @@ setSeries({
                   ) : (
                     <div className="text-gray-400">Aucun casting disponible.</div>
                   )}
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
 
                 {/* Séries similaires */}
                 <TabsContent value="similar" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
                   <SimilarSeriesGrid tmdbId={series.tmdbId} />
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
 
                 {/* Commentaires */}
                 <TabsContent value="comments" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
                   <CommentsSection contentId={id} contentType="series" />
+                  {/* Affiche en bas */}
+                  <div className="flex justify-center mt-8">
+                    <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
