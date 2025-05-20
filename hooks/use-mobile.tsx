@@ -1,25 +1,40 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 
-export function useMobile() {
-  const [isMobile, setIsMobile] = useState(false)
+/**
+ * Hook universel pour détecter si l'utilisateur est sur mobile (SSR-safe, breakpoint configurable, debounce).
+ * @param breakpoint - largeur max (en px) pour considérer "mobile" (par défaut : 768)
+ * @param debounceMs - délai (en ms) pour le debounce du resize (par défaut : 150)
+ * @returns boolean - true si mobile, false sinon
+ */
+export function useMobile(breakpoint = 768, debounceMs = 150) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false; // SSR-safe
+    return window.innerWidth < breakpoint;
+  });
 
   useEffect(() => {
-    // Fonction pour vérifier si l'écran est mobile
+    if (typeof window === "undefined") return; // SSR-safe
+
+    let timeout: NodeJS.Timeout | null = null;
+
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768) // Considère mobile si largeur < 768px
-    }
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setIsMobile(window.innerWidth < breakpoint);
+      }, debounceMs);
+    };
 
-    // Vérifier au chargement
-    checkIfMobile()
+    window.addEventListener("resize", checkIfMobile);
+    // Vérifier à l'initialisation (utile si resize avant mount)
+    checkIfMobile();
 
-    // Ajouter un écouteur d'événement pour les changements de taille d'écran
-    window.addEventListener("resize", checkIfMobile)
+    return () => {
+      window.removeEventListener("resize", checkIfMobile);
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [breakpoint, debounceMs]);
 
-    // Nettoyage
-    return () => window.removeEventListener("resize", checkIfMobile)
-  }, [])
-
-  return isMobile
+  return isMobile;
 }
