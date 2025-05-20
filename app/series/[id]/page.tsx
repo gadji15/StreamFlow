@@ -565,20 +565,17 @@ export default function SeriesDetailPage() {
                   </ul>
                 </div>
                 
-                {/* Casting */}
-                {series.cast && series.cast.length > 0 && (
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                    <ul className="space-y-3">
-                      {series.cast.map((actor, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="font-medium">{actor.name}</span>
-                          {actor.role && <span className="text-gray-400">{actor.role}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {/* Casting dynamique via TMDB */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                  {series.tmdb_id ? (
+                    <CastingGrid tmdbId={series.tmdb_id.toString()} fallbackCast={series.cast} />
+                  ) : series.cast && series.cast.length > 0 ? (
+                    <CastingGrid tmdbId={""} fallbackCast={series.cast} />
+                  ) : (
+                    <div className="text-gray-400">Aucun casting disponible.</div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>
