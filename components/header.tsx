@@ -173,7 +173,7 @@ export default function Header() {
                       <Link href="/mon-compte/historique">Historique</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/mon-compte/favoris">Favoris</Link>
+                      <Link href="/favoris">Favoris</Link>
                     </DropdownMenuItem>
                     {!isVIP && (
                       <DropdownMenuItem asChild>
@@ -292,7 +292,7 @@ export default function Header() {
                       Historique
                     </Link>
                     <Link
-                      href="/mon-compte/favoris"
+                      href="/favoris"
                       className="block py-2 hover:text-white"
                       onClick={() => setNavOpen(false)}
                     >
