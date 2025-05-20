@@ -370,16 +370,6 @@ export default function SeriesDetailPage() {
   const noSeasons = !seasons || seasons.length === 0;
   const noEpisodes = !seasonEpisodes || seasonEpisodes.length === 0;
 
-  // Pour l'annonce ARIA lors du changement de saison
-  const ariaSeasonMessageId = useId();
-  const [seasonAriaMessage, setSeasonAriaMessage] = useState("");
-  useEffect(() => {
-    if (selectedSeasonId) {
-      const season = seasons.find((s) => s.id === selectedSeasonId);
-      if (season) setSeasonAriaMessage(`Saison ${season.number} affichée`);
-    }
-  }, [selectedSeasonId, seasons]);
-
   return (
     <div className="relative min-h-screen bg-background">
       {/* --- Backdrop Header --- */}
