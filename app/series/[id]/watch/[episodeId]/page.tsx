@@ -197,6 +197,7 @@ export default function WatchEpisodePage() {
             episode: nextEpisode.episodeNumber,
             onNext: goToNextEpisode
           } : undefined}
+          onClose={undefined}
         />
       </div>
       
