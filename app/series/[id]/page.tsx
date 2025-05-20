@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import SeasonEpisodeList from "@/components/series/season-episode-list";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFavoriteSeries } from "@/hooks/useFavoriteSeries";
-import Head from "next/head";
+// import Head from "next/head"; // ❌ À retirer : Next.js App Router ne supporte pas Head dans un composant "use client"
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
 // Typage strict
@@ -260,16 +260,9 @@ export default function SeriesDetailPage() {
 
   return (
     <>
-      <Head>
-        <title>{series.title} | Détail Série</title>
-        <meta name="description" content={series.description?.slice(0, 150)} />
-        <meta property="og:title" content={series.title} />
-        <meta property="og:description" content={series.description?.slice(0, 150)} />
-        {series.poster_url && <meta property="og:image" content={series.poster_url} />}
-        {series.backdrop_url && <meta property="twitter:image" content={series.backdrop_url} />}
-        <meta property="og:type" content="video.tv_show" />
-        <meta property="og:url" content={typeof window !== "undefined" ? window.location.href : ""} />
-      </Head>
+      {/* Pour le SEO, utiliser generateMetadata dans app/series/[id]/page.tsx (server) */}
+      {/* Balises SEO : à gérer côté server component/app router via generateMetadata */}
+      {/* Si besoin d'un <Head>, l'intégrer dans un composant server sans "use client" */}
 
       {/* Header visuel */}
       <section
