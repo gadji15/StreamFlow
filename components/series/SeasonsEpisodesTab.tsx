@@ -61,7 +61,7 @@ export default function SeasonsEpisodesTab({
       {/* Saisons en cards */}
       <div
         className={cn(
-          isMobile ? "w-full mb-4" : "w-1/3 min-w-[13rem] max-w-md"
+          isMobile ? "w-full mb-4" : "w-1/3 min-w-[13rem] max-w-[18rem]"
         )}
         role="navigation"
         aria-label="Navigation des saisons"
@@ -146,7 +146,7 @@ export default function SeasonsEpisodesTab({
       )}
 
       {/* Episodes */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>

@@ -21,7 +21,7 @@ export default function MiniEpisodePoster({
       className="group flex flex-col items-center w-full max-w-[120px] focus:outline-none"
       aria-label={`Regarder épisode ${number} : ${title}`}
     >
-      <div className="w-[120px] h-[180px] rounded-lg overflow-hidden shadow-md bg-gray-900 transition-transform duration-150 group-hover:scale-105 group-hover:shadow-xl group-focus:scale-105">
+      <div className="w-[140px] h-[210px] rounded-lg overflow-hidden shadow-md bg-gray-900 transition-transform duration-150 group-hover:scale-105 group-hover:shadow-xl group-focus:scale-105">
         <img
           src={posterUrl || "/placeholder-poster.jpg"}
           alt={title}
