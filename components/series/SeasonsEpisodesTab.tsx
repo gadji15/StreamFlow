@@ -54,14 +54,16 @@ export default function SeasonsEpisodesTab({
   return (
     <div
       className={cn(
-        "flex gap-8",
-        isMobile ? "flex-col" : "flex-row"
+        "flex",
+        isMobile ? "flex-col gap-6" : "flex-row gap-x-12"
       )}
     >
       {/* Saisons en cards */}
       <div
         className={cn(
-          isMobile ? "w-full mb-4" : "w-1/3 min-w-[13rem] max-w-[18rem]"
+          isMobile
+            ? "w-full mb-4"
+            : "flex-shrink-0 w-[18rem] min-w-[15rem] max-w-[20rem] pr-2"
         )}
         role="navigation"
         aria-label="Navigation des saisons"
@@ -142,11 +144,11 @@ export default function SeasonsEpisodesTab({
 
       {/* Séparateur professionnel */}
       {!isMobile && (
-        <div className="w-px mx-1 bg-gradient-to-b from-transparent via-gray-700/60 to-transparent rounded-full shadow-lg self-stretch" />
+        <div className="w-[2px] mx-2 bg-gradient-to-b from-transparent via-gray-700/80 to-transparent rounded-full shadow-lg self-stretch" />
       )}
 
       {/* Episodes */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pl-2">
         {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>
