@@ -23,6 +23,9 @@ import { supabase } from '@/lib/supabaseClient';
 import SeasonEpisodeList from '@/components/series/season-episode-list';
 import CastingGrid from "@/components/CastingGrid";
 import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
+import SeriesBackdrop from "@/components/SeriesBackdrop";
+import SeriesPosterCard from "@/components/SeriesPosterCard";
+import SeriesInfo from "@/components/SeriesInfo";
 import { 
   Dialog,
   DialogContent,
@@ -325,111 +328,23 @@ export default function SeriesDetailPage() {
   return (
     <div className="pb-8">
       {/* Backdrop et informations principales */}
-      {/* Backdrop premium */}
+      {/* Backdrop premium avec composant dédié */}
       <div className="relative w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 mb-6">
-        {/* Backdrop image avec overlay premium */}
-        <img
-          src={
-            series.backdrop_url
-              ? series.backdrop_url.startsWith("/")
-                ? `https://image.tmdb.org/t/p/original${series.backdrop_url}`
-                : series.backdrop_url
-              : "/placeholder-backdrop.png"
-          }
-          alt={series.title}
-          className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out opacity-100"
-          style={{
-            objectPosition: "center 35%",
-            filter:
-              "brightness(1.06) contrast(1.26) saturate(1.18) drop-shadow(0 1px 3px rgba(0,0,0,0.12))",
-            imageRendering: "auto",
-          }}
-          loading="eager"
-          aria-hidden="true"
-          onError={(e) => {
-            e.currentTarget.src = "/placeholder-backdrop.png";
-          }}
-        />
-        {/* Overlay sombre & gradient premium */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-          style={{
-            background: "linear-gradient(to bottom, rgba(10,10,10,0.80) 0%, rgba(10,10,10,0.55) 30%, rgba(10,10,10,0.00) 70%)",
-            zIndex: 3,
-          }}
-        />
-        <div className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-          style={{
-            background: `
-              linear-gradient(to bottom, rgba(20,20,20,0.64) 0%, rgba(20,20,20,0.22) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.37) 100%),
-              radial-gradient(ellipse at center, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.09) 85%, rgba(0,0,0,0.17) 100%)
-            `,
-            zIndex: 4,
-          }}
-        />
-        <div
-          className="absolute left-0 right-0 bottom-0 h-28 md:h-44 backdrop-blur-xl bg-black/30"
-          aria-hidden="true"
-          style={{ zIndex: 5 }}
-        />
+        <SeriesBackdrop src={series.backdrop_url} alt={series.title} />
         <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8 relative z-10">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Poster */}
-            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl bg-gray-900/30">
-              <img 
-                src={
-                  series.poster_url
-                    ? series.poster_url.startsWith("/")
-                      ? `https://image.tmdb.org/t/p/w500${series.poster_url}`
-                      : series.poster_url
-                    : '/placeholder-poster.png'
-                }
-                alt={series.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder-poster.png";
-                }}
-                draggable={false}
-              />
-            </div>
+            {/* Poster premium */}
+            <SeriesPosterCard src={series.poster_url} alt={series.title} />
             {/* Détails */}
             <div className="flex-1">
-              <div className="flex items-center">
-                <h1 className="text-2xl md:text-4xl font-bold text-white drop-shadow">{series.title}</h1>
-                {series.is_vip && (
-                  <div className="ml-2">
-                    <VipBadge />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-white drop-shadow font-semibold mt-2">
-                <span className="flex items-center">
-                  <Calendar className="mr-1 h-4 w-4" /> 
-                  {series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}
-                </span>
-                <span className="flex items-center">
-                  <Film className="mr-1 h-4 w-4" /> 
-                  {series.seasons} Saison{series.seasons && series.seasons > 1 ? 's' : ''}
-                </span>
-                {series.rating && (
-                  <span className="flex items-center font-bold text-yellow-400 drop-shadow">
-                    <Star className="mr-1 h-4 w-4 text-yellow-400" /> 
-                    {series.rating.toFixed(1)}/10
-                  </span>
-                )}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {series.genres?.map(genreId => (
-                  <span 
-                    key={genreId} 
-                    className="px-3 py-1 bg-gray-700 text-xs rounded-full"
-                  >
-                    {genreId}
-                  </span>
-                ))}
-              </div>
+              <SeriesInfo
+                title={series.title}
+                startYear={series.start_year}
+                endYear={series.end_year}
+                seasons={series.seasons}
+                genres={series.genres}
+                rating={series.rating}
+              />
               <p className="text-gray-100 my-4 line-clamp-4 md:line-clamp-none drop-shadow">
                 {series.description}
               </p>
