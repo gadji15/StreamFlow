@@ -55,6 +55,11 @@ export default function CastingGrid({
     );
   }
 
+  // DEBUG: log cast array and tmdbId/type
+  if (typeof window !== "undefined") {
+    console.log("[CastingGrid DEBUG] tmdbId:", tmdbId, "type:", type, "cast:", cast);
+  }
+
   if (!cast.length) {
     return <div className="text-gray-400">Aucun membre du casting disponible.</div>;
   }
