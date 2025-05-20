@@ -45,7 +45,7 @@ export default function EpisodeCard({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row gap-4 p-4 rounded-lg shadow ${
+      className={`flex flex-col sm:flex-row gap-2 p-2 rounded-md shadow-sm ${
         episode.is_vip && !isVIP
           ? "bg-gray-700 opacity-80"
           : watched
@@ -54,7 +54,7 @@ export default function EpisodeCard({
       } transition-colors`}
     >
       {/* Poster spécifique ou placeholder */}
-      <div className="w-full sm:w-48 h-28 flex-shrink-0 rounded overflow-hidden relative aspect-video bg-gray-800">
+      <div className="w-full sm:w-32 h-16 flex-shrink-0 rounded overflow-hidden relative aspect-video bg-gray-800">
         {episode.thumbnail_url ? (
           <img
             src={episode.thumbnail_url}
@@ -63,13 +63,13 @@ export default function EpisodeCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Play className="h-8 w-8 text-gray-600" />
+            <Play className="h-6 w-6 text-gray-600" />
           </div>
         )}
         {/* Overlay VIP */}
         {episode.is_vip && !isVIP && (
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
-            <Lock className="h-8 w-8 text-yellow-500 mb-1" />
+            <Lock className="h-6 w-6 text-yellow-500 mb-1" />
             <VipBadge size="small" variant="subtle" />
           </div>
         )}
@@ -77,19 +77,19 @@ export default function EpisodeCard({
 
       {/* Infos */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold truncate">
+        <div className="flex items-center justify-between gap-1">
+          <h3 className="font-semibold truncate text-sm">
             {episode.season}x{String(episode.episode_number).padStart(2, "0")} : {episode.title}
           </h3>
           {episode.is_vip && (
-            <div className="ml-2">
+            <div className="ml-1">
               <VipBadge size="small" variant="subtle" />
             </div>
           )}
         </div>
 
         {/* Description dynamique */}
-        <div className="text-sm text-gray-300 mt-1">
+        <div className="text-xs text-gray-300 mt-0.5">
           <span className="line-clamp-2">
             {episode.description}
           </span>
@@ -98,7 +98,7 @@ export default function EpisodeCard({
               <Popover.Trigger asChild>
                 <button
                   type="button"
-                  className="ml-2 text-blue-400 underline text-xs focus:outline-none"
+                  className="ml-1 text-blue-400 underline text-xs focus:outline-none"
                   onClick={e => {
                     e.stopPropagation();
                     setOpen(true);
@@ -110,17 +110,17 @@ export default function EpisodeCard({
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Content
-                  className="max-w-xs sm:max-w-md bg-gray-800 text-white rounded-lg shadow-lg p-4 z-50"
+                  className="max-w-xs sm:max-w-md bg-gray-800 text-white rounded-lg shadow-lg p-2 z-50"
                   sideOffset={8}
                   side="bottom"
                   onPointerDownOutside={e => e.preventDefault()}
                   onInteractOutside={e => e.preventDefault()}
                 >
-                  <div className="text-sm whitespace-pre-line">
+                  <div className="text-xs whitespace-pre-line">
                     {episode.description}
                   </div>
                   <Popover.Close
-                    className="mt-3 text-blue-400 underline text-xs cursor-pointer"
+                    className="mt-2 text-blue-400 underline text-xs cursor-pointer"
                     aria-label="Fermer"
                     onClick={e => {
                       e.stopPropagation();
@@ -135,7 +135,7 @@ export default function EpisodeCard({
           )}
         </div>
 
-        <div className="flex items-center mt-auto pt-2 text-xs text-gray-400 gap-4 flex-wrap">
+        <div className="flex items-center mt-auto pt-1 text-xs text-gray-400 gap-2 flex-wrap">
           <span className="flex items-center">
             <Clock className="mr-1 h-3 w-3" />
             {episode.duration ? formatDuration(episode.duration) : "Durée inconnue"}
@@ -144,7 +144,7 @@ export default function EpisodeCard({
           {user && !(episode.is_vip && !isVIP) && (
             <button
               type="button"
-              className={`ml-2 text-xs rounded px-2 py-1 border ${
+              className={`ml-1 text-xs rounded px-1.5 py-0.5 border ${
                 watched
                   ? "bg-green-700/40 border-green-500 text-green-300"
                   : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-green-900/30 hover:text-green-200"
@@ -169,10 +169,10 @@ export default function EpisodeCard({
       </div>
       
       {/* Bouton lecture */}
-      <div className="flex sm:flex-col justify-end items-center gap-2 mt-2 sm:mt-0">
+      <div className="flex sm:flex-col justify-end items-center gap-1 mt-1 sm:mt-0">
         <Button
           size="sm"
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto h-8 px-2 text-xs"
           onClick={() => onWatch(episode)}
           disabled={episode.is_vip && !isVIP}
           aria-label={
@@ -181,7 +181,7 @@ export default function EpisodeCard({
               : `Regarder ${episode.title}`
           }
         >
-          <Play className="h-4 w-4 mr-2" />
+          <Play className="h-4 w-4 mr-1" />
           Regarder
         </Button>
       </div>
