@@ -10,22 +10,40 @@ import SeasonEpisodeList from "@/components/series/season-episode-list";
 import { CommentsSection } from "@/components/comments-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Sparkles, Share2, Star, ChevronDown } from "lucide-react";
+import { Play, Sparkles, Share2, ChevronDown } from "lucide-react";
 import dynamic from "next/dynamic";
 import LoadingScreen from "@/components/loading-screen";
-
-// You may need to create/adapt these components for true DRYness and design consistency.
 import SeriesBackdrop from "@/components/SeriesBackdrop";
 import SeriesPosterCard from "@/components/SeriesPosterCard";
 import SeriesInfo from "@/components/SeriesInfo";
-import ActionButtons from "@/components/ActionButtons";
 import SeriesCard from "@/components/SeriesCard";
 
 const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
-
 import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
 
-function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
+// Utils pour images TMDB (même logique que films)
+function normalizedPosterUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (raw.startsWith("/")) {
+      // Chemin TMDB : HD
+      return `https://image.tmdb.org/t/p/w500${raw}`;
+    }
+    return raw.trim();
+  }
+  return "/placeholder-poster.jpg";
+}
+function normalizedBackdropUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (raw.startsWith("/")) {
+      // Chemin TMDB : HD
+      return `https://image.tmdb.org/t/p/original${raw}`;
+    }
+    return raw.trim();
+  }
+  return "/placeholder-backdrop.jpg";
+}
+
+function SimilarSeriesGrid({ tmdbId }: { tmdbId: string | number }) {
   const [similar, setSimilar] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,9 +70,13 @@ function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
             similar.map((serie) => (
               <SeriesCard
                 key={serie.id}
-                title={serie.title}
+                title={serie.name || serie.title}
                 description={serie.overview}
-                imageUrl={tmdbPosterUrl(serie.poster_path)}
+                imageUrl={
+                  serie.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${serie.poster_path}`
+                    : "/placeholder-poster.jpg"
+                }
               />
             ))
           ) : (
@@ -77,7 +99,6 @@ export default function SeriesDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isVIP, setIsVIP] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  // On retire similarSeries du state local, il est géré par SimilarSeriesGrid
 
   useEffect(() => {
     if (!id) return;
@@ -86,7 +107,7 @@ export default function SeriesDetailPage() {
       setError(null);
 
       try {
-        // Get series details
+        // Récupérer les détails de la série
         const { data: fetchedSeries, error: seriesError } = await supabase
           .from("series")
           .select("*")
@@ -99,33 +120,25 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Normalization (robuste, inspiré de la page film)
-// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
-function normalizedPosterUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  return "/placeholder-poster.jpg";
-}
-function normalizedBackdropUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  return "/placeholder-backdrop.jpg";
-}
-const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
-const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
+        // Normalisation stricte des images et mapping pour TMDB
+        const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
+        const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
 
-// (DEV) Log pour débogage
-if (typeof window !== "undefined") {
-  console.log("[TMDB poster url]", posterUrl);
-  console.log("[TMDB backdrop url]", backdropUrl);
-}
+        // Mapping camelCase pour compatibilité avec CastingGrid et TMDB
+        const normalizedSeries = {
+          ...fetchedSeries,
+          posterUrl,
+          backdropUrl,
+          tmdbId: fetchedSeries.tmdb_id || fetchedSeries.tmdbId || null,
+          genres: fetchedSeries.genre || fetchedSeries.genres || [],
+          seasons: fetchedSeries.seasons ?? (fetchedSeries.start_year && fetchedSeries.end_year ? (fetchedSeries.end_year - fetchedSeries.start_year + 1) : null),
+          rating: fetchedSeries.vote_average ?? null,
+        };
 
-setSeries({
-  ...fetchedSeries,
-  posterUrl,
-  backdropUrl,
-});
+        setSeries(normalizedSeries);
 
-        // Fetch episodes
-        const { data: fetchedEpisodes, error: episodesError } = await supabase
+        // Récupérer les épisodes
+        const { data: fetchedEpisodes } = await supabase
           .from("episodes")
           .select("*")
           .eq("series_id", id)
@@ -133,7 +146,7 @@ setSeries({
 
         setEpisodes(fetchedEpisodes || []);
 
-        // VIP logic
+        // Statut VIP utilisateur
         if (user) {
           const { data: profile } = await supabase
             .from("profiles")
@@ -145,18 +158,14 @@ setSeries({
           setIsVIP(false);
         }
 
-        // Set default selected season
-        if (fetchedSeries.seasons && fetchedSeries.seasons > 0) {
-          setSelectedSeason(fetchedSeries.seasons);
+        // Saison par défaut
+        if (normalizedSeries.seasons && normalizedSeries.seasons > 0) {
+          setSelectedSeason(normalizedSeries.seasons);
         } else if (fetchedEpisodes && fetchedEpisodes.length > 0) {
           setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
         }
 
-        // Plus de setSimilarSeries ici : la grille des séries similaires TMDB est désormais découplée.
-        // TODO: Fetch similar series logic (TMDB/local), placeholder for now
-        // setSimilarSeries([]);
-
-        // Check favorite
+        // Favori
         if (user) {
           const { data } = await supabase
             .from("favorites")
@@ -167,7 +176,6 @@ setSeries({
           setIsFavorite(!!data);
         }
       } catch (err) {
-        // Ajout d'un log détaillé pour le debug
         if (typeof window !== "undefined") {
           // eslint-disable-next-line no-console
           console.error("[ERREUR fetchSeries]", err);
@@ -181,7 +189,7 @@ setSeries({
     fetchSeries();
   }, [id, user]);
 
-  // Episodes per season
+  // Episodes par saison (identique, mais sécurise sur undefined)
   const availableSeasons = Array.from(
     new Set(episodes.map((ep) => ep.season))
   ).sort((a, b) => a - b);
@@ -190,7 +198,7 @@ setSeries({
     (ep) => ep.season === selectedSeason
   );
 
-  // Favorite logic (DRY, similar to films)
+  // Favori
   const toggleFavorite = async () => {
     if (!user) {
       toast({
@@ -239,7 +247,7 @@ setSeries({
     }
   };
 
-  // Watch button: jump to first episode of selected season
+  // Regarder : aller au 1er épisode de la saison sélectionnée
   const handleWatch = () => {
     if (seasonEpisodes.length > 0) {
       router.push(`/series/${id}/watch/${seasonEpisodes[0].id}`);
@@ -259,9 +267,10 @@ setSeries({
     );
   }
 
-  // VIP logic
+  // VIP
   const canWatch = !series.is_vip || isVIP;
 
+  // Responsive layout harmonisé comme films
   return (
     <>
       {/* Backdrop header */}
@@ -269,82 +278,91 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
+  <div className="flex flex-col md:flex-row gap-10 items-start">
           {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
-            {/* VIP Badge/Card */}
-            {series.is_vip && (
-              <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
-                  Contenu VIP
-                </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
-                    {isVIP
-                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
-                      : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
-                  </p>
-                  {!isVIP && (
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                      onClick={() => router.push("/vip")}
-                    >
-                      Devenir VIP
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative
+  min-w-[220px] flex-shrink-0
+">
+  <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+  {/* VIP Badge/Card */}
+  {series.is_vip && (
+    <div className="mt-4 w-full flex flex-col items-center">
+      <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+        Contenu VIP
+      </Badge>
+      <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+        <p className="text-amber-400 font-medium mb-1">
+          {isVIP
+            ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
+            : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
+        </p>
+        {!isVIP && (
+          <Button
+            size="sm"
+            className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+            onClick={() => router.push("/vip")}
+          >
+            Devenir VIP
+          </Button>
+        )}
+      </div>
+    </div>
+  )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3 w-full mt-4">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatch}
-                disabled={!canWatch}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
-            </div>
+  {/* Boutons d'action */}
+  <div className="flex flex-col gap-3 w-full mt-4">
+    <Button
+      size="lg"
+      className="w-full gap-2"
+      onClick={handleWatch}
+      disabled={!canWatch}
+      aria-label="Regarder la série"
+    >
+      <Play className="h-5 w-5" />
+      Regarder
+    </Button>
+    <Button
+      variant={isFavorite ? "default" : "outline"}
+      size="lg"
+      className="w-full gap-2"
+      onClick={toggleFavorite}
+      aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+    >
+      <Sparkles className="h-5 w-5" />
+      {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+    </Button>
+    <Button
+      variant="outline"
+      size="lg"
+      className="w-full gap-2"
+      onClick={handleShare}
+      aria-label="Partager"
+    >
+      <Share2 className="h-5 w-5" />
+      Partager
+    </Button>
+  </div>
+</div>
           </div>
 
-          {/* Main info & tabs */}
+          {/* Main info & onglets */}
           <div className="flex-1 flex flex-col gap-6">
             <SeriesInfo
               title={series.title}
-              years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
+              years={
+                series.start_year
+                  ? series.end_year
+                    ? `${series.start_year} - ${series.end_year}`
+                    : `${series.start_year} - Présent`
+                  : ""
+              }
               seasons={series.seasons}
               genres={series.genres}
               rating={series.rating}
             />
 
-            {/* Tabs for overview, episodes, casting, similar, comments */}
+            {/* Tabs pour overview, episodes, casting, similar, comments */}
             <div className="mt-8">
               <Tabs defaultValue="overview">
                 <TabsList className="w-full md:w-auto border-b border-gray-700">
