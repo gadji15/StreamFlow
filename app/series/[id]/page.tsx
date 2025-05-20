@@ -258,9 +258,11 @@ export default function SeriesDetailPage() {
   const availableSeasons = getAvailableSeasons();
   const seasonEpisodes = getSeasonEpisodes(selectedSeason);
 
-  // Pour le SEO, utiliser generateMetadata dans app/series/[id]/page.tsx (server)
-  // Balises SEO : à gérer côté server component/app router via generateMetadata
-  // Si besoin d'un <Head>, l'intégrer dans un composant server sans "use client"
+  /*
+    Pour le SEO, utiliser generateMetadata dans app/series/[id]/page.tsx (server)
+    Balises SEO : à gérer côté server component/app router via generateMetadata
+    Si besoin d'un <Head>, l'intégrer dans un composant server sans "use client"
+  */
 
   return (
     <>
