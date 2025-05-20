@@ -19,22 +19,9 @@ import SeriesInfo from "@/components/SeriesInfo";
 import SeasonEpisodeList from "@/components/series/season-episode-list";
 import { CommentsSection } from "@/components/comments-section";
 import CastingGrid from "@/components/CastingGrid";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { VipBadge } from "@/components/vip-badge";
-import { cn } from "@/lib/utils";
-import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
-
-// Helper: normalize image URLs
-import { getTMDBImageUrl } from "@/lib/tmdb";
-
-// --- PAGE START ---
-
-export default function SeriesDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-  const { user } = useCurrentUser();
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
+import { useMobile } from "@/hooks/use-mobile";
+...
+const isMobile = useMobile();
 
   // Data state
   const [series, setSeries] = useState<any>(null);
