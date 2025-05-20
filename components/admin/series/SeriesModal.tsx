@@ -607,12 +607,15 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
             </div>
           </div>
         )}
-        {/* Gestion du casting (AJOUT/EDITION/SUPPRESSION) */}
-        <div className="px-3 pt-2 pb-1">
-          <label className="block text-[11px] font-medium text-white/80 mb-1">
-            Casting <span className="text-[10px] text-gray-400">(nom, rôle, image)</span>
-          </label>
-          <div className="space-y-1">
+        {/* Gestion du casting (compact, accordéon) */}
+        <details className="px-3 pt-2 pb-1" style={{ userSelect: "none" }}>
+          <summary className="block text-[11px] font-medium text-white/80 mb-1 cursor-pointer select-none outline-none focus:ring-2 ring-indigo-500 rounded">
+            Casting
+            <span className="ml-2 text-[10px] text-gray-400 font-normal">
+              ({Array.isArray(form.casting) && form.casting.length > 0 ? `${form.casting.length} acteur${form.casting.length > 1 ? "s" : ""}` : "aucun"})
+            </span>
+          </summary>
+          <div className="space-y-1 mt-2">
             {Array.isArray(form.casting) && form.casting.length > 0 ? (
               <ul className="space-y-1">
                 {form.casting.map((actor, idx) => (
@@ -621,18 +624,17 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                       <img
                         src={actor.image}
                         alt={actor.name}
-                        className="w-8 h-8 object-cover rounded-full border border-gray-700"
+                        className="w-7 h-7 object-cover rounded-full border border-gray-700"
                       />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-semibold text-white/90 text-xs">{actor.name}</div>
-                      <div className="truncate text-[11px] text-gray-400">{actor.role}</div>
-                    </div>
+                    <div className="truncate font-semibold text-white/90 text-xs">{actor.name}</div>
+                    <div className="truncate text-[11px] text-gray-400 flex-1">{actor.role}</div>
                     <button
                       type="button"
                       className="text-indigo-400 hover:text-indigo-300 text-xs px-1"
                       onClick={() => setEditingActor({ ...actor, index: idx })}
                       aria-label="Modifier acteur"
+                      tabIndex={0}
                     >
                       ✎
                     </button>
@@ -645,6 +647,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                         setForm(f => ({ ...f, casting: next }));
                       }}
                       aria-label="Supprimer acteur"
+                      tabIndex={0}
                     >
                       ×
                     </button>
@@ -655,28 +658,28 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
               <div className="text-xs text-gray-400">Aucun acteur ajouté.</div>
             )}
           </div>
-          {/* Ajout d'un acteur */}
-          <div className="flex mt-2 gap-1">
+          {/* Ajout d'un acteur (inline, compact) */}
+          <div className="flex flex-wrap mt-2 gap-1 items-center">
             <input
               type="text"
               placeholder="Nom"
               value={newActor.name}
               onChange={e => setNewActor(a => ({ ...a, name: e.target.value }))}
-              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[32%] min-w-[60px]"
             />
             <input
               type="text"
               placeholder="Rôle"
               value={newActor.role}
               onChange={e => setNewActor(a => ({ ...a, role: e.target.value }))}
-              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[32%] min-w-[60px]"
             />
             <input
               type="text"
-              placeholder="URL image"
+              placeholder="Image"
               value={newActor.image}
               onChange={e => setNewActor(a => ({ ...a, image: e.target.value }))}
-              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+              className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[28%] min-w-[60px]"
             />
             <button
               type="button"
@@ -688,33 +691,34 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
               }}
               aria-label="Ajouter acteur"
               title="Ajouter"
+              tabIndex={0}
             >
               +
             </button>
           </div>
-          {/* Edition d'un acteur */}
+          {/* Edition d'un acteur (compact, inline) */}
           {editingActor && (
-            <div className="flex mt-2 gap-1 bg-gray-800/80 p-2 rounded border border-indigo-700">
+            <div className="flex flex-wrap mt-2 gap-1 bg-gray-800/80 p-2 rounded border border-indigo-700 items-center">
               <input
                 type="text"
                 placeholder="Nom"
                 value={editingActor.name}
                 onChange={e => setEditingActor(a => ({ ...a, name: e.target.value }))}
-                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[32%] min-w-[60px]"
               />
               <input
                 type="text"
                 placeholder="Rôle"
                 value={editingActor.role}
                 onChange={e => setEditingActor(a => ({ ...a, role: e.target.value }))}
-                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[32%] min-w-[60px]"
               />
               <input
                 type="text"
-                placeholder="URL image"
+                placeholder="Image"
                 value={editingActor.image}
                 onChange={e => setEditingActor(a => ({ ...a, image: e.target.value }))}
-                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[30%]"
+                className="rounded border border-neutral-700 bg-gray-800 text-xs px-2 py-1 text-white w-[28%] min-w-[60px]"
               />
               <button
                 type="button"
@@ -731,6 +735,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                 }}
                 aria-label="Valider modification"
                 title="Valider"
+                tabIndex={0}
               >
                 ✓
               </button>
@@ -740,12 +745,13 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                 onClick={() => setEditingActor(null)}
                 aria-label="Annuler modification"
                 title="Annuler"
+                tabIndex={0}
               >
                 ×
               </button>
             </div>
           )}
-        </div>
+        </details>
 
         {/* Content scrollable */}
         <form
