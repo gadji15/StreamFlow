@@ -29,6 +29,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     published: !!initialData.published,
     isvip: !!initialData.isvip,
     poster: initialData.poster || "",
+    backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
   });
@@ -83,6 +84,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         published: !!initialData.published,
         isvip: !!initialData.isvip,
         poster: initialData.poster || "",
+        backdrop: initialData.backdrop || "",
         tmdb_id,
         description: initialData.description || "",
       };
@@ -207,6 +209,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         published: !!form.published,
         isvip: !!form.isvip,
         poster: clean(form.poster),
+        backdrop: clean(form.backdrop),
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         description: clean(form.description),
         // Optionnels
@@ -332,6 +335,8 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         title: detail.name || serie.name || f.title,
         poster: (detail.poster_path || serie.poster_path)
           ? `https://image.tmdb.org/t/p/w500${detail.poster_path || serie.poster_path}` : f.poster,
+        backdrop: (detail.backdrop_path || serie.backdrop_path)
+          ? `https://image.tmdb.org/t/p/original${detail.backdrop_path || serie.backdrop_path}` : f.backdrop || "",
         start_year: (detail.first_air_date || serie.first_air_date)
           ? (detail.first_air_date || serie.first_air_date).slice(0, 4)
           : f.start_year,
@@ -786,6 +791,35 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                   onClick={() => handleChange("poster", "")}
                 >
                   Supprimer l'affiche
+                </button>
+              </div>
+            )}
+          </div>
+          <div>
+            <label htmlFor="backdrop" className="block text-[11px] font-medium text-white/80">
+              Backdrop (URL)
+            </label>
+            <input
+              id="backdrop"
+              value={form.backdrop}
+              onChange={(e) => handleChange("backdrop", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              placeholder="https://... ou /path/tmdb"
+            />
+            {form.backdrop && (
+              <div className="flex flex-col items-start mt-1">
+                <img
+                  src={form.backdrop}
+                  alt="Aperçu backdrop"
+                  className="h-12 rounded shadow border border-gray-700"
+                  style={{ maxWidth: "100%" }}
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => handleChange("backdrop", "")}
+                >
+                  Supprimer le backdrop
                 </button>
               </div>
             )}
