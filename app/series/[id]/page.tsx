@@ -399,7 +399,9 @@ export default function SeriesDetailPage() {
               rating={series.vote_average}
             />
 
-            {/* Barre d'onglets (comme sur la page film) */}
+            <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
+
+            {/* Barre d’onglets harmonisée */}
             <div className="mt-8">
   <Tabs defaultValue="overview">
     <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
