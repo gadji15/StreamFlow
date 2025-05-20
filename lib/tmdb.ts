@@ -24,13 +24,23 @@ export interface TMDBMovie {
   vote_average: number;
 }
 
-export async function fetchTMDBCredits(tmdbId: string): Promise<TMDBCastMember[]> {
+/**
+ * Récupère le casting d'un film OU d'une série via TMDB.
+ * @param tmdbId L'identifiant TMDB de l'œuvre
+ * @param type 'movie' ou 'tv'
+ */
+export async function fetchTMDBCredits(
+  tmdbId: string,
+  type: 'movie' | 'tv' = 'movie'
+): Promise<TMDBCastMember[]> {
   if (!TMDB_API_KEY) {
     throw new Error("TMDB API key manquante.");
   }
-  const res = await fetch(
-    `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`
-  );
+  const endpoint =
+    type === 'tv'
+      ? `${TMDB_BASE_URL}/tv/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`
+      : `${TMDB_BASE_URL}/movie/${tmdbId}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`;
+  const res = await fetch(endpoint);
   if (!res.ok) throw new Error('Erreur TMDB');
   const data = await res.json();
   return (data.cast || []).map((member: any) => ({

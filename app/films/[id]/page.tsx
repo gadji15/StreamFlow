@@ -436,7 +436,7 @@ export default function FilmDetailPage() {
             <TabsContent value="casting" className="pt-6">
               <h2 className="text-xl font-semibold mb-4">Casting</h2>
               {movie.tmdbId ? (
-                <CastingGrid tmdbId={movie.tmdbId} fallbackCast={movie.cast} />
+                <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
               ) : (
                 <div className="text-gray-400">Aucun casting disponible.</div>
               )}
