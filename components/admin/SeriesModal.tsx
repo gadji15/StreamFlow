@@ -185,14 +185,23 @@ export default function SeriesModal({ initialData, onSave, onClose }: SeriesModa
               className="w-full mt-2 px-3 py-2 rounded bg-gray-800 text-gray-100"
               value={poster}
               onChange={(e) => setPoster(e.target.value)}
-              placeholder="URL ou chemin TMDB"
+              placeholder="URL complète, chemin TMDB ou URL Supabase"
+              aria-label="Saisir le chemin de l'affiche"
             />
             <div className="mt-1 flex items-center gap-2">
               {poster && (
                 <img
-                  src={poster.startsWith("/") ? "https://image.tmdb.org/t/p/w185" + poster : poster}
+                  src={
+                    poster.startsWith("http")
+                      ? poster
+                      : poster.startsWith("/")
+                        ? "https://image.tmdb.org/t/p/w185" + poster
+                        : poster
+                  }
                   alt="Aperçu affiche"
-                  className="w-16 h-24 rounded shadow"
+                  className="w-16 h-24 rounded shadow border border-gray-700 object-cover"
+                  style={{ background: "#222" }}
+                  onError={e => { e.currentTarget.src = "/placeholder-poster.jpg"; }}
                 />
               )}
             </div>
@@ -212,14 +221,23 @@ export default function SeriesModal({ initialData, onSave, onClose }: SeriesModa
               className="w-full mt-2 px-3 py-2 rounded bg-gray-800 text-gray-100"
               value={backdrop}
               onChange={(e) => setBackdrop(e.target.value)}
-              placeholder="URL ou chemin TMDB"
+              placeholder="URL complète, chemin TMDB ou URL Supabase"
+              aria-label="Saisir le chemin du backdrop"
             />
             <div className="mt-1 flex items-center gap-2">
               {backdrop && (
                 <img
-                  src={backdrop.startsWith("/") ? "https://image.tmdb.org/t/p/w300" + backdrop : backdrop}
+                  src={
+                    backdrop.startsWith("http")
+                      ? backdrop
+                      : backdrop.startsWith("/")
+                        ? "https://image.tmdb.org/t/p/w300" + backdrop
+                        : backdrop
+                  }
                   alt="Aperçu backdrop"
-                  className="w-28 h-16 rounded shadow object-cover"
+                  className="w-28 h-16 rounded shadow border border-gray-700 object-cover"
+                  style={{ background: "#222" }}
+                  onError={e => { e.currentTarget.src = "/placeholder-backdrop.jpg"; }}
                 />
               )}
             </div>
