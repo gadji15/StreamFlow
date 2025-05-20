@@ -392,45 +392,45 @@ export default function SeriesDetailPage() {
             {/* --- Sticky Tabs Bar --- */}
             <div className="sticky top-0 z-30 bg-background bg-opacity-80 backdrop-blur border-b border-gray-700">
               <Tabs defaultValue="overview">
-                <TabsList className="flex w-full flex-nowrap gap-2 overflow-x-auto scrollbar-hide border-b border-gray-700">
-                  <TabsTrigger value="overview" className="flex-shrink-0">Synopsis</TabsTrigger>
-                  <TabsTrigger value="seasons" className="flex-shrink-0">Saisons</TabsTrigger>
-                  <TabsTrigger value="casting" className="flex-shrink-0">Casting</TabsTrigger>
-                  <TabsTrigger value="similar" className="flex-shrink-0">Similaires</TabsTrigger>
-                  <TabsTrigger value="comments" className="flex-shrink-0">Commentaires</TabsTrigger>
-                </TabsList>
+                <TabsList className="flex w-full min-w-0 flex-nowrap gap-2 overflow-x-auto scrollbar-hide border-b border-gray-700">
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Synopsis</TabsTrigger>
+  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Saisons</TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[100px] text-xs sm:text-sm py-1">Casting</TabsTrigger>
+  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[110px] text-xs sm:text-sm py-1">Similaires</TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[120px] text-xs sm:text-sm py-1">Commentaires</TabsTrigger>
+</TabsList>
 
                 {/* --- Synopsis --- */}
-                <TabsContent value="overview" className="pt-6">
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
-                    <p className="text-gray-300 whitespace-pre-line">
-                      {series.description}
-                    </p>
-                  </div>
-                  {series.trailer_url && (
-                    <div>
-                      <h2 className="text-xl font-semibold mb-4">
-                        Bande-annonce
-                      </h2>
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                        <iframe
-                          src={
-                            series.trailer_url.includes("youtube.com/watch")
-                              ? series.trailer_url.replace(
-                                  "watch?v=",
-                                  "embed/"
-                                )
-                              : series.trailer_url
-                          }
-                          title={`Bande-annonce de ${series.title}`}
-                          allowFullScreen
-                          className="w-full h-full"
-                        ></iframe>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
+<TabsContent value="overview" className="pt-6">
+  <div className="mb-4">
+    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
+    <p className="text-gray-300 whitespace-pre-line">
+      {series.description}
+    </p>
+  </div>
+  {series.trailer_url && (
+    <div>
+      <h2 className="text-base font-semibold mb-2">
+        Bande-annonce
+      </h2>
+      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+        <iframe
+          src={
+            series.trailer_url.includes("youtube.com/watch")
+              ? series.trailer_url.replace(
+                  "watch?v=",
+                  "embed/"
+                )
+              : series.trailer_url
+          }
+          title={`Bande-annonce de ${series.title}`}
+          allowFullScreen
+          className="w-full h-full"
+        ></iframe>
+      </div>
+    </div>
+  )}
+</TabsContent>
 
                 {/* --- Saisons & Episodes --- */}
                 <TabsContent value="seasons" className="pt-6">
@@ -458,69 +458,69 @@ export default function SeriesDetailPage() {
                 </TabsContent>
 
                 {/* --- Casting --- */}
-                <TabsContent value="casting" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdb_id ? (
-                    <CastingGrid
-                      tmdbId={series.tmdb_id}
-                      type="tv"
-                      fallbackCast={series.cast}
-                    />
-                  ) : series.cast && series.cast.length > 0 ? (
-                    <ul className="space-y-3">
-                      {series.cast.map((actor: any, idx: number) => {
-                        let imgUrl = null;
-                        if (actor.image) {
-                          if (/^https?:\/\//.test(actor.image)) {
-                            imgUrl = actor.image;
-                          } else {
-                            imgUrl = getTMDBImageUrl(actor.image, "w185");
-                          }
-                        } else if (actor.profile_path) {
-                          imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
-                        }
-                        return (
-                          <li key={idx} className="flex items-center gap-4">
-                            {imgUrl && (
-                              <img
-                                src={imgUrl}
-                                alt={actor.name}
-                                className="w-12 h-12 object-cover rounded-full border border-gray-600"
-                                loading="lazy"
-                              />
-                            )}
-                            <div className="flex-1 flex justify-between items-center">
-                              <span className="font-medium">{actor.name}</span>
-                              {actor.role && (
-                                <span className="text-gray-400">
-                                  {actor.role}
-                                </span>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <div className="text-gray-400">
-                      Aucun casting disponible.
-                    </div>
-                  )}
-                </TabsContent>
+<TabsContent value="casting" className="pt-6">
+  <h2 className="text-base font-semibold mb-2">Casting</h2>
+  {series.tmdb_id ? (
+    <CastingGrid
+      tmdbId={series.tmdb_id}
+      type="tv"
+      fallbackCast={series.cast}
+    />
+  ) : series.cast && series.cast.length > 0 ? (
+    <ul className="space-y-2">
+      {series.cast.map((actor: any, idx: number) => {
+        let imgUrl = null;
+        if (actor.image) {
+          if (/^https?:\/\//.test(actor.image)) {
+            imgUrl = actor.image;
+          } else {
+            imgUrl = getTMDBImageUrl(actor.image, "w185");
+          }
+        } else if (actor.profile_path) {
+          imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
+        }
+        return (
+          <li key={idx} className="flex items-center gap-3">
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt={actor.name}
+                className="w-10 h-10 object-cover rounded-full border border-gray-600"
+                loading="lazy"
+              />
+            )}
+            <div className="flex-1 flex justify-between items-center">
+              <span className="font-medium text-sm">{actor.name}</span>
+              {actor.role && (
+                <span className="text-gray-400 text-xs">
+                  {actor.role}
+                </span>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    <div className="text-gray-400">
+      Aucun casting disponible.
+    </div>
+  )}
+</TabsContent>
 
                 {/* --- Similaires --- */}
-                <TabsContent value="similar" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Séries similaires
-                  </h2>
-                  <SimilarSeriesGrid tmdbId={series.tmdb_id} />
-                </TabsContent>
+<TabsContent value="similar" className="pt-6">
+  <h2 className="text-base font-semibold mb-2">
+    Séries similaires
+  </h2>
+  <SimilarSeriesGrid tmdbId={series.tmdb_id} />
+</TabsContent>
 
                 {/* --- Commentaires --- */}
-                <TabsContent value="comments" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
-                  <CommentsSection contentId={id as string} contentType="series" />
-                </TabsContent>
+<TabsContent value="comments" className="pt-6">
+  <h2 className="text-base font-semibold mb-2">Commentaires</h2>
+  <CommentsSection contentId={id as string} contentType="series" />
+</TabsContent>
               </Tabs>
             </div>
           </div>
