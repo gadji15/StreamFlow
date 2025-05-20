@@ -18,15 +18,19 @@ export default function MiniEpisodePoster({
     <button
       tabIndex={0}
       onClick={onClick}
-      className="group flex flex-col items-center w-full max-w-[110px] focus:outline-none"
+      className="group flex flex-col items-center w-full max-w-[120px] focus:outline-none"
       aria-label={`Regarder épisode ${number} : ${title}`}
     >
-      <div className="w-[90px] h-[130px] rounded-lg overflow-hidden border border-gray-700 shadow bg-gray-900 transition-transform duration-150 group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary group-focus:scale-105 group-focus:border-primary">
+      <div className="w-[100px] h-[150px] rounded-lg overflow-hidden border border-gray-500 shadow-md bg-gray-900 transition-transform duration-150 group-hover:scale-105 group-hover:shadow-xl group-hover:border-primary group-focus:scale-105 group-focus:border-primary">
         <img
           src={posterUrl || "/placeholder-poster.jpg"}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain bg-black"
           loading="lazy"
+          style={{
+            imageRendering: "auto",
+            filter: "contrast(1.1) brightness(1.02) saturate(1.05)",
+          }}
         />
       </div>
       <div className="mt-1 flex flex-col items-center w-full">
