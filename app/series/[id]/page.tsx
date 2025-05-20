@@ -380,8 +380,8 @@ setSeries({
                 {/* Casting */}
                 <TabsContent value="casting" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdb_id ? (
-                    <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
+                  {series.tmdbId ? (
+                    <CastingGrid tmdbId={series.tmdbId} fallbackCast={series.cast} />
                   ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
