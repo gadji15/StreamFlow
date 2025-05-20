@@ -182,8 +182,8 @@ export default function SeriesDetailPage() {
     // eslint-disable-next-line
   }, [id, user]);
 
-  // Gérer l'ajout/suppression des favoris
-  const toggleFavorite = () => {
+  // Gérer l'ajout/suppression des favoris via Supabase (cloud)
+  const toggleFavorite = async () => {
     if (!user) {
       toast({
         title: "Connectez-vous",
@@ -193,41 +193,82 @@ export default function SeriesDetailPage() {
       return;
     }
 
-    const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
-    let newFavorites;
     if (isFavorite) {
-      newFavorites = favorites.filter((favId: string) => favId !== id);
-      toast({
-        title: "Retiré des favoris",
-        description: `"${series?.title}" a été retiré de vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_remove",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
+      // Supprimer le favori
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("series_id", id);
+
+      if (!error) {
+        setIsFavorite(false);
+        toast({
+          title: "Retiré des favoris",
+          description: `"${series?.title}" a été retiré de vos favoris.`,
+        });
+        // Log activity
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_remove",
+          content_type: "series",
+          content_id: id,
+          details: { title: series?.title },
+          timestamp: new Date().toISOString()
+        }]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de retirer cette série des favoris.",
+          variant: "destructive",
+        });
+      }
     } else {
-      newFavorites = [...favorites, id];
-      toast({
-        title: "Ajouté aux favoris",
-        description: `"${series?.title}" a été ajouté à vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_add",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
+      // Ajouter le favori
+      const { error } = await supabase.from("favorites").insert([
+        {
+          user_id: user.id,
+          series_id: id,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (!error) {
+        setIsFavorite(true);
+        toast({
+          title: "Ajouté aux favoris",
+          description: `"${series?.title}" a été ajouté à vos favoris.`,
+        });
+        supabase.from('activities').insert([{
+          user_id: user.id,
+          action: "favorite_add",
+          content_type: "series",
+          content_id: id,
+          details: { title: series?.title },
+          timestamp: new Date().toISOString()
+        }]);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter cette série aux favoris.",
+          variant: "destructive",
+        });
+      }
     }
-    localStorage.setItem('favoritesSeries', JSON.stringify(newFavorites));
-    setIsFavorite(!isFavorite);
+    // Rafraîchir la vérification pour garder l’UI à jour
+    checkIfFavorite(id);
+  };
+
+  // Vérifier si la série est dans les favoris de l'utilisateur (Supabase)
+  const checkIfFavorite = async (seriesId: string) => {
+    if (user && seriesId) {
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("series_id", seriesId)
+        .maybeSingle();
+      setIsFavorite(!!data && !error);
+    }
   };
 
   // Obtenir les épisodes de la saison sélectionnée
@@ -282,13 +323,47 @@ export default function SeriesDetailPage() {
   return (
     <div className="pb-8">
       {/* Backdrop et informations principales */}
-      <div 
-        className="relative w-full h-[50vh] md:h-[60vh] bg-cover bg-center bg-no-repeat mb-6"
-        style={{ 
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url(${series.backdrop_url || '/placeholder-backdrop.png'})` 
-        }}
-      >
-        <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8">
+      {/* Backdrop premium */}
+      <div className="relative w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 mb-6">
+        {/* Backdrop image avec overlay premium */}
+        <img
+          src={series.backdrop_url || '/placeholder-backdrop.png'}
+          alt={series.title}
+          className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out opacity-100"
+          style={{
+            objectPosition: "center 35%",
+            filter:
+              "brightness(1.06) contrast(1.26) saturate(1.18) drop-shadow(0 1px 3px rgba(0,0,0,0.12))",
+            imageRendering: "auto",
+          }}
+          loading="eager"
+          aria-hidden="true"
+        />
+        {/* Overlay sombre & gradient premium */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: "linear-gradient(to bottom, rgba(10,10,10,0.80) 0%, rgba(10,10,10,0.55) 30%, rgba(10,10,10,0.00) 70%)",
+            zIndex: 3,
+          }}
+        />
+        <div className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: `
+              linear-gradient(to bottom, rgba(20,20,20,0.64) 0%, rgba(20,20,20,0.22) 13%, rgba(20,20,20,0.0) 36%, rgba(20,20,20,0.0) 68%, rgba(20,20,20,0.37) 100%),
+              radial-gradient(ellipse at center, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.09) 85%, rgba(0,0,0,0.17) 100%)
+            `,
+            zIndex: 4,
+          }}
+        />
+        <div
+          className="absolute left-0 right-0 bottom-0 h-28 md:h-44 backdrop-blur-xl bg-black/30"
+          aria-hidden="true"
+          style={{ zIndex: 5 }}
+        />
+        <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8 relative z-10">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Poster */}
             <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl">
@@ -298,19 +373,17 @@ export default function SeriesDetailPage() {
                 className="w-full h-full object-cover"
               />
             </div>
-            
             {/* Détails */}
             <div className="flex-1">
               <div className="flex items-center">
-                <h1 className="text-2xl md:text-4xl font-bold">{series.title}</h1>
+                <h1 className="text-2xl md:text-4xl font-bold text-white drop-shadow">{series.title}</h1>
                 {series.is_vip && (
                   <div className="ml-2">
                     <VipBadge />
                   </div>
                 )}
               </div>
-              
-              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300 mt-2">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-white drop-shadow font-semibold mt-2">
                 <span className="flex items-center">
                   <Calendar className="mr-1 h-4 w-4" /> 
                   {series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}
@@ -320,13 +393,12 @@ export default function SeriesDetailPage() {
                   {series.seasons} Saison{series.seasons && series.seasons > 1 ? 's' : ''}
                 </span>
                 {series.rating && (
-                  <span className="flex items-center">
+                  <span className="flex items-center font-bold text-yellow-400 drop-shadow">
                     <Star className="mr-1 h-4 w-4 text-yellow-400" /> 
                     {series.rating.toFixed(1)}/10
                   </span>
                 )}
               </div>
-              
               <div className="mt-2 flex flex-wrap gap-2">
                 {series.genres?.map(genreId => (
                   <span 
@@ -337,11 +409,9 @@ export default function SeriesDetailPage() {
                   </span>
                 ))}
               </div>
-              
-              <p className="text-gray-300 my-4 line-clamp-4 md:line-clamp-none">
+              <p className="text-gray-100 my-4 line-clamp-4 md:line-clamp-none drop-shadow">
                 {series.description}
               </p>
-              
               <div className="flex flex-wrap gap-3 mt-4">
                 <Button 
                   size="lg" 
@@ -362,7 +432,6 @@ export default function SeriesDetailPage() {
                   <Play className="h-5 w-5" /> 
                   Regarder
                 </Button>
-                
                 <Button
                   variant="outline"
                   size="lg"
