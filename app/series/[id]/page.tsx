@@ -269,8 +269,8 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
+      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 md:items-start">
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
@@ -335,7 +335,7 @@ setSeries({
           </div>
 
           {/* Main info & tabs */}
-          <div className="flex-1 flex flex-col gap-5">
+          <div className="flex-1 flex flex-col gap-6">
             <SeriesInfo
               title={series.title}
               years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
