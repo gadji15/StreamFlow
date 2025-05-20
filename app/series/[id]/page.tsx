@@ -61,18 +61,18 @@ export default function SeriesDetailPage() {
         // Normalization (robuste, inspiré de la page film)
 // -- Normalisation TMDB ultra-robuste --
 function tmdbPosterUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-poster.png";
+  if (!raw || typeof raw !== 'string') return "/placeholder-poster.jpg";
   const val = raw.trim();
   if (val.startsWith("http")) return val;
   if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/w500${val}`;
-  return "/placeholder-poster.png";
+  return "/placeholder-poster.jpg";
 }
 function tmdbBackdropUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.png";
+  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.jpg";
   const val = raw.trim();
   if (val.startsWith("http")) return val;
   if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
-  return "/placeholder-backdrop.png";
+  return "/placeholder-backdrop.jpg";
 }
 const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
 const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
@@ -404,7 +404,7 @@ setSeries({
                     {similarSeries.length > 0 ? (
   similarSeries.map((serie) => {
     // Normalisation de l'image pour chaque carte série similaire (exactement comme pour le film)
-    let posterUrl = serie.poster_url || "/placeholder-poster.png";
+    let posterUrl = serie.poster_url || "/placeholder-poster.jpg";
     if (
       typeof posterUrl === "string" &&
       posterUrl.startsWith("/") &&
