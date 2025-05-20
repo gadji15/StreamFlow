@@ -99,14 +99,23 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Normalization (robuste, inspiré de la page film)
-// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
+        // Adapté de la logique film : préfixe TMDB si nécessaire (et gère les placeholders)
 function normalizedPosterUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (raw.startsWith("/") && !raw.startsWith("/placeholder")) {
+      return `https://image.tmdb.org/t/p/w500${raw}`;
+    }
+    return raw.trim();
+  }
   return "/placeholder-poster.jpg";
 }
 function normalizedBackdropUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (raw.startsWith("/") && !raw.startsWith("/placeholder")) {
+      return `https://image.tmdb.org/t/p/original${raw}`;
+    }
+    return raw.trim();
+  }
   return "/placeholder-backdrop.jpg";
 }
 const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
@@ -269,8 +278,8 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
+        <div className="flex flex-col md:flex-row gap-10">
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
