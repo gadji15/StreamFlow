@@ -84,54 +84,44 @@ export default function SeasonsEpisodesTab({
           {seasonAriaMessage}
         </div>
         {!noSeasons ? (
-          <div className={cn("grid gap-4", seasonGridCols)}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {seasons.map((season) => (
               <button
                 key={season.id}
                 onClick={() => setSelectedSeasonId(season.id)}
                 className={cn(
-                  "group relative flex flex-col items-center border rounded-xl overflow-hidden shadow transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer bg-gray-900/80 hover:border-primary",
+                  "group flex flex-col items-center bg-gray-900/80 rounded-lg p-2 transition-all outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary hover:bg-gray-800",
                   season.id === selectedSeasonId
-                    ? "border-primary ring-2 ring-primary"
-                    : "border-gray-800"
+                    ? "ring-2 ring-primary"
+                    : ""
                 )}
                 aria-current={season.id === selectedSeasonId}
                 aria-label={`Saison ${season.season_number}${season.title ? " - " + season.title : ""}`}
+                style={{ minWidth: "110px", maxWidth: "120px" }}
               >
                 {/* Poster saison */}
-                {season.poster ? (
-                  <img
-                    src={season.poster}
-                    alt={`Affiche saison ${season.season_number}`}
-                    className="w-full h-36 object-cover bg-black"
-                  />
-                ) : (
-                  <div className="w-full h-36 flex items-center justify-center bg-gray-800">
+                <div className="w-[90px] h-[135px] rounded-md overflow-hidden bg-black mb-1 flex items-center justify-center">
+                  {season.poster ? (
+                    <img
+                      src={season.poster}
+                      alt={`Affiche saison ${season.season_number}`}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      style={{
+                        imageRendering: "auto",
+                        filter: "contrast(1.05) brightness(1.04)",
+                      }}
+                    />
+                  ) : (
                     <Layers className="w-10 h-10 text-gray-400" />
-                  </div>
-                )}
-                {/* Overlay numéro et titre */}
-                <div className={cn(
-                  "absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-xs font-semibold text-primary shadow",
-                  season.id === selectedSeasonId ? "bg-primary/80 text-white" : ""
-                )}>
+                  )}
+                </div>
+                <span className="text-xs text-primary font-bold mt-1">
                   S{season.season_number}
-                </div>
-                <div className="w-full px-2 py-2 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent absolute bottom-0 left-0">
-                  <div className="font-bold text-gray-100 text-sm truncate">
-                    {season.title || `Saison ${season.season_number}`}
-                  </div>
-                  {season.episode_count && (
-                    <div className="text-xs text-gray-400">
-                      {season.episode_count} épisode{season.episode_count > 1 ? "s" : ""}
-                    </div>
-                  )}
-                  {season.air_date && (
-                    <div className="text-xs text-gray-500">
-                      {season.air_date}
-                    </div>
-                  )}
-                </div>
+                </span>
+                <span className="text-xs text-gray-100 font-medium w-full text-center truncate" title={season.title || `Saison ${season.season_number}`}>
+                  {season.title || `Saison ${season.season_number}`}
+                </span>
               </button>
             ))}
           </div>
@@ -148,7 +138,7 @@ export default function SeasonsEpisodesTab({
       )}
 
       {/* Episodes */}
-      <div className="flex-1 min-w-0 pl-2">
+      <div className="flex-1 min-w-0">
         {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>
