@@ -96,7 +96,7 @@ export default function SeriesDetailPage() {
         .from("seasons")
         .select("*")
         .eq("series_id", seriesId)
-        .order("number", { ascending: true });
+        .order("season_number", { ascending: true });
 
       // All episodes for the series (ordered)
       const { data: fetchedEpisodes } = await supabase
