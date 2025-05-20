@@ -329,7 +329,13 @@ export default function SeriesDetailPage() {
       <div className="relative w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 mb-6">
         {/* Backdrop image avec overlay premium */}
         <img
-          src={series.backdrop_url || '/placeholder-backdrop.png'}
+          src={
+            series.backdrop_url
+              ? series.backdrop_url.startsWith("/")
+                ? `https://image.tmdb.org/t/p/original${series.backdrop_url}`
+                : series.backdrop_url
+              : "/placeholder-backdrop.png"
+          }
           alt={series.title}
           className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out opacity-100"
           style={{
@@ -340,6 +346,9 @@ export default function SeriesDetailPage() {
           }}
           loading="eager"
           aria-hidden="true"
+          onError={(e) => {
+            e.currentTarget.src = "/placeholder-backdrop.png";
+          }}
         />
         {/* Overlay sombre & gradient premium */}
         <div
@@ -370,7 +379,13 @@ export default function SeriesDetailPage() {
             {/* Poster */}
             <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl bg-gray-900/30">
               <img 
-                src={series.poster_url || '/placeholder-poster.png'} 
+                src={
+                  series.poster_url
+                    ? series.poster_url.startsWith("/")
+                      ? `https://image.tmdb.org/t/p/w500${series.poster_url}`
+                      : series.poster_url
+                    : '/placeholder-poster.png'
+                }
                 alt={series.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
