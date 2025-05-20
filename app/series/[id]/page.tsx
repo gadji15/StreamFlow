@@ -312,7 +312,7 @@ const isMobile = useMobile();
             )}
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 w-full mt-4">
+            <div className="flex flex-col gap-3 w-full min-w-0 mt-4 max-w-xs md:max-w-none mx-auto md:mx-0">
               <Button
                 size="lg"
                 className="w-full gap-2"
