@@ -173,6 +173,11 @@ setSeries({
           setIsFavorite(!!data);
         }
       } catch (err) {
+        // Ajout d'un log détaillé pour le debug
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line no-console
+          console.error("[ERREUR fetchSeries]", err);
+        }
         setError("Impossible de charger les détails de la série.");
       } finally {
         setIsLoading(false);
