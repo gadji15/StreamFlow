@@ -2,7 +2,13 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 /**
- * Hook pour gérer l'état de favori d'une série pour un utilisateur via Supabase.
+ * Hook React pour gérer l'état de favori d'une série pour un utilisateur (persisté via Supabase).
+ * - Récupère l'état favori, loading, et expose addFavorite/removeFavorite/toggleFavorite.
+ * - Exemples d'usage : bouton "Ajouter/Retirer des favoris" dans la page série.
+ *
+ * @param seriesId - ID de la série
+ * @param userId - ID de l'utilisateur (nullable)
+ * @returns { isFavorite, loading, addFavorite, removeFavorite, toggleFavorite }
  */
 export function useFavoriteSeries(seriesId: string, userId?: string | null) {
   const [isFavorite, setIsFavorite] = useState(false);

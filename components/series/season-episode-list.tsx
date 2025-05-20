@@ -9,7 +9,8 @@ import { formatDuration } from '@/lib/utils';
 /**
  * Affiche dynamiquement la liste des épisodes d'une saison d'une série.
  * Gère l'affichage VIP, le feedback utilisateur, l'accessibilité et le responsive.
- * Ajoute la gestion de la progression utilisateur (épisodes vus).
+ * Affiche la progression utilisateur (épisodes vus/non vus, bouton de marquage).
+ * Nécessite le hook useWatchedEpisodes (persisté via Supabase).
  */
 export type Episode = {
   id: string;
