@@ -76,6 +76,9 @@ if (
   backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
 }
 
+console.log("Poster URL utilisée :", posterUrl);
+console.log("Backdrop URL utilisée :", backdropUrl);
+
 setSeries({
   ...fetchedSeries,
   posterUrl,
