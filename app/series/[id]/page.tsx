@@ -1,66 +1,111 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter, notFound } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SeasonEpisodeList from "@/components/series/season-episode-list";
-import { CommentsSection } from "@/components/comments-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Sparkles, Share2, Star, ChevronDown } from "lucide-react";
-import dynamic from "next/dynamic";
+import { Play, Sparkles, Share2, Star } from "lucide-react";
 import LoadingScreen from "@/components/loading-screen";
 
-// You may need to create/adapt these components for true DRYness and design consistency.
-import SeriesBackdrop from "@/components/SeriesBackdrop";
-import SeriesPosterCard from "@/components/SeriesPosterCard";
-import SeriesInfo from "@/components/SeriesInfo";
-import ActionButtons from "@/components/ActionButtons";
-import SeriesCard from "@/components/SeriesCard";
+// Helpers
+function isFullUrl(str) {
+  return /^https?:\/\//.test(str);
+}
+function getImageUrl(raw, fallback, size = "original") {
+  if (!raw) return fallback;
+  if (isFullUrl(raw)) return raw;
+  if (raw.startsWith("/")) return `https://image.tmdb.org/t/p/${size}${raw}`;
+  return raw;
+}
 
-const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
-
-import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
-
-function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
-  const [similar, setSimilar] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!tmdbId) {
-      setSimilar([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    fetchTMDBSimilarSeries(tmdbId)
-      .then((results) => setSimilar(results || []))
-      .catch(() => setSimilar([]))
-      .finally(() => setLoading(false));
-  }, [tmdbId]);
-
+function Genres({ genre }) {
+  if (!genre) return null;
+  const genres = typeof genre === "string" ? genre.split(",").map(g => g.trim()).filter(Boolean) : [];
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {loading
-        ? Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 bg-gray-800 rounded-xl animate-pulse" aria-hidden="true"></div>
-          ))
-        : similar.length > 0 ? (
-            similar.map((serie) => (
-              <SeriesCard
-                key={serie.id}
-                title={serie.title}
-                description={serie.overview}
-                imageUrl={tmdbPosterUrl(serie.poster_path)}
-              />
-            ))
-          ) : (
-            <div className="text-gray-400 col-span-6 text-center">Aucune série similaire trouvée.</div>
-          )}
+    <div className="flex flex-wrap gap-2 mt-2 mb-2">
+      {genres.map((g, i) => (
+        <span
+          key={g + i}
+          className="bg-amber-900/60 text-amber-300 px-3 py-0.5 rounded-full text-xs font-medium shadow"
+        >
+          {g}
+        </span>
+      ))}
     </div>
+  );
+}
+
+// Casting grid
+function CastingSection({ casting }) {
+  const cast = Array.isArray(casting) && casting.length > 0 ? casting : [];
+  if (cast.length === 0) {
+    return (
+      <div className="text-gray-400 text-center py-4 text-sm italic">Aucun acteur renseigné pour cette série.</div>
+    );
+  }
+  return (
+    <ul className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 py-3">
+      {cast.map((actor, idx) => (
+        <li
+          key={idx}
+          className="flex flex-col items-center bg-gray-900/80 rounded-lg shadow p-2 transition transform hover:scale-105 focus-within:ring-2 ring-amber-400 min-w-0"
+          tabIndex={0}
+          aria-label={`${actor.name}${actor.role ? ", " + actor.role : ""}`}
+        >
+          <img
+            src={getImageUrl(actor.image, "/no-image.png", "w185")}
+            alt={actor.name}
+            className="w-14 h-14 object-cover rounded-full border border-gray-700 shadow mb-1"
+            loading="lazy"
+            style={{ minWidth: "3.5rem", minHeight: "3.5rem" }}
+          />
+          <span className="text-white font-semibold text-[13px] truncate w-full text-center">{actor.name}</span>
+          {actor.role && (
+            <span className="text-gray-400 text-xs text-center truncate w-full">{actor.role}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Similar series
+function SimilarSeriesGrid({ currentId, genre }) {
+  const [similar, setSimilar] = React.useState([]);
+  React.useEffect(() => {
+    const fetchSimilar = async () => {
+      if (!genre) return setSimilar([]);
+      const { data } = await supabase
+        .from("series")
+        .select("*")
+        .neq("id", currentId)
+        .ilike("genre", `%${genre.split(",")[0].trim()}%`)
+        .eq("published", true)
+        .limit(12);
+      setSimilar(data || []);
+    };
+    fetchSimilar();
+  }, [currentId, genre]);
+  if (!similar || similar.length === 0)
+    return <div className="text-gray-400 text-center py-3 text-sm italic">Aucune série similaire trouvée.</div>;
+  return (
+    <ul className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 py-3">
+      {similar.map((serie) => (
+        <li key={serie.id} className="flex flex-col items-center bg-gray-900/80 rounded-lg shadow p-2 hover:scale-105 transition cursor-pointer"
+          onClick={() => window.location.href = `/series/${serie.id}`}>
+          <img
+            src={getImageUrl(serie.poster, "/placeholder-poster.jpg", "w300")}
+            alt={serie.title}
+            className="w-16 h-24 object-cover rounded border border-gray-700 shadow mb-1"
+            loading="lazy"
+          />
+          <span className="text-white font-semibold text-xs truncate w-full text-center">{serie.title}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -70,23 +115,19 @@ export default function SeriesDetailPage() {
   const { user } = useCurrentUser();
   const { toast } = useToast();
 
-  const [series, setSeries] = useState<any>(null);
-  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [series, setSeries] = useState(null);
+  const [episodes, setEpisodes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isVIP, setIsVIP] = useState(false);
-  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  // On retire similarSeries du state local, il est géré par SimilarSeriesGrid
+  const [selectedSeason, setSelectedSeason] = useState(null);
 
   useEffect(() => {
     if (!id) return;
-    const fetchSeries = async () => {
-      setIsLoading(true);
-      setError(null);
-
+    setIsLoading(true);
+    setError(null);
+    (async () => {
       try {
-        // Get series details
         const { data: fetchedSeries, error: seriesError } = await supabase
           .from("series")
           .select("*")
@@ -99,64 +140,22 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Normalization (robuste, inspiré de la page film)
-// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
-function normalizedPosterUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  return "/placeholder-poster.jpg";
-}
-function normalizedBackdropUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  return "/placeholder-backdrop.jpg";
-}
-const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
-const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
-
-// (DEV) Log pour débogage
-if (typeof window !== "undefined") {
-  console.log("[TMDB poster url]", posterUrl);
-  console.log("[TMDB backdrop url]", backdropUrl);
-}
-
-setSeries({
-  ...fetchedSeries,
-  posterUrl,
-  backdropUrl,
-});
-
-        // Fetch episodes
-        const { data: fetchedEpisodes, error: episodesError } = await supabase
+        const { data: fetchedEpisodes } = await supabase
           .from("episodes")
           .select("*")
           .eq("series_id", id)
           .eq("published", true);
 
         setEpisodes(fetchedEpisodes || []);
+        setSeries(fetchedSeries);
 
-        // VIP logic
-        if (user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("is_vip")
-            .eq("id", user.id)
-            .single();
-          setIsVIP(profile?.is_vip || false);
-        } else {
-          setIsVIP(false);
+        // Default season logic
+        if (fetchedEpisodes && fetchedEpisodes.length > 0) {
+          const seasons = Array.from(new Set(fetchedEpisodes.map((ep) => ep.season))).sort((a, b) => a - b);
+          setSelectedSeason(seasons[0]);
         }
 
-        // Set default selected season
-        if (fetchedSeries.seasons && fetchedSeries.seasons > 0) {
-          setSelectedSeason(fetchedSeries.seasons);
-        } else if (fetchedEpisodes && fetchedEpisodes.length > 0) {
-          setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
-        }
-
-        // Plus de setSimilarSeries ici : la grille des séries similaires TMDB est désormais découplée.
-        // TODO: Fetch similar series logic (TMDB/local), placeholder for now
-        // setSimilarSeries([]);
-
-        // Check favorite
+        // Favorite logic
         if (user) {
           const { data } = await supabase
             .from("favorites")
@@ -167,30 +166,22 @@ setSeries({
           setIsFavorite(!!data);
         }
       } catch (err) {
-        // Ajout d'un log détaillé pour le debug
-        if (typeof window !== "undefined") {
-          // eslint-disable-next-line no-console
-          console.error("[ERREUR fetchSeries]", err);
-        }
         setError("Impossible de charger les détails de la série.");
       } finally {
         setIsLoading(false);
       }
-    };
-
-    fetchSeries();
+    })();
   }, [id, user]);
 
-  // Episodes per season
+  // Responsive seasons/episodes
   const availableSeasons = Array.from(
     new Set(episodes.map((ep) => ep.season))
   ).sort((a, b) => a - b);
-
   const seasonEpisodes = episodes.filter(
     (ep) => ep.season === selectedSeason
   );
 
-  // Favorite logic (DRY, similar to films)
+  // Favorite logic
   const toggleFavorite = async () => {
     if (!user) {
       toast({
@@ -239,221 +230,212 @@ setSeries({
     }
   };
 
-  // Watch button: jump to first episode of selected season
   const handleWatch = () => {
     if (seasonEpisodes.length > 0) {
       router.push(`/series/${id}/watch/${seasonEpisodes[0].id}`);
     }
   };
 
-  // Loading/Error states
   if (isLoading) return <LoadingScreen />;
   if (error || !series) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-2">Erreur</h2>
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center">
+        <div className="bg-red-900/50 border border-red-700 rounded-lg p-8 max-w-md w-full shadow-lg text-center">
+          <h2 className="text-2xl font-bold mb-3">Erreur</h2>
           <p className="text-gray-300">{error || "Série non trouvée"}</p>
+          <Button className="mt-6" onClick={() => router.back()}>Retour</Button>
         </div>
       </div>
     );
   }
 
-  // VIP logic
-  const canWatch = !series.is_vip || isVIP;
+  // Images
+  const posterUrl = getImageUrl(series.poster, "/placeholder-poster.jpg", "w500");
+  const backdropUrl = getImageUrl(series.backdrop, "/placeholder-backdrop.jpg", "original");
 
+  // Responsive/accessible layout start
   return (
-    <>
+    <div className="relative min-h-screen bg-gradient-to-b from-gray-950 via-gray-900/95 to-gray-950 text-white">
       {/* Backdrop header */}
-      {series.backdropUrl && (
-        <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
-      )}
-
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
-          {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
-            {/* VIP Badge/Card */}
-            {series.is_vip && (
-              <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
-                  Contenu VIP
-                </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
-                    {isVIP
-                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
-                      : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
-                  </p>
-                  {!isVIP && (
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                      onClick={() => router.push("/vip")}
-                    >
-                      Devenir VIP
-                    </Button>
-                  )}
-                </div>
-              </div>
+      <div className="relative h-[40vw] min-h-[160px] max-h-[360px] w-full overflow-hidden rounded-b-2xl shadow-xl">
+        <img
+          src={backdropUrl}
+          alt={`Backdrop de ${series.title}`}
+          className="absolute inset-0 w-full h-full object-cover object-center brightness-[.56] blur-[2px] scale-105 pointer-events-none select-none"
+          style={{ zIndex: 1 }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/90 z-10" />
+        <div className="relative z-20 flex flex-col xs:flex-row items-end xs:items-center gap-4 xs:gap-7 px-2 xs:px-3 sm:px-4 pt-6 pb-4 max-w-7xl mx-auto">
+          {/* Poster */}
+          <div className="relative -mt-24 xs:mt-0 shadow-xl shrink-0">
+            <img
+              src={posterUrl}
+              alt={`Affiche ${series.title}`}
+              className="w-28 h-40 xs:w-32 xs:h-48 sm:w-36 sm:h-56 object-cover rounded-xl border-4 border-gray-800 shadow-2xl bg-gray-900"
+              style={{ boxShadow: "0 6px 32px 0 #0007" }}
+            />
+            {series.isvip && (
+              <span className="absolute top-2 left-2 bg-gradient-to-r from-amber-600 to-yellow-500 text-black font-bold text-[10px] px-2 py-0.5 rounded-full shadow-lg border border-amber-300 uppercase tracking-wide">
+                VIP
+              </span>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3 w-full mt-4">
+          </div>
+          {/* Main info */}
+          <div className="flex-1 flex flex-col gap-2 xs:gap-3 items-start max-w-2xl">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl font-extrabold drop-shadow tracking-tight leading-tight">
+              {series.title}
+            </h1>
+            <div className="flex flex-wrap gap-2 items-center text-xs xs:text-sm">
+              {series.start_year && (
+                <span className="text-amber-400">{series.start_year}{series.end_year ? ` - ${series.end_year}` : " - ..."} </span>
+              )}
+              <Genres genre={series.genre} />
+              {series.vote_average !== null && (
+                <span className="flex items-center gap-1 bg-gray-800/80 px-2 py-0.5 rounded text-amber-300 font-semibold text-xs">
+                  <Star className="w-4 h-4 text-amber-400" /> {series.vote_average}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap mt-1">
+              {series.creator && (
+                <Badge variant="secondary" className="bg-indigo-900/80 border-indigo-500 text-indigo-200 px-2 py-0.5 text-xs">
+                  Créateur&nbsp;: <span className="font-medium">{series.creator}</span>
+                </Badge>
+              )}
+              {series.seasons && (
+                <Badge className="bg-gray-700/80 border-gray-600 text-gray-200 px-2 py-0.5 text-xs">
+                  {series.seasons} saison{series.seasons > 1 ? "s" : ""}
+                </Badge>
+              )}
+            </div>
+            {/* Actions */}
+            <div className="flex gap-2 mt-1 flex-wrap">
               <Button
-                size="lg"
-                className="w-full gap-2"
+                size="sm"
+                className="gap-2 bg-amber-500 text-black hover:bg-amber-600 shadow py-1 px-3 text-xs xs:text-sm"
                 onClick={handleWatch}
-                disabled={!canWatch}
                 aria-label="Regarder la série"
               >
-                <Play className="h-5 w-5" />
-                Regarder
+                <Play className="h-4 w-4" /> Regarder
               </Button>
               <Button
                 variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
+                size="sm"
+                className="gap-2 py-1 px-3 text-xs xs:text-sm"
                 onClick={toggleFavorite}
                 aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
-                <Sparkles className="h-5 w-5" />
+                <Sparkles className="h-4 w-4" />
                 {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               </Button>
               <Button
                 variant="outline"
-                size="lg"
-                className="w-full gap-2"
+                size="sm"
+                className="gap-2 py-1 px-3 text-xs xs:text-sm"
                 onClick={handleShare}
                 aria-label="Partager"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-4 w-4" />
                 Partager
               </Button>
             </div>
           </div>
-
-          {/* Main info & tabs */}
-          <div className="flex-1 flex flex-col gap-6">
-            <SeriesInfo
-              title={series.title}
-              years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
-              seasons={series.seasons}
-              genres={series.genres}
-              rating={series.rating}
-            />
-
-            {/* Tabs for overview, episodes, casting, similar, comments */}
-            <div className="mt-8">
-              <Tabs defaultValue="overview">
-                <TabsList className="w-full md:w-auto border-b border-gray-700">
-                  <TabsTrigger value="overview">Aperçu</TabsTrigger>
-                  <TabsTrigger value="episodes">Épisodes</TabsTrigger>
-                  <TabsTrigger value="casting">Casting</TabsTrigger>
-                  <TabsTrigger value="similar">Séries similaires</TabsTrigger>
-                  <TabsTrigger value="comments">Commentaires</TabsTrigger>
-                </TabsList>
-
-                {/* Aperçu */}
-                <TabsContent value="overview" className="pt-6">
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
-                    <p className="text-gray-300 whitespace-pre-line">{series.description}</p>
-                  </div>
-                  {series.trailer_url && (
-                    <div>
-                      <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                        <iframe
-                          src={
-                            series.trailer_url.includes("youtube.com/watch")
-                              ? series.trailer_url.replace("watch?v=", "embed/")
-                              : series.trailer_url
-                          }
-                          title={`Bande-annonce de ${series.title}`}
-                          allowFullScreen
-                          className="w-full h-full"
-                        ></iframe>
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Episodes */}
-                <TabsContent value="episodes" className="pt-6">
-                  <div className="flex items-center mb-4 gap-4">
-                    <div>
-                      <label htmlFor="season-select" className="text-gray-400 mr-2">
-                        Saison :
-                      </label>
-                      <select
-                        id="season-select"
-                        value={selectedSeason || ""}
-                        onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                        className="appearance-none bg-gray-700 rounded-md px-4 py-2 pr-10 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                      >
-                        {availableSeasons.map((season) => (
-                          <option key={season} value={season}>
-                            Saison {season}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="inline ml-[-24px] text-gray-400 pointer-events-none" />
-                    </div>
-                    {/* Progression */}
-                    {seasonEpisodes.length > 0 && (
-                      <span className="text-xs text-gray-400">
-                        {seasonEpisodes.filter(ep => ep.is_watched).length}/{seasonEpisodes.length} épisode
-                        {seasonEpisodes.length > 1 ? "s" : ""} vu
-                        {seasonEpisodes.length > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                  <SeasonEpisodeList
-                    episodes={seasonEpisodes}
-                    seriesId={id}
-                    isVIP={isVIP}
-                  />
-                </TabsContent>
-
-                {/* Casting */}
-                <TabsContent value="casting" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdbId ? (
-                    <CastingGrid tmdbId={series.tmdbId} type="tv" fallbackCast={series.cast} />
-                  ) : series.cast && series.cast.length > 0 ? (
-                    <ul className="space-y-3">
-                      {series.cast.map((actor, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="font-medium">{actor.name}</span>
-                          {actor.role && (
-                            <span className="text-gray-400">{actor.role}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="text-gray-400">Aucun casting disponible.</div>
-                  )}
-                </TabsContent>
-
-                {/* Séries similaires */}
-                <TabsContent value="similar" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
-                  <SimilarSeriesGrid tmdbId={series.tmdbId} />
-                </TabsContent>
-
-                {/* Commentaires */}
-                <TabsContent value="comments" className="pt-6">
-                  <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
-                  <CommentsSection contentId={id} contentType="series" />
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
         </div>
       </div>
-    </>
+
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 py-6">
+        {/* Overview */}
+        <section aria-labelledby="synopsis-heading" className="mb-8">
+          <h2 id="synopsis-heading" className="text-lg md:text-xl font-bold mb-2">Synopsis</h2>
+          <p className="text-gray-200 text-[15px] md:text-base whitespace-pre-line leading-relaxed rounded-lg bg-gray-900/70 p-3 shadow">
+            {series.description || <span className="italic text-gray-500">Aucun synopsis disponible.</span>}
+          </p>
+        </section>
+
+        {/* Episodes: sticky/fixed season nav */}
+        <section aria-labelledby="episodes-heading" className="mb-8">
+          <div className="sticky top-[64px] bg-gray-950/95 z-30 py-2 xs:py-0 mb-1 flex flex-col xs:flex-row xs:items-center gap-2 border-b border-gray-800">
+            <h2 id="episodes-heading" className="text-lg md:text-xl font-bold">Épisodes</h2>
+            {availableSeasons.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <label htmlFor="season-select" className="text-xs text-gray-400 font-medium">
+                  Saison&nbsp;:
+                </label>
+                <nav aria-label="Navigation des saisons" className="flex gap-1">
+                  {availableSeasons.map((season) => (
+                    <button
+                      key={season}
+                      onClick={() => setSelectedSeason(season)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition focus:outline-none focus:ring-2 ring-amber-400
+                        ${season === selectedSeason
+                          ? "bg-amber-600 text-black shadow"
+                          : "bg-gray-800/80 text-amber-200 hover:bg-amber-700/50"
+                        }`}
+                      aria-current={season === selectedSeason}
+                    >
+                      Saison {season}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            )}
+          </div>
+          {seasonEpisodes.length > 0 ? (
+            <ul className="divide-y divide-gray-800 rounded-lg overflow-hidden shadow bg-gray-900/70">
+              {seasonEpisodes.map((ep) => (
+                <li
+                  key={ep.id}
+                  className="flex items-start gap-3 px-2 py-2 hover:bg-gray-900/90 focus-within:bg-gray-800/80 transition group"
+                  tabIndex={0}
+                  aria-label={`Épisode ${ep.episode}: ${ep.title}`}
+                >
+                  <span className="text-amber-400 font-bold text-base w-7 text-right shrink-0">{ep.episode}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-xs truncate">{ep.title}</span>
+                      {ep.is_watched && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-green-700/60 text-green-200">Vu</span>
+                      )}
+                    </div>
+                    {ep.description && (
+                      <p className="text-gray-300 text-xs truncate">{ep.description}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-400 text-center py-4 text-sm italic">Aucun épisode publié pour cette saison.</div>
+          )}
+        </section>
+
+        {/* Casting */}
+        <section aria-labelledby="casting-heading" className="mb-8">
+          <h2 id="casting-heading" className="text-lg md:text-xl font-bold mb-2">Casting</h2>
+          <CastingSection casting={series.casting} />
+        </section>
+
+        {/* Séries similaires */}
+        <section aria-labelledby="similar-heading" className="mb-8">
+          <h2 id="similar-heading" className="text-lg md:text-xl font-bold mb-2">Séries similaires</h2>
+          <SimilarSeriesGrid currentId={series.id} genre={series.genre} />
+        </section>
+
+        {/* Commentaires */}
+        <section aria-labelledby="comments-heading" className="mb-12">
+          <h2 id="comments-heading" className="text-lg md:text-xl font-bold mb-2">Commentaires</h2>
+          <div className="rounded-lg bg-gray-900/80 p-4">
+            {typeof window !== "undefined" && window.StreamFlowComments ? (
+              <window.StreamFlowComments contentId={series.id} contentType="series" />
+            ) : (
+              <span className="text-gray-400 italic">
+                Les commentaires arrivent bientôt. <button className="underline text-indigo-400 hover:text-indigo-200">Contactez-nous</button> pour être notifié.
+              </span>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
