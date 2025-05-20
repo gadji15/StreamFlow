@@ -405,10 +405,10 @@ export default function SeriesDetailPage() {
             <div className="mt-8">
   <Tabs defaultValue="overview">
     <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-      <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-        <BookText className="w-5 h-5 inline sm:hidden" />
-        <span className="hidden sm:inline">Synopsis</span>
-      </TabsTrigger>
+                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                    <BookText className="w-5 h-5 inline sm:hidden" />
+                    <span className="hidden sm:inline">Bande-annonce</span>
+                  </TabsTrigger>
       <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
         <Layers className="w-5 h-5 inline sm:hidden" />
         <span className="hidden sm:inline">Saisons</span>
@@ -427,37 +427,30 @@ export default function SeriesDetailPage() {
       </TabsTrigger>
     </TabsList>
 
-    {/* --- Synopsis --- */}
-    <TabsContent value="overview" className="pt-6">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold mb-2">Synopsis</h2>
-        <p className="text-gray-300 whitespace-pre-line">
-          {series.description}
-        </p>
-      </div>
-      {series.trailer_url && (
-        <div>
-          <h2 className="text-base font-semibold mb-2">
-            Bande-annonce
-          </h2>
-          <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            <iframe
-              src={
-                series.trailer_url.includes("youtube.com/watch")
-                  ? series.trailer_url.replace(
-                      "watch?v=",
-                      "embed/"
-                    )
-                  : series.trailer_url
-              }
-              title={`Bande-annonce de ${series.title}`}
-              allowFullScreen
-              className="w-full h-full"
-            ></iframe>
-          </div>
-        </div>
-      )}
-    </TabsContent>
+    {/* --- Bande-annonce --- */}
+                <TabsContent value="trailer" className="pt-6">
+                  {series.trailer_url ? (
+                    <div>
+                      <h2 className="text-base font-semibold mb-2">
+                        Bande-annonce
+                      </h2>
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          src={
+                            series.trailer_url.includes("youtube.com/watch")
+                              ? series.trailer_url.replace("watch?v=", "embed/")
+                              : series.trailer_url
+                          }
+                          title={`Bande-annonce de ${series.title}`}
+                          allowFullScreen
+                          className="w-full h-full"
+                        ></iframe>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-gray-400">Aucune bande-annonce disponible.</div>
+                  )}
+                </TabsContent>
 
     {/* --- Saisons & Episodes --- */}
     <TabsContent value="seasons" className="pt-6">
