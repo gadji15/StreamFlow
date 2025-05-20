@@ -154,21 +154,14 @@ export default function SeasonsEpisodesTab({
                     ?.season_number ?? ""
                 }
               </h3>
-              <div className="space-y-4">
+              {/* Nouvelle grille responsive d'épisodes */}
+              <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                 {seasonEpisodes.map((ep) => (
-                  <EpisodeCard
+                  <MiniEpisodePoster
                     key={ep.id}
-                    episode={{
-                      ...ep,
-                      thumbnail_url: ep.poster || ep.thumbnail_url, // compatibilité poster ou thumbnail
-                    }}
-                    watched={isWatched(ep.id)}
-                    loadingWatched={loadingWatched}
-                    isVIP={isVIP}
-                    user={user}
-                    onMarkWatched={markWatched}
-                    onUnmarkWatched={unmarkWatched}
-                    onWatch={() => router.push(`/series/${id}/watch/${ep.id}`)}
+                    posterUrl={ep.poster || ep.thumbnail_url || "/placeholder-poster.jpg"}
+                    number={ep.episode_number}
+                    title={ep.title}
                   />
                 ))}
               </div>
