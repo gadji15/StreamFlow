@@ -18,7 +18,27 @@ interface VideoPlayerProps {
   }
 }
 
-export function VideoPlayer({ 
+export function VideoPlayer({
+  src,
+  poster,
+  title,
+  onEnded,
+  nextEpisode,
+  onClose, // Ajout explicite de la prop
+  // ... autres props peut-être
+}: {
+  src: string;
+  poster?: string;
+  title?: string;
+  onEnded?: () => void;
+  nextEpisode?: {
+    title: string;
+    season: number;
+    episode: number;
+    onNext: () => void;
+  };
+  onClose?: () => void; // Déclaration explicite
+}) { 
   src, 
   poster, 
   title,
