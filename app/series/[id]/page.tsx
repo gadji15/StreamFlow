@@ -23,7 +23,7 @@ import SeriesCard from "@/components/SeriesCard";
 
 const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
 
-import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
+import { fetchTMDBSimilarSeries, getTMDBImageUrl } from "@/lib/tmdb";
 
 function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
   const [similar, setSimilar] = useState<any[]>([]);
@@ -99,18 +99,28 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Normalization (robuste, inspiré de la page film)
-// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
+        // Helper: check if string looks like a full URL
+function isFullUrl(str: string) {
+  return /^https?:\/\//.test(str);
+}
+// Normalisation poster/backdrop
 function normalizedPosterUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (isFullUrl(raw)) return raw.trim();
+    // TMDB path
+    return getTMDBImageUrl(raw, "w300");
+  }
   return "/placeholder-poster.jpg";
 }
 function normalizedBackdropUrl(raw: any) {
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    if (isFullUrl(raw)) return raw.trim();
+    return getTMDBImageUrl(raw, "original");
+  }
   return "/placeholder-backdrop.jpg";
 }
-const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
-const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
+const posterUrl = normalizedPosterUrl(fetchedSeries.poster || fetchedSeries.poster_path);
+const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop || fetchedSeries.backdrop_path);
 
 // (DEV) Log pour débogage
 if (typeof window !== "undefined") {
@@ -424,14 +434,39 @@ setSeries({
                     <CastingGrid tmdbId={series.tmdbId} type="tv" fallbackCast={series.cast} />
                   ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
-                      {series.cast.map((actor, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span className="font-medium">{actor.name}</span>
-                          {actor.role && (
-                            <span className="text-gray-400">{actor.role}</span>
-                          )}
-                        </li>
-                      ))}
+                      {series.cast.map((actor, index) => {
+                        // Normalisation de l'image : supporte TMDB path, full URL, ou null
+                        let imgUrl = null;
+                        if (actor.image) {
+                          if (typeof actor.image === "string") {
+                            if (/^https?:\/\//.test(actor.image)) {
+                              imgUrl = actor.image;
+                            } else {
+                              imgUrl = getTMDBImageUrl(actor.image, "w185");
+                            }
+                          }
+                        } else if (actor.profile_path) {
+                          imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
+                        }
+                        return (
+                          <li key={index} className="flex items-center gap-4">
+                            {imgUrl && (
+                              <img
+                                src={imgUrl}
+                                alt={actor.name}
+                                className="w-12 h-12 object-cover rounded-full border border-gray-600"
+                                loading="lazy"
+                              />
+                            )}
+                            <div className="flex-1 flex justify-between items-center">
+                              <span className="font-medium">{actor.name}</span>
+                              {actor.role && (
+                                <span className="text-gray-400">{actor.role}</span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
                     <div className="text-gray-400">Aucun casting disponible.</div>

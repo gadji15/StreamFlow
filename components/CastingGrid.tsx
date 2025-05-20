@@ -61,11 +61,27 @@ export default function CastingGrid({
   }
 
   if (!cast.length) {
-    return <div className="text-gray-400">Aucun membre du casting disponible.</div>;
+    return (
+      <div className="flex justify-center items-center h-36">
+        <div className="flex flex-col items-center bg-gray-900/70 rounded-xl px-7 py-6 shadow-inner border border-gray-800 max-w-xs mx-auto">
+          <img
+            src="/placeholder-avatar.jpg"
+            alt="Aucun membre du casting"
+            className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 opacity-60"
+            aria-hidden="true"
+          />
+          <span className="font-semibold text-gray-300 text-base mb-0.5">Casting indisponible</span>
+          <span className="text-xs text-gray-400 text-center">Aucun membre du casting n’a été trouvé pour cette œuvre.</span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div
+      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+      aria-label="Grille du casting"
+    >
       {cast.map((person, idx) => (
         <div
           key={person.id}
@@ -81,7 +97,10 @@ export default function CastingGrid({
             alt={person.name}
             className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-gray-700 transition-transform duration-200 hover:scale-110"
             onError={(e) => {
-              e.currentTarget.src = "/placeholder-avatar.png";
+              // Empêche le fallback de reboucler
+              if (!e.currentTarget.src.endsWith("/placeholder-avatar.jpg")) {
+                e.currentTarget.src = "/placeholder-avatar.jpg";
+              }
             }}
             style={{
               boxShadow: '0 2px 8px rgba(0,0,0,0.18)'
@@ -90,8 +109,11 @@ export default function CastingGrid({
           <span className="font-medium text-gray-100 text-sm text-center">
             {person.name}
           </span>
-          {person.character && (
-            <span className="text-xs text-gray-400 text-center">{person.character}</span>
+          {/* Affiche le rôle/personnage même en fallback local */}
+          {(person.character || person.role) && (
+            <span className="text-xs text-gray-400 text-center">
+              {person.character || person.role}
+            </span>
           )}
         </div>
       ))}
