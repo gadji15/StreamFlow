@@ -58,22 +58,29 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Normalization
-        let backdropUrl = fetchedSeries.backdrop_url || "/placeholder-backdrop.png";
-        if (
-          typeof backdropUrl === "string" &&
-          backdropUrl.startsWith("/") &&
-          !backdropUrl.startsWith("/placeholder")
-        ) {
-          backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
-        }
-        const posterUrl = fetchedSeries.poster_url || "/placeholder-poster.png";
+        // Normalization (robuste, inspiré de la page film)
+let posterUrl = fetchedSeries.poster_url || "/placeholder-poster.png";
+if (
+  typeof posterUrl === "string" &&
+  posterUrl.startsWith("/") &&
+  !posterUrl.startsWith("/placeholder")
+) {
+  posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
+}
+let backdropUrl = fetchedSeries.backdrop_url || "/placeholder-backdrop.png";
+if (
+  typeof backdropUrl === "string" &&
+  backdropUrl.startsWith("/") &&
+  !backdropUrl.startsWith("/placeholder")
+) {
+  backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
+}
 
-        setSeries({
-          ...fetchedSeries,
-          backdropUrl,
-          posterUrl,
-        });
+setSeries({
+  ...fetchedSeries,
+  posterUrl,
+  backdropUrl,
+});
 
         // Fetch episodes
         const { data: fetchedEpisodes, error: episodesError } = await supabase
