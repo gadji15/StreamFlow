@@ -1,35 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { 
-  Play, 
-  Star, 
-  Calendar, 
-  Info, 
-  ThumbsUp,
-  ThumbsDown,
-  Film,
-  ChevronDown,
-  Clock
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { VipBadge } from '@/components/vip-badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CommentsSection } from '@/components/comments-section';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/lib/supabaseClient';
-import SeasonEpisodeList from '@/components/series/season-episode-list';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Play, Star, Calendar, Film, ChevronDown, Clock, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { VipBadge } from "@/components/vip-badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CommentsSection } from "@/components/comments-section";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabaseClient";
+import SeasonEpisodeList from "@/components/series/season-episode-list";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useFavoriteSeries } from "@/hooks/useFavoriteSeries";
+// import Head from "next/head"; // ❌ À retirer : Next.js App Router ne supporte pas Head dans un composant "use client"
+import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
-// TypeScript type for Series and Episode (aligned with Supabase)
+// Typage strict
 type Series = {
   id: string;
   title: string;
@@ -39,7 +26,7 @@ type Series = {
   end_year?: number | null;
   creator?: string;
   genres: string[];
-  cast?: { name: string; role: string }[];
+  cast?: { name: string; role?: string }[];
   trailer_url?: string;
   is_vip?: boolean;
   published?: boolean;
@@ -47,6 +34,8 @@ type Series = {
   backdrop_url?: string;
   seasons?: number;
   rating?: number;
+  views?: number;
+  tmdb_id?: string | number;
 };
 
 type Episode = {
@@ -57,7 +46,8 @@ type Episode = {
   episode_number: number;
   is_vip?: boolean;
   published?: boolean;
-  // ...other fields as needed
+  duration?: number;
+  thumbnail_url?: string;
 };
 
 export default function SeriesDetailPage() {
@@ -70,14 +60,38 @@ export default function SeriesDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showVipDialog, setShowVipDialog] = useState(false);
   const { user } = useCurrentUser();
   const [isVIP, setIsVIP] = useState(false);
 
   const { toast } = useToast();
 
-  // Charger les détails de la série et ses épisodes
+  // Hook favoris via Supabase
+  const { isFavorite, loading: loadingFavorite, toggleFavorite } = useFavoriteSeries(id, user?.id);
+
+  // Gestion progression épisodes vus
+  const {
+    watchedIds,
+    loading: loadingWatched,
+    markWatched,
+    unmarkWatched,
+    isWatched,
+  } = useWatchedEpisodes(id, user?.id);
+
+  // Détection offline
+  const [isOffline, setIsOffline] = useState(false);
+  useEffect(() => {
+    const handle = () => setIsOffline(!navigator.onLine);
+    window.addEventListener("online", handle);
+    window.addEventListener("offline", handle);
+    handle();
+    return () => {
+      window.removeEventListener("online", handle);
+      window.removeEventListener("offline", handle);
+    };
+  }, []);
+
+  // Chargement de la série et de ses épisodes
   useEffect(() => {
     const loadSeriesDetails = async () => {
       if (!id) return;
@@ -86,11 +100,11 @@ export default function SeriesDetailPage() {
       setError(null);
 
       try {
-        // Charger la série depuis Supabase
+        // Charger la série
         const { data: seriesData, error: seriesError } = await supabase
-          .from('series')
-          .select('*')
-          .eq('id', id)
+          .from("series")
+          .select("*")
+          .eq("id", id)
           .single();
 
         if (seriesError || !seriesData) {
@@ -98,21 +112,36 @@ export default function SeriesDetailPage() {
           return;
         }
 
-        // Vérifier si la série est publiée
         if (!seriesData.published) {
           setError("Cette série n'est pas disponible.");
           return;
         }
 
-        setSeries(seriesData);
+        // Reconstruire les URLs images TMDB si besoin
+        let posterUrl = seriesData.poster_url || "/placeholder-poster.png";
+        if (typeof posterUrl === "string" && posterUrl.startsWith("/") && !posterUrl.startsWith("/placeholder")) {
+          posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
+        }
+        let backdropUrl = seriesData.backdrop_url || "/placeholder-backdrop.png";
+        if (typeof backdropUrl === "string" && backdropUrl.startsWith("/") && !backdropUrl.startsWith("/placeholder")) {
+          backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
+        }
 
-        // VIP: vérifier le statut de l'utilisateur
+        // Normalisation + enrichissement
+        setSeries({
+          ...seriesData,
+          poster_url: posterUrl,
+          backdrop_url: backdropUrl,
+          tmdb_id: seriesData.tmdb_id || "",
+        });
+
+        // VIP : statut utilisateur
         let userIsVIP = false;
         if (user) {
           const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_vip')
-            .eq('id', user.id)
+            .from("profiles")
+            .select("is_vip")
+            .eq("id", user.id)
             .single();
           userIsVIP = !!profile?.is_vip;
           setIsVIP(userIsVIP);
@@ -120,58 +149,53 @@ export default function SeriesDetailPage() {
           setIsVIP(false);
         }
 
-        // Afficher le dialog VIP si la série est VIP et l'utilisateur ne l'est pas
+        // Dialog VIP si besoin
         if (seriesData.is_vip && !userIsVIP) {
           setShowVipDialog(true);
         }
 
-        // Définir la saison sélectionnée par défaut (la plus récente)
+        // Saison par défaut = la dernière (plus récente)
         if (seriesData.seasons && seriesData.seasons > 0) {
           setSelectedSeason(seriesData.seasons);
         }
 
-        // Charger les épisodes depuis Supabase
+        // Charger les épisodes
         const { data: episodesData, error: episodesError } = await supabase
-          .from('episodes')
-          .select('*')
-          .eq('series_id', id)
-          .eq('published', true);
+          .from("episodes")
+          .select("*")
+          .eq("series_id", id)
+          .eq("published", true);
 
         if (episodesError) {
           setEpisodes([]);
         } else {
-          // Filtrer les épisodes VIP si l'utilisateur n'est pas VIP
+          // Filtrer VIP si besoin
           const filteredEpisodes = userIsVIP
             ? (episodesData || [])
             : (episodesData || []).filter((ep: any) => !ep.is_vip);
           setEpisodes(filteredEpisodes);
         }
 
-        // Incrémenter le nombre de vues côté serveur
+        // Incrémenter les vues
         supabase
-          .from('series')
+          .from("series")
           .update({ views: (seriesData.views || 0) + 1 })
-          .eq('id', id);
+          .eq("id", id);
 
-        // Journaliser l'activité de vue de série
+        // Log activité vue
         if (user) {
-          supabase.from('activities').insert([{
-            user_id: user.id,
-            action: "content_view",
-            content_type: "series",
-            content_id: id,
-            details: { title: seriesData.title, isVIP: seriesData.is_vip },
-            timestamp: new Date().toISOString()
-          }]);
-        }
-
-        // Vérifier si la série est dans les favoris de l'utilisateur
-        if (user) {
-          const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
-          setIsFavorite(favorites.includes(id));
+          supabase.from("activities").insert([
+            {
+              user_id: user.id,
+              action: "content_view",
+              content_type: "series",
+              content_id: id,
+              details: { title: seriesData.title, isVIP: seriesData.is_vip },
+              timestamp: new Date().toISOString(),
+            },
+          ]);
         }
       } catch (error) {
-        console.error("Erreur de chargement de la série:", error);
         setError("Impossible de charger les détails de la série.");
       } finally {
         setIsLoading(false);
@@ -182,77 +206,36 @@ export default function SeriesDetailPage() {
     // eslint-disable-next-line
   }, [id, user]);
 
-  // Gérer l'ajout/suppression des favoris
-  const toggleFavorite = () => {
-    if (!user) {
-      toast({
-        title: "Connectez-vous",
-        description: "Vous devez être connecté pour ajouter des séries à vos favoris.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Saisons
+  const getSeasonEpisodes = (season: number) =>
+    episodes.filter((ep) => ep.season === season);
 
-    const favorites = JSON.parse(localStorage.getItem('favoritesSeries') || '[]');
-    let newFavorites;
-    if (isFavorite) {
-      newFavorites = favorites.filter((favId: string) => favId !== id);
-      toast({
-        title: "Retiré des favoris",
-        description: `"${series?.title}" a été retiré de vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_remove",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
-    } else {
-      newFavorites = [...favorites, id];
-      toast({
-        title: "Ajouté aux favoris",
-        description: `"${series?.title}" a été ajouté à vos favoris.`,
-      });
-      // Log activity
-      supabase.from('activities').insert([{
-        user_id: user.id,
-        action: "favorite_add",
-        content_type: "series",
-        content_id: id,
-        details: { title: series?.title },
-        timestamp: new Date().toISOString()
-      }]);
-    }
-    localStorage.setItem('favoritesSeries', JSON.stringify(newFavorites));
-    setIsFavorite(!isFavorite);
-  };
-
-  // Obtenir les épisodes de la saison sélectionnée
-  const getSeasonEpisodes = (season: number) => {
-    return episodes.filter(episode => episode.season === season);
-  };
-
-  // Obtenir la liste des saisons disponibles
   const getAvailableSeasons = () => {
-    const seasons = [...new Set(episodes.map(episode => episode.season))];
+    const seasons = [...new Set(episodes.map((ep) => ep.season))];
     return seasons.sort((a, b) => a - b);
   };
 
-  // Rediriger vers la page VIP
+  // Navigation VIP
   const goToVipPage = () => {
     setShowVipDialog(false);
-    router.push('/vip');
+    router.push("/vip");
   };
 
   // Chargement
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-        <p className="mt-4">Chargement de la série...</p>
+        <div className="animate-pulse rounded-full h-12 w-12 border-4 border-amber-500/60 mx-auto mb-4"></div>
+        <p className="mt-4">Chargement de la série…</p>
+      </div>
+    );
+  }
+
+  if (isOffline) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <div className="text-2xl mb-4">🚫 Mode hors connexion</div>
+        <p className="text-gray-400">Certaines fonctionnalités (favoris, progression, lecture) sont désactivées jusqu'à rétablissement de la connexion.</p>
       </div>
     );
   }
@@ -264,10 +247,7 @@ export default function SeriesDetailPage() {
         <div className="bg-red-900/20 border border-red-800 rounded-lg p-6 max-w-md mx-auto">
           <h2 className="text-xl font-bold mb-2">Erreur</h2>
           <p>{error || "Série non trouvée"}</p>
-          <Button 
-            onClick={() => router.push('/series')}
-            className="mt-4"
-          >
+          <Button onClick={() => router.push("/series")} className="mt-4">
             Retour aux séries
           </Button>
         </div>
@@ -275,76 +255,83 @@ export default function SeriesDetailPage() {
     );
   }
 
-  // Obtenir les saisons disponibles
   const availableSeasons = getAvailableSeasons();
   const seasonEpisodes = getSeasonEpisodes(selectedSeason);
 
+  /*
+    Pour le SEO, utiliser generateMetadata dans app/series/[id]/page.tsx (server)
+    Balises SEO : à gérer côté server component/app router via generateMetadata
+    Si besoin d'un <Head>, l'intégrer dans un composant server sans "use client"
+  */
+
   return (
-    <div className="pb-8">
-      {/* Backdrop et informations principales */}
-      <div 
+    <>
+      {/* Header visuel */}
+      <section
         className="relative w-full h-[50vh] md:h-[60vh] bg-cover bg-center bg-no-repeat mb-6"
-        style={{ 
-          backgroundImage: `linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url(${series.backdrop_url || '/placeholder-backdrop.png'})` 
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.95)), url(${series.backdrop_url})`,
         }}
+        aria-label="Image de fond série"
       >
         <div className="container mx-auto px-4 h-full flex flex-col justify-end py-8">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Poster */}
-            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl">
-              <img 
-                src={series.poster_url || '/placeholder-poster.png'} 
-                alt={series.title} 
+            <div className="w-32 h-48 md:w-48 md:h-72 flex-shrink-0 -mt-20 md:-mt-40 rounded-lg overflow-hidden shadow-xl border-4 border-amber-600/30">
+              <img
+                src={series.poster_url}
+                alt={`Affiche de ${series.title}`}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
-            
             {/* Détails */}
             <div className="flex-1">
               <div className="flex items-center">
                 <h1 className="text-2xl md:text-4xl font-bold">{series.title}</h1>
                 {series.is_vip && (
-                  <div className="ml-2">
-                    <VipBadge />
-                  </div>
+                  <span className="ml-2">
+                    <VipBadge size="default" variant="default" />
+                  </span>
                 )}
               </div>
-              
+
               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300 mt-2">
                 <span className="flex items-center">
-                  <Calendar className="mr-1 h-4 w-4" /> 
-                  {series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}
+                  <Calendar className="mr-1 h-4 w-4" />
+                  {series.start_year}
+                  {series.end_year ? ` - ${series.end_year}` : " - Présent"}
                 </span>
                 <span className="flex items-center">
-                  <Film className="mr-1 h-4 w-4" /> 
-                  {series.seasons} Saison{series.seasons && series.seasons > 1 ? 's' : ''}
+                  <Film className="mr-1 h-4 w-4" />
+                  {series.seasons} Saison{series.seasons && series.seasons > 1 ? "s" : ""}
                 </span>
                 {series.rating && (
                   <span className="flex items-center">
-                    <Star className="mr-1 h-4 w-4 text-yellow-400" /> 
+                    <Star className="mr-1 h-4 w-4 text-yellow-400" />
                     {series.rating.toFixed(1)}/10
                   </span>
                 )}
               </div>
-              
+
               <div className="mt-2 flex flex-wrap gap-2">
-                {series.genres?.map(genreId => (
-                  <span 
-                    key={genreId} 
+                {series.genres?.map((genre, idx) => (
+                  <span
+                    key={idx}
                     className="px-3 py-1 bg-gray-700 text-xs rounded-full"
                   >
-                    {genreId}
+                    {genre}
                   </span>
                 ))}
               </div>
-              
+
               <p className="text-gray-300 my-4 line-clamp-4 md:line-clamp-none">
                 {series.description}
               </p>
-              
+
               <div className="flex flex-wrap gap-3 mt-4">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="gap-2"
                   onClick={() => {
                     if (seasonEpisodes.length > 0) {
@@ -352,31 +339,58 @@ export default function SeriesDetailPage() {
                     } else {
                       toast({
                         title: "Aucun épisode disponible",
-                        description: "Il n'y a pas d'épisodes disponibles pour cette saison.",
+                        description:
+                          "Il n'y a pas d'épisodes disponibles pour cette saison.",
                         variant: "destructive",
                       });
                     }
                   }}
                   disabled={seasonEpisodes.length === 0 || (series.is_vip && !isVIP)}
+                  aria-label="Regarder le premier épisode disponible"
                 >
-                  <Play className="h-5 w-5" /> 
+                  <Play className="h-5 w-5" />
                   Regarder
                 </Button>
-                
+
                 <Button
-                  variant="outline"
+                  variant={isFavorite ? "default" : "outline"}
                   size="lg"
                   className="gap-2"
-                  onClick={toggleFavorite}
+                  onClick={async () => {
+                    if (!user) {
+                      toast({
+                        title: "Connectez-vous",
+                        description:
+                          "Vous devez être connecté pour utiliser les favoris.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    const ok = await toggleFavorite();
+                    toast({
+                      title: isFavorite
+                        ? "Retiré des favoris"
+                        : "Ajouté aux favoris",
+                      description: isFavorite
+                        ? `"${series.title}" a été retiré de vos favoris.`
+                        : `"${series.title}" a été ajouté à vos favoris.`,
+                    });
+                  }}
+                  disabled={loadingFavorite}
+                  aria-label={
+                    isFavorite
+                      ? "Retirer des favoris"
+                      : "Ajouter aux favoris"
+                  }
                 >
                   {isFavorite ? (
                     <>
-                      <ThumbsDown className="h-5 w-5" />
+                      <Sparkles className="h-5 w-5 text-yellow-400" />
                       Retirer des favoris
                     </>
                   ) : (
                     <>
-                      <ThumbsUp className="h-5 w-5" />
+                      <Sparkles className="h-5 w-5" />
                       Ajouter aux favoris
                     </>
                   )}
@@ -385,46 +399,56 @@ export default function SeriesDetailPage() {
             </div>
           </div>
         </div>
-      </div>
-      
+      </section>
+
       {/* Contenu principal */}
-      <div className="container mx-auto px-4">
+      <main className="container mx-auto px-4">
         <Tabs defaultValue="episodes" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="episodes">Épisodes</TabsTrigger>
             <TabsTrigger value="details">Détails</TabsTrigger>
             <TabsTrigger value="comments">Commentaires</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="episodes" className="space-y-6">
-            {/* Sélecteur de saison */}
             <div className="bg-gray-800 rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Saison {selectedSeason}</h2>
-                
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    Saison {selectedSeason}
+                  </h2>
+                  {/* Progression affichée ici aussi */}
+                  {user && seasonEpisodes.length > 0 && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      {seasonEpisodes.filter(ep => isWatched(ep.id)).length}/{seasonEpisodes.length} épisode{seasonEpisodes.length > 1 ? "s" : ""} vu{seasonEpisodes.length > 1 ? "s" : ""}
+                    </div>
+                  )}
+                </div>
                 <div className="relative">
                   <select
                     value={selectedSeason}
                     onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                    className="appearance-none bg-gray-700 rounded-md px-4 py-2 pr-10 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="appearance-none bg-gray-700 rounded-md px-4 py-2 pr-10 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                    aria-label="Sélectionnez la saison"
                   >
-                    {availableSeasons.map(season => (
-                      <option key={season} value={season}>Saison {season}</option>
+                    {availableSeasons.map((season) => (
+                      <option key={season} value={season}>
+                        Saison {season}
+                      </option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none text-gray-400" />
                 </div>
               </div>
-              
               {/* Liste des épisodes */}
-              <SeasonEpisodeList 
-                episodes={seasonEpisodes} 
-                seriesId={id} 
+              <SeasonEpisodeList
+                episodes={seasonEpisodes}
+                seriesId={id}
                 isVIP={isVIP}
               />
             </div>
           </TabsContent>
-          
+
           <TabsContent value="details" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-6">
@@ -433,7 +457,7 @@ export default function SeriesDetailPage() {
                   <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
                   <p className="text-gray-300">{series.description}</p>
                 </div>
-                
+
                 {/* Bande-annonce */}
                 {series.trailer_url && (
                   <div className="bg-gray-800 rounded-lg p-6">
@@ -441,7 +465,11 @@ export default function SeriesDetailPage() {
                     <div className="aspect-video">
                       <iframe
                         className="w-full h-full rounded-lg"
-                        src={`https://www.youtube.com/embed/${extractYouTubeId(series.trailer_url)}`}
+                        src={
+                          series.trailer_url.includes("youtube.com/watch")
+                            ? series.trailer_url.replace("watch?v=", "embed/")
+                            : series.trailer_url
+                        }
                         title={`Bande-annonce de ${series.title}`}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -450,7 +478,7 @@ export default function SeriesDetailPage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="space-y-6">
                 {/* Informations */}
                 <div className="bg-gray-800 rounded-lg p-6">
@@ -468,7 +496,10 @@ export default function SeriesDetailPage() {
                     )}
                     <li className="flex justify-between">
                       <span className="text-gray-400">Années :</span>
-                      <span>{series.start_year}{series.end_year ? ` - ${series.end_year}` : ' - Présent'}</span>
+                      <span>
+                        {series.start_year}
+                        {series.end_year ? ` - ${series.end_year}` : " - Présent"}
+                      </span>
                     </li>
                     <li className="flex justify-between">
                       <span className="text-gray-400">Saisons :</span>
@@ -482,7 +513,9 @@ export default function SeriesDetailPage() {
                     )}
                     <li className="flex justify-between">
                       <span className="text-gray-400">Genres :</span>
-                      <span className="text-right">{series.genres?.join(', ') || ''}</span>
+                      <span className="text-right">
+                        {series.genres?.join(", ") || ""}
+                      </span>
                     </li>
                     {series.rating && (
                       <li className="flex justify-between">
@@ -495,35 +528,42 @@ export default function SeriesDetailPage() {
                     )}
                   </ul>
                 </div>
-                
-                {/* Casting */}
-                {series.cast && series.cast.length > 0 && (
-                  <div className="bg-gray-800 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold mb-4">Casting</h2>
+
+                {/* Casting dynamique TMDB */}
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h2 className="text-xl font-semibold mb-4">Casting</h2>
+                  {series.tmdb_id ? (
+                    <import('components/CastingGrid').then(mod => mod.default) && (
+                      <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
+                    )
+                  ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
                         <li key={index} className="flex justify-between">
                           <span className="font-medium">{actor.name}</span>
-                          {actor.role && <span className="text-gray-400">{actor.role}</span>}
+                          {actor.role && (
+                            <span className="text-gray-400">{actor.role}</span>
+                          )}
                         </li>
                       ))}
                     </ul>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-gray-400">Aucun casting disponible.</div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="comments">
-            {/* Commentaires */}
             <div className="bg-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
               <CommentsSection contentId={id} contentType="series" />
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-      
+      </main>
+
       {/* Dialog VIP */}
       <Dialog open={showVipDialog} onOpenChange={setShowVipDialog}>
         <DialogContent>
@@ -534,26 +574,13 @@ export default function SeriesDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-between mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowVipDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setShowVipDialog(false)}>
               Retour
             </Button>
-            <Button onClick={goToVipPage}>
-              Découvrir l'offre VIP
-            </Button>
+            <Button onClick={goToVipPage}>Découvrir l'offre VIP</Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
-}
-
-// Fonction pour extraire l'ID YouTube d'une URL
-function extractYouTubeId(url: string) {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
 }
