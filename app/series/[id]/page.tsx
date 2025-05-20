@@ -351,6 +351,8 @@ export default function SeriesDetailPage() {
     </Collapsible>
   );
 
+  // Log de debug pour vérifier le contenu du tableau episodes avant filtrage
+  console.log("[DEBUG] episodes :", episodes);
   // Episodes for selected season
   const seasonEpisodes = episodes.filter(
     (ep) => ep.season_id === selectedSeasonId
