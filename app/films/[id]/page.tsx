@@ -386,11 +386,11 @@ export default function FilmDetailPage() {
         {/* Onglets premium */}
         <div className="mt-12">
           <Tabs defaultValue="overview">
-            <TabsList className="w-full min-w-0 flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Synopsis</TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[100px] text-xs sm:text-sm py-1">Casting</TabsTrigger>
-  <TabsTrigger value="related" className="flex-shrink-0 min-w-[110px] text-xs sm:text-sm py-1">Films similaires</TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[120px] text-xs sm:text-sm py-1">Commentaires</TabsTrigger>
+            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Synopsis</TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[72px] text-xs py-0.5">Casting</TabsTrigger>
+  <TabsTrigger value="related" className="flex-shrink-0 min-w-[80px] text-xs py-0.5">Films similaires</TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[88px] text-xs py-0.5">Commentaires</TabsTrigger>
 </TabsList>
             {/* 
               Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :

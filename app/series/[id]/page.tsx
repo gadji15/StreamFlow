@@ -392,12 +392,12 @@ export default function SeriesDetailPage() {
             {/* --- Sticky Tabs Bar --- */}
             <div className="sticky top-0 z-30 bg-background bg-opacity-80 backdrop-blur border-b border-gray-700">
               <Tabs defaultValue="overview">
-                <TabsList className="flex w-full min-w-0 flex-nowrap gap-2 overflow-x-auto scrollbar-hide border-b border-gray-700">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Synopsis</TabsTrigger>
-  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Saisons</TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[100px] text-xs sm:text-sm py-1">Casting</TabsTrigger>
-  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[110px] text-xs sm:text-sm py-1">Similaires</TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[120px] text-xs sm:text-sm py-1">Commentaires</TabsTrigger>
+                <TabsList className="flex w-full min-w-0 flex-nowrap gap-1 overflow-x-auto scrollbar-hide border-b border-gray-700">
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Synopsis</TabsTrigger>
+  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Saisons</TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[72px] text-xs py-0.5">Casting</TabsTrigger>
+  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[80px] text-xs py-0.5">Similaires</TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[88px] text-xs py-0.5">Commentaires</TabsTrigger>
 </TabsList>
 
                 {/* --- Synopsis --- */}
