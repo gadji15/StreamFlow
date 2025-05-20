@@ -99,7 +99,10 @@ export default function EpisodeCard({
                 <button
                   type="button"
                   className="ml-2 text-blue-400 underline text-xs focus:outline-none"
-                  onClick={() => setOpen(true)}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setOpen(true);
+                  }}
                   aria-label="Afficher la description complète"
                 >
                   Afficher plus
@@ -110,6 +113,8 @@ export default function EpisodeCard({
                   className="max-w-xs sm:max-w-md bg-gray-800 text-white rounded-lg shadow-lg p-4 z-50"
                   sideOffset={8}
                   side="bottom"
+                  onPointerDownOutside={e => e.preventDefault()}
+                  onInteractOutside={e => e.preventDefault()}
                 >
                   <div className="text-sm whitespace-pre-line">
                     {episode.description}
@@ -117,6 +122,10 @@ export default function EpisodeCard({
                   <Popover.Close
                     className="mt-3 text-blue-400 underline text-xs cursor-pointer"
                     aria-label="Fermer"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }}
                   >
                     Fermer
                   </Popover.Close>
@@ -146,11 +155,12 @@ export default function EpisodeCard({
                   ? "Marquer comme non vu"
                   : "Marquer comme vu"
               }
-              onClick={() =>
+              onClick={e => {
+                e.stopPropagation();
                 watched
                   ? onUnmarkWatched(episode.id)
-                  : onMarkWatched(episode.id)
-              }
+                  : onMarkWatched(episode.id);
+              }}
             >
               {watched ? "Vu ✔" : "Marquer comme vu"}
             </button>
