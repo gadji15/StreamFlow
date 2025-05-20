@@ -59,25 +59,29 @@ export default function SeriesDetailPage() {
         }
 
         // Normalization (robuste, inspiré de la page film)
-let posterUrl = fetchedSeries.poster_url || "/placeholder-poster.png";
-if (
-  typeof posterUrl === "string" &&
-  posterUrl.startsWith("/") &&
-  !posterUrl.startsWith("/placeholder")
-) {
-  posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
+// -- Normalisation TMDB ultra-robuste --
+function tmdbPosterUrl(raw: any) {
+  if (!raw || typeof raw !== 'string') return "/placeholder-poster.png";
+  const val = raw.trim();
+  if (val.startsWith("http")) return val;
+  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/w500${val}`;
+  return "/placeholder-poster.png";
 }
-let backdropUrl = fetchedSeries.backdrop_url || "/placeholder-backdrop.png";
-if (
-  typeof backdropUrl === "string" &&
-  backdropUrl.startsWith("/") &&
-  !backdropUrl.startsWith("/placeholder")
-) {
-  backdropUrl = `https://image.tmdb.org/t/p/original${backdropUrl}`;
+function tmdbBackdropUrl(raw: any) {
+  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.png";
+  const val = raw.trim();
+  if (val.startsWith("http")) return val;
+  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
+  return "/placeholder-backdrop.png";
 }
+const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
+const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
 
-console.log("Poster URL utilisée :", posterUrl);
-console.log("Backdrop URL utilisée :", backdropUrl);
+// (DEV) Log pour débogage
+if (typeof window !== "undefined") {
+  console.log("[TMDB poster url]", posterUrl);
+  console.log("[TMDB backdrop url]", backdropUrl);
+}
 
 setSeries({
   ...fetchedSeries,
