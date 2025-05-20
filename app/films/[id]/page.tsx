@@ -18,6 +18,7 @@ import FilmCard from "@/components/FilmCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BookText, Users, CopyPlus, MessageSquare } from "lucide-react";
 
 function normalizePosterUrl(raw: any) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -387,10 +388,22 @@ export default function FilmDetailPage() {
         <div className="mt-12">
           <Tabs defaultValue="overview">
             <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Synopsis</TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[72px] text-xs py-0.5">Casting</TabsTrigger>
-  <TabsTrigger value="related" className="flex-shrink-0 min-w-[80px] text-xs py-0.5">Films similaires</TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[88px] text-xs py-0.5">Commentaires</TabsTrigger>
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <BookText className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Synopsis</span>
+  </TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <Users className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Casting</span>
+  </TabsTrigger>
+  <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <CopyPlus className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Films similaires</span>
+  </TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <MessageSquare className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Commentaires</span>
+  </TabsTrigger>
 </TabsList>
             {/* 
               Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :

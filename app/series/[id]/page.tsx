@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Share2, Sparkles, ChevronDown } from "lucide-react";
+import { Play, Share2, Sparkles, ChevronDown, BookText, Layers, Users, CopyPlus, MessageSquare } from "lucide-react";
 import LoadingScreen from "@/components/loading-screen";
 import SeriesBackdrop from "@/components/SeriesBackdrop";
 import SeriesPosterCard from "@/components/SeriesPosterCard";
@@ -393,11 +393,26 @@ export default function SeriesDetailPage() {
             <div className="sticky top-0 z-30 bg-background bg-opacity-80 backdrop-blur border-b border-gray-700">
               <Tabs defaultValue="overview">
                 <TabsList className="flex w-full min-w-0 flex-nowrap gap-1 overflow-x-auto scrollbar-hide border-b border-gray-700">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Synopsis</TabsTrigger>
-  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[64px] text-xs py-0.5">Saisons</TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[72px] text-xs py-0.5">Casting</TabsTrigger>
-  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[80px] text-xs py-0.5">Similaires</TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[88px] text-xs py-0.5">Commentaires</TabsTrigger>
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <BookText className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Synopsis</span>
+  </TabsTrigger>
+  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <Layers className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Saisons</span>
+  </TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <Users className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Casting</span>
+  </TabsTrigger>
+  <TabsTrigger value="similar" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <CopyPlus className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Similaires</span>
+  </TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+    <MessageSquare className="w-5 h-5 inline sm:hidden" />
+    <span className="hidden sm:inline">Commentaires</span>
+  </TabsTrigger>
 </TabsList>
 
                 {/* --- Synopsis --- */}
