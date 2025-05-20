@@ -386,67 +386,59 @@ export default function FilmDetailPage() {
         {/* Onglets premium */}
         <div className="mt-12">
           <Tabs defaultValue="overview">
-            <TabsList className="w-full flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-              <TabsTrigger value="overview" className="flex-shrink-0">
-                Synopsis
-              </TabsTrigger>
-              <TabsTrigger value="casting" className="flex-shrink-0">
-                Casting
-              </TabsTrigger>
-              <TabsTrigger value="related" className="flex-shrink-0">
-                Films similaires
-              </TabsTrigger>
-              <TabsTrigger value="comments" className="flex-shrink-0">
-                Commentaires
-              </TabsTrigger>
-            </TabsList>
+            <TabsList className="w-full min-w-0 flex-nowrap gap-2 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
+  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[80px] text-xs sm:text-sm py-1">Synopsis</TabsTrigger>
+  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[100px] text-xs sm:text-sm py-1">Casting</TabsTrigger>
+  <TabsTrigger value="related" className="flex-shrink-0 min-w-[110px] text-xs sm:text-sm py-1">Films similaires</TabsTrigger>
+  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[120px] text-xs sm:text-sm py-1">Commentaires</TabsTrigger>
+</TabsList>
             {/* 
               Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :
               .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
               .scrollbar-none::-webkit-scrollbar { display: none; }
             */}
             <TabsContent value="overview" className="pt-6">
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
-                <p className="text-gray-300 whitespace-pre-line">{movie.description}</p>
-              </div>
-              {movie.trailerUrl && (
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Bande-annonce</h2>
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                    <iframe
-                      src={
-                        movie.trailerUrl.includes("youtube.com/watch")
-                          ? movie.trailerUrl.replace("watch?v=", "embed/")
-                          : movie.trailerUrl
-                      }
-                      title={`Bande-annonce de ${movie.title}`}
-                      allowFullScreen
-                      className="w-full h-full"
-                    ></iframe>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
+  <div className="mb-4">
+    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
+    <p className="text-gray-300 whitespace-pre-line">{movie.description}</p>
+  </div>
+  {movie.trailerUrl && (
+    <div>
+      <h2 className="text-base font-semibold mb-2">Bande-annonce</h2>
+      <div className="aspect-video bg-black rounded-lg overflow-hidden">
+        <iframe
+          src={
+            movie.trailerUrl.includes("youtube.com/watch")
+              ? movie.trailerUrl.replace("watch?v=", "embed/")
+              : movie.trailerUrl
+          }
+          title={`Bande-annonce de ${movie.title}`}
+          allowFullScreen
+          className="w-full h-full"
+        ></iframe>
+      </div>
+    </div>
+  )}
+</TabsContent>
 
             <TabsContent value="casting" className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Casting</h2>
-              {movie.tmdbId ? (
-                <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
-              ) : (
-                <div className="text-gray-400">Aucun casting disponible.</div>
-              )}
-            </TabsContent>
+  <h2 className="text-base font-semibold mb-2">Casting</h2>
+  {movie.tmdbId ? (
+    <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
+  ) : (
+    <div className="text-gray-400">Aucun casting disponible.</div>
+  )}
+</TabsContent>
 
             <TabsContent value="related" className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Films similaires</h2>
-              <SimilarLocalMovies currentMovieId={id} tmdbId={movie.tmdbId} />
-            </TabsContent>
+  <h2 className="text-base font-semibold mb-2">Films similaires</h2>
+  <SimilarLocalMovies currentMovieId={id} tmdbId={movie.tmdbId} />
+</TabsContent>
 
             <TabsContent value="comments" className="pt-6">
-              <h2 className="text-xl font-semibold mb-4">Commentaires</h2>
-              <CommentsSection contentId={id} contentType="movie" />
-            </TabsContent>
+  <h2 className="text-base font-semibold mb-2">Commentaires</h2>
+  <CommentsSection contentId={id} contentType="movie" />
+</TabsContent>
           </Tabs>
         </div>
       </div>
