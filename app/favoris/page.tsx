@@ -123,9 +123,11 @@ export default function FavorisPage() {
             {filmFavorites.map((film) => (
               <FilmCard
                 key={film.id}
+                id={film.id}
                 title={film.title}
                 description={film.description}
                 imageUrl={film.poster || "/placeholder-poster.png"}
+                isFavorite={true}
               />
             ))}
           </div>
@@ -142,9 +144,11 @@ export default function FavorisPage() {
             {seriesFavorites.map((serie) => (
               <SeriesCard
                 key={serie.id}
+                id={serie.id}
                 title={serie.title}
                 description={serie.description}
                 imageUrl={serie.poster || "/placeholder-poster.png"}
+                isFavorite={true}
               />
             ))}
           </div>
