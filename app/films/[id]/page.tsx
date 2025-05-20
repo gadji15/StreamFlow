@@ -144,7 +144,7 @@ export default function FilmDetailPage() {
         .from("favorites")
         .delete()
         .eq("user_id", user.id)
-        .eq("film_id", id);
+        .eq("film_id", id); // Pour films
       setIsFavorite(false);
 
       toast({
@@ -167,8 +167,9 @@ export default function FilmDetailPage() {
       const { error } = await supabase.from("favorites").insert([
         {
           user_id: user.id,
-          film_id: id,
+          film_id: id, // pour un film, renseigne film_id
           created_at: new Date().toISOString(),
+          // Pas de content_id ! Pas de series_id ni episode_id ici
         },
       ]);
       setIsFavorite(true);
