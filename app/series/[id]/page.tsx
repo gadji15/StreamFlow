@@ -100,24 +100,17 @@ export default function SeriesDetailPage() {
         }
 
         // Normalization (robuste, inspiré de la page film)
-// -- Normalisation TMDB ultra-robuste --
-function tmdbPosterUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-poster.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/w500${val}`;
+// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
+function normalizedPosterUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-poster.jpg";
 }
-function tmdbBackdropUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
+function normalizedBackdropUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-backdrop.jpg";
 }
-// On rend ces fonctions accessibles dans tout le composant pour les utiliser dans le render.
-const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
-const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
+const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
+const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
 
 // (DEV) Log pour débogage
 if (typeof window !== "undefined") {
