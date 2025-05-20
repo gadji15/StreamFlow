@@ -129,7 +129,7 @@ export default function SeasonsEpisodesTab({
       </div>
       {/* Episodes */}
       <div className="flex-1">
-        {!noSeasons ? (
+        {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>
               <h3
@@ -147,11 +147,21 @@ export default function SeasonsEpisodesTab({
                 {seasonEpisodes.map((ep) => (
                   <div
                     key={ep.id}
-                    className={cn(
-                      "flex items-start gap-4 rounded-xl bg-gray-900/80 border border-gray-800 shadow-sm hover:border-primary transition-all focus-within:ring-2 focus-within:ring-primary/60 outline-none",
-                      expandedEpisodeId === ep.id ? "ring-2 ring-primary/70 bg-gray-900/90" : ""
-                    )}
-                    tabIndex={0}
+                      ...
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-gray-400 italic p-4 rounded-lg bg-gray-900/60 border border-gray-800 shadow-inner" role="status">
+              Aucun épisode disponible pour cette saison.
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
                     role="button"
                     aria-label={`Accéder à l'épisode ${ep.episode_number} : ${ep.title}`}
                     onClick={() => router.push(`/series/${id}/watch/${ep.id}`)}
