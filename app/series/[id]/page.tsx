@@ -103,7 +103,7 @@ export default function SeriesDetailPage() {
         .from("episodes")
         .select("*")
         .eq("series_id", seriesId)
-        .order("season")
+        .order("season_number")
         .order("episode_number");
 
       // Map poster/backdrop/cast from admin
