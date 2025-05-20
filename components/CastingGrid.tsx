@@ -6,9 +6,11 @@ import { fetchTMDBCredits, getTMDBImageUrl, TMDBCastMember } from "@/lib/tmdb";
  */
 export default function CastingGrid({
   tmdbId,
+  type = 'movie',
   fallbackCast,
 }: {
   tmdbId: string;
+  type?: 'movie' | 'tv';
   fallbackCast?: { name: string; role?: string; photoUrl?: string }[];
 }) {
   const [cast, setCast] = useState<TMDBCastMember[]>([]);
@@ -16,7 +18,7 @@ export default function CastingGrid({
 
   useEffect(() => {
     let isMounted = true;
-    fetchTMDBCredits(tmdbId)
+    fetchTMDBCredits(tmdbId, type)
       .then((castData) => {
         if (isMounted) setCast(castData.slice(0, 12)); // Limite à 12 membres
       })
@@ -37,7 +39,7 @@ export default function CastingGrid({
     return () => {
       isMounted = false;
     };
-  }, [tmdbId, fallbackCast]);
+  }, [tmdbId, type, fallbackCast]);
 
   if (loading) {
     return (
@@ -51,6 +53,11 @@ export default function CastingGrid({
         ))}
       </div>
     );
+  }
+
+  // DEBUG: log cast array and tmdbId/type
+  if (typeof window !== "undefined") {
+    console.log("[CastingGrid DEBUG] tmdbId:", tmdbId, "type:", type, "cast:", cast);
   }
 
   if (!cast.length) {

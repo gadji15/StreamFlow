@@ -23,6 +23,47 @@ import SeriesCard from "@/components/SeriesCard";
 
 const CastingGrid = dynamic(() => import("@/components/CastingGrid"), { ssr: false });
 
+import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
+
+function SimilarSeriesGrid({ tmdbId }: { tmdbId: string }) {
+  const [similar, setSimilar] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tmdbId) {
+      setSimilar([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchTMDBSimilarSeries(tmdbId)
+      .then((results) => setSimilar(results || []))
+      .catch(() => setSimilar([]))
+      .finally(() => setLoading(false));
+  }, [tmdbId]);
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {loading
+        ? Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-64 bg-gray-800 rounded-xl animate-pulse" aria-hidden="true"></div>
+          ))
+        : similar.length > 0 ? (
+            similar.map((serie) => (
+              <SeriesCard
+                key={serie.id}
+                title={serie.title}
+                description={serie.overview}
+                imageUrl={tmdbPosterUrl(serie.poster_path)}
+              />
+            ))
+          ) : (
+            <div className="text-gray-400 col-span-6 text-center">Aucune série similaire trouvée.</div>
+          )}
+    </div>
+  );
+}
+
 export default function SeriesDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -36,7 +77,7 @@ export default function SeriesDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isVIP, setIsVIP] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
-  const [similarSeries, setSimilarSeries] = useState<any[]>([]);
+  // On retire similarSeries du state local, il est géré par SimilarSeriesGrid
 
   useEffect(() => {
     if (!id) return;
@@ -59,23 +100,17 @@ export default function SeriesDetailPage() {
         }
 
         // Normalization (robuste, inspiré de la page film)
-// -- Normalisation TMDB ultra-robuste --
-function tmdbPosterUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-poster.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/w500${val}`;
+// -- Normalisation simple adaptée à ta base (URL TMDB ou null) --
+function normalizedPosterUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-poster.jpg";
 }
-function tmdbBackdropUrl(raw: any) {
-  if (!raw || typeof raw !== 'string') return "/placeholder-backdrop.jpg";
-  const val = raw.trim();
-  if (val.startsWith("http")) return val;
-  if (val.startsWith("/") && !val.startsWith("/placeholder")) return `https://image.tmdb.org/t/p/original${val}`;
+function normalizedBackdropUrl(raw: any) {
+  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
   return "/placeholder-backdrop.jpg";
 }
-const posterUrl = tmdbPosterUrl(fetchedSeries.poster_url);
-const backdropUrl = tmdbBackdropUrl(fetchedSeries.backdrop_url);
+const posterUrl = normalizedPosterUrl(fetchedSeries.poster);
+const backdropUrl = normalizedBackdropUrl(fetchedSeries.backdrop);
 
 // (DEV) Log pour débogage
 if (typeof window !== "undefined") {
@@ -117,8 +152,9 @@ setSeries({
           setSelectedSeason(Math.max(...fetchedEpisodes.map((ep) => ep.season)));
         }
 
+        // Plus de setSimilarSeries ici : la grille des séries similaires TMDB est désormais découplée.
         // TODO: Fetch similar series logic (TMDB/local), placeholder for now
-        setSimilarSeries([]);
+        // setSimilarSeries([]);
 
         // Check favorite
         if (user) {
@@ -131,6 +167,11 @@ setSeries({
           setIsFavorite(!!data);
         }
       } catch (err) {
+        // Ajout d'un log détaillé pour le debug
+        if (typeof window !== "undefined") {
+          // eslint-disable-next-line no-console
+          console.error("[ERREUR fetchSeries]", err);
+        }
         setError("Impossible de charger les détails de la série.");
       } finally {
         setIsLoading(false);
@@ -228,8 +269,8 @@ setSeries({
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
+      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
@@ -294,7 +335,7 @@ setSeries({
           </div>
 
           {/* Main info & tabs */}
-          <div className="flex-1 flex flex-col gap-5">
+          <div className="flex-1 flex flex-col gap-6">
             <SeriesInfo
               title={series.title}
               years={series.start_year + (series.end_year ? ` - ${series.end_year}` : " - Présent")}
@@ -379,8 +420,8 @@ setSeries({
                 {/* Casting */}
                 <TabsContent value="casting" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Casting</h2>
-                  {series.tmdb_id ? (
-                    <CastingGrid tmdbId={String(series.tmdb_id)} fallbackCast={series.cast} />
+                  {series.tmdbId ? (
+                    <CastingGrid tmdbId={series.tmdbId} type="tv" fallbackCast={series.cast} />
                   ) : series.cast && series.cast.length > 0 ? (
                     <ul className="space-y-3">
                       {series.cast.map((actor, index) => (
@@ -400,33 +441,7 @@ setSeries({
                 {/* Séries similaires */}
                 <TabsContent value="similar" className="pt-6">
                   <h2 className="text-xl font-semibold mb-4">Séries similaires</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {similarSeries.length > 0 ? (
-  similarSeries.map((serie) => {
-    // Normalisation de l'image pour chaque carte série similaire (exactement comme pour le film)
-    let posterUrl = serie.poster_url || "/placeholder-poster.jpg";
-    if (
-      typeof posterUrl === "string" &&
-      posterUrl.startsWith("/") &&
-      !posterUrl.startsWith("/placeholder")
-    ) {
-      posterUrl = `https://image.tmdb.org/t/p/w500${posterUrl}`;
-    }
-    return (
-      <SeriesCard
-        key={serie.id}
-        title={serie.title}
-        description={serie.description}
-        imageUrl={posterUrl}
-      />
-    );
-  })
-) : (
-  <div className="text-gray-400 col-span-6 text-center">
-    Aucune série similaire trouvée.
-  </div>
-)}
-                  </div>
+                  <SimilarSeriesGrid tmdbId={series.tmdbId} />
                 </TabsContent>
 
                 {/* Commentaires */}
