@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { getTMDBImageUrl } from "@/lib/tmdb";
 
 /**
  * Affiche le backdrop premium d'une série (overlay, fallback, etc).
@@ -7,19 +8,12 @@ export default function SeriesBackdrop({ src, alt }: { src: string; alt: string 
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Génère l'URL TMDB si besoin
-  const getBackdropUrl = (url?: string) => {
-    if (!url) return "/placeholder-backdrop.png";
-    if (url.startsWith("/")) return `https://image.tmdb.org/t/p/original${url}`;
-    return url;
-  };
-
   return (
     <div className="absolute top-0 left-0 w-full h-[50vh] md:h-[65vh] lg:h-[75vh] z-0 transition-all duration-500">
       {/* Backdrop image */}
       <img
         ref={imgRef}
-        src={getBackdropUrl(src)}
+        src={getTMDBImageUrl(src, "original")}
         alt={alt}
         className={`w-full h-full object-cover select-none pointer-events-none transition-opacity duration-1000 ease-in-out ${
           loaded ? "opacity-100" : "opacity-0"

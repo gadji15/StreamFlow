@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getTMDBImageUrl } from "@/lib/tmdb";
 
 /**
  * Affiche le poster premium d'une série (avec fallback, style card).
@@ -6,17 +7,10 @@ import React, { useState } from "react";
 export default function SeriesPosterCard({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
 
-  // Génère l'URL TMDB si besoin
-  const getPosterUrl = (url?: string) => {
-    if (!url) return "/placeholder-poster.png";
-    if (url.startsWith("/")) return `https://image.tmdb.org/t/p/w500${url}`;
-    return url;
-  };
-
   return (
     <div className="w-32 h-48 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-xl bg-gray-900/30 flex items-center justify-center">
       <img
-        src={getPosterUrl(src)}
+        src={getTMDBImageUrl(src, "w500")}
         alt={alt}
         className={`w-full h-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
         onLoad={() => setLoaded(true)}
