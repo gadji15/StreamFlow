@@ -279,68 +279,71 @@ export default function SeriesDetailPage() {
       )}
 
       <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
+  <div className="flex flex-col md:flex-row gap-10 items-start">
           {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
-            {/* VIP Badge/Card */}
-            {series.is_vip && (
-              <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
-                  Contenu VIP
-                </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
-                    {isVIP
-                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
-                      : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
-                  </p>
-                  {!isVIP && (
-                    <Button
-                      size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
-                      onClick={() => router.push("/vip")}
-                    >
-                      Devenir VIP
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative
+  min-w-[220px] flex-shrink-0
+">
+  <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+  {/* VIP Badge/Card */}
+  {series.is_vip && (
+    <div className="mt-4 w-full flex flex-col items-center">
+      <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+        Contenu VIP
+      </Badge>
+      <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+        <p className="text-amber-400 font-medium mb-1">
+          {isVIP
+            ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
+            : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
+        </p>
+        {!isVIP && (
+          <Button
+            size="sm"
+            className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+            onClick={() => router.push("/vip")}
+          >
+            Devenir VIP
+          </Button>
+        )}
+      </div>
+    </div>
+  )}
 
-            {/* Boutons d'action */}
-            <div className="flex flex-col gap-3 w-full mt-4">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatch}
-                disabled={!canWatch}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
-            </div>
+  {/* Boutons d'action */}
+  <div className="flex flex-col gap-3 w-full mt-4">
+    <Button
+      size="lg"
+      className="w-full gap-2"
+      onClick={handleWatch}
+      disabled={!canWatch}
+      aria-label="Regarder la série"
+    >
+      <Play className="h-5 w-5" />
+      Regarder
+    </Button>
+    <Button
+      variant={isFavorite ? "default" : "outline"}
+      size="lg"
+      className="w-full gap-2"
+      onClick={toggleFavorite}
+      aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+    >
+      <Sparkles className="h-5 w-5" />
+      {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+    </Button>
+    <Button
+      variant="outline"
+      size="lg"
+      className="w-full gap-2"
+      onClick={handleShare}
+      aria-label="Partager"
+    >
+      <Share2 className="h-5 w-5" />
+      Partager
+    </Button>
+  </div>
+</div>
           </div>
 
           {/* Main info & onglets */}
