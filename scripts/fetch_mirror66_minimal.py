@@ -48,10 +48,12 @@ def get_film_links(p):
 def extract_video_url_multi(page):
     """
     Clique chaque onglet de lecteur, extrait l'URL de l'iframe pour chaque source.
+    Donne la priorité à PREMIUM si présent.
     Retourne un dict {nom_source: url}
     """
     video_links = {}
-    tab_names = ["VIDZY", "DOOD", "FILMOON", "VOE", "UQLOAD"]
+    # Priorité : PREMIUM d'abord, puis les autres
+    tab_names = ["PREMIUM", "VIDZY", "DOOD", "FILMOON", "VOE", "UQLOAD"]
     for tab in tab_names:
         try:
             tab_elem = page.query_selector(f'text="{tab}"')
@@ -102,11 +104,17 @@ def main():
         for i, film in enumerate(links):
             log(f"[{i+1}/{len(links)}] {film['title']}")
             video_url, all_sources = scrape_film(page, film['url'])
-            if video_url:
-                log(f"OK: {film['title']} | {video_url}")
+            # Sélectionne la source avec priorité PREMIUM, puis VIDZY, puis autres
+            preferred = (
+                all_sources.get("PREMIUM") or
+                all_sources.get("VIDZY") or
+                next(iter(all_sources.values()), None)
+            )
+            if preferred:
+                log(f"OK: {film['title']} | {preferred} (source choisie)")
                 results.append({
                     "title": film['title'],
-                    "video_url": video_url,
+                    "video_url": preferred,
                     "all_sources": all_sources
                 })
             else:
