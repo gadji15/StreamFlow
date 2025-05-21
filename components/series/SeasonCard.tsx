@@ -30,9 +30,6 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
       tabIndex={0}
       type="button"
     >
-      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-xs font-semibold text-primary shadow z-10">
-        S{seasonNumber}
-      </div>
       {posterUrl ? (
         <img
           src={posterUrl}
@@ -45,14 +42,17 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
           <Layers className="w-10 h-10 text-gray-400" />
         </div>
       )}
-      {/* Overlay titre adaptatif */}
-      <div className="w-full absolute bottom-0 left-0 px-2 py-3 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-        <div className="font-bold text-gray-100 text-sm md:text-base truncate" title={title || `Saison ${seasonNumber}`}>
+      {/* Animation border sur hover */}
+      <span className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent group-hover:border-primary transition-all duration-200"></span>
+      {/* Saison number and title below poster */}
+      <div className="w-full flex flex-col items-center mt-2">
+        <div className="text-primary font-bold text-base mb-0.5 select-none">
+          S{seasonNumber}
+        </div>
+        <div className="font-bold text-gray-100 text-sm md:text-base truncate max-w-full text-center" title={title || `Saison ${seasonNumber}`}>
           {title || `Saison ${seasonNumber}`}
         </div>
       </div>
-      {/* Animation border sur hover */}
-      <span className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent group-hover:border-primary transition-all duration-200"></span>
     </button>
   );
 };
