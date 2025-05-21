@@ -185,6 +185,14 @@ function MobileHero() {
         </motion.div>
       </AnimatePresence>
 
+      {/* Overlay bas pour fondu homogène */}
+      <div
+        className="pointer-events-none absolute left-0 right-0 bottom-0 z-[60] h-20 sm:h-28"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #0a0a0f 90%, #0a0a0f 100%)"
+        }}
+      />
       {/* Contenu */}
       <div
         className="
