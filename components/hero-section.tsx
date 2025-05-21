@@ -165,7 +165,7 @@ function HeroSection() {
         className="pointer-events-none absolute left-0 right-0 bottom-0 z-[60] h-32 sm:h-36 md:h-44"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgb(var(--background)) 90%, rgb(var(--background)) 100%)"
+            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #18171c 90%, #18171c 100%)"
         }}
       />
       {/* Contenu */}
