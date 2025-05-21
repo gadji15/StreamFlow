@@ -37,15 +37,14 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
         style={{
           fontSize: "1.1rem",
           lineHeight: 1,
-          color: "#a259f7", // violet fluorescent
+          color: "#fff", // blanc pour contraste
           opacity: 0.93,
           letterSpacing: "-0.03em",
           transform: "skewX(-17deg) rotateX(13deg)",
           textShadow: `
-            0 0 4px #a259f7,
-            0 0 6px #a259f7cc,
-            0 1px 8px #c084fc77,
-            0 0 2px #fff
+            0 0 5px #000,
+            0 1px 10px #000,
+            0 0 2px #000
           `
         }}
       >
