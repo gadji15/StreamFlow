@@ -77,17 +77,17 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
         >
           {/* Modal Card */}
           <motion.div
-            className="relative w-full max-w-md sm:max-w-sm xs:max-w-[92vw] mx-2 rounded-2xl shadow-2xl border border-neutral-800 flex flex-col"
+            className="relative w-full max-w-xs sm:max-w-sm xs:max-w-[85vw] mx-2 rounded-2xl shadow-2xl border border-neutral-800 flex flex-col"
             initial={{ scale: 0.96, opacity: 0, y: 40 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: 40 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
             onClick={e => e.stopPropagation()}
             style={{
-              maxHeight: "70vh",
+              maxHeight: "60vh",
               width: "100%",
-              maxWidth: "92vw",
-              background: "rgba(24, 24, 27, 0.85)", // bg-neutral-900/85 avec transparence
+              maxWidth: "85vw",
+              background: "rgba(24, 24, 27, 0.68)", // plus transparent
               backdropFilter: "blur(2px)",
             }}
           >
