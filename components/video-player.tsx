@@ -6,17 +6,9 @@ import { cn } from "@/lib/utils"
 import { Slider } from "@/components/ui/slider"
 
 interface VideoPlayerProps {
-  src: string
-  poster?: string
-  title?: string
-  autoPlay?: boolean
-  onEnded?: () => void
-  onClose?: () => void
-  nextEpisode?: {
-    title: string
-    onPlay: () => void
-  }
+  onClose?: () => void;
 }
+
 
 export function VideoPlayer({ 
   src, 
