@@ -16,8 +16,9 @@ export function VideoPlayer({
   title,
   autoPlay = false,
   onEnded,
-  nextEpisode
-}: VideoPlayerProps) {
+  nextEpisode,
+  onClose
+}: VideoPlayerProps & { src?: string; poster?: string; title?: string; nextEpisode?: any }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(autoPlay)
