@@ -38,6 +38,16 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
 }) => {
   const season = seasons[selectedSeasonIndex];
 
+  // Animation direction
+  const [direction, setDirection] = React.useState<"left" | "right">("right");
+  const prevSeasonIdx = React.useRef(selectedSeasonIndex);
+
+  React.useEffect(() => {
+    if (selectedSeasonIndex > prevSeasonIdx.current) setDirection("right");
+    else if (selectedSeasonIndex < prevSeasonIdx.current) setDirection("left");
+    prevSeasonIdx.current = selectedSeasonIndex;
+  }, [selectedSeasonIndex]);
+
   // Navigation
   const canGoPrev = selectedSeasonIndex > 0;
   const canGoNext = selectedSeasonIndex < seasons.length - 1;
@@ -46,19 +56,40 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
   React.useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" && canGoPrev) onSeasonChange(selectedSeasonIndex - 1);
-      if (e.key === "ArrowRight" && canGoNext) onSeasonChange(selectedSeasonIndex + 1);
+      if (e.key === "ArrowLeft" && canGoPrev) {
+        setDirection("left");
+        onSeasonChange(selectedSeasonIndex - 1);
+      }
+      if (e.key === "ArrowRight" && canGoNext) {
+        setDirection("right");
+        onSeasonChange(selectedSeasonIndex + 1);
+      }
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, selectedSeasonIndex, canGoPrev, canGoNext, onSeasonChange, onClose]);
 
-  // Animation variants for framer-motion
+  // Animation variants
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.96, y: 40 },
     visible: { opacity: 1, scale: 1, y: 0 },
     exit: { opacity: 0, scale: 0.96, y: 40 },
+  };
+
+  const contentVariants = {
+    initial: (direction: "left" | "right") => ({
+      opacity: 0,
+      x: direction === "right" ? 40 : -40,
+      scale: 0.98,
+    }),
+    animate: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.33, ease: "easeOut" } },
+    exit: (direction: "left" | "right") => ({
+      opacity: 0,
+      x: direction === "right" ? -40 : 40,
+      scale: 0.98,
+      transition: { duration: 0.27, ease: "easeIn" },
+    }),
   };
 
   return (
@@ -95,7 +126,10 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
             <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-800 relative">
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => canGoPrev && onSeasonChange(selectedSeasonIndex - 1)}
+                  onClick={() => {
+                    setDirection("left");
+                    canGoPrev && onSeasonChange(selectedSeasonIndex - 1);
+                  }}
                   disabled={!canGoPrev}
                   aria-label="Saison précédente"
                   className={cn(
@@ -112,7 +146,10 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
                   S{season?.season_number}
                 </span>
                 <button
-                  onClick={() => canGoNext && onSeasonChange(selectedSeasonIndex + 1)}
+                  onClick={() => {
+                    setDirection("right");
+                    canGoNext && onSeasonChange(selectedSeasonIndex + 1);
+                  }}
                   disabled={!canGoNext}
                   aria-label="Saison suivante"
                   className={cn(
@@ -135,34 +172,48 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Season title */}
-            <div className="px-4 pt-1 pb-2 text-center">
-              <div className="font-extrabold text-gray-100 text-xl md:text-2xl truncate max-w-full" title={season?.title || `Saison ${season?.season_number}`}>
-                {season?.title || `Saison ${season?.season_number}`}
-              </div>
-            </div>
-
-            {/* Episodes grid */}
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              {season?.episodes && season.episodes.length > 0 ? (
-                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                  {season.episodes.map((ep) => (
-                    <EpisodePoster
-                      key={ep.id}
-                      posterUrl={ep.poster}
-                      episodeNumber={ep.episode_number}
-                      title={ep.title}
-                      onClick={() => onEpisodeClick(ep)}
-                    />
-                  ))}
+            <AnimatePresence
+              custom={direction}
+              mode="wait"
+            >
+              <motion.div
+                key={season?.id}
+                className="flex-1 flex flex-col"
+                custom={direction}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={contentVariants}
+                style={{ minHeight: 0 }}
+              >
+                {/* Season title */}
+                <div className="px-4 pt-1 pb-2 text-center">
+                  <div className="font-extrabold text-gray-100 text-xl md:text-2xl truncate max-w-full" title={season?.title || `Saison ${season?.season_number}`}>
+                    {season?.title || `Saison ${season?.season_number}`}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-gray-400 italic p-6 rounded-lg bg-gray-900/60 border border-gray-800 shadow-inner text-center">
-                  Aucun épisode disponible pour cette saison.
+                {/* Episodes grid */}
+                <div className="flex-1 overflow-y-auto px-4 pb-4">
+                  {season?.episodes && season.episodes.length > 0 ? (
+                    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                      {season.episodes.map((ep) => (
+                        <EpisodePoster
+                          key={ep.id}
+                          posterUrl={ep.poster}
+                          episodeNumber={ep.episode_number}
+                          title={ep.title}
+                          onClick={() => onEpisodeClick(ep)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 italic p-6 rounded-lg bg-gray-900/60 border border-gray-800 shadow-inner text-center">
+                      Aucun épisode disponible pour cette saison.
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       )}
