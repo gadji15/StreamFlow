@@ -57,6 +57,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         ? JSON.parse(initialData.cast)
         : []),
     no_video: !!initialData.no_video, // flag pour absence de vidéo
+    // Nouveau champ pour supporter le MovieBox slug/external_id
+    slug: initialData.slug || "",
   });
 
   // CAST UI STATE
@@ -499,6 +501,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       homepage_categories_sync = homepage_categories_sync.filter((cat) => cat !== "featured");
     }
 
+    // NOUVEAU : gestion du slug externe (MovieBox) sans jamais toucher à "id"
+    // Si form.slug existe, on le stocke, sinon rien
+    // Il faut que la colonne "slug" (ou "external_id") existe dans la table films
+    let slug = null;
+    if (form.slug && typeof form.slug === "string" && form.slug.trim().length > 0) {
+      slug = form.slug.trim();
+    }
+
     return {
       title: form.title?.trim() || "",
       original_title: form.original_title?.trim() || null,
@@ -524,6 +534,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       popularity,
       cast,
       no_video,
+      ...(slug ? { slug } : {}), // Ajoute le champ slug si présent
     };
   }
 
@@ -1086,6 +1097,19 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               onChange={(e) => handleChange("trailer_url", e.target.value)}
               className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
               placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+          {/* Champ facultatif pour slug MovieBox/externe */}
+          <div>
+            <label htmlFor="slug" className="block text-[11px] font-medium text-white/80">
+              Slug/ID externe (MovieBox) <span className="text-gray-400 text-xs">(optionnel)</span>
+            </label>
+            <input
+              id="slug"
+              value={form.slug}
+              onChange={(e) => handleChange("slug", e.target.value)}
+              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              placeholder="ex: exterritorial-SPoiojVys37"
             />
           </div>
           <div>
