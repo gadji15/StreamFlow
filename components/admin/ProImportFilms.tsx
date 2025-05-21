@@ -7,6 +7,7 @@ import {
 
 export default function ProImportFilms() {
   const [films, setFilms] = useState([]);
+  // rowSelectionModel doit être un tableau d'ids uniques
   const [selected, setSelected] = useState([]);
   const [feedback, setFeedback] = useState({ open: false, msg: "", sev: "success" });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -19,7 +20,9 @@ export default function ProImportFilms() {
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      setFilms(parsed.map((f, i) => ({ ...f, id: i })));
+      // Génère des IDs uniques même si tout est vide
+      setFilms(parsed.map((f, i) => ({ ...f, id: `${i}-${Date.now()}` })));
+      setSelected([]); // reset sélection au rechargement
       setFeedback({ open: true, msg: "Fichier chargé !", sev: "success" });
     } catch {
       setFeedback({ open: true, msg: "Fichier JSON invalide.", sev: "error" });
@@ -37,7 +40,7 @@ export default function ProImportFilms() {
   // Suppression ligne
   const handleDelete = (ids) => {
     setFilms((prev) => prev.filter((f) => !ids.includes(f.id)));
-    setSelected([]);
+    setSelected((prev) => prev.filter((id) => !ids.includes(id)));
   };
 
   // Confirmation d’import
@@ -130,7 +133,7 @@ export default function ProImportFilms() {
           checkboxSelection
           disableRowSelectionOnClick
           processRowUpdate={processRowUpdate}
-          onRowSelectionModelChange={setSelected}
+          onRowSelectionModelChange={(newSelection) => setSelected(newSelection)}
           rowSelectionModel={selected}
           pageSizeOptions={[5, 10, 20, 100]}
           autoHeight
