@@ -29,7 +29,22 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
       onClick={onClick}
       tabIndex={0}
       type="button"
+      style={{}}
     >
+      {/* Numéro géant en violet, débordant */}
+      <span
+        className="absolute left-1/2 -translate-x-1/2 -top-7 sm:-top-10 z-20 select-none pointer-events-none font-extrabold text-primary"
+        style={{
+          fontSize: "3.7rem",
+          lineHeight: 1,
+          opacity: 0.74,
+          textShadow: "0 2px 12px rgba(80,0,150,0.18)",
+          letterSpacing: "-0.07em",
+          filter: "drop-shadow(0 1px 8px rgba(120,60,255,0.22))",
+        }}
+      >
+        S{seasonNumber}
+      </span>
       {posterUrl ? (
         <img
           src={posterUrl}
@@ -44,11 +59,8 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
       )}
       {/* Animation border sur hover */}
       <span className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent group-hover:border-primary transition-all duration-200"></span>
-      {/* Saison number and title below poster */}
+      {/* Titre sous le poster */}
       <div className="w-full flex flex-col items-center mt-2">
-        <div className="text-primary font-bold text-base mb-0.5 select-none">
-          S{seasonNumber}
-        </div>
         <div className="font-bold text-gray-100 text-sm md:text-base truncate max-w-full text-center" title={title || `Saison ${seasonNumber}`}>
           {title || `Saison ${seasonNumber}`}
         </div>
