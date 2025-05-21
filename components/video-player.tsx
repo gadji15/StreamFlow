@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils"
 import { Slider } from "@/components/ui/slider"
 
 interface VideoPlayerProps {
-  // ...autres props...
   onClose?: () => void;
+  // Ajoute ici les autres props si nécessaire, par exemple :
+  // src: string;
+  // ...etc
 }
 }
 
