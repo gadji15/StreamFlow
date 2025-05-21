@@ -185,6 +185,30 @@ function MobileHero() {
         </motion.div>
       </AnimatePresence>
 
+      {/* Overlay gauche pour fondu latéral */}
+      <div
+        className="pointer-events-none absolute top-0 left-0 bottom-0 z-[60] w-8 sm:w-16"
+        style={{
+          background:
+            "linear-gradient(to right, #18171c 0%, rgba(24,23,28,0.90) 55%, rgba(24,23,28,0))"
+        }}
+      />
+      {/* Overlay droit pour fondu latéral */}
+      <div
+        className="pointer-events-none absolute top-0 right-0 bottom-0 z-[60] w-8 sm:w-16"
+        style={{
+          background:
+            "linear-gradient(to left, #18171c 0%, rgba(24,23,28,0.90) 55%, rgba(24,23,28,0))"
+        }}
+      />
+      {/* Overlay bas pour fondu homogène */}
+      <div
+        className="pointer-events-none absolute left-0 right-0 bottom-0 z-[60] h-20 sm:h-28"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, #18171c 90%, #18171c 100%)"
+        }}
+      />
       {/* Contenu */}
       <div
         className="

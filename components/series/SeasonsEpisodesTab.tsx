@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import EpisodeCard from "./EpisodeCard";
+import MiniEpisodePoster from "./MiniEpisodePoster";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
@@ -53,14 +54,16 @@ export default function SeasonsEpisodesTab({
   return (
     <div
       className={cn(
-        "flex gap-8",
-        isMobile ? "flex-col" : "flex-row"
+        "flex",
+        isMobile ? "flex-col gap-6" : "flex-row gap-x-12"
       )}
     >
       {/* Saisons en cards */}
       <div
         className={cn(
-          isMobile ? "w-full mb-4" : "w-1/3 min-w-[13rem] max-w-md"
+          isMobile
+            ? "w-full mb-4"
+            : "flex-shrink-0 w-[18rem] min-w-[15rem] max-w-[20rem] pr-2"
         )}
         role="navigation"
         aria-label="Navigation des saisons"
@@ -81,54 +84,44 @@ export default function SeasonsEpisodesTab({
           {seasonAriaMessage}
         </div>
         {!noSeasons ? (
-          <div className={cn("grid gap-4", seasonGridCols)}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-y-6 gap-x-8">
             {seasons.map((season) => (
               <button
                 key={season.id}
                 onClick={() => setSelectedSeasonId(season.id)}
                 className={cn(
-                  "group relative flex flex-col items-center border rounded-xl overflow-hidden shadow transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer bg-gray-900/80 hover:border-primary",
+                  "group flex flex-col items-center bg-gray-900/80 rounded-lg px-4 py-2 transition-all outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-primary hover:bg-gray-800",
                   season.id === selectedSeasonId
-                    ? "border-primary ring-2 ring-primary"
-                    : "border-gray-800"
+                    ? "ring-2 ring-primary"
+                    : ""
                 )}
                 aria-current={season.id === selectedSeasonId}
                 aria-label={`Saison ${season.season_number}${season.title ? " - " + season.title : ""}`}
+                style={{ minWidth: "110px", maxWidth: "120px" }}
               >
                 {/* Poster saison */}
-                {season.poster ? (
-                  <img
-                    src={season.poster}
-                    alt={`Affiche saison ${season.season_number}`}
-                    className="w-full h-36 object-cover bg-black"
-                  />
-                ) : (
-                  <div className="w-full h-36 flex items-center justify-center bg-gray-800">
+                <div className="w-[90px] h-[135px] rounded-md overflow-hidden bg-black mb-1 flex items-center justify-center">
+                  {season.poster ? (
+                    <img
+                      src={season.poster}
+                      alt={`Affiche saison ${season.season_number}`}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      style={{
+                        imageRendering: "auto",
+                        filter: "contrast(1.05) brightness(1.04)",
+                      }}
+                    />
+                  ) : (
                     <Layers className="w-10 h-10 text-gray-400" />
-                  </div>
-                )}
-                {/* Overlay numéro et titre */}
-                <div className={cn(
-                  "absolute top-2 left-2 px-2 py-0.5 rounded bg-black/60 text-xs font-semibold text-primary shadow",
-                  season.id === selectedSeasonId ? "bg-primary/80 text-white" : ""
-                )}>
+                  )}
+                </div>
+                <span className="text-xs text-primary font-bold mt-1">
                   S{season.season_number}
-                </div>
-                <div className="w-full px-2 py-2 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent absolute bottom-0 left-0">
-                  <div className="font-bold text-gray-100 text-sm truncate">
-                    {season.title || `Saison ${season.season_number}`}
-                  </div>
-                  {season.episode_count && (
-                    <div className="text-xs text-gray-400">
-                      {season.episode_count} épisode{season.episode_count > 1 ? "s" : ""}
-                    </div>
-                  )}
-                  {season.air_date && (
-                    <div className="text-xs text-gray-500">
-                      {season.air_date}
-                    </div>
-                  )}
-                </div>
+                </span>
+                <span className="text-xs text-gray-100 font-medium w-full text-center truncate" title={season.title || `Saison ${season.season_number}`}>
+                  {season.title || `Saison ${season.season_number}`}
+                </span>
               </button>
             ))}
           </div>
@@ -138,8 +131,14 @@ export default function SeasonsEpisodesTab({
           </div>
         )}
       </div>
+
+      {/* Séparateur professionnel */}
+      {!isMobile && (
+        <div className="w-[2px] mx-2 bg-gradient-to-b from-transparent via-gray-700/80 to-transparent rounded-full shadow-lg self-stretch" />
+      )}
+
       {/* Episodes */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>
@@ -154,21 +153,15 @@ export default function SeasonsEpisodesTab({
                     ?.season_number ?? ""
                 }
               </h3>
-              <div className="space-y-4">
+              {/* Nouvelle grille responsive d'épisodes */}
+              <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                 {seasonEpisodes.map((ep) => (
-                  <EpisodeCard
+                  <MiniEpisodePoster
                     key={ep.id}
-                    episode={{
-                      ...ep,
-                      thumbnail_url: ep.poster || ep.thumbnail_url, // compatibilité poster ou thumbnail
-                    }}
-                    watched={isWatched(ep.id)}
-                    loadingWatched={loadingWatched}
-                    isVIP={isVIP}
-                    user={user}
-                    onMarkWatched={markWatched}
-                    onUnmarkWatched={unmarkWatched}
-                    onWatch={() => router.push(`/series/${id}/watch/${ep.id}`)}
+                    posterUrl={ep.poster || ep.thumbnail_url || "/placeholder-poster.jpg"}
+                    number={ep.episode_number}
+                    title={ep.title}
+                    onClick={() => router.push(`/series/${id}/watch/${ep.id}`)}
                   />
                 ))}
               </div>
