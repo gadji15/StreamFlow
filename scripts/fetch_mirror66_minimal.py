@@ -45,24 +45,29 @@ def get_film_links(p):
     log(f"{len(links)} fiches films trouvées.")
     return links
 
-def extract_video_url(page):
-    # Essaie d'abord iframe, puis video
-    iframe = page.query_selector('iframe')
-    if iframe:
-        src = iframe.get_attribute('src')
-        if src and src.startswith('http'):
-            return src
-    video = page.query_selector('video')
-    if video:
-        src = video.get_attribute('src')
-        if src and src.startswith('http'):
-            return src
-    # Fallback: cherche un lien .mp4 dans tout le HTML
-    html = page.content()
-    for part in html.split('"'):
-        if part.endswith('.mp4') and part.startswith('http'):
-            return part
-    return None
+def extract_video_url_multi(page):
+    """
+    Clique chaque onglet de lecteur, extrait l'URL de l'iframe pour chaque source.
+    Retourne un dict {nom_source: url}
+    """
+    video_links = {}
+    tab_names = ["VIDZY", "DOOD", "FILMOON", "VOE", "UQLOAD"]
+    for tab in tab_names:
+        try:
+            tab_elem = page.query_selector(f'text="{tab}"')
+            if tab_elem:
+                tab_elem.click()
+                log(f"  - Onglet {tab} sélectionné")
+                time.sleep(2.5)
+                iframe = page.query_selector('iframe')
+                if iframe:
+                    src = iframe.get_attribute('src')
+                    if src and src.startswith('http'):
+                        video_links[tab] = src
+                        log(f"    > Lien trouvé pour {tab}: {src}")
+        except Exception as e:
+            log(f"    ! Erreur onglet {tab}: {e}")
+    return video_links
 
 def scrape_film(page, url, retries=2):
     for attempt in range(retries):
@@ -71,9 +76,11 @@ def scrape_film(page, url, retries=2):
             page.set_extra_http_headers({"User-Agent": ua})
             page.goto(url, wait_until="domcontentloaded")
             time.sleep(random.uniform(2.5, 4))
-            video_url = extract_video_url(page)
-            if video_url:
-                return video_url
+            video_urls = extract_video_url_multi(page)
+            if video_urls:
+                # Prend VIDZY par défaut, sinon le premier trouvé
+                preferred = video_urls.get("VIDZY") or next(iter(video_urls.values()))
+                return preferred, video_urls
             else:
                 log(f"Tentative {attempt+1}: pas de vidéo trouvée.")
         except PWTimeout:
@@ -81,7 +88,7 @@ def scrape_film(page, url, retries=2):
         except Exception as e:
             log(f"Tentative {attempt+1}: Erreur inattendue: {e}")
         time.sleep(random.uniform(3, 6))
-    return None
+    return None, {}
 
 def main():
     with sync_playwright() as p:
@@ -94,10 +101,14 @@ def main():
         results = []
         for i, film in enumerate(links):
             log(f"[{i+1}/{len(links)}] {film['title']}")
-            video_url = scrape_film(page, film['url'])
+            video_url, all_sources = scrape_film(page, film['url'])
             if video_url:
                 log(f"OK: {film['title']} | {video_url}")
-                results.append({"title": film['title'], "video_url": video_url})
+                results.append({
+                    "title": film['title'],
+                    "video_url": video_url,
+                    "all_sources": all_sources
+                })
             else:
                 log("Aucune vidéo trouvée après retries.")
             # Délai anti-bot fort
