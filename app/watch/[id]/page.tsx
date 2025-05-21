@@ -1,29 +1,30 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipForward, SkipBack, Settings, ArrowLeft } from "lucide-react"
 
-// Mock data for video
-const getVideoData = (id: string) => {
-  return {
-    id: Number.parseInt(id),
-    title: "Dune",
-    src: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4", // Sample video URL
-    thumbnail: "/placeholder.svg?height=1080&width=1920",
-    duration: 596, // in seconds
-    nextEpisode: {
-      id: 2,
-      title: "Episode 2",
-    },
-  }
+// Helper : charge un film par id depuis Supabase
+async function fetchFilmById(id: string) {
+  const { data, error } = await supabase
+    .from("films")
+    .select("*")
+    .eq("id", id)
+    .single()
+  if (error) throw error
+  return data
 }
 
 export default function VideoPlayerPage({ params }: { params: { id: string } }) {
-  const videoData = getVideoData(params.id)
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [film, setFilm] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  // Player states
   const videoRef = useRef<HTMLVideoElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -34,34 +35,34 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
   const [showControls, setShowControls] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [showNextEpisode, setShowNextEpisode] = useState(false)
 
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
+  // --- FETCH FILM ---
   useEffect(() => {
+    setLoading(true)
+    setFilm(null)
+    setError(null)
+    fetchFilmById(params.id)
+      .then(film => {
+        if (!film) throw new Error("Film non trouvé")
+        if (!film.video_url) throw new Error("Aucune vidéo disponible pour ce film.")
+        setFilm(film)
+      })
+      .catch(e => setError(typeof e === "string" ? e : e.message))
+      .finally(() => setLoading(false))
+  }, [params.id])
+
+  // --- PLAYER LOGIC (dynamique sur video_url) ---
+  useEffect(() => {
+    if (!film) return
     const video = videoRef.current
     if (!video) return
 
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime)
-
-      // Show next episode button when near the end
-      if (video.duration - video.currentTime < 30) {
-        setShowNextEpisode(true)
-      } else {
-        setShowNextEpisode(false)
-      }
-    }
-
+    const handleTimeUpdate = () => setCurrentTime(video.currentTime)
     const handleLoadedMetadata = () => {
       setDuration(video.duration)
       setIsLoaded(true)
     }
-
-    const handleEnded = () => {
-      setIsPlaying(false)
-      setShowNextEpisode(true)
-    }
+    const handleEnded = () => setIsPlaying(false)
 
     video.addEventListener("timeupdate", handleTimeUpdate)
     video.addEventListener("loadedmetadata", handleLoadedMetadata)
@@ -72,7 +73,7 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
       video.removeEventListener("loadedmetadata", handleLoadedMetadata)
       video.removeEventListener("ended", handleEnded)
     }
-  }, [])
+  }, [film])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,7 +98,8 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
+    // eslint-disable-next-line
+  }, [isPlaying, isMuted])
 
   const togglePlay = () => {
     const video = videoRef.current
@@ -108,14 +110,12 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
     } else {
       video.play()
     }
-
     setIsPlaying(!isPlaying)
   }
 
   const toggleMute = () => {
     const video = videoRef.current
     if (!video) return
-
     video.muted = !isMuted
     setIsMuted(!isMuted)
   }
@@ -123,7 +123,6 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current
     if (!video) return
-
     const newVolume = Number.parseFloat(e.target.value)
     video.volume = newVolume
     setVolume(newVolume)
@@ -133,7 +132,6 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
   const skip = (seconds: number) => {
     const video = videoRef.current
     if (!video) return
-
     video.currentTime += seconds
   }
 
@@ -141,7 +139,6 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
     const progressBar = progressRef.current
     const video = videoRef.current
     if (!progressBar || !video) return
-
     const rect = progressBar.getBoundingClientRect()
     const pos = (e.clientX - rect.left) / rect.width
     video.currentTime = pos * video.duration
@@ -162,106 +159,86 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
     }
   }
 
-  const handleMouseMove = () => {
-    setShowControls(true)
-
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current)
-    }
-
-    controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) {
-        setShowControls(false)
-      }
-    }, 3000)
-  }
-
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600)
     const m = Math.floor((seconds % 3600) / 60)
     const s = Math.floor(seconds % 60)
-
     return [h > 0 ? h : null, h > 0 ? (m < 10 ? `0${m}` : m) : m, s < 10 ? `0${s}` : s].filter(Boolean).join(":")
   }
+
+  // --- RENDU ---
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-white">
+        Chargement du film...
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-red-400">
+        {error}
+      </div>
+    )
+  }
+  if (!film) return null
 
   return (
     <div className="bg-black min-h-screen flex flex-col">
       {/* Back Button */}
       <div className="p-4 absolute top-0 left-0 z-20">
         <Button variant="ghost" size="icon" asChild className="text-white bg-black/50 rounded-full hover:bg-black/70">
-          <Link href="/">
+          <Link href={`/films/${film.id}`}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
       </div>
 
+      {/* Titre du film */}
+      <div className="text-white text-xl font-bold pt-8 px-6 pb-2">{film.title}</div>
+
       {/* Video Player */}
       <div
         id="video-container"
         className="relative flex-1 flex items-center justify-center bg-black"
-        onMouseMove={handleMouseMove}
-        onClick={() => isLoaded && togglePlay()}
+        style={{ minHeight: 400 }}
       >
         <video
           ref={videoRef}
-          src={videoData.src}
-          poster={videoData.thumbnail}
+          src={film.video_url}
+          poster={film.poster || film.thumbnail || "/placeholder.svg"}
           className="w-full h-full max-h-screen object-contain"
           preload="metadata"
+          controls={false}
+          onClick={() => isLoaded && togglePlay()}
         ></video>
 
         {/* Video Controls */}
         {showControls && (
           <div
             className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             {/* Progress Bar */}
             <div ref={progressRef} className="video-progress mb-4 cursor-pointer" onClick={handleProgressClick}>
-              <div className="video-progress-bar" style={{ width: `${(currentTime / duration) * 100}%` }}></div>
+              <div className="video-progress-bar" style={{ width: `${(currentTime / duration) * 100}%`, height: "6px", background: "#9333ea" }}></div>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {/* Play/Pause Button */}
                 <Button variant="ghost" size="icon" onClick={togglePlay} className="video-button" disabled={!isLoaded}>
                   {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                 </Button>
-
-                {/* Skip Backward */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => skip(-10)}
-                  className="video-button"
-                  disabled={!isLoaded}
-                >
+                <Button variant="ghost" size="icon" onClick={() => skip(-10)} className="video-button" disabled={!isLoaded}>
                   <SkipBack className="h-5 w-5" />
                 </Button>
-
-                {/* Skip Forward */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => skip(10)}
-                  className="video-button"
-                  disabled={!isLoaded}
-                >
+                <Button variant="ghost" size="icon" onClick={() => skip(10)} className="video-button" disabled={!isLoaded}>
                   <SkipForward className="h-5 w-5" />
                 </Button>
-
-                {/* Volume Control */}
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleMute}
-                    className="video-button"
-                    disabled={!isLoaded}
-                  >
+                  <Button variant="ghost" size="icon" onClick={toggleMute} className="video-button" disabled={!isLoaded}>
                     {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                   </Button>
-
                   <input
                     type="range"
                     min="0"
@@ -272,41 +249,24 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
                     className="w-20 accent-purple-500"
                   />
                 </div>
-
-                {/* Time Display */}
                 <div className="video-time">
                   <span>{formatTime(currentTime)}</span>
                   <span className="mx-1">/</span>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
-
               <div className="flex items-center space-x-4">
-                {/* Settings Button */}
-                <Button variant="ghost" size="icon" className="video-button">
-                  <Settings className="h-5 w-5" />
-                </Button>
-
-                {/* Fullscreen Button */}
-                <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="video-button">
-                  <Maximize className="h-5 w-5" />
-                </Button>
+                <Button variant="ghost" size="icon" className="video-button"><Settings className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="video-button"><Maximize className="h-5 w-5" /></Button>
               </div>
             </div>
           </div>
         )}
-
-        {/* Next Episode Overlay */}
-        {showNextEpisode && (
-          <div className="absolute bottom-20 right-4 bg-gray-900/90 p-4 rounded-lg shadow-lg">
-            <p className="text-white font-medium mb-2">Prochain épisode</p>
-            <p className="text-gray-300 text-sm mb-3">{videoData.nextEpisode.title}</p>
-            <Button asChild className="btn-primary w-full">
-              <Link href={`/watch/${videoData.nextEpisode.id}`}>Regarder</Link>
-            </Button>
-          </div>
-        )}
       </div>
+      {/* Optionnel : description, suggestions, etc. */}
+      {film.description && (
+        <div className="text-white/80 text-sm px-6 pb-6 pt-2 max-w-2xl">{film.description}</div>
+      )}
     </div>
   )
 }
