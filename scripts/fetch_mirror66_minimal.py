@@ -27,11 +27,59 @@ USER_AGENTS = [
 def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}")
 
-def get_film_links(p):
+def login_and_get_film_links(p, email, password):
+    """
+    Ouvre Mirror66, se connecte avec le compte fourni, puis récupère les liens films.
+    """
     browser = p.chromium.launch(headless=HEADLESS)
     page = browser.new_page()
     ua = random.choice(USER_AGENTS)
     page.set_extra_http_headers({"User-Agent": ua})
+
+    # 1. Aller sur la page d'accueil
+    page.goto("https://mirror66.lol/", wait_until="networkidle")
+    time.sleep(2)
+
+    # 2. Cliquer sur le bouton "Connexion"/"Login" (adapte le sélecteur si besoin)
+    try:
+        login_btn = page.query_selector('a[href*="login"], button:has-text("Login"), button:has-text("Connexion")')
+        if login_btn:
+            login_btn.click()
+            time.sleep(2)
+    except Exception as e:
+        log(f"Erreur bouton login : {e}")
+
+    # 3. Remplir le formulaire de connexion
+    try:
+        # Adapte ces sélecteurs selon les vrais IDs/classes du formulaire
+        email_input = page.query_selector('input[type="email"], input[name="email"]')
+        if not email_input:
+            email_input = page.query_selector('input')
+        email_input.fill(email)
+        password_input = page.query_selector('input[type="password"], input[name="password"]')
+        password_input.fill(password)
+        # Cliquer sur le bouton "Connexion"/"Login"
+        submit_btn = page.query_selector('button[type="submit"], button:has-text("Connexion"), button:has-text("Login")')
+        if submit_btn:
+            submit_btn.click()
+        else:
+            # tente Enter
+            password_input.press("Enter")
+        time.sleep(4)
+    except Exception as e:
+        log(f"Erreur formulaire login : {e}")
+
+    # 4. Vérifier qu'on est bien connecté (adapte le sélecteur si besoin)
+    try:
+        # Ex: présence d'un bouton logout ou pseudo utilisateur
+        if page.query_selector('a[href*="logout"], button:has-text("Déconnexion")'):
+            log("Connexion réussie !")
+        else:
+            log("Connexion peut-être échouée (bouton logout non trouvé).")
+    except Exception as e:
+        log(f"Erreur vérif connexion : {e}")
+
+    # 5. Aller sur la page des films
     page.goto(MIRROR66_LIST_URL, wait_until="networkidle")
     time.sleep(3)
     links = []
@@ -94,7 +142,10 @@ def scrape_film(page, url, retries=2):
 
 def main():
     with sync_playwright() as p:
-        links = get_film_links(p)
+        # Renseigne ici tes identifiants
+        email = "gadjicheikh15@gmail.com"
+        password = "Messigadji1503"
+        links = login_and_get_film_links(p, email, password)
         if not links:
             print("Aucun film trouvé.")
             return
