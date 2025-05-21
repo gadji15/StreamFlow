@@ -31,16 +31,22 @@ const SeasonCard: React.FC<SeasonCardProps> = ({
       type="button"
       style={{}}
     >
-      {/* Numéro géant en violet, débordant */}
+      {/* Numéro S{num} petit, perspective et fluorescent */}
       <span
-        className="absolute left-1/2 -translate-x-1/2 -top-7 sm:-top-10 z-20 select-none pointer-events-none font-extrabold text-primary"
+        className="absolute left-1/2 -translate-x-1/2 top-1 z-20 select-none pointer-events-none font-extrabold"
         style={{
-          fontSize: "3.7rem",
+          fontSize: "1.1rem",
           lineHeight: 1,
-          opacity: 0.74,
-          textShadow: "0 2px 12px rgba(80,0,150,0.18)",
-          letterSpacing: "-0.07em",
-          filter: "drop-shadow(0 1px 8px rgba(120,60,255,0.22))",
+          color: "#a259f7", // violet fluorescent
+          opacity: 0.93,
+          letterSpacing: "-0.03em",
+          transform: "skewX(-17deg) rotateX(13deg)",
+          textShadow: `
+            0 0 4px #a259f7,
+            0 0 6px #a259f7cc,
+            0 1px 8px #c084fc77,
+            0 0 2px #fff
+          `
         }}
       >
         S{seasonNumber}
