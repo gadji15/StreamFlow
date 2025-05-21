@@ -177,6 +177,12 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
               />
             </div>
           )}
+          <NavItem
+            href="/admin/pro-import-films"
+            icon={<PlusSquare className="h-5 w-5" />}
+            title="Import Pro Films"
+            isActive={pathname === '/admin/pro-import-films'}
+          />
         </div>
         <div className="mb-6">
           <p className="text-xs uppercase text-gray-500 font-semibold mb-2 px-3">Système</p>
