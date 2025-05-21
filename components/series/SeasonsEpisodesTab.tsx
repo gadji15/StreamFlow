@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import EpisodeCard from "./EpisodeCard";
+import MiniEpisodePoster from "./MiniEpisodePoster";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useWatchedEpisodes } from "@/hooks/useWatchedEpisodes";
 
@@ -53,14 +54,16 @@ export default function SeasonsEpisodesTab({
   return (
     <div
       className={cn(
-        "flex gap-8",
-        isMobile ? "flex-col" : "flex-row"
+        "flex",
+        isMobile ? "flex-col gap-6" : "flex-row gap-x-12"
       )}
     >
       {/* Saisons en cards */}
       <div
         className={cn(
-          isMobile ? "w-full mb-4" : "w-1/3 min-w-[13rem] max-w-md"
+          isMobile
+            ? "w-full mb-4"
+            : "flex-shrink-0 w-[18rem] min-w-[15rem] max-w-[20rem] pr-2"
         )}
         role="navigation"
         aria-label="Navigation des saisons"
@@ -138,8 +141,14 @@ export default function SeasonsEpisodesTab({
           </div>
         )}
       </div>
+
+      {/* Séparateur professionnel */}
+      {!isMobile && (
+        <div className="w-[2px] mx-2 bg-gradient-to-b from-transparent via-gray-700/80 to-transparent rounded-full shadow-lg self-stretch" />
+      )}
+
       {/* Episodes */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {noSeasons ? null : (
           seasonEpisodes.length > 0 ? (
             <div>
@@ -154,21 +163,15 @@ export default function SeasonsEpisodesTab({
                     ?.season_number ?? ""
                 }
               </h3>
-              <div className="space-y-4">
+              {/* Nouvelle grille responsive d'épisodes */}
+              <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
                 {seasonEpisodes.map((ep) => (
-                  <EpisodeCard
+                  <MiniEpisodePoster
                     key={ep.id}
-                    episode={{
-                      ...ep,
-                      thumbnail_url: ep.poster || ep.thumbnail_url, // compatibilité poster ou thumbnail
-                    }}
-                    watched={isWatched(ep.id)}
-                    loadingWatched={loadingWatched}
-                    isVIP={isVIP}
-                    user={user}
-                    onMarkWatched={markWatched}
-                    onUnmarkWatched={unmarkWatched}
-                    onWatch={() => router.push(`/series/${id}/watch/${ep.id}`)}
+                    posterUrl={ep.poster || ep.thumbnail_url || "/placeholder-poster.jpg"}
+                    number={ep.episode_number}
+                    title={ep.title}
+                    onClick={() => router.push(`/series/${id}/watch/${ep.id}`)}
                   />
                 ))}
               </div>
