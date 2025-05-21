@@ -1,0 +1,60 @@
+import React from "react";
+import { Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface SeasonCardProps {
+  posterUrl?: string;
+  seasonNumber: number;
+  title?: string;
+  onClick?: () => void;
+  selected?: boolean;
+}
+
+const SeasonCard: React.FC<SeasonCardProps> = ({
+  posterUrl,
+  seasonNumber,
+  title,
+  onClick,
+  selected = false,
+}) => {
+  return (
+    <button
+      className={cn(
+        "group relative flex flex-col items-center w-full aspect-[2/3] min-w-[120px] max-w-[180px] rounded-xl overflow-hidden shadow-lg border transition-all duration-200 bg-gray-900/80 hover:scale-105 hover:shadow-2xl focus-visible:ring-2 focus-visible:ring-primary cursor-pointer",
+        selected
+          ? "border-primary ring-2 ring-primary"
+          : "border-gray-800 hover:border-primary"
+      )}
+      aria-label={`Saison ${seasonNumber}${title ? " - " + title : ""}`}
+      onClick={onClick}
+      tabIndex={0}
+      type="button"
+    >
+      <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 text-xs font-semibold text-primary shadow z-10">
+        S{seasonNumber}
+      </div>
+      {posterUrl ? (
+        <img
+          src={posterUrl}
+          alt={`Affiche saison ${seasonNumber}`}
+          className="w-full h-full object-cover bg-black transition-transform duration-300 group-hover:scale-105"
+          draggable={false}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-800">
+          <Layers className="w-10 h-10 text-gray-400" />
+        </div>
+      )}
+      {/* Overlay titre adaptatif */}
+      <div className="w-full absolute bottom-0 left-0 px-2 py-3 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+        <div className="font-bold text-gray-100 text-sm md:text-base truncate" title={title || `Saison ${seasonNumber}`}>
+          {title || `Saison ${seasonNumber}`}
+        </div>
+      </div>
+      {/* Animation border sur hover */}
+      <span className="absolute inset-0 rounded-xl pointer-events-none border-2 border-transparent group-hover:border-primary transition-all duration-200"></span>
+    </button>
+  );
+};
+
+export default SeasonCard;
