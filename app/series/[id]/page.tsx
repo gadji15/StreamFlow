@@ -131,7 +131,13 @@ export default function SeriesDetailPage() {
       // Debug log pour verifier les saisons fetchées
       console.log("[DEBUG] Saisons fetchées depuis Supabase :", fetchedSeasons);
       setSeasons(fetchedSeasons || []);
-      setEpisodes(fetchedEpisodes || []);
+      // Map poster field to thumbnail_url for EpisodeCard compatibility
+      setEpisodes(
+        (fetchedEpisodes || []).map((ep: any) => ({
+          ...ep,
+          thumbnail_url: ep.thumbnail_url || ep.poster || ep.poster_url || "", // priorité à thumbnail_url, sinon poster/poster_url
+        }))
+      );
 
       // Set default selected season (last one)
       if (fetchedSeasons && fetchedSeasons.length > 0) {
@@ -378,17 +384,19 @@ export default function SeriesDetailPage() {
   const noEpisodes = !seasonEpisodes || seasonEpisodes.length === 0;
 
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* --- Backdrop Header --- */}
-      {series.backdropUrl && (
-        <SeriesBackdrop
-          src={series.backdropUrl}
-          alt={`Backdrop de ${series.title}`}
-        />
-      )}
+    <div className="relative min-h-screen bg-background overflow-x-hidden">
+      {/* --- Backdrop Header (edge-to-edge, fixed height) --- */}
+      <div className="relative w-full min-h-[50vh] md:min-h-[65vh] lg:min-h-[75vh]">
+        {series.backdropUrl && (
+          <SeriesBackdrop
+            src={series.backdropUrl}
+            alt={`Backdrop de ${series.title}`}
+          />
+        )}
+      </div>
 
       {/* --- Main Content --- */}
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
+      <div className="container mx-auto px-2 sm:px-4 max-w-6xl -mt-20 md:-mt-32 pb-8 relative z-10">
         {/* --- Header --- */}
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
           {/* Poster & VIP badge */}
