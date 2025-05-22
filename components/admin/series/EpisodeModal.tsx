@@ -6,7 +6,11 @@ import { useToast } from "@/components/ui/use-toast";
 function isValidImageUrl(url: string): boolean {
   try {
     const u = new URL(url);
-    return /^https?:/.test(u.protocol) && /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(u.pathname);
+    // Autoriser aussi .jpg, .jpeg, .png, .webp (utilisés par TMDB), .svg, .bmp, .gif, et les URL TMDB classiques (qui n'ont parfois pas d'extension dans le path)
+    return /^https?:/.test(u.protocol) && (
+      /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(u.pathname) ||
+      u.hostname.endsWith("tmdb.org")
+    );
   } catch {
     return false;
   }
@@ -655,7 +659,7 @@ export default function EpisodeModal({
           </div>
           <div>
             <label htmlFor="thumbnail_url" className="block text-[11px] font-medium text-white/80">
-              Image (URL)
+              Image (URL) <span className="text-red-500">*</span>
             </label>
             <input
               id="thumbnail_url"
@@ -667,9 +671,13 @@ export default function EpisodeModal({
               placeholder="https://..."
               disabled={loading}
               aria-label="URL de l'image"
+              required
             />
             {errors.thumbnail_url && (
               <div className="text-xs text-red-400 mt-0.5">{errors.thumbnail_url}</div>
+            )}
+            {!form.thumbnail_url && (
+              <div className="text-xs text-yellow-400 mt-0.5">⚠️ Merci d’importer via TMDB ou de renseigner une image d’épisode pour l’affichage côté utilisateur.</div>
             )}
             {form.thumbnail_url && (
               <div className="flex flex-col items-start mt-1">
