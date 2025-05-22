@@ -174,7 +174,7 @@ function HeroSection() {
           relative z-20 flex flex-col
           justify-end
           h-full w-full
-          px-3 sm:px-6 md:px-12
+          px-0 sm:px-4 md:px-0
           pb-4 sm:pb-8 md:pb-10
           items-start
         "
@@ -187,12 +187,12 @@ function HeroSection() {
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
             className="
-              max-w-[95vw] sm:max-w-md md:max-w-xl
+              max-w-[100vw] sm:max-w-full md:max-w-full
               w-full
               bg-black/55 sm:bg-black/20 md:bg-transparent
               backdrop-blur-[2px] sm:backdrop-blur-0 md:backdrop-blur-0
               rounded-lg sm:rounded-xl md:rounded-none
-              p-3 sm:p-6 md:py-7 md:px-8
+              p-3 sm:p-6 md:py-7 md:px-0
               mt-2 sm:mt-0
               shadow-lg shadow-black/20
               text-left
