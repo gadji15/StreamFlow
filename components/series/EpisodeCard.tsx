@@ -44,15 +44,21 @@ export default function EpisodeCard({
       style={{ width: '100%', maxWidth: 240, minWidth: 140 }}
     >
       {/* Poster spécifique ou placeholder */}
-      <div className="w-full max-w-[140px] aspect-[2/3] rounded-lg overflow-hidden relative bg-gray-900 flex-shrink-0 transition-all group-hover:scale-105">
+      <div className="w-28 sm:w-32 aspect-[16/9] rounded-xl overflow-hidden relative bg-gray-900 flex-shrink-0 border border-gray-700 shadow-sm transition-all group-hover:scale-105">
         {episode.thumbnail_url ? (
           <img
             src={episode.thumbnail_url}
             alt={`Poster de ${episode.title}`}
-            className="w-full h-full object-cover transition-all"
+            className="w-full h-full object-cover object-center transition-all duration-300"
+            style={{
+              background: "#18181b",
+              display: "block"
+            }}
+            loading="lazy"
+            draggable={false}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-gray-800">
             <Play className="h-8 w-8 text-gray-600" />
           </div>
         )}
