@@ -280,21 +280,15 @@ export function VideoPlayer({
         </div>
       )}
 
-      {/* Progress bar (SUPPRIMÉE à la demande utilisateur) */}
-      {/* 
+      {/* Barre de progression (une seule ligne, Slider/seekbar) */}
       <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6">
-        <Progress
-          value={loadingProgress}
-          className="h-1 bg-gray-700/70"
-          indicatorClassName="bg-primary"
-        />
         <Slider
           value={[currentTime]}
           min={0}
           max={duration || 100}
           step={0.1}
           onValueChange={handleSeek}
-          className="cursor-pointer mt-1"
+          className="cursor-pointer"
           aria-label="Barre de progression"
         />
         <div className="flex justify-between text-xs text-gray-300 mt-1 font-mono">
@@ -302,7 +296,6 @@ export function VideoPlayer({
           <span>{formatTime(duration)}</span>
         </div>
       </div>
-      */}
 
       {/* Controls */}
       {showControls && (
