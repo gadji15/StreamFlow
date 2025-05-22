@@ -199,29 +199,33 @@ export default function WatchEpisodePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-gray-900 text-white flex flex-col">
+      {/* Espace sous navbar principale */}
+      <div className="h-14 sm:h-16 md:h-20" />
       {/* Header contextuel */}
-      <header className="flex items-center justify-between px-4 pt-5 pb-2 bg-gradient-to-b from-black/90 to-transparent sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center justify-between px-2 sm:px-4 pt-4 pb-2 bg-gradient-to-b from-black/90 to-transparent sticky top-0 z-30"
+        style={{marginTop: 0, minHeight: "56px"}}
+      >
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button variant="ghost" onClick={goBackToSeries} className="rounded-full p-2">
             <ChevronLeft className="h-5 w-5" />
           </Button>
           {seriesPoster && (
-            <img src={seriesPoster} alt={seriesTitle} className="h-10 w-10 object-cover rounded shadow" />
+            <img src={seriesPoster} alt={seriesTitle} className="h-8 w-8 sm:h-10 sm:w-10 object-cover rounded shadow" />
           )}
-          <h1 className="font-bold text-lg sm:text-2xl truncate">{seriesTitle}</h1>
+          <h1 className="font-bold text-base sm:text-lg md:text-2xl truncate max-w-[40vw]">{seriesTitle}</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button variant="ghost" className="rounded-full p-2" aria-label="Voir les infos série">
             <Info className="h-5 w-5" />
           </Button>
           <Button
             variant="outline"
-            className="rounded-full px-3 py-2 flex items-center gap-2"
+            className="rounded-full px-2 sm:px-3 py-2 flex items-center gap-2"
             onClick={() => setIsSeasonModalOpen(true)}
             aria-label="Voir saisons et épisodes"
           >
             <Layers className="w-5 h-5 mr-1" />
-            Saisons
+            <span className="hidden xs:inline">Saisons</span>
           </Button>
         </div>
       </header>
@@ -238,11 +242,14 @@ export default function WatchEpisodePage() {
 
       {/* Player vidéo premium */}
       <main className="flex-1 flex flex-col items-center justify-start w-full">
-        <div className="relative w-full max-w-4xl aspect-video mt-4 rounded-xl overflow-hidden shadow-lg border border-gray-800 bg-black mx-auto">
+        <div className="relative w-full max-w-[98vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl aspect-video mt-3 sm:mt-6 rounded-xl overflow-hidden shadow-lg bg-black mx-auto">
           <VideoPlayer
             src={episode.video_url || ''}
             poster={episode.thumbnail_url}
-            title={`${seriesTitle} - S${episode.season} E${episode.episode_number}: ${episode.title}`}
+            title={
+              [seriesTitle, `S${episode.season}${episode.episode_number ? "E"+episode.episode_number : ""}`, episode.title]
+                .filter(Boolean).join(" - ")
+            }
             onEnded={nextEpisode ? goToNextEpisode : undefined}
             nextEpisode={nextEpisode ? {
               title: nextEpisode.title,
@@ -253,9 +260,9 @@ export default function WatchEpisodePage() {
             onClose={undefined}
           />
           {/* Overlay titre/infos flottantes */}
-          <div className="absolute bottom-2 left-4 bg-black/50 rounded px-3 py-1 flex items-center gap-3">
-            <span className="font-bold text-primary text-base drop-shadow">
-              S{episode.season}E{episode.episode_number} : {episode.title}
+          <div className="absolute bottom-2 left-2 sm:left-4 bg-black/50 rounded px-2 sm:px-3 py-1 flex items-center gap-2 sm:gap-3 overflow-x-auto">
+            <span className="font-bold text-primary text-sm sm:text-base drop-shadow">
+              S{episode.season}E{episode.episode_number}{episode.title ? `: ${episode.title}` : ""}
             </span>
             {episode.is_vip && (
               <span className="ml-2 text-xs px-2 py-0.5 rounded bg-yellow-700/80 text-yellow-200 font-bold">VIP</span>
