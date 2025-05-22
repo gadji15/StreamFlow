@@ -1,0 +1,15 @@
+2025-05-21 19:12:39,596 - ERROR: Erreur GET https://moviebox.ng/fr/movies: 404 Client Error: Not Found for url: https://moviebox.ng/fr/movies
+2025-05-21 19:12:39,817 - ERROR: Erreur GET https://xalaflix.io/movies: 403 Client Error: Forbidden for url: https://xalaflix.io/movies
+2025-05-21 19:13:00,637 - INFO: [Mirror66] 0 films trouvés.
+2025-05-21 19:13:17,869 - WARNING: [Coflix] Erreur page: https://coflix.mov/film/ - Page.wait_for_selector: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("iframe, video") to be visible
+    24 × locator resolved to hidden <iframe width="0" height="0" src="javascript:false"></iframe>
+
+2025-05-21 19:14:41,171 - WARNING: [Coflix] Erreur page: https://coflix.mov/film/ - Page.wait_for_selector: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("iframe, video") to be visible
+    24 × locator resolved to hidden <iframe width="0" height="0" src="javascript:false"></iframe>
+
+2025-05-21 19:15:56,019 - INFO: [Coflix] 36 films trouvés.
+2025-05-21 19:15:56,020 - INFO: 33 films uniques sauvegardés dans import_films.json.
