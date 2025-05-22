@@ -267,12 +267,12 @@ function HeroSection() {
         </AnimatePresence>
         {/* Pagination compacte */}
         {featuredMovies.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-30">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden sm:flex space-x-2 md:space-x-3 z-30">
             {featuredMovies.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 sm:h-2.5 rounded-full transition-all duration-200 ${
-                  index === currentIndex ? 'w-8 bg-white/90' : 'w-4 bg-white/40'
+                className={`h-2.5 md:h-3 rounded-full transition-all duration-200 ${
+                  index === currentIndex ? 'w-8 md:w-10 bg-white/90' : 'w-4 md:w-6 bg-white/40'
                 }`}
                 onClick={() => handleManualNavigation(index)}
                 aria-label={`Voir le film ${index + 1}`}
