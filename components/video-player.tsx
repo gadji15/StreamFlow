@@ -46,6 +46,9 @@ export function VideoPlayer({
   const [showControls, setShowControls] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [showNextEpisode, setShowNextEpisode] = useState(false)
+  const [playPauseIcon, setPlayPauseIcon] = useState<"play" | "pause" | null>(null)
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false)
+  const [playbackRate, setPlaybackRate] = useState(1)
 
   // Responsive state
   const [isMobile, setIsMobile] = useState(false)
@@ -68,10 +71,13 @@ export function VideoPlayer({
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
+        setPlayPauseIcon("pause")
       } else {
         videoRef.current.play()
+        setPlayPauseIcon("play")
       }
       setIsPlaying(!isPlaying)
+      setTimeout(() => setPlayPauseIcon(null), 600)
     }
   }
 
@@ -87,6 +93,7 @@ export function VideoPlayer({
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration)
+      videoRef.current.playbackRate = playbackRate
     }
   }
 
@@ -177,27 +184,41 @@ export function VideoPlayer({
       switch (e.key.toLowerCase()) {
         case " ":
         case "k":
-          e.preventDefault()
-          togglePlay()
-          break
+          e.preventDefault(); togglePlay(); break
         case "f":
-          toggleFullscreen()
-          break
+          toggleFullscreen(); break
         case "m":
-          toggleMute()
-          break
+          toggleMute(); break
         case "arrowright":
-          skipForward()
-          break
+          skipForward(); break
         case "arrowleft":
-          skipBackward()
+          skipBackward(); break
+        case "+":
+        case "=":
+        case ">":
+          setPlaybackRate(r => {
+            const next = Math.min(2, parseFloat((r + 0.25).toFixed(2)))
+            if (videoRef.current) videoRef.current.playbackRate = next
+            return next
+          });
           break
+        case "-":
+        case "_":
+        case "<":
+          setPlaybackRate(r => {
+            const next = Math.max(0.5, parseFloat((r - 0.25).toFixed(2)))
+            if (videoRef.current) videoRef.current.playbackRate = next
+            return next
+          });
+          break
+        // TODO: PiP, cinéma, sous-titres (c, t, p)
       }
+      setShowControls(true)
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
     // eslint-disable-next-line
-  }, [isPlaying, isMuted, duration])
+  }, [isPlaying, isMuted, duration, playbackRate])
 
   // Touch controls for mobile
   const handleTouch = () => {
@@ -257,12 +278,12 @@ export function VideoPlayer({
           isMobile ? "rounded-none" : "rounded-xl"
         )}
         autoPlay={autoPlay}
-        onClick={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); togglePlay(); }}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onProgress={handleProgress}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlay={() => { setIsPlaying(true); setPlayPauseIcon("play"); setTimeout(() => setPlayPauseIcon(null), 600); }}
+        onPause={() => { setIsPlaying(false); setPlayPauseIcon("pause"); setTimeout(() => setPlayPauseIcon(null), 600); }}
         onEnded={() => {
           setIsPlaying(false)
           if (onEnded) onEnded()
@@ -271,7 +292,20 @@ export function VideoPlayer({
         controls={false}
         playsInline
         preload="metadata"
+        playbackRate={playbackRate}
       />
+      {/* Icône centrale play/pause animée */}
+      {playPauseIcon && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-fade">
+          <div className="bg-black/60 rounded-full p-6 sm:p-8 flex items-center justify-center">
+            {playPauseIcon === "play" ? (
+              <Play size={64} className="text-white drop-shadow" />
+            ) : (
+              <Pause size={64} className="text-white drop-shadow" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Overlay: Title */}
       {title && showControls && (
@@ -281,7 +315,7 @@ export function VideoPlayer({
       )}
 
       {/* Barre de progression (une seule ligne, Slider/seekbar) */}
-      <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6">
+      <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6 flex flex-col gap-0.5">
         <Slider
           value={[currentTime]}
           min={0}
@@ -291,8 +325,38 @@ export function VideoPlayer({
           className="cursor-pointer"
           aria-label="Barre de progression"
         />
-        <div className="flex justify-between text-xs text-gray-300 mt-1 font-mono">
+        <div className="flex justify-between items-center text-xs text-gray-300 font-mono w-full">
           <span>{formatTime(currentTime)}</span>
+          {/* Contrôle vitesse */}
+          <div className="relative flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs px-2 py-1"
+              onClick={() => setShowSpeedMenu(v => !v)}
+              aria-label="Vitesse de lecture"
+              tabIndex={0}
+            >
+              {playbackRate}x
+            </Button>
+            {showSpeedMenu && (
+              <div className="absolute bottom-8 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1">
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                  <button
+                    key={speed}
+                    onClick={() => {
+                      setShowSpeedMenu(false)
+                      setPlaybackRate(speed)
+                      if (videoRef.current) videoRef.current.playbackRate = speed
+                    }}
+                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${playbackRate===speed?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
