@@ -187,6 +187,12 @@ export function VideoPlayer({
           e.preventDefault(); togglePlay(); break
         case "f":
           toggleFullscreen(); break
+        case "t":
+          setCinemaMode((v) => !v); break
+        case "p":
+          handlePiP(); break
+        case "c":
+          setShowSubMenu((v) => !v); break
         case "m":
           toggleMute(); break
         case "arrowright":
@@ -211,18 +217,33 @@ export function VideoPlayer({
             return next
           });
           break
-        // TODO: PiP, cinéma, sous-titres (c, t, p)
       }
       setShowControls(true)
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-    // eslint-disable-next-line
   }, [isPlaying, isMuted, duration, playbackRate])
 
   // Touch controls for mobile
   const handleTouch = () => {
     setShowControls(v => !v)
+  }
+
+  // Mode Picture-in-Picture
+  const handlePiP = async () => {
+    if (videoRef.current) {
+      if (!document.pictureInPictureElement) {
+        try {
+          // @ts-ignore
+          await videoRef.current.requestPictureInPicture()
+          setIsPiP(true)
+        } catch {}
+      } else {
+        // @ts-ignore
+        await document.exitPictureInPicture?.()
+        setIsPiP(false)
+      }
+    }
   }
 
   // --- Subcomponents ---
@@ -248,13 +269,17 @@ export function VideoPlayer({
       className={cn(
         "relative w-full h-full bg-black overflow-hidden flex flex-col justify-center items-center",
         "aspect-video md:rounded-xl shadow-lg",
-        "max-h-screen"
+        "max-h-screen",
+        cinemaMode && "fixed inset-0 z-[9999] bg-black transition-all duration-300",
       )}
       onMouseMove={!isMobile ? showControlsTemporarily : undefined}
       onTouchStart={isMobile ? handleTouch : undefined}
       tabIndex={0}
       style={{ touchAction: "manipulation" }}
     >
+    {cinemaMode && (
+      <div className="fixed inset-0 bg-black/90 z-[9998]" aria-hidden="true"></div>
+    )}
       {/* Close button */}
       {onClose && showControls && (
         <ControlButton
@@ -392,7 +417,7 @@ export function VideoPlayer({
               <SkipForward size={20} />
             </ControlButton>
           </div>
-          {/* Volume & fullscreen */}
+          {/* Volume & fullscreen, cinema, PiP, sous-titres */}
           <div className="flex items-center gap-2 md:gap-4 justify-center">
             <ControlButton
               onClick={toggleMute}
@@ -416,6 +441,57 @@ export function VideoPlayer({
             >
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </ControlButton>
+            {/* Cinema mode */}
+            <ControlButton
+              onClick={() => setCinemaMode(v => !v)}
+              ariaLabel={cinemaMode ? "Quitter le mode cinéma" : "Mode cinéma"}
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2" />
+                <rect x="7" y="11" width="2" height="2" fill="white" />
+                <rect x="15" y="11" width="2" height="2" fill="white" />
+              </svg>
+            </ControlButton>
+            {/* PiP */}
+            <ControlButton
+              onClick={handlePiP}
+              ariaLabel={isPiP ? "Fermer le mode Picture-in-Picture" : "Picture-in-Picture"}
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="white" strokeWidth="2"/>
+                <rect x="15" y="13" width="4" height="4" rx="1" fill="white"/>
+              </svg>
+            </ControlButton>
+            {/* Sous-titres */}
+            <ControlButton
+              onClick={() => setShowSubMenu(v => !v)}
+              ariaLabel="Sous-titres"
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2"/>
+                <rect x="7" y="11" width="2" height="2" fill="white"/>
+                <rect x="15" y="11" width="2" height="2" fill="white"/>
+              </svg>
+            </ControlButton>
+            {showSubMenu && (
+              <div className="absolute bottom-12 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1 min-w-[120px]">
+                <button
+                  className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${!activeSubtitle?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                  onClick={() => { setActiveSubtitle(null); setShowSubMenu(false); }}
+                >
+                  Désactiver
+                </button>
+                {subtitles.map(sub => (
+                  <button
+                    key={sub.lang}
+                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${activeSubtitle===sub.lang?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                    onClick={() => { setActiveSubtitle(sub.lang); setShowSubMenu(false); }}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
