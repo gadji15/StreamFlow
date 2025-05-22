@@ -280,7 +280,8 @@ export function VideoPlayer({
         </div>
       )}
 
-      {/* Progress bar (buffer/seek) */}
+      {/* Progress bar (SUPPRIMÉE à la demande utilisateur) */}
+      {/* 
       <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6">
         <Progress
           value={loadingProgress}
@@ -301,6 +302,7 @@ export function VideoPlayer({
           <span>{formatTime(duration)}</span>
         </div>
       </div>
+      */}
 
       {/* Controls */}
       {showControls && (
