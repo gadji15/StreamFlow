@@ -207,7 +207,7 @@ function MobileHero() {
               max-w-[95vw] sm:max-w-md
               w-full
               bg-black/20 sm:bg-black/20
-              backdrop-blur-[2px] sm:backdrop-blur-0
+              backdrop-blur-[1px] sm:backdrop-blur-0
               rounded-lg sm:rounded-xl
               p-3 sm:p-6
               mt-2 sm:mt-0
