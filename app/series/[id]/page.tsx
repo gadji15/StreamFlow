@@ -131,7 +131,13 @@ export default function SeriesDetailPage() {
       // Debug log pour verifier les saisons fetchées
       console.log("[DEBUG] Saisons fetchées depuis Supabase :", fetchedSeasons);
       setSeasons(fetchedSeasons || []);
-      setEpisodes(fetchedEpisodes || []);
+      // Map poster field to thumbnail_url for EpisodeCard compatibility
+      setEpisodes(
+        (fetchedEpisodes || []).map((ep: any) => ({
+          ...ep,
+          thumbnail_url: ep.thumbnail_url || ep.poster || ep.poster_url || "", // priorité à thumbnail_url, sinon poster/poster_url
+        }))
+      );
 
       // Set default selected season (last one)
       if (fetchedSeasons && fetchedSeasons.length > 0) {
