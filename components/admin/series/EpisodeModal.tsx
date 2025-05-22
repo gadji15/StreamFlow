@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabaseClient";
 
 // Validation simple d'URL d'image
 function isValidImageUrl(url: string): boolean {
@@ -259,23 +260,48 @@ export default function EpisodeModal({
     try {
       // Nettoyage des champs
       const clean = (v: any) => (v === "" || v === undefined ? null : v);
-      // Nettoyer explicitement tous les champs non présents en base (plus de "order" !)
       const {
         local_video_file,
         parentSeasonNumber,
-        thumbnail_url, // va être nettoyé plus bas
-        video_url,     // idem
-        trailer_url,   // idem
+        thumbnail_url,
+        video_url,
+        trailer_url,
         ...restForm
       } = form;
 
-      // Seuls les champs explicitement listés sont envoyés à la base
+      let finalVideoUrl = clean(video_url);
+
+      // Si un fichier vidéo local a été uploadé, on l'upload dans Supabase Storage et on récupère l'URL publique
+      if (local_video_file && !form.video_unavailable) {
+        const fileExt = local_video_file.name.split('.').pop();
+        const filePath = `episodes/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(filePath, local_video_file, {
+            upsert: false,
+            cacheControl: '3600'
+          });
+        if (uploadError) {
+          toast({ title: "Erreur upload vidéo", description: uploadError.message, variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        // Récupérer l'URL publique via getPublicUrl
+        const { data: publicUrlData } = supabase.storage.from('videos').getPublicUrl(filePath);
+        if (!publicUrlData || !publicUrlData.publicUrl) {
+          toast({ title: "Erreur", description: "Impossible d'obtenir l'URL publique de la vidéo", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        finalVideoUrl = publicUrlData.publicUrl;
+      }
+
       const submitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
         thumbnail_url: clean(thumbnail_url),
-        video_url: clean(video_url),
+        video_url: finalVideoUrl,
         trailer_url: clean(trailer_url),
         title: clean(form.title),
         description: clean(form.description),
@@ -290,7 +316,6 @@ export default function EpisodeModal({
       toast({ title: "Épisode enregistré" });
       onClose();
     } catch (e) {
-      // Gestion spécifique du code d'erreur 23505 (doublon)
       if (e.code === "23505" || (e.message && e.message.includes("duplicate key"))) {
         setErrors(prev => ({
           ...prev,
