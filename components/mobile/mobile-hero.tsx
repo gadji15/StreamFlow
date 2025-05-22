@@ -206,8 +206,8 @@ function MobileHero() {
             className="
               max-w-[95vw] sm:max-w-md
               w-full
-              bg-black/55 sm:bg-black/20
-              backdrop-blur-[2px] sm:backdrop-blur-0
+              bg-black/20 sm:bg-black/20
+              backdrop-blur-none sm:backdrop-blur-0
               rounded-lg sm:rounded-xl
               p-3 sm:p-6
               mt-2 sm:mt-0
@@ -316,7 +316,7 @@ function MobileHero() {
               sm:transform sm:-translate-y-1/2
               w-8 sm:w-10 h-8 sm:h-10
               flex items-center justify-center
-              rounded-full bg-black/40 text-white z-40 shadow-md
+              rounded-full bg-black/20 sm:bg-black/40 text-white z-40 shadow-md
               transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white
             "
             onClick={goToPrevious}
@@ -331,7 +331,7 @@ function MobileHero() {
               sm:transform sm:-translate-y-1/2
               w-8 sm:w-10 h-8 sm:h-10
               flex items-center justify-center
-              rounded-full bg-black/40 text-white z-40 shadow-md
+              rounded-full bg-black/20 sm:bg-black/40 text-white z-40 shadow-md
               transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white
             "
             onClick={goToNext}

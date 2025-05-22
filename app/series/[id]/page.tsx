@@ -378,17 +378,22 @@ export default function SeriesDetailPage() {
   const noEpisodes = !seasonEpisodes || seasonEpisodes.length === 0;
 
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* --- Backdrop Header --- */}
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      {/* --- Backdrop Header, étendu sur toute la largeur et hauteur, derrière le contenu --- */}
       {series.backdropUrl && (
-        <SeriesBackdrop
-          src={series.backdropUrl}
-          alt={`Backdrop de ${series.title}`}
-        />
+        <div className="absolute inset-0 w-full h-full z-0">
+          <SeriesBackdrop
+            src={series.backdropUrl}
+            alt={`Backdrop de ${series.title}`}
+            className="w-full h-full object-cover"
+          />
+          {/* Overlay dégradé pour lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90 pointer-events-none" />
+        </div>
       )}
 
       {/* --- Main Content --- */}
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
+      <div className="relative z-10 container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8">
         {/* --- Header --- */}
         <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
           {/* Poster & VIP badge */}
