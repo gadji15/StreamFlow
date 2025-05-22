@@ -6,6 +6,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipForward, SkipBack, Settings, ArrowLeft } from "lucide-react"
+import { VideoPlayer } from "@/components/video-player"
 
 // Helper : charge un film par id depuis Supabase
 async function fetchFilmById(id: string) {
@@ -24,17 +25,7 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
   const [film, setFilm] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Player states
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const progressRef = useRef<HTMLDivElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [volume, setVolume] = useState(1)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [showControls, setShowControls] = useState(true)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
+  // (Suppression de toute la logique player custom, on utilise VideoPlayer)
 
   // --- FETCH FILM ---
   useEffect(() => {
@@ -197,71 +188,18 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
       {/* Titre du film */}
       <div className="text-white text-xl font-bold pt-8 px-6 pb-2">{film.title}</div>
 
-      {/* Video Player */}
+      {/* Video Player premium */}
       <div
         id="video-container"
         className="relative flex-1 flex items-center justify-center bg-black"
         style={{ minHeight: 400 }}
       >
-        <video
-          ref={videoRef}
+        <VideoPlayer
           src={film.video_url}
           poster={film.poster || film.thumbnail || "/placeholder.svg"}
-          className="w-full h-full max-h-screen object-contain"
-          preload="metadata"
-          controls={false}
-          onClick={() => isLoaded && togglePlay()}
-        ></video>
-
-        {/* Video Controls */}
-        {showControls && (
-          <div
-            className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Progress Bar */}
-            <div ref={progressRef} className="video-progress mb-4 cursor-pointer" onClick={handleProgressClick}>
-              <div className="video-progress-bar" style={{ width: `${(currentTime / duration) * 100}%`, height: "6px", background: "#9333ea" }}></div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" onClick={togglePlay} className="video-button" disabled={!isLoaded}>
-                  {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => skip(-10)} className="video-button" disabled={!isLoaded}>
-                  <SkipBack className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => skip(10)} className="video-button" disabled={!isLoaded}>
-                  <SkipForward className="h-5 w-5" />
-                </Button>
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="icon" onClick={toggleMute} className="video-button" disabled={!isLoaded}>
-                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                  </Button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="w-20 accent-purple-500"
-                  />
-                </div>
-                <div className="video-time">
-                  <span>{formatTime(currentTime)}</span>
-                  <span className="mx-1">/</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" className="video-button"><Settings className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="video-button"><Maximize className="h-5 w-5" /></Button>
-              </div>
-            </div>
-          </div>
-        )}
+          title={film.title}
+          autoPlay
+        />
       </div>
       {/* Optionnel : description, suggestions, etc. */}
       {film.description && (

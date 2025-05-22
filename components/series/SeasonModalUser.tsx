@@ -199,7 +199,7 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
                       {season.episodes.map((ep) => (
                         <EpisodePoster
                           key={ep.id}
-                          posterUrl={ep.poster}
+                          posterUrl={ep.thumbnail_url}
                           episodeNumber={ep.episode_number}
                           title={ep.title}
                           onClick={() => onEpisodeClick(ep)}

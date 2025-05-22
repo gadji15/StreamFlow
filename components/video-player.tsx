@@ -46,6 +46,26 @@ export function VideoPlayer({
   const [showControls, setShowControls] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [showNextEpisode, setShowNextEpisode] = useState(false)
+  const [playPauseIcon, setPlayPauseIcon] = useState<"play" | "pause" | null>(null)
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false)
+  const [playbackRate, setPlaybackRate] = useState(1)
+  const [cinemaMode, setCinemaMode] = useState(false)
+  const [isPiP, setIsPiP] = useState(false)
+  const [showSubMenu, setShowSubMenu] = useState(false)
+  const [subtitles, setSubtitles] = useState<{label: string, src: string, lang: string}[]>([])
+  const [activeSubtitle, setActiveSubtitle] = useState<string|null>(null)
+  const [isPlaying, setIsPlaying] = useState(autoPlay)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(1)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showControls, setShowControls] = useState(true)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [showNextEpisode, setShowNextEpisode] = useState(false)
+  const [playPauseIcon, setPlayPauseIcon] = useState<"play" | "pause" | null>(null)
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false)
+  const [playbackRate, setPlaybackRate] = useState(1)
 
   // Responsive state
   const [isMobile, setIsMobile] = useState(false)
@@ -68,10 +88,13 @@ export function VideoPlayer({
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
+        setPlayPauseIcon("pause")
       } else {
         videoRef.current.play()
+        setPlayPauseIcon("play")
       }
       setIsPlaying(!isPlaying)
+      setTimeout(() => setPlayPauseIcon(null), 600)
     }
   }
 
@@ -87,6 +110,7 @@ export function VideoPlayer({
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration)
+      videoRef.current.playbackRate = playbackRate
     }
   }
 
@@ -177,31 +201,66 @@ export function VideoPlayer({
       switch (e.key.toLowerCase()) {
         case " ":
         case "k":
-          e.preventDefault()
-          togglePlay()
-          break
+          e.preventDefault(); togglePlay(); break
         case "f":
-          toggleFullscreen()
-          break
+          toggleFullscreen(); break
+        case "t":
+          setCinemaMode((v) => !v); break
+        case "p":
+          handlePiP(); break
+        case "c":
+          setShowSubMenu((v) => !v); break
         case "m":
-          toggleMute()
-          break
+          toggleMute(); break
         case "arrowright":
-          skipForward()
-          break
+          skipForward(); break
         case "arrowleft":
-          skipBackward()
+          skipBackward(); break
+        case "+":
+        case "=":
+        case ">":
+          setPlaybackRate(r => {
+            const next = Math.min(2, parseFloat((r + 0.25).toFixed(2)))
+            if (videoRef.current) videoRef.current.playbackRate = next
+            return next
+          });
+          break
+        case "-":
+        case "_":
+        case "<":
+          setPlaybackRate(r => {
+            const next = Math.max(0.5, parseFloat((r - 0.25).toFixed(2)))
+            if (videoRef.current) videoRef.current.playbackRate = next
+            return next
+          });
           break
       }
+      setShowControls(true)
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-    // eslint-disable-next-line
-  }, [isPlaying, isMuted, duration])
+  }, [isPlaying, isMuted, duration, playbackRate])
 
   // Touch controls for mobile
   const handleTouch = () => {
     setShowControls(v => !v)
+  }
+
+  // Mode Picture-in-Picture
+  const handlePiP = async () => {
+    if (videoRef.current) {
+      if (!document.pictureInPictureElement) {
+        try {
+          // @ts-ignore
+          await videoRef.current.requestPictureInPicture()
+          setIsPiP(true)
+        } catch {}
+      } else {
+        // @ts-ignore
+        await document.exitPictureInPicture?.()
+        setIsPiP(false)
+      }
+    }
   }
 
   // --- Subcomponents ---
@@ -227,13 +286,17 @@ export function VideoPlayer({
       className={cn(
         "relative w-full h-full bg-black overflow-hidden flex flex-col justify-center items-center",
         "aspect-video md:rounded-xl shadow-lg",
-        "max-h-screen"
+        "max-h-screen",
+        cinemaMode && "fixed inset-0 z-[9999] bg-black transition-all duration-300",
       )}
       onMouseMove={!isMobile ? showControlsTemporarily : undefined}
       onTouchStart={isMobile ? handleTouch : undefined}
       tabIndex={0}
       style={{ touchAction: "manipulation" }}
     >
+    {cinemaMode && (
+      <div className="fixed inset-0 bg-black/90 z-[9998]" aria-hidden="true"></div>
+    )}
       {/* Close button */}
       {onClose && showControls && (
         <ControlButton
@@ -257,12 +320,12 @@ export function VideoPlayer({
           isMobile ? "rounded-none" : "rounded-xl"
         )}
         autoPlay={autoPlay}
-        onClick={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); togglePlay(); }}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onProgress={handleProgress}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlay={() => { setIsPlaying(true); setPlayPauseIcon("play"); setTimeout(() => setPlayPauseIcon(null), 600); }}
+        onPause={() => { setIsPlaying(false); setPlayPauseIcon("pause"); setTimeout(() => setPlayPauseIcon(null), 600); }}
         onEnded={() => {
           setIsPlaying(false)
           if (onEnded) onEnded()
@@ -271,7 +334,20 @@ export function VideoPlayer({
         controls={false}
         playsInline
         preload="metadata"
+        playbackRate={playbackRate}
       />
+      {/* Icône centrale play/pause animée */}
+      {playPauseIcon && (
+        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-fade">
+          <div className="bg-black/60 rounded-full p-6 sm:p-8 flex items-center justify-center">
+            {playPauseIcon === "play" ? (
+              <Play size={64} className="text-white drop-shadow" />
+            ) : (
+              <Pause size={64} className="text-white drop-shadow" />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Overlay: Title */}
       {title && showControls && (
@@ -280,24 +356,49 @@ export function VideoPlayer({
         </div>
       )}
 
-      {/* Progress bar (buffer/seek) */}
-      <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6">
-        <Progress
-          value={loadingProgress}
-          className="h-1 bg-gray-700/70"
-          indicatorClassName="bg-primary"
-        />
+      {/* Barre de progression (une seule ligne, Slider/seekbar) */}
+      <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6 flex flex-col gap-0.5">
         <Slider
           value={[currentTime]}
           min={0}
           max={duration || 100}
           step={0.1}
           onValueChange={handleSeek}
-          className="cursor-pointer mt-1"
+          className="cursor-pointer"
           aria-label="Barre de progression"
         />
-        <div className="flex justify-between text-xs text-gray-300 mt-1 font-mono">
+        <div className="flex justify-between items-center text-xs text-gray-300 font-mono w-full">
           <span>{formatTime(currentTime)}</span>
+          {/* Contrôle vitesse */}
+          <div className="relative flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs px-2 py-1"
+              onClick={() => setShowSpeedMenu(v => !v)}
+              aria-label="Vitesse de lecture"
+              tabIndex={0}
+            >
+              {playbackRate}x
+            </Button>
+            {showSpeedMenu && (
+              <div className="absolute bottom-8 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1">
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                  <button
+                    key={speed}
+                    onClick={() => {
+                      setShowSpeedMenu(false)
+                      setPlaybackRate(speed)
+                      if (videoRef.current) videoRef.current.playbackRate = speed
+                    }}
+                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${playbackRate===speed?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
@@ -333,7 +434,7 @@ export function VideoPlayer({
               <SkipForward size={20} />
             </ControlButton>
           </div>
-          {/* Volume & fullscreen */}
+          {/* Volume & fullscreen, cinema, PiP, sous-titres */}
           <div className="flex items-center gap-2 md:gap-4 justify-center">
             <ControlButton
               onClick={toggleMute}
@@ -357,6 +458,57 @@ export function VideoPlayer({
             >
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </ControlButton>
+            {/* Cinema mode */}
+            <ControlButton
+              onClick={() => setCinemaMode(v => !v)}
+              ariaLabel={cinemaMode ? "Quitter le mode cinéma" : "Mode cinéma"}
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2" />
+                <rect x="7" y="11" width="2" height="2" fill="white" />
+                <rect x="15" y="11" width="2" height="2" fill="white" />
+              </svg>
+            </ControlButton>
+            {/* PiP */}
+            <ControlButton
+              onClick={handlePiP}
+              ariaLabel={isPiP ? "Fermer le mode Picture-in-Picture" : "Picture-in-Picture"}
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="white" strokeWidth="2"/>
+                <rect x="15" y="13" width="4" height="4" rx="1" fill="white"/>
+              </svg>
+            </ControlButton>
+            {/* Sous-titres */}
+            <ControlButton
+              onClick={() => setShowSubMenu(v => !v)}
+              ariaLabel="Sous-titres"
+            >
+              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2"/>
+                <rect x="7" y="11" width="2" height="2" fill="white"/>
+                <rect x="15" y="11" width="2" height="2" fill="white"/>
+              </svg>
+            </ControlButton>
+            {showSubMenu && (
+              <div className="absolute bottom-12 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1 min-w-[120px]">
+                <button
+                  className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${!activeSubtitle?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                  onClick={() => { setActiveSubtitle(null); setShowSubMenu(false); }}
+                >
+                  Désactiver
+                </button>
+                {subtitles.map(sub => (
+                  <button
+                    key={sub.lang}
+                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${activeSubtitle===sub.lang?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                    onClick={() => { setActiveSubtitle(sub.lang); setShowSubMenu(false); }}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

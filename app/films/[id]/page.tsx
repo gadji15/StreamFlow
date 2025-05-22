@@ -295,7 +295,7 @@ export default function FilmDetailPage() {
 
   const handlePlay = () => {
     if (movie && (!movie.isVIP || isVIP) && movie.videoUrl) {
-      window.open(movie.videoUrl, "_blank", "noopener,noreferrer");
+      router.push(`/watch/${movie.id}`);
     }
   };
 
