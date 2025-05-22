@@ -259,10 +259,12 @@ export default function WatchEpisodePage() {
             } : undefined}
             onClose={undefined}
           />
-          {/* Overlay titre/infos flottantes */}
-          <div className="absolute bottom-2 left-2 sm:left-4 bg-black/50 rounded px-2 sm:px-3 py-1 flex items-center gap-2 sm:gap-3 overflow-x-auto">
-            <span className="font-bold text-primary text-sm sm:text-base drop-shadow">
-              S{episode.season}E{episode.episode_number}{episode.title ? `: ${episode.title}` : ""}
+          {/* Overlay titre flottant en haut à gauche du player */}
+          <div className="absolute top-2 left-2 sm:left-4 bg-black/70 rounded px-2 sm:px-4 py-1 flex items-center gap-2 sm:gap-3 pointer-events-none z-10">
+            <span className="font-bold text-primary text-xs sm:text-lg drop-shadow">
+              {seriesTitle && episode.season && episode.episode_number
+                ? `${seriesTitle} - S${episode.season}E${episode.episode_number}${episode.title ? ` : ${episode.title}` : ""}`
+                : episode.title}
             </span>
             {episode.is_vip && (
               <span className="ml-2 text-xs px-2 py-0.5 rounded bg-yellow-700/80 text-yellow-200 font-bold">VIP</span>
