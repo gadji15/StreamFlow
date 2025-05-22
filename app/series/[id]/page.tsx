@@ -388,9 +388,9 @@ export default function SeriesDetailPage() {
       )}
 
       {/* --- Main Content --- */}
-      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pt-32 pb-8 relative z-10">
-        {/* --- Header --- */}
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+      {/* HERO --- pleine largeur */}
+      <div className="w-full pt-32 pb-8 relative z-10 bg-transparent">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start w-full max-w-none px-2 sm:px-4">
           {/* Poster & VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative md:sticky md:top-32 md:self-start">
             <SeriesPosterCard
@@ -475,52 +475,135 @@ export default function SeriesDetailPage() {
             />
 
             <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
-
-            {/* Barre d’onglets harmonisée */}
-            <div className="mt-8">
-              <Tabs defaultValue="trailer">
-                <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <BookText className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Bande-annonce</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <Layers className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Saisons</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <Users className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Casting</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <CopyPlus className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Séries similaires</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <MessageSquare className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Commentaires</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* --- Bande-annonce --- */}
-                <TabsContent value="trailer" className="pt-6">
-                  {series.trailer_url ? (
-                    <div>
-                      <h2 className="text-base font-semibold mb-2">
-                        Bande-annonce
-                      </h2>
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                        <iframe
-                          src={
-                            series.trailer_url.includes("youtube.com/watch")
-                              ? series.trailer_url.replace("watch?v=", "embed/")
-                              : series.trailer_url
-                          }
-                          title={`Bande-annonce de ${series.title}`}
-                          allowFullScreen
-                          className="w-full h-full"
-                        ></iframe>
-                      </div>
+          </div>
+        </div>
+      </div>
+      {/* CONTENU (onglets, etc) centré */}
+      <div className="container mx-auto px-2 sm:px-4 max-w-6xl pb-8">
+        {/* Onglets/Tabs centrés, tout le contenu principal */}
+        <div className="mt-8">
+          <Tabs defaultValue="trailer">
+            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
+              <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                <BookText className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Bande-annonce</span>
+              </TabsTrigger>
+              <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                <Layers className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Saisons</span>
+              </TabsTrigger>
+              <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                <Users className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Casting</span>
+              </TabsTrigger>
+              <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                <CopyPlus className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Séries similaires</span>
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                <MessageSquare className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Commentaires</span>
+              </TabsTrigger>
+            </TabsList>
+            {/* ... (TabsContent pour toutes les sections) ... */}
+            <TabsContent value="trailer" className="pt-6">
+              {series.trailer_url ? (
+                <div>
+                  <h2 className="text-base font-semibold mb-2">
+                    Bande-annonce
+                  </h2>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={
+                        series.trailer_url.includes("youtube.com/watch")
+                          ? series.trailer_url.replace("watch?v=", "embed/")
+                          : series.trailer_url
+                      }
+                      title={`Bande-annonce de ${series.title}`}
+                      allowFullScreen
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-400">Aucune bande-annonce disponible.</div>
+              )}
+            </TabsContent>
+            <TabsContent value="seasons" className="pt-6">
+              <SeasonsEpisodesTab
+                seasons={seasons}
+                episodes={episodes}
+                id={id}
+                isVIP={isVIP}
+                isMobile={isMobile}
+                selectedSeasonId={selectedSeasonId}
+                setSelectedSeasonId={setSelectedSeasonId}
+                renderSeasonsNavMobile={renderSeasonsNavMobile}
+                renderSeasonsNavDesktop={renderSeasonsNavDesktop}
+              />
+            </TabsContent>
+            <TabsContent value="casting" className="pt-6">
+              <h2 className="text-base font-semibold mb-2">Casting</h2>
+              {series.tmdb_id ? (
+                <CastingGrid
+                  tmdbId={series.tmdb_id}
+                  type="tv"
+                  fallbackCast={series.cast}
+                />
+              ) : series.cast && series.cast.length > 0 ? (
+                <ul className="space-y-2">
+                  {series.cast.map((actor: any, idx: number) => {
+                    let imgUrl = null;
+                    if (actor.image) {
+                      if (/^https?:\/\//.test(actor.image)) {
+                        imgUrl = actor.image;
+                      } else {
+                        imgUrl = getTMDBImageUrl(actor.image, "w185");
+                      }
+                    } else if (actor.profile_path) {
+                      imgUrl = getTMDBImageUrl(actor.profile_path, "w185");
+                    }
+                    return (
+                      <li key={idx} className="flex items-center gap-3">
+                        {imgUrl && (
+                          <img
+                            src={imgUrl}
+                            alt={actor.name}
+                            className="w-10 h-10 object-cover rounded-full border border-gray-600"
+                            loading="lazy"
+                          />
+                        )}
+                        <div className="flex-1 flex justify-between items-center">
+                          <span className="font-medium text-sm">{actor.name}</span>
+                          {actor.role && (
+                            <span className="text-gray-400 text-xs">
+                              {actor.role}
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="text-gray-400">
+                  Aucun casting disponible.
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="related" className="pt-6">
+              <h2 className="text-base font-semibold mb-2">
+                Séries similaires
+              </h2>
+              <SimilarSeriesGrid tmdbId={series.tmdb_id} />
+            </TabsContent>
+            <TabsContent value="comments" className="pt-6">
+              <h2 className="text-base font-semibold mb-2">Commentaires</h2>
+              <CommentsSection contentId={id as string} contentType="series" />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
                     </div>
                   ) : (
                     <div className="text-gray-400">Aucune bande-annonce disponible.</div>

@@ -174,7 +174,7 @@ function HeroSection() {
           relative z-20 flex flex-col
           justify-end
           h-full w-full
-          px-3 sm:px-6 md:px-12
+          px-0 sm:px-4 md:px-0
           pb-4 sm:pb-8 md:pb-10
           items-start
         "
@@ -187,12 +187,12 @@ function HeroSection() {
             exit={{ opacity: 0, y: 18 }}
             transition={{ duration: 0.4 }}
             className="
-              max-w-[95vw] sm:max-w-md md:max-w-xl
+              max-w-[100vw] sm:max-w-full md:max-w-full
               w-full
               bg-black/55 sm:bg-black/20 md:bg-transparent
               backdrop-blur-[2px] sm:backdrop-blur-0 md:backdrop-blur-0
               rounded-lg sm:rounded-xl md:rounded-none
-              p-3 sm:p-6 md:py-7 md:px-8
+              p-3 sm:p-6 md:py-7 md:px-0
               mt-2 sm:mt-0
               shadow-lg shadow-black/20
               text-left
@@ -267,17 +267,19 @@ function HeroSection() {
         </AnimatePresence>
         {/* Pagination compacte */}
         {featuredMovies.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 sm:space-x-2 z-30">
-            {featuredMovies.map((_, index) => (
-              <button
-                key={index}
-                className={`h-2 sm:h-2.5 rounded-full transition-all duration-200 ${
-                  index === currentIndex ? 'w-8 bg-white/90' : 'w-4 bg-white/40'
-                }`}
-                onClick={() => handleManualNavigation(index)}
-                aria-label={`Voir le film ${index + 1}`}
-              />
-            ))}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden sm:flex z-30">
+            <div className="flex space-x-2 md:space-x-3 bg-black/50 rounded-full px-4 py-2 shadow-lg shadow-black/60">
+              {featuredMovies.map((_, index) => (
+                <button
+                  key={index}
+                  className={`h-2.5 md:h-3 rounded-full transition-all duration-200 ${
+                    index === currentIndex ? 'w-8 md:w-10 bg-white/90' : 'w-4 md:w-6 bg-white/40'
+                  }`}
+                  onClick={() => handleManualNavigation(index)}
+                  aria-label={`Voir le film ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
