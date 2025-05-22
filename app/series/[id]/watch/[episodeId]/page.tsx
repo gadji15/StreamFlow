@@ -286,15 +286,29 @@ export default function WatchEpisodePage() {
           </div>
         </section>
 
-        {/* Carousel séries similaires */}
+        {/* Séries similaires en grille (max 3 lignes) */}
         <section className="w-full max-w-6xl mx-auto mt-10 px-2 sm:px-0">
           <h3 className="font-bold text-lg mb-3 text-primary">Séries similaires</h3>
           <div className="relative">
-            <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-thin scrollbar-thumb-gray-700">
+            <div
+              className={`
+                grid gap-6
+                grid-cols-2
+                sm:grid-cols-3
+                md:grid-cols-4
+                lg:grid-cols-5
+                xl:grid-cols-6
+                2xl:grid-cols-7
+              `}
+              style={{
+                maxHeight: "900px", // 3 lignes * 300px env
+                overflow: "auto",
+              }}
+            >
               {similarSeries.map((serie) => (
                 <div
                   key={serie.id}
-                  className="min-w-[180px] max-w-[180px] bg-gray-900/70 rounded-lg shadow border border-gray-800 hover:scale-105 transition-all cursor-pointer"
+                  className="bg-gray-900/70 rounded-lg shadow border border-gray-800 hover:scale-105 transition-all cursor-pointer"
                   tabIndex={0}
                   role="button"
                   aria-label={`Voir la série ${serie.title}`}
@@ -304,6 +318,7 @@ export default function WatchEpisodePage() {
                       router.push(`/series/${serie.id}`);
                     }
                   }}
+                  style={{ minWidth: 0 }}
                 >
                   <div className="aspect-[2/3] rounded-t-lg overflow-hidden">
                     <img
