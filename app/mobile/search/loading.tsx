@@ -1,3 +1,5 @@
+import CatalogSkeleton from "@/components/catalog-skeleton";
+
 export default function Loading() {
-  return null
+  return <CatalogSkeleton count={8} />;
 }
