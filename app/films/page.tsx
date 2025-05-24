@@ -133,7 +133,12 @@ export default function FilmsPage() {
             />
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
+            <label htmlFor="genre-select" className="sr-only">
+              Genre
+            </label>
             <select
+              id="genre-select"
+              aria-label="Genre"
               value={selectedGenre}
               onChange={e => setSelectedGenre(e.target.value)}
               className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
@@ -142,7 +147,12 @@ export default function FilmsPage() {
                 <option key={g.value} value={g.value}>{g.label}</option>
               ))}
             </select>
+            <label htmlFor="vip-select" className="sr-only">
+              Filtrer par VIP
+            </label>
             <select
+              id="vip-select"
+              aria-label="Filtrer par VIP"
               value={showVIP}
               onChange={e => setShowVIP(e.target.value)}
               className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"

@@ -303,7 +303,7 @@ export default function AdminSeriesSeasonsPage() {
                   }}
                   aria-autocomplete="list"
                   aria-controls="series-suggestions"
-                  aria-expanded={showSuggestions}
+                  aria-expanded={!!showSuggestions}
                   aria-activedescendant={activeSuggestionIndex >= 0 ? `series-suggestion-${activeSuggestionIndex}` : undefined}
                   role="combobox"
                   required
@@ -325,7 +325,6 @@ export default function AdminSeriesSeasonsPage() {
                         className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSuggestionIndex === idx ? "bg-blue-600/80 text-white" : ""}`}
                         role="option"
                         aria-selected={activeSuggestionIndex === idx}
-                        tabIndex={-1}
                         onClick={() => {
                           setForm(f => ({
                             ...f,

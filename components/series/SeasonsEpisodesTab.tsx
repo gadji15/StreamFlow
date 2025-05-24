@@ -6,11 +6,31 @@ import { useRouter } from "next/navigation";
 import SeasonCard from "./SeasonCard";
 import SeasonModalUser from "./SeasonModalUser";
 
+// Ajout du typage complet des props
+type SeasonsEpisodesTabProps = {
+  seasons: any[];
+  episodes: any[];
+  id: string | undefined;
+  isVIP: boolean;
+  isMobile: boolean;
+  selectedSeasonId: string | null;
+  setSelectedSeasonId: React.Dispatch<React.SetStateAction<string | null>>;
+  renderSeasonsNavMobile: () => React.ReactElement;
+  renderSeasonsNavDesktop: () => React.ReactElement;
+};
+
+
 export default function SeasonsEpisodesTab({
   seasons,
   episodes,
   id, // series id
-}) {
+  isVIP,
+  isMobile,
+  selectedSeasonId,
+  setSelectedSeasonId,
+  renderSeasonsNavMobile,
+  renderSeasonsNavDesktop,
+}: SeasonsEpisodesTabProps) {
   const router = useRouter();
 
   // Association des épisodes à leur saison correspondante
@@ -40,7 +60,7 @@ export default function SeasonsEpisodesTab({
     setSelectedSeasonIdx(idx);
   };
 
-  const handleEpisodeClick = (episode) => {
+  const handleEpisodeClick = (episode: any) => {
     router.push(`/series/${id}/watch/${episode.id}`);
     setModalOpen(false);
   };

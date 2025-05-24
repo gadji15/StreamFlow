@@ -31,7 +31,8 @@ const EpisodePoster: React.FC<EpisodePosterProps> = ({
         <img
           src={posterUrl}
           alt={`Affiche épisode ${episodeNumber}`}
-          className="w-full h-full object-cover bg-black transition-transform duration-300 group-hover:scale-105"
+          className="w-full h-full object-contain bg-gray-900 transition-transform duration-300 group-hover:scale-105"
+          style={{ backgroundColor: "#18181b", padding: "2px" }}
           draggable={false}
         />
       ) : (

@@ -52,7 +52,12 @@ import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 
 export default function SeriesDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params && typeof params.id === "string"
+    ? params.id
+    : Array.isArray(params?.id)
+    ? params.id[0]
+    : undefined;
   const router = useRouter();
   const { user } = useCurrentUser();
   const { toast } = useToast();
@@ -108,20 +113,20 @@ export default function SeriesDetailPage() {
       console.log("[DEBUG] fetchedEpisodes :", fetchedEpisodes, "error :", episodesError);
 
       // Map poster/backdrop/cast from admin
-      function normalizedPosterUrl(raw: any) {
+      const normalizedPosterUrl = (raw: any) => {
         if (typeof raw === "string" && raw.trim().length > 0) {
           if (/^https?:\/\//.test(raw)) return raw.trim();
           return getTMDBImageUrl(raw, "w300");
         }
         return "/placeholder-poster.jpg";
-      }
-      function normalizedBackdropUrl(raw: any) {
+      };
+      const normalizedBackdropUrl = (raw: any) => {
         if (typeof raw === "string" && raw.trim().length > 0) {
           if (/^https?:\/\//.test(raw)) return raw.trim();
           return getTMDBImageUrl(raw, "original");
         }
         return "/placeholder-backdrop.jpg";
-      }
+      };
 
       setSeries({
         ...fetchedSeries,
@@ -385,7 +390,6 @@ export default function SeriesDetailPage() {
           <SeriesBackdrop
             src={series.backdropUrl}
             alt={`Backdrop de ${series.title}`}
-            className="w-full h-full object-cover"
           />
           {/* Overlay dégradé pour lisibilité */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/90 pointer-events-none" />
@@ -470,10 +474,8 @@ export default function SeriesDetailPage() {
           <div className="flex-1 flex flex-col gap-6 w-full">
             <SeriesInfo
               title={series.title}
-              years={
-                series.start_year +
-                (series.end_year ? ` - ${series.end_year}` : " - Présent")
-              }
+              startYear={series.start_year}
+              endYear={series.end_year}
               seasons={seasons.length}
               genres={series.genre}
               rating={series.vote_average}
@@ -483,16 +485,16 @@ export default function SeriesDetailPage() {
 
             {/* Barre d’onglets harmonisée */}
             <div className="mt-8">
-              <Tabs defaultValue="trailer">
+              <Tabs defaultValue="seasons">
                 <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                    <BookText className="w-5 h-5 inline sm:hidden" />
-                    <span className="hidden sm:inline">Bande-annonce</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                   <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <Layers className="w-5 h-5 inline sm:hidden" />
                     <span className="hidden sm:inline">Saisons</span>
                   </TabsTrigger>
+                  <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
+                    <BookText className="w-5 h-5 inline sm:hidden" />
+                    <span className="hidden sm:inline">Bande-annonce</span>
+                  </TabsTrigger>               
                   <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
                     <Users className="w-5 h-5 inline sm:hidden" />
                     <span className="hidden sm:inline">Casting</span>
@@ -603,7 +605,7 @@ export default function SeriesDetailPage() {
                   <h2 className="text-base font-semibold mb-2">
                     Séries similaires
                   </h2>
-                  <SimilarSeriesGrid tmdbId={series.tmdb_id} />
+                  <SimilarSeriesGrid tmdbId={series.tmdb_id} currentSeriesId={id as string} />
                 </TabsContent>
 
                 {/* --- Commentaires --- */}

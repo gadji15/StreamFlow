@@ -106,6 +106,7 @@ function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string
       {similarLocal.map((film) => (
         <FilmCard
           key={film.id}
+          id={film.id}
           title={film.title}
           description={film.description}
           imageUrl={normalizePosterUrl(film.poster)}
@@ -295,7 +296,7 @@ export default function FilmDetailPage() {
 
   const handlePlay = () => {
     if (movie && (!movie.isVIP || isVIP) && movie.videoUrl) {
-      window.open(movie.videoUrl, "_blank", "noopener,noreferrer");
+      router.push(`/watch/${movie.id}`);
     }
   };
 

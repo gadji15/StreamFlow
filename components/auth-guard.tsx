@@ -19,11 +19,11 @@ export default function AuthGuard({ children, requireVIP = false }: AuthGuardPro
     if (!isLoading) {
       if (!isLoggedIn) {
         // Mémoriser la page que l'utilisateur essayait d'atteindre
-        sessionStorage.setItem('redirectAfterLogin', pathname);
-        router.push('/login?redirect=' + encodeURIComponent(pathname));
+        sessionStorage.setItem('redirectAfterLogin', pathname ?? '');
+        router.push('/login?redirect=' + encodeURIComponent(pathname ?? ''));
       } else if (requireVIP && !isVIP) {
         // Rediriger vers la page d'abonnement VIP si l'accès VIP est requis
-        router.push('/vip?from=' + encodeURIComponent(pathname));
+        router.push('/vip?from=' + encodeURIComponent(pathname ?? ''));
       } else {
         setIsAuthChecked(true);
       }

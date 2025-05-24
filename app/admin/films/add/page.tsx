@@ -895,11 +895,16 @@ export default function AdminAddFilmPage() {
                   Collez l’URL complète de la vidéo principale du film (YouTube, mp4, etc.), ou uploadez un fichier vidéo ci-dessous.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 items-center">
+                  <label htmlFor="video-upload" className="sr-only">
+                    Uploader une vidéo du film
+                  </label>
                   <input
                     type="file"
                     accept="video/mp4,video/mkv,video/webm,video/quicktime,video/x-matroska,video/x-msvideo,video/x-ms-wmv"
                     id="video-upload"
-                    style={{ display: 'none' }}
+                    className="hidden"
+                    title="Uploader une vidéo du film"
+                    placeholder="Sélectionner un fichier vidéo"
                     onChange={e => {
                       const file = e.target.files && e.target.files[0];
                       if (file) {
