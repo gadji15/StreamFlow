@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import LoadingScreen from "@/components/loading-screen";
 import FilmInfo from "@/components/FilmInfo";
 import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
+import Footer from "@/components/footer";
 import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { ArrowLeft } from "lucide-react";
@@ -207,7 +208,7 @@ export default function WatchFilmPage() {
           <SimilarMoviesGrid tmdbId={movie.tmdb_id || ""} />
         </section>
       </div>
-
+    <Footer />
       {/* Animation keyframes */}
       <style>{`
         @keyframes fadeInUp {

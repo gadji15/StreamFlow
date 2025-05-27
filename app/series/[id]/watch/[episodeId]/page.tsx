@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LoadingScreen from "@/components/loading-screen";
 import SeasonModalUser from "@/components/series/SeasonModalUser";
+import Footer from "@/components/footer";
 import { supabase } from "@/lib/supabaseClient";
 import { ChevronLeft, ListPlus } from "lucide-react";
 
@@ -416,6 +417,7 @@ export default function WatchEpisodePage() {
           </div>
         </section>
       </div>
+    <Footer />
       {/* Animation keyframes */}
       <style>{`
         @keyframes fadeInUp {
