@@ -50,6 +50,7 @@ import { useMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
 import { getTMDBImageUrl } from "@/lib/tmdb";
+import ActionButtons from "@/components/ActionButtons";
 
 export default function SeriesDetailPage() {
   const params = useParams();
