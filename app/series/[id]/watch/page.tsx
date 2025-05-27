@@ -2,133 +2,111 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { VideoPlayer } from "@/components/video-player";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import LoadingScreen from "@/components/loading-screen";
-import FilmInfo from "@/components/FilmInfo";
-import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
-import Link from "next/link";
-import { getMoviesByGenre, Movie } from "@/lib/supabaseFilms";
+import { getSeriesByGenre, Series } from "@/lib/supabaseSeries";
 import { supabase } from "@/lib/supabaseClient";
-import { getTMDBImageUrl } from "@/lib/tmdb";
 import { ArrowLeft } from "lucide-react";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
     if (/^https?:\/\//.test(raw)) return raw.trim();
-    return getTMDBImageUrl(raw, "original");
+    return raw; // You could adapt with TMDB if needed
   }
   return "/placeholder-backdrop.jpg";
 }
 
-type Movie = {
-  id: string;
-  title: string;
-  year?: number;
-  genre?: string;
-  is_vip?: boolean;
-  duration?: number;
-  rating?: number;
-  description?: string;
-  backdrop?: string;
-  poster?: string;
-  video_url?: string;
-  tmdb_id?: string;
-  backdropUrl?: string;
-  posterUrl?: string;
-};
-
-export default function WatchFilmPage() {
+export default function WatchSeriesPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const [movie, setMovie] = useState<Movie | null>(null);
+  const [series, setSeries] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
+  const [similarSeries, setSimilarSeries] = useState<Series[]>([]);
   const [loadingSimilar, setLoadingSimilar] = useState(true);
 
   useEffect(() => {
-    async function fetchMovieAndSimilar() {
+    async function fetchSeriesAndSimilar() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: movieError } = await supabase
-          .from("films")
+        const { data, error: seriesError } = await supabase
+          .from("series")
           .select("*")
           .eq("id", id)
           .single();
-
-        if (movieError || !data) {
-          setError("Film non trouvé.");
+        if (seriesError || !data) {
+          setError("Série non trouvée.");
         } else {
-          const currentMovie: Movie = {
+          const currentSeries: Series = {
             ...data,
             backdropUrl: normalizeBackdropUrl(data.backdrop),
             posterUrl: data.poster
               ? /^https?:\/\//.test(data.poster)
                 ? data.poster
-                : getTMDBImageUrl(data.poster, "w300")
+                : data.poster // You may adapt if you use TMDB image utils
               : "/placeholder-poster.png",
           };
-          setMovie(currentMovie);
+          setSeries(currentSeries);
 
-          // Fetch similar movies by genre (fallback: no genre = show popular)
+          // Fetch similar series by genre (fallback: no genre = popular)
           setLoadingSimilar(true);
-          let similar: Movie[] = [];
+          let similar: Series[] = [];
           try {
-            if (currentMovie.genre) {
-              // getMoviesByGenre attend un genreId. Si plusieurs genres, prendre le 1er ou mapper.
-              const genreList = typeof currentMovie.genre === "string"
-                ? currentMovie.genre.split(",").map(g => g.trim())
-                : Array.isArray(currentMovie.genre)
-                  ? currentMovie.genre
+            if (currentSeries.genre) {
+              const genreList = typeof currentSeries.genre === "string"
+                ? currentSeries.genre.split(",").map(g => g.trim())
+                : Array.isArray(currentSeries.genre)
+                  ? currentSeries.genre
                   : [];
               const mainGenre = genreList[0] || "";
               if (mainGenre) {
-                similar = await getMoviesByGenre(mainGenre, 12, "popularity");
-                // Remove the current movie from similar list
-                similar = similar.filter((m) => m.id !== currentMovie.id);
+                similar = await getSeriesByGenre(mainGenre, 12);
+                similar = similar.filter((s) => s.id !== currentSeries.id);
               }
             }
-            // Si pas de genre ou pas de résultat, fallback sur populaires hors film en cours
+            // Si pas de genre ou pas de résultat, fallback sur populaires hors série en cours
             if (!similar.length) {
               const { data: popular } = await supabase
-                .from("films")
+                .from("series")
                 .select("*")
                 .order("popularity", { ascending: false })
                 .limit(12);
               if (popular) {
-                similar = popular.filter((m: Movie) => m.id !== currentMovie.id);
+                similar = popular.filter((s: Series) => s.id !== currentSeries.id);
               }
             }
           } catch (err) {
             similar = [];
           }
-          setSimilarMovies(similar);
+          setSimilarSeries(similar);
           setLoadingSimilar(false);
         }
       } catch {
-        setError("Impossible de charger le film.");
+        setError("Impossible de charger la série.");
       } finally {
         setLoading(false);
       }
     }
-    if (id) fetchMovieAndSimilar();
+    if (id) fetchSeriesAndSimilar();
   }, [id]);
 
   if (loading) return <LoadingScreen />;
-  if (error || !movie) {
+  if (error || !series) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-black/90 px-4">
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-6 max-w-md w-full text-center">
           <h2 className="text-2xl font-bold mb-2">Erreur</h2>
-          <p className="text-gray-300">{error || "Film non trouvé"}</p>
-          <Button onClick={() => router.push(`/films/${id}`)} className="mt-4 rounded-2xl text-lg px-6 py-3">
-            <ArrowLeft className="h-5 w-5 mr-2" /> Retour à la fiche film
-          </Button>
+          <p className="text-gray-300">{error || "Série non trouvée"}</p>
+          <button
+            onClick={() => router.push(`/series/${id}`)}
+            className="mt-4 rounded-2xl text-lg px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2 inline" /> Retour à la fiche série
+          </button>
         </div>
       </div>
     );
@@ -137,11 +115,11 @@ export default function WatchFilmPage() {
   return (
     <div className="relative min-h-screen bg-black text-white flex flex-col justify-center items-center overflow-x-hidden">
       {/* Backdrop */}
-      {movie.backdropUrl && (
+      {series.backdropUrl && (
         <div className="fixed inset-0 z-0 w-full h-full">
           <img
-            src={movie.backdropUrl}
-            alt={`Backdrop de ${movie.title}`}
+            src={series.backdropUrl}
+            alt={`Backdrop de ${series.title}`}
             className="w-full h-full object-cover object-center blur-md brightness-50 scale-105 transition-all duration-500"
             draggable={false}
           />
@@ -152,42 +130,36 @@ export default function WatchFilmPage() {
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-4xl mx-auto pt-24 pb-10 px-2 sm:px-6 flex flex-col items-center">
         {/* Retour bouton flottant */}
-        <Button
-          variant="secondary"
-          className="absolute top-6 left-2 sm:left-6 rounded-full shadow-lg bg-black/70 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all"
-          onClick={() => router.push(`/films/${id}`)}
+        <button
+          className="absolute top-6 left-2 sm:left-6 rounded-full shadow-lg bg-black/70 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all text-white flex items-center"
+          onClick={() => router.push(`/series/${id}`)}
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
-          Retour à la fiche film
-        </Button>
+          Retour à la fiche série
+        </button>
 
-        {/* Player */}
-        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-8 animate-fadeInUp">
-          <VideoPlayer
-            src={movie.video_url || ""}
-            poster={movie.posterUrl}
-            title={movie.title}
-            autoPlay
-          />
+        {/* Player Placeholder */}
+        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-8 animate-fadeInUp flex items-center justify-center">
+          <span className="text-gray-400 text-lg">Lecteur vidéo série ici</span>
         </div>
 
         {/* Metadata */}
         <section className="w-full max-w-3xl mx-auto mt-8 bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 animate-fadeInUp">
           <div className="flex flex-wrap items-center gap-3 mb-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-              {movie.title}
+              {series.title}
             </h1>
-            {movie.year && (
+            {series.year && (
               <span className="text-base px-3 py-1 rounded-xl bg-gray-800/50 text-gray-200 font-medium">
-                {movie.year}
+                {series.year}
               </span>
             )}
-            {movie.genre && (
+            {series.genre && (
               <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                {movie.genre}
+                {series.genre}
               </span>
             )}
-            {movie.is_vip && (
+            {series.is_vip && (
               <Badge
                 variant="secondary"
                 className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
@@ -197,23 +169,23 @@ export default function WatchFilmPage() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-            {movie.duration && (
+            {series.seasons && (
               <span>
-                <b>Durée :</b> {movie.duration} min
+                <b>Saisons :</b> {series.seasons}
               </span>
             )}
-            {movie.rating && (
+            {series.rating && (
               <span>
-                <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
+                <b>Note :</b> <span className="text-yellow-400">★ {series.rating.toFixed(1)}</span>
               </span>
             )}
           </div>
-          <p className="text-gray-200 text-base whitespace-pre-line mt-1">{movie.description}</p>
+          <p className="text-gray-200 text-base whitespace-pre-line mt-1">{series.description}</p>
         </section>
 
-        {/* Films similaires améliorés */}
+        {/* Séries similaires */}
         <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
-          <h3 className="font-bold text-xl mb-3 text-primary">Films similaires</h3>
+          <h3 className="font-bold text-xl mb-3 text-primary">Séries similaires</h3>
           {loadingSimilar ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -224,16 +196,16 @@ export default function WatchFilmPage() {
                 ></div>
               ))}
             </div>
-          ) : similarMovies.length === 0 ? (
+          ) : similarSeries.length === 0 ? (
             <div className="text-center p-8 text-gray-400">
-              Aucun film similaire trouvé.
+              Aucune série similaire trouvée.
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {similarMovies.map((film, idx) => (
+              {similarSeries.map((s, idx) => (
                 <Link
-                  key={film.id}
-                  href={`/films/${film.id}`}
+                  key={s.id}
+                  href={`/series/${s.id}`}
                   className="group flex flex-col items-center bg-gray-800 rounded-xl p-3 shadow transition-transform duration-300 hover:scale-[1.045] hover:shadow-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   style={{
                     opacity: 0,
@@ -243,22 +215,22 @@ export default function WatchFilmPage() {
                   tabIndex={0}
                 >
                   <img
-                    src={film.poster || film.posterUrl || "/placeholder-poster.png"}
-                    alt={film.title}
+                    src={s.poster || s.posterUrl || "/placeholder-poster.png"}
+                    alt={s.title}
                     className="w-full h-48 rounded-lg object-cover mb-2 border-2 border-gray-700 bg-gray-900 transition-transform duration-200 group-hover:scale-105"
                     onError={e => {
                       (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png";
                     }}
                   />
                   <span className="font-medium text-gray-100 text-sm text-center line-clamp-2">
-                    {film.title}
+                    {s.title}
                   </span>
-                  {film.rating !== undefined && film.rating !== null && (
+                  {s.rating !== undefined && s.rating !== null && (
                     <span className="text-xs text-yellow-400 mt-1">
-                      ★ {film.rating.toFixed(1)}
+                      ★ {s.rating.toFixed(1)}
                     </span>
                   )}
-                  {film.is_vip && (
+                  {s.is_vip && (
                     <span className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-2 py-0.5 rounded-full text-xs font-bold">
                       VIP
                     </span>
@@ -281,23 +253,6 @@ export default function WatchFilmPage() {
           )}
         </section>
       </div>
-
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes fadeInUp {
-          0% {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
-        }
-      `}</style>
     </div>
   );
 }
