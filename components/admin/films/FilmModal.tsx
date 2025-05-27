@@ -915,61 +915,38 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
             </div>
           </div>
           <div>
-            <label htmlFor="genres" className="block text-[11px] font-medium text-white/80">
-              Genres
+            <label className="block text-[11px] font-medium text-white/80 mb-1">
+              Genres <span className="text-red-500">*</span>
             </label>
-            <div className="flex flex-wrap gap-1 mb-1">
-              {(Array.isArray(form.genres) ? form.genres : []).map((g, idx) => (
-                <span
-                  key={g + idx}
-                  className="inline-flex items-center px-2 py-0.5 bg-indigo-700/30 text-indigo-200 rounded text-[11px] mr-1"
-                >
-                  {g}
-                  <button
-                    type="button"
-                    aria-label={`Supprimer le genre ${g}`}
-                    className="ml-1 text-indigo-300 hover:text-red-400 text-xs"
-                    onClick={() =>
-                      handleChange(
-                        "genres",
-                        form.genres.filter((x, i) => i !== idx)
-                      )
-                    }
-                  >
-                    ×
-                  </button>
-                </span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "thriller",
+                "sci-fi",
+                "action",
+                "animation",
+                "comedy",
+                "documentary"
+              ].map((genre) => (
+                <label key={genre} className="inline-flex items-center text-[11px] text-indigo-200 bg-indigo-700/10 rounded px-2 py-1 mr-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Array.isArray(form.genres) && form.genres.includes(genre)}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        handleChange("genres", [...(form.genres || []), genre]);
+                      } else {
+                        handleChange("genres", (form.genres || []).filter(g => g !== genre));
+                      }
+                    }}
+                    className="accent-indigo-500 mr-1"
+                  />
+                  {genre}
+                </label>
               ))}
             </div>
-            <input
-              id="genres"
-              value={form.genresInput || ""}
-              onChange={(e) => handleChange("genresInput", e.target.value)}
-              onKeyDown={(e) => {
-                if (
-                  (e.key === "Enter" || e.key === ",") &&
-                  form.genresInput?.trim()
-                ) {
-                  e.preventDefault();
-                  const genre = form.genresInput.trim();
-                  if (genre.length > 0 && !(form.genres || []).includes(genre)) {
-                    handleChange("genres", [...(form.genres || []), genre]);
-                  }
-                  handleChange("genresInput", "");
-                }
-                if (
-                  e.key === "Backspace" &&
-                  !form.genresInput &&
-                  Array.isArray(form.genres) &&
-                  form.genres.length > 0
-                ) {
-                  handleChange("genres", form.genres.slice(0, -1));
-                }
-              }}
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
-              placeholder="Ajoutez un genre puis Entrée ou ,"
-              autoComplete="off"
-            />
+            <div className="text-xs text-gray-400 mt-1">
+              Sélectionnez un ou plusieurs genres. Cette liste est synchronisée avec la page d'accueil.
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-1">
             <div className="flex-1">
