@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { VideoPlayer } from "@/components/video-player";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -305,55 +306,107 @@ export default function WatchEpisodePage() {
 
         {/* Séries similaires */}
         <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
-          <h3 className="font-bold text-xl mb-3 text-primary">Séries similaires</h3>
-          <div
-            className={`
-              grid gap-6
-              grid-cols-2
-              sm:grid-cols-3
-              md:grid-cols-4
-              lg:grid-cols-5
-              xl:grid-cols-6
-            `}
-          >
-            {similarSeries.map((serie) => (
-              <div
-                key={serie.id}
-                className="bg-gray-900/70 rounded-lg shadow border border-gray-800 hover:scale-105 transition-all cursor-pointer animate-fadeInUp"
-                tabIndex={0}
-                role="button"
-                aria-label={`Voir la série ${serie.title}`}
-                onClick={() => router.push(`/series/${serie.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    router.push(`/series/${serie.id}`);
-                  }
-                }}
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-bold">Séries similaires</h2>
+              <p className="text-gray-400 text-sm mt-1">Découvrez d'autres séries du même univers ou genre&nbsp;!</p>
+            </div>
+            {/* Optionnel : bouton voir tout vers la catégorie/genre de la série */}
+            {series.genre && (
+              <Link
+                href={`/series?genre=${encodeURIComponent(series.genre)}`}
+                className={`
+                  text-sm flex items-center font-medium
+                  bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+                  bg-clip-text text-transparent
+                  underline underline-offset-4
+                  transition-all duration-300
+                  hover:bg-none hover:text-violet-400 hover:scale-105
+                  focus:outline-none
+                `}
                 style={{
-                  minWidth: 0,
-                  animationDelay: "0.08s",
-                  opacity: 0,
-                  animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
+                  WebkitTextFillColor: 'transparent',
+                  background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+                  WebkitBackgroundClip: 'text',
+                  padding: 0,
+                  border: "none"
                 }}
               >
-                <div className="aspect-[2/3] rounded-t-lg overflow-hidden">
+                <span className="underline underline-offset-4">Voir tout</span>
+              </Link>
+            )}
+          </div>
+          <div
+            className={`
+              w-full
+              [display:grid]
+              gap-3
+              [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
+            `}
+            style={{
+              gridAutoRows: "1fr",
+              maxHeight: "calc(2 * 210px + 1.5rem)", // 2 rows max
+              overflow: "hidden"
+            }}
+          >
+            {similarSeries.slice(0, 12).map((serie, idx) => (
+              <Link
+                key={serie.id}
+                href={`/series/${serie.id}`}
+                className="
+                  bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
+                  flex flex-col items-center
+                  rounded-md
+                  sm:rounded-lg md:rounded-xl
+                  h-full
+                "
+                style={{
+                  opacity: 0,
+                  animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
+                  animationDelay: `${idx * 0.06}s`,
+                }}
+              >
+                <div
+                  className="
+                    relative aspect-[2/3]
+                    w-full
+                    h-full
+                    flex flex-col items-center
+                  "
+                >
                   <img
                     src={serie.poster || "/placeholder-poster.png"}
                     alt={serie.title}
-                    className="w-full h-full object-cover"
+                    className="
+                      w-full h-full object-cover transition-all duration-300
+                      rounded-md
+                      sm:rounded-lg
+                      md:rounded-xl
+                    "
+                    onError={e => {
+                      (e.target as HTMLImageElement).src = "/placeholder-poster.png";
+                    }}
+                    loading="lazy"
                   />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <rect x="4" y="4" width="16" height="16" rx="2" strokeWidth="2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 8h8v8H8z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="px-2 py-2 text-center">
-                  <span className="font-semibold text-sm truncate block">
-                    {serie.title}
-                  </span>
-                  {serie.genre && (
-                    <span className="text-xs text-gray-400">
-                      {serie.genre}
-                    </span>
-                  )}
+                <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
+                  <h3 className="
+                    truncate font-medium w-full text-center
+                    text-xs
+                    sm:text-sm
+                    md:text-base
+                  ">{serie.title}</h3>
+                  <p className="text-[11px] text-gray-400 w-full text-center">
+                    {serie.genre || ""}
+                  </p>
                 </div>
-              </div>
+              </Link>
             ))}
             {similarSeries.length === 0 && (
               <div className="text-gray-400 py-8 text-center w-full">
