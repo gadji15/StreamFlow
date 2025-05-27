@@ -435,15 +435,17 @@ export default function SeriesDetailPage() {
             )}
 
             {/* Actions - harmonisées avec films */}
-            <ActionButtons
-              canWatch={canWatch && seasonEpisodes.length > 0}
-              videoUrl={seasonEpisodes.length > 0 ? "dummy" : undefined}
-              trailerUrl={series.trailer_url}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
-              onShare={handleShare}
-              onPlay={handleWatchFirst}
-            />
+            <div className="w-full flex flex-row flex-wrap gap-4 mt-4 justify-center md:justify-start">
+              <ActionButtons
+                canWatch={canWatch && seasonEpisodes.length > 0}
+                videoUrl={seasonEpisodes.length > 0 ? "dummy" : undefined}
+                trailerUrl={series.trailer_url}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+                onShare={handleShare}
+                onPlay={handleWatchFirst}
+              />
+            </div>
           </div>
 
           {/* Main info & Tabs */}
