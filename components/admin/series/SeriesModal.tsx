@@ -306,6 +306,14 @@ export default function SeriesModal({
   };
 
   // Import détaillé à partir d'un objet serie (mapping bulletproof pour creator/genres, + debug)
+  const GENRES_LIST = [
+    "thriller",
+    "sci-fi",
+    "action",
+    "animation",
+    "comedy",
+    "documentary"
+  ];
   const importSerieFromTMDB = async (serie: any) => {
     if (!serie || !serie.id) return;
     setLoading(true);
@@ -354,10 +362,13 @@ export default function SeriesModal({
       } else if (serie && Array.isArray(serie.genre_ids) && typeof window !== "undefined" && window.__TMDB_GENRES_MAP__) {
         genresValue = serie.genre_ids.map((id: number | string) => (window.__TMDB_GENRES_MAP__?.[id] ?? id));
       }
+      // Synchronisation auto sur la liste autorisée
+      const genresChecked = (genresValue || [])
+        .map((g: string) => g.toLowerCase())
+        .filter((g: string) => GENRES_LIST.includes(g));
       // Fallbacks
       if (!creatorValue) creatorValue = "";
-      if (!genresValue || genresValue.length === 0) genresValue = [];
-
+      // Si aucun genre reconnu, laisser l'état courant
       setForm((f) => ({
         ...f,
         title: detail.name || serie.name || f.title,
@@ -371,7 +382,7 @@ export default function SeriesModal({
         end_year: (detail.last_air_date || serie.last_air_date)
           ? (detail.last_air_date || serie.last_air_date).slice(0, 4)
           : f.end_year,
-        genres: genresValue,
+        genres: genresChecked.length > 0 ? genresChecked : f.genres,
         vote_average: detail.vote_average ?? serie.vote_average ?? f.vote_average,
         description: detail.overview ?? serie.overview ?? f.description,
         tmdb_id: serie.id,
@@ -380,7 +391,7 @@ export default function SeriesModal({
       await fetchCast(serie.id);
       toast({
         title: "Import TMDB réussi",
-        description: "Champs pré-remplis depuis TMDB !",
+        description: "Champs pré-remplis depuis TMDB ! Les genres reconnus sont automatiquement cochés.",
       });
     } catch (e) {
       setCast([]);
@@ -401,6 +412,13 @@ export default function SeriesModal({
       if (!res.ok) throw new Error("Erreur réseau TMDB");
       const data = await res.json();
       if (data && data.id) {
+        let genres = [];
+        if (Array.isArray(data.genres) && data.genres.length > 0) {
+          genres = data.genres.map((g: { name: string }) => g.name).filter(Boolean);
+        }
+        const genresChecked = genres
+          .map((g: string) => g.toLowerCase())
+          .filter((g: string) => GENRES_LIST.includes(g));
         setForm((f) => ({
           ...f,
           title: data.name || f.title,
@@ -413,7 +431,7 @@ export default function SeriesModal({
           end_year: data.last_air_date
             ? data.last_air_date.slice(0, 4)
             : f.end_year,
-          genres: data.genres ? data.genres.map((g: { name: string }) => g.name) : f.genres,
+          genres: genresChecked.length > 0 ? genresChecked : f.genres,
           vote_average: data.vote_average ?? f.vote_average,
           description: data.overview ?? f.description,
           creator: extractCreator(data) || f.creator,
@@ -421,7 +439,7 @@ export default function SeriesModal({
         await fetchCast(data.id);
         toast({
           title: "Import TMDB réussi",
-          description: "Champs pré-remplis depuis TMDB !",
+          description: "Champs pré-remplis depuis TMDB ! Les genres reconnus sont automatiquement cochés.",
         });
       } else {
         setCast([]);
