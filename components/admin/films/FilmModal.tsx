@@ -2,6 +2,37 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
+// Table de correspondance des genres TMDB (adapter selon les genres détectés à l'import)
+const GENRE_NORMALIZATION_MAP = {
+  "sci fi": "Science Fiction",
+  "science fiction": "Science Fiction",
+  "sci-fi": "Science Fiction",
+  "action": "Action",
+  "adventure": "Adventure",
+  "animation": "Animation",
+  "comedy": "Comedy",
+  "crime": "Crime",
+  "documentary": "Documentary",
+  "drama": "Drama",
+  "family": "Family",
+  "fantasy": "Fantasy",
+  "history": "History",
+  "horror": "Horror",
+  "music": "Music",
+  "mystery": "Mystery",
+  "romance": "Romance",
+  "thriller": "Thriller",
+  "war": "War",
+  "western": "Western"
+};
+
+// Fonction de normalisation
+function normalizeGenre(input) {
+  if (!input) return "";
+  const key = input.trim().toLowerCase().replace(/[\s\-]+/g, " ").replace(/\s+/g, " ");
+  return GENRE_NORMALIZATION_MAP[key] || input.trim();
+}
+
 // Pour upload local (images, vidéos)
 import { supabase } from "@/lib/supabaseClient";
 
@@ -982,7 +1013,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                 ) {
                   e.preventDefault();
                   let genre = form.genresInput.trim();
-                  genre = normalizeGenre(genre); // <--- normalisation automatique
+                  genre = normalizeGenre(genre); // normalisation automatique
                   if (genre.length > 0 && !(form.genres || []).includes(genre)) {
                     handleChange("genres", [...(form.genres || []), genre]);
                   }
@@ -1001,7 +1032,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               placeholder="Ajoutez un genre puis Entrée ou ,"
               autoComplete="off"
             />
-          </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-1">
             <div className="flex-1">
