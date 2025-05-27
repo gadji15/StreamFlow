@@ -383,7 +383,118 @@ export default function SeriesDetailPage() {
   const noEpisodes = !seasonEpisodes || seasonEpisodes.length === 0;
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden">
+    <>
+      {/* --- Backdrop pleine largeur en fond --- */}
+      {series.backdropUrl && (
+        <div className="fixed inset-0 w-full h-[480px] sm:h-[500px] md:h-[520px] lg:h-[560px] xl:h-[600px] z-0 pointer-events-none">
+          <SeriesBackdrop
+            src={series.backdropUrl}
+            alt={`Backdrop de ${series.title}`}
+            className="object-cover w-full h-full"
+          />
+          {/* Overlay dégradé pour lisibilité */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/10 to-black/90 pointer-events-none" />
+        </div>
+      )}
+
+      {/* --- Main Content --- */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-2 sm:px-6 pt-32 pb-8">
+        {/* --- EN-TÊTE HERO --- */}
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-end md:items-end min-h-[340px]">
+          {/* Poster & VIP badge */}
+          <div className="flex-shrink-0 flex flex-col items-center md:items-start gap-4 relative" style={{marginTop: '-80px'}}>
+            <SeriesPosterCard
+              src={series.posterUrl}
+              alt={`Affiche de ${series.title}`}
+              className="shadow-xl rounded-2xl w-[210px] md:w-[230px] lg:w-[260px] z-10"
+            />
+            {series.is_vip && (
+              <div className="mt-2 w-full flex flex-col items-center">
+                <Badge
+                  variant="secondary"
+                  className="mb-1 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg"
+                >
+                  Contenu VIP
+                </Badge>
+                <div className="p-2 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+                  <p className="text-amber-400 text-sm font-medium mb-1">
+                    {isVIP
+                      ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
+                      : "Ce contenu est réservé aux abonnés VIP."}
+                  </p>
+                  {!isVIP && (
+                    <Button
+                      size="sm"
+                      className="mt-2 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      onClick={() => router.push("/vip")}
+                    >
+                      Devenir VIP
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Main info & Actions */}
+          <div className="flex-1 flex flex-col gap-3 w-full max-w-3xl bg-black/60 rounded-xl p-6 md:mb-10">
+            <SeriesInfo
+              title={series.title}
+              startYear={series.start_year}
+              endYear={series.end_year}
+              seasons={seasons.length}
+              genres={series.genre}
+              rating={series.vote_average}
+            />
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-3 w-full mt-2">
+              <Button
+                size="lg"
+                className="gap-2"
+                onClick={handleWatchFirst}
+                disabled={!canWatch || seasonEpisodes.length === 0}
+                aria-label="Regarder la série"
+              >
+                <Play className="h-5 w-5" />
+                Regarder
+              </Button>
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                size="lg"
+                className="gap-2"
+                onClick={toggleFavorite}
+                aria-label={
+                  isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
+                }
+              >
+                <Sparkles className="h-5 w-5" />
+                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share2 className="h-5 w-5" />
+                Partager
+              </Button>
+            </div>
+
+            <p className="text-gray-200 text-base mt-2 mb-2 [text-shadow:_0_1px_4px_rgba(0,0,0,0.60)]">
+              {series.description}
+            </p>
+          </div>
+        </div>
+
+        {/* --- Tabs et contenu principal sous le header hero --- */}
+        <div className="relative z-10 mt-10">
+          <div className="bg-black/80 rounded-xl p-4">
+            {/* Barre d’onglets harmonisée */}
+            <div>
+              {/* ...tabs etc... */}
       {/* --- Backdrop Header, étendu sur toute la largeur et hauteur, derrière le contenu --- */}
       {series.backdropUrl && (
         <div className="absolute inset-0 w-full h-full z-0">
