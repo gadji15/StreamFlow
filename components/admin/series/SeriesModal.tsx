@@ -228,7 +228,7 @@ export default function SeriesModal({
     try {
       // Construction du payload compatible Supabase
       const clean = (v: string | number | undefined | null) => (v === "" || v === undefined ? null : v);
-      // Normalisation des genres avant sauvegarde
+      // Normalisation des genres avant sauvegarde (slugs uniquement)
       let genresArr: string[] = [];
       if (Array.isArray(form.genres)) {
         genresArr = normalizeGenres(form.genres.filter(Boolean));
@@ -242,7 +242,7 @@ export default function SeriesModal({
         creator: clean(form.creator),
         start_year: clean(form.start_year) !== null ? Number(form.start_year) : null,
         end_year: clean(form.end_year) !== null ? Number(form.end_year) : null,
-        genre: genresArr.join(", "),
+        genre: genresArr.join(","),
         vote_average: clean(form.vote_average) !== null ? Number(form.vote_average) : null,
         published: !!form.published,
         isvip: !!form.isvip,

@@ -423,15 +423,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   // --- SUBMIT ---
   // Fonction utilitaire pour formater le payload
   function prepareFilmPayload(form: any, castList: any[], localVideoUrl: string) {
-    // Genres : array => string (séparé par virgule)
-    let genre: string | null = null;
+    // Genres : array => string (canonical slugs séparés par virgule, ex: "sci-fi,comedy")
     let genresArr: string[] = [];
+    let genre: string | null = null;
     if (Array.isArray(form.genres) && form.genres.length > 0) {
       genresArr = normalizeGenres(form.genres);
-      genre = genresArr.join(", ");
+      genre = genresArr.join(",");
     } else if (typeof form.genres === "string") {
       genresArr = normalizeGenres(form.genres.split(",").map((g) => g.trim()));
-      genre = genresArr.join(", ");
+      genre = genresArr.join(",");
     }
 
     // Homepage_categories : array obligatoire (pas de stringification JSON)
