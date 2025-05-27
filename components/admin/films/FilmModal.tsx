@@ -266,6 +266,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   };
 
   // --- TMDB IMPORT DÉTAILLÉ ---
+  const GENRES_LIST = [
+    "thriller",
+    "sci-fi",
+    "action",
+    "animation",
+    "comedy",
+    "documentary"
+  ];
+
   const importMovieFromTMDB = async (movie) => {
     if (!movie || !movie.id) return;
     setLoading(true);
@@ -295,6 +304,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       if (Array.isArray(detail.genres) && detail.genres.length > 0) {
         genres = detail.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
+      // Synchronisation auto des genres sur la liste autorisée
+      const genresChecked = genres
+        .map(g => g.toLowerCase())
+        .filter(g => GENRES_LIST.includes(g));
       // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(detail.videos?.results || []);
       // Images
@@ -319,7 +332,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
           ? (detail.release_date || movie.release_date).slice(0, 4)
           : f.year,
         duration: detail.runtime ?? f.duration ?? "",
-        genres: genres.length > 0 ? genres : f.genres,
+        genres: genresChecked.length > 0 ? genresChecked : f.genres,
         vote_average: detail.vote_average ?? f.vote_average,
         vote_count: detail.vote_count ?? f.vote_count,
         poster: poster || f.poster,
@@ -336,7 +349,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       setCastList(castArr.length > 0 ? castArr : []);
       toast({
         title: "Import TMDB réussi",
-        description: "Champs pré-remplis depuis TMDB !",
+        description: "Champs pré-remplis depuis TMDB ! Les genres reconnus sont automatiquement cochés.",
       });
     } catch (e) {
       setCastList([]);
@@ -368,6 +381,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       if (Array.isArray(data.genres) && data.genres.length > 0) {
         genres = data.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
+      // Synchronisation auto des genres sur la liste autorisée
+      const genresChecked = genres
+        .map(g => g.toLowerCase())
+        .filter(g => GENRES_LIST.includes(g));
       // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(data.videos?.results || []);
       // Images
@@ -389,7 +406,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         director: director || f.director,
         year: data.release_date ? data.release_date.slice(0, 4) : f.year,
         duration: data.runtime ?? f.duration ?? "",
-        genres: genres.length > 0 ? genres : f.genres,
+        genres: genresChecked.length > 0 ? genresChecked : f.genres,
         vote_average: data.vote_average ?? f.vote_average,
         vote_count: data.vote_count ?? f.vote_count,
         poster: poster || f.poster,
@@ -406,7 +423,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       setCastList(castArr.length > 0 ? castArr : []);
       toast({
         title: "Import TMDB réussi",
-        description: "Champs pré-remplis depuis TMDB !",
+        description: "Champs pré-remplis depuis TMDB ! Les genres reconnus sont automatiquement cochés.",
       });
     } catch (e) {
       setCastList([]);
