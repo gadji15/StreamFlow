@@ -221,7 +221,7 @@ export default function FilmDetailPage() {
 
   const handlePlay = () => {
     if (movie && (!movie.isVIP || isVIP) && movie.videoUrl) {
-      router.push(`/watch/${movie.id}`);
+      router.push(`/films/${movie.id}/watch`);
     }
   };
 
