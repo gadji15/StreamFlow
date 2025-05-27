@@ -709,9 +709,51 @@ export default function SeriesModal({
           </div>
           <div>
             <label htmlFor="genres" className="block text-[11px] font-medium text-white/80">
-              Genres
+              Genres <span className="text-red-500">*</span>
             </label>
-            <div className="flex flex-wrap gap-1 mb-1">
+            {/* Liste canonique des genres */}
+            {(() => {
+              const GENRES_LIST = [
+                "action",
+                "adventure",
+                "animation",
+                "comedy",
+                "crime",
+                "documentary",
+                "drama",
+                "family",
+                "fantasy",
+                "history",
+                "horror",
+                "music",
+                "mystery",
+                "romance",
+                "sci-fi",
+                "thriller",
+                "war",
+                "western"
+              ];
+              return (
+                <select
+                  id="genres"
+                  multiple
+                  value={form.genres}
+                  onChange={e => {
+                    const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                    handleChange("genres", selected);
+                  }}
+                  className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+                  style={{ minHeight: "60px" }}
+                >
+                  {GENRES_LIST.map(g => (
+                    <option key={g} value={g}>
+                      {g.charAt(0).toUpperCase() + g.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              );
+            })()}
+            <div className="flex flex-wrap gap-1 mt-1">
               {(Array.isArray(form.genres) ? form.genres : []).map((g, idx) => (
                 <span
                   key={g + idx}
@@ -734,35 +776,6 @@ export default function SeriesModal({
                 </span>
               ))}
             </div>
-            <input
-              id="genres"
-              value={form.genresInput || ""}
-              onChange={(e) => handleChange("genresInput", e.target.value)}
-              onKeyDown={(e) => {
-                if (
-                  (e.key === "Enter" || e.key === ",") &&
-                  form.genresInput?.trim()
-                ) {
-                  e.preventDefault();
-                  const genre = form.genresInput.trim();
-                  if (genre.length > 0 && !(form.genres || []).includes(genre)) {
-                    handleChange("genres", [...(form.genres || []), genre]);
-                  }
-                  handleChange("genresInput", "");
-                }
-                if (
-                  e.key === "Backspace" &&
-                  !form.genresInput &&
-                  Array.isArray(form.genres) &&
-                  form.genres.length > 0
-                ) {
-                  handleChange("genres", form.genres.slice(0, -1));
-                }
-              }}
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
-              placeholder="Ajoutez un genre puis Entrée ou ,"
-              autoComplete="off"
-            />
           </div>
           <div>
             <label htmlFor="vote_average" className="block text-[11px] font-medium text-white/80">
