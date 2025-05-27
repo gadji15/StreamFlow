@@ -12,6 +12,7 @@ import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
 import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { ArrowLeft } from "lucide-react";
+import Footer from "@/components/footer";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -224,6 +225,10 @@ export default function WatchFilmPage() {
           animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
         }
       `}</style>
+    {/* Footer */}
+        <div className="w-full mt-8">
+          <Footer />
+        </div>
     </div>
   );
 }
