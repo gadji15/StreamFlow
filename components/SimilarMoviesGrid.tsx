@@ -23,10 +23,12 @@ export default function SimilarMoviesGrid({ tmdbId }: { tmdbId: string }) {
     };
   }, [tmdbId]);
 
-  // Essayons d'exclure le film en cours si id TMDB = id courant (possible si mapping direct)
-  const filteredMovies = movies.filter(movie =>
+  // Exclure le film en cours si id TMDB = id courant (possible si mapping direct)
+  let filteredMovies = movies.filter(movie =>
     movie.id?.toString() !== tmdbId && movie.id?.toString() !== currentFilmId
   );
+  // Limiter à 12 films max (2 lignes de 6 sur desktop, 2x3 ou 2x4 selon responsive)
+  filteredMovies = filteredMovies.slice(0, 12);
 
   if (loading) {
     return (
@@ -64,7 +66,12 @@ export default function SimilarMoviesGrid({ tmdbId }: { tmdbId: string }) {
         [display:grid]
         gap-3
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
-      "
+        "
+        style={{
+          gridAutoRows: "1fr",
+          maxHeight: "calc(2 * 210px + 1.5rem)", // 2 rows max, 210px card + gap
+          overflow: "hidden"
+        }}
     >
       {filteredMovies.map((movie, idx) => (
         <Link

@@ -343,8 +343,13 @@ export default function WatchEpisodePage() {
               gap-3
               [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
             `}
+            style={{
+              gridAutoRows: "1fr",
+              maxHeight: "calc(2 * 210px + 1.5rem)", // 2 rows max
+              overflow: "hidden"
+            }}
           >
-            {similarSeries.map((serie, idx) => (
+            {similarSeries.slice(0, 12).map((serie, idx) => (
               <Link
                 key={serie.id}
                 href={`/series/${serie.id}`}
