@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { normalizeGenres } from "../genres-normalizer";
 
 // Pour upload local (images, vidéos)
 import { supabase } from "@/lib/supabaseClient";
@@ -424,10 +425,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   function prepareFilmPayload(form: any, castList: any[], localVideoUrl: string) {
     // Genres : array => string (séparé par virgule)
     let genre: string | null = null;
+    let genresArr: string[] = [];
     if (Array.isArray(form.genres) && form.genres.length > 0) {
-      genre = form.genres.join(", ");
+      genresArr = normalizeGenres(form.genres);
+      genre = genresArr.join(", ");
     } else if (typeof form.genres === "string") {
-      genre = form.genres;
+      genresArr = normalizeGenres(form.genres.split(",").map((g) => g.trim()));
+      genre = genresArr.join(", ");
     }
 
     // Homepage_categories : array obligatoire (pas de stringification JSON)

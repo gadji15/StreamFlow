@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { normalizeGenres } from "../genres-normalizer";
 
 // Ajout de la déclaration de la propriété globale TMDB_GENRES_MAP
 declare global {
@@ -227,18 +228,21 @@ export default function SeriesModal({
     try {
       // Construction du payload compatible Supabase
       const clean = (v: string | number | undefined | null) => (v === "" || v === undefined ? null : v);
+      // Normalisation des genres avant sauvegarde
+      let genresArr: string[] = [];
+      if (Array.isArray(form.genres)) {
+        genresArr = normalizeGenres(form.genres.filter(Boolean));
+      } else if (typeof form.genres === "string") {
+        genresArr = normalizeGenres(form.genres.split(",").map((g: string) => g.trim()));
+      }
+
       const payload = {
         // Champs obligatoires ou existants
         title: clean(form.title),
         creator: clean(form.creator),
         start_year: clean(form.start_year) !== null ? Number(form.start_year) : null,
         end_year: clean(form.end_year) !== null ? Number(form.end_year) : null,
-        genre:
-          Array.isArray(form.genres)
-            ? form.genres.filter(Boolean).join(", ")
-            : typeof form.genres === "string"
-              ? form.genres
-              : "",
+        genre: genresArr.join(", "),
         vote_average: clean(form.vote_average) !== null ? Number(form.vote_average) : null,
         published: !!form.published,
         isvip: !!form.isvip,
