@@ -303,7 +303,7 @@ export default function AdminSeriesSeasonsPage() {
                   }}
                   aria-autocomplete="list"
                   aria-controls="series-suggestions"
-                  aria-expanded={!!showSuggestions}
+                  aria-expanded={Boolean(showSuggestions)}
                   aria-activedescendant={activeSuggestionIndex >= 0 ? `series-suggestion-${activeSuggestionIndex}` : undefined}
                   role="combobox"
                   required

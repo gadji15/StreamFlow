@@ -1,3 +1,5 @@
+import AdminSkeleton from "@/components/admin-skeleton";
+
 export default function Loading() {
-  return null
+  return <AdminSkeleton rows={10} />;
 }

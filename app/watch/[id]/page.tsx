@@ -198,8 +198,7 @@ export default function VideoPlayerPage({ params }: { params: { id: string } }) 
       {/* Video Player premium */}
       <div
         id="video-container"
-        className="relative flex-1 flex items-center justify-center bg-black"
-        style={{ minHeight: 400 }}
+        className="relative flex-1 flex items-center justify-center bg-black min-h-video-container"
       >
         <VideoPlayer
           src={film.video_url}

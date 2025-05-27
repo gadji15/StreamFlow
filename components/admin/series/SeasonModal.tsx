@@ -13,6 +13,16 @@ function isValidImageUrl(url: string): boolean {
   }
 }
 
+type SeasonModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+  initialData?: any;
+  seriesTitle?: string;
+  tmdbSeriesId?: string | number;
+  seriesId?: string | number;
+};
+
 export default function SeasonModal({
   open,
   onClose,
@@ -21,7 +31,7 @@ export default function SeasonModal({
   seriesTitle = "",
   tmdbSeriesId = "",
   seriesId,
-}) {
+}: SeasonModalProps) {
   // Formulaire principal
   const [form, setForm] = useState({
     id: initialData.id,
@@ -172,35 +182,36 @@ export default function SeasonModal({
       }
     }
     if (!open && wasOpen.current) {
-      setForm({
-        title: "",
-        season_number: "",
-        air_date: "",
-        episode_count: "",
-        poster: "",
-        tmdb_id: "",
-        description: "",
-        tmdb_series_id: "",
-      });
-      setErrors({});
-      setTmdbSearch("");
-      setSeasonSearchError(null);
-      setSeasonSearchLoading(false);
-      setSerieSearch("");
-      setSerieSuggestions([]);
-      setActiveSerieSuggestion(-1);
-      setTmdbSeasonCount(null);
-      setTmdbSeasonError(null);
-      if (tmdbAbortControllerRef.current) {
-        tmdbAbortControllerRef.current.abort();
-      }
-    }
+          setForm({
+            id: undefined,
+            title: "",
+            season_number: "",
+            air_date: "",
+            episode_count: "",
+            poster: "",
+            tmdb_id: "",
+            description: "",
+            tmdb_series_id: "",
+          });
+          setErrors({});
+          setTmdbSearch("");
+          setSeasonSearchError(null);
+          setSeasonSearchLoading(false);
+          setSerieSearch("");
+          setSerieSuggestions([]);
+          setActiveSerieSuggestion(-1);
+          setTmdbSeasonCount(null);
+          setTmdbSeasonError(null);
+          if (tmdbAbortControllerRef.current) {
+            tmdbAbortControllerRef.current.abort();
+          }
+        }
     wasOpen.current = open;
   // eslint-disable-next-line
   }, [open, initialData?.id]);
 
   // Changement champ unique (un seul input pour numéro de saison)
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: string) => {
     setForm((f) => {
       const update = { ...f, [field]: value };
       // Si on change le numéro de saison, vider tmdb_id et les erreurs associées
@@ -216,7 +227,10 @@ export default function SeasonModal({
       }
       return update;
     });
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    setErrors((e) => {
+      const { [field]: _removed, ...rest } = e;
+      return rest;
+    });
   };
 
   const validate = async () => {
@@ -278,7 +292,7 @@ export default function SeasonModal({
     return err;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = await validate();
     setErrors(err);
@@ -377,7 +391,7 @@ export default function SeasonModal({
         setSeasonSearchError("Aucune saison trouvée pour ces paramètres.");
       }
     } catch (e) {
-      if (e.name !== "AbortError") {
+      if (typeof e === "object" && e !== null && "name" in e && (e as any).name !== "AbortError") {
         setSeasonSearchError("Erreur TMDB ou connexion.");
       }
     }
@@ -385,7 +399,7 @@ export default function SeasonModal({
   };
 
   // Gestion navigation suggestions clavier
-  const handleSuggestionKeyDown = (e) => {
+  const handleSuggestionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSerieSuggestions || serieSuggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -491,35 +505,37 @@ export default function SeasonModal({
                     role="listbox"
                     aria-label="Suggestions de séries"
                   >
-                    {serieLoading && (
+                    {serieLoading ? (
                       <li className="p-2 text-sm text-gray-400">Chargement…</li>
-                    )}
-                    {serieSuggestions.map((suggestion, idx) => (
-                      <li
-                        key={suggestion.id}
-                        className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
-                        role="option"
-                        aria-selected={activeSerieSuggestion === idx}
-                        tabIndex={0}
-                        onClick={() => {
-                          setForm(f => ({
-                            ...f,
-                            tmdb_series_id: String(suggestion.id)
-                          }));
-                          setSerieSearch(suggestion.name);
-                          setSerieSuggestions([]);
-                          setShowSerieSuggestions(false);
-                        }}
-                        onMouseEnter={() => setActiveSerieSuggestion(idx)}
-                      >
-                        <span className="font-medium">{suggestion.name}</span>
-                        {suggestion.first_air_date && (
-                          <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                    ) : (
+                      <>
+                        {serieSuggestions.map((suggestion, idx) => (
+                          <li
+                            key={suggestion.id}
+                            className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                            role="option"
+                            aria-selected={activeSerieSuggestion === idx ? true : false}
+                            onClick={() => {
+                              setForm(f => ({
+                                ...f,
+                                tmdb_series_id: String(suggestion.id)
+                              }));
+                              setSerieSearch(suggestion.name);
+                              setSerieSuggestions([]);
+                              setShowSerieSuggestions(false);
+                            }}
+                            onMouseEnter={() => setActiveSerieSuggestion(idx)}
+                          >
+                            <span className="font-medium">{suggestion.name}</span>
+                            {suggestion.first_air_date && (
+                              <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                            )}
+                          </li>
+                        ))}
+                        {serieSuggestions.length === 0 && (
+                          <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
                         )}
-                      </li>
-                    ))}
-                    {!serieLoading && serieSuggestions.length === 0 && (
-                      <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                      </>
                     )}
                   </ul>
                 )}

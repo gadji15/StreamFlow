@@ -28,6 +28,17 @@ function isValidImageUrl(url: string): boolean {
  * @param parentSeasonNumber - Numéro de la saison parente (optionnel)
  * @param seasonId - ID de la saison parente (optionnel)
  */
+type EpisodeModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: any) => Promise<void>;
+  initialData?: any;
+  seriesTitle?: string;
+  tmdbSeriesId?: string;
+  parentSeasonNumber?: string | number;
+  seasonId?: string | number;
+};
+
 export default function EpisodeModal({
   open,
   onClose,
@@ -37,7 +48,7 @@ export default function EpisodeModal({
   tmdbSeriesId = "",
   parentSeasonNumber = "",
   seasonId,
-}) {
+}: EpisodeModalProps) {
   // Protection : si initialData est null ou undefined, on force un objet vide
   initialData = initialData || {};
   // Vérification stricte de parentSeasonNumber
@@ -46,7 +57,26 @@ export default function EpisodeModal({
     : "";
 
   // Form state
-  const [form, setForm] = useState({
+  type FormState = {
+    id?: any;
+    title: string;
+    episode_number: string;
+    air_date: string;
+    thumbnail_url: string;
+    video_url: string;
+    trailer_url: string;
+    tmdb_id: string;
+    description: string;
+    published: boolean;
+    isvip: boolean;
+    video_unavailable: boolean;
+    tmdb_series_id: string;
+    local_video_file: File | null;
+    parentSeasonNumber: string;
+    sort_order?: string | number | null;
+  };
+
+  const [form, setForm] = useState<FormState>({
     id: initialData.id,
     title: initialData.title || "",
     episode_number:
@@ -65,6 +95,7 @@ export default function EpisodeModal({
     tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
     local_video_file: null,
     parentSeasonNumber: validParentSeasonNumber, // Ajout dans le form state pour cohérence
+    sort_order: initialData.sort_order ?? null,
   });
 
   // Pour la recherche TMDB série (autocomplete)
@@ -141,6 +172,7 @@ export default function EpisodeModal({
     }
     if (!open && wasOpen.current) {
       setForm({
+        id: undefined,
         title: "",
         episode_number: "",
         air_date: "",
@@ -168,9 +200,12 @@ export default function EpisodeModal({
     // eslint-disable-next-line
   }, [open, initialData?.id, seriesTitle, parentSeasonNumber]);
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: any) => {
     setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    setErrors((e) => {
+      const { [field]: _removed, ...rest } = e;
+      return rest;
+    });
     if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url") setTmdbError(null);
     if (field === "local_video_file" && value) {
       // Si upload local, vider video_url
@@ -216,7 +251,7 @@ export default function EpisodeModal({
     return err;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
     setErrors(err);
@@ -316,16 +351,26 @@ export default function EpisodeModal({
       toast({ title: "Épisode enregistré" });
       onClose();
     } catch (e) {
-      if (e.code === "23505" || (e.message && e.message.includes("duplicate key"))) {
-        setErrors(prev => ({
-          ...prev,
-          episode_number: "Un épisode avec ce numéro existe déjà dans cette saison.",
-        }));
-        toast({
-          title: "Doublon",
-          description: "Un épisode avec ce numéro existe déjà dans cette saison.",
-          variant: "destructive",
-        });
+      if (
+        typeof e === "object" &&
+        e !== null &&
+        ("code" in e || "message" in e)
+      ) {
+        const code = (e as any).code;
+        const message = (e as any).message;
+        if (code === "23505" || (message && typeof message === "string" && message.includes("duplicate key"))) {
+          setErrors(prev => ({
+            ...prev,
+            episode_number: "Un épisode avec ce numéro existe déjà dans cette saison.",
+          }));
+          toast({
+            title: "Doublon",
+            description: "Un épisode avec ce numéro existe déjà dans cette saison.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Erreur", description: String(e), variant: "destructive" });
+        }
       } else {
         toast({ title: "Erreur", description: String(e), variant: "destructive" });
       }
@@ -382,7 +427,7 @@ export default function EpisodeModal({
         let videoUrl = "";
         if (detail.videos && Array.isArray(detail.videos.results)) {
           const ytTrailer = detail.videos.results.find(
-            v =>
+            (v: { type: string; site: string; key?: string }) =>
               v.type === "Trailer" &&
               v.site === "YouTube" &&
               v.key
@@ -554,8 +599,10 @@ export default function EpisodeModal({
                 id="serie_tmdb_id"
                 value={form.tmdb_series_id}
                 readOnly
-                style={{ display: "none" }}
+                className="hidden-input"
                 tabIndex={-1}
+                title="TMDB Series ID"
+                placeholder="TMDB Series ID"
               />
             </div>
           )}
@@ -962,21 +1009,24 @@ export default function EpisodeModal({
         <div role="alert" aria-live="assertive" style={{ position: "absolute", left: -9999, top: "auto", width: "1px", height: "1px", overflow: "hidden" }}>
           {Object.values(errors).length > 0 ? Object.values(errors).join(" ") : ""}
           {tmdbError ? tmdbError : ""}
+          <style jsx global>{`
+            @keyframes fadeInScale {
+              0% { opacity: 0; transform: scale(.95);}
+              100% { opacity: 1; transform: scale(1);}
+            }
+            .animate-\[fadeInScale_0\.25s_ease\] {
+              animation: fadeInScale 0.25s ease;
+            }
+            input[disabled], textarea[disabled] {
+              background: #222 !important;
+              cursor: not-allowed;
+            }
+            .hidden-input {
+              display: none;
+            }
+          `}</style>
         </div>
       </div>
-      <style jsx global>{`
-        @keyframes fadeInScale {
-          0% { opacity: 0; transform: scale(.95);}
-          100% { opacity: 1; transform: scale(1);}
-        }
-        .animate-\[fadeInScale_0\.25s_ease\] {
-          animation: fadeInScale 0.25s ease;
-        }
-        input[disabled], textarea[disabled] {
-          background: #222 !important;
-          cursor: not-allowed;
-        }
-      `}</style>
     </div>
   );
 }

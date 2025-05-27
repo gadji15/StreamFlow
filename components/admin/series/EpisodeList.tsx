@@ -114,7 +114,7 @@ export default function EpisodeList({
         video_unavailable: form.video_unavailable ?? false,
         tmdb_id: form.tmdb_id ? Number(form.tmdb_id) : null,
         tmdb_series_id: form.tmdb_series_id || null,
-        sort_order: episodes.length,
+        sort_order: (episodes ? episodes.length : 0),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         runtime: form.runtime ? Number(form.runtime) : null, // correspond à la durée
@@ -249,7 +249,7 @@ export default function EpisodeList({
             aria-label="Recherche épisodes"
           />
           <Button
-            variant="success"
+            variant="default"
             onClick={() => {
               if (!seriesId) {
                 alert("Impossible d’ajouter un épisode : série introuvable (seriesId manquant)");
@@ -292,7 +292,6 @@ export default function EpisodeList({
         seriesTitle={seriesTitle}
         tmdbSeriesId={tmdbSeriesId}
         parentSeasonNumber={seasonNumber}
-        loading={actionLoading}
       />
       {/* Gestion loading/erreur */}
       {episodesLoading ? (
@@ -342,23 +341,23 @@ export default function EpisodeList({
                       draggableProps={{
                         draggable: true,
                         onDragStart: () => setDraggedIndex(idx),
-                        onDragOver: (e) => { e.preventDefault(); },
-                        onDrop: () => {
-                          if (draggedIndex !== null && draggedIndex !== idx) {
-                            moveEpisode(draggedIndex, idx);
-                          }
-                          setDraggedIndex(null);
-                        },
-                        onDragEnd: () => setDraggedIndex(null),
-                        style: {
-                          cursor: "grab",
-                          background: draggedIndex === idx ? "rgba(99,102,241,0.1)" : undefined
-                        }
-                      }}
-                      actionLoading={actionLoading}
-                    />
-                  ))
-                )}
+        onDragOver: (e: React.DragEvent<HTMLTableRowElement>) => { e.preventDefault(); },
+        onDrop: () => {
+          if (draggedIndex !== null && draggedIndex !== idx) {
+            moveEpisode(draggedIndex, idx);
+          }
+          setDraggedIndex(null);
+        },
+        onDragEnd: () => setDraggedIndex(null),
+        style: {
+          cursor: "grab",
+          background: draggedIndex === idx ? "rgba(99,102,241,0.1)" : undefined
+        }
+      }}
+      actionLoading={actionLoading}
+    />
+  ))
+)}
               </tbody>
             </table>
           </div>

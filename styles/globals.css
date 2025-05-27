@@ -76,12 +76,13 @@ main {
 }
 
 /* Animation shimmer pour les états de chargement */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 1.4s infinite linear;
   }
-  100% {
-    background-position: 200% 0;
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }
 

@@ -4,6 +4,29 @@ import VipBadge from "./VipBadge";
 import SeriesActionMenu from "./SeriesActionMenu";
 import { useRouter } from "next/navigation";
 
+type Serie = {
+  id: string | number;
+  poster?: string;
+  title: string;
+  genres?: string[];
+  genre?: string;
+  start_year?: number | string;
+  end_year?: number | string;
+  creator?: string;
+  vote_average?: number | string;
+  published?: boolean;
+  isvip?: boolean;
+};
+
+type SeriesRowProps = {
+  serie: Serie;
+  selected: boolean;
+  onSelect: (id: string | number) => void;
+  onAction?: (action: string, serie: Serie) => void;
+  seasonCount?: number;
+  genres?: string[];
+};
+
 export default function SeriesRow({
   serie,
   selected,
@@ -11,7 +34,7 @@ export default function SeriesRow({
   onAction,
   seasonCount,
   genres,
-}) {
+}: SeriesRowProps) {
   const router = useRouter();
   const posterUrl = serie.poster || '/placeholder-backdrop.jpg';
   const genreList = Array.isArray(serie.genres)
@@ -20,13 +43,13 @@ export default function SeriesRow({
         ? serie.genre.split(',').map(g => g.trim())
         : []);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Ferme le menu contextuel si clic en dehors
   useEffect(() => {
     if (!menuOpen) return;
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && event.target && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     }

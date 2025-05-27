@@ -3,8 +3,8 @@ import SeriesRow from "./SeriesRow";
 
 interface SeriesTableProps {
   series: any[];
-  selectedIds: string[];
-  onSelect: (id: string) => void;
+  selectedIds: (string | number)[];
+  onSelect: (id: string | number) => void;
   onSelectAll: () => void;
   allSelected: boolean;
   onAction: (action: string, serie: any) => void;

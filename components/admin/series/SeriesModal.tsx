@@ -2,6 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
+// Ajout de la déclaration de la propriété globale TMDB_GENRES_MAP
+declare global {
+  interface Window {
+    __TMDB_GENRES_MAP__?: { [id: string]: string };
+  }
+}
+
 /**
  * Modal d'ajout/édition d'une série. 
  * 
@@ -13,7 +20,23 @@ import { useToast } from "@/components/ui/use-toast";
  * - existingSeries (array) : liste des séries existantes [{title, tmdb_id, id}]
  * - tmdbSearch (function, optional): fonction asynchrone pour rechercher une série TMDB par query
  */
-export default function SeriesModal({ open, onClose, onSave, initialData = {}, existingSeries = [], tmdbSearch }) {
+type SeriesModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onSave: (payload: any) => Promise<void>;
+  initialData?: any;
+  existingSeries?: Array<{ title: string; tmdb_id: number | string; id: number | string }>;
+  tmdbSearch?: (query: string) => Promise<any>;
+};
+
+export default function SeriesModal({
+  open,
+  onClose,
+  onSave,
+  initialData = {},
+  existingSeries = [],
+  tmdbSearch,
+}: SeriesModalProps) {
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -22,7 +45,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     genres: Array.isArray(initialData.genres)
       ? initialData.genres
       : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g) => g.trim())
+        ? initialData.genre.split(",").map((g: string) => g.trim())
         : []),
     genresInput: "",
     vote_average: initialData.vote_average || "",
@@ -34,8 +57,16 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     description: initialData.description || "",
   });
 
+  // Définition du type Actor pour le cast importé depuis TMDB
+  type Actor = {
+    id: number | string;
+    name: string;
+    profile_path?: string;
+    character?: string;
+    [key: string]: any;
+  };
   // Nouvel état pour le cast importé depuis TMDB
-  const [cast, setCast] = useState([]);
+  const [cast, setCast] = useState<Actor[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearchValue, setTmdbSearchValue] = useState(initialData.title || "");
@@ -43,7 +74,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
   const firstInput = useRef<HTMLInputElement>(null);
 
   // Utilitaire pour charger le cast d'une série TMDB
-  const fetchCast = async (tmdbId) => {
+  const fetchCast = async (tmdbId: string | number) => {
     if (!tmdbId) {
       setCast([]);
       return;
@@ -77,7 +108,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
         genres: Array.isArray(initialData.genres)
           ? initialData.genres
           : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g) => g.trim())
+            ? initialData.genre.split(",").map((g: string) => g.trim())
             : []),
         genresInput: "",
         vote_average: initialData.vote_average || "",
@@ -97,9 +128,12 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     // eslint-disable-next-line
   }, [open, initialData && initialData.id]);
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: any) => {
     setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    setErrors((e) => {
+      const { [field]: _, ...rest } = e;
+      return rest;
+    });
   };
 
   const validate = () => {
@@ -132,7 +166,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     return err;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
     setErrors(err);
@@ -192,7 +226,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
 
     try {
       // Construction du payload compatible Supabase
-      const clean = (v) => (v === "" || v === undefined ? null : v);
+      const clean = (v: string | number | undefined | null) => (v === "" || v === undefined ? null : v);
       const payload = {
         // Champs obligatoires ou existants
         title: clean(form.title),
@@ -228,30 +262,24 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
     setLoading(false);
   };
 
-  function extractCreator(detail) {
-    if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
-      return detail.created_by.map(c => c.name).join(", ");
-    }
-    return "";
-  }
-
   // Suggestion TMDB (autocomplete)
-  const [serieSuggestions, setSerieSuggestions] = useState([]);
+  type SerieSuggestion = { id: number | string; name: string; first_air_date?: string; [key: string]: any };
+  const [serieSuggestions, setSerieSuggestions] = useState<SerieSuggestion[]>([]);
   const [serieLoading, setSerieLoading] = useState(false);
   const [showSerieSuggestions, setShowSerieSuggestions] = useState(false);
   const [activeSerieSuggestion, setActiveSerieSuggestion] = useState(-1);
   const suggestionTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Correction : extraction fiable du créateur
-  function extractCreator(detail) {
+  function extractCreator(detail: any) {
     if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
-      return detail.created_by.map(c => c.name).join(", ");
+      return detail.created_by.map((c: { name: string }) => c.name).join(", ");
     }
     return "";
   }
 
   // Suggestion temps réel
-  const handleSerieSearchInput = async (e) => {
+  const handleSerieSearchInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setTmdbSearchValue(value);
     setShowSerieSuggestions(true);
@@ -278,7 +306,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
   };
 
   // Import détaillé à partir d'un objet serie (mapping bulletproof pour creator/genres, + debug)
-  const importSerieFromTMDB = async (serie) => {
+  const importSerieFromTMDB = async (serie: any) => {
     if (!serie || !serie.id) return;
     setLoading(true);
     try {
@@ -307,24 +335,24 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
       // Créateur
       let creatorValue = "";
       if (detail && Array.isArray(detail.created_by) && detail.created_by.length > 0) {
-        creatorValue = detail.created_by.map(c => c.name).join(", ");
+        creatorValue = detail.created_by.map((c: { name: string }) => c.name).join(", ");
       } else if (serie && serie.created_by && Array.isArray(serie.created_by) && serie.created_by.length > 0) {
-        creatorValue = serie.created_by.map(c => c.name).join(", ");
+        creatorValue = serie.created_by.map((c: { name: string }) => c.name).join(", ");
       } else if (detail && detail.creator && typeof detail.creator === "string") {
         creatorValue = detail.creator;
       }
       // Genres
       let genresValue = [];
       if (detail && Array.isArray(detail.genres) && detail.genres.length > 0) {
-        genresValue = detail.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
-      } else if (serie && Array.isArray(serie.genres) && serie.genres.length > 0) {
-        genresValue = serie.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+        genresValue = detail.genres.map((g: any) => g.name).filter(Boolean);
+      } else if (serie && Array.isArray(serie.genre_ids) && typeof window !== "undefined" && (window as any).__TMDB_GENRES_MAP__) {
+        genresValue = serie.genre_ids.map((id: number | string) => (window as any).__TMDB_GENRES_MAP__[id] || id);
       } else if (detail && typeof detail.genre === "string" && detail.genre.length > 0) {
-        genresValue = detail.genre.split(",").map((g) => g.trim()).filter(Boolean);
+        genresValue = detail.genre.split(",").map((g: string) => g.trim()).filter(Boolean);
       } else if (serie && typeof serie.genre === "string" && serie.genre.length > 0) {
-        genresValue = serie.genre.split(",").map((g) => g.trim()).filter(Boolean);
+        genresValue = serie.genre.split(",").map((g: string) => g.trim()).filter(Boolean);
       } else if (serie && Array.isArray(serie.genre_ids) && typeof window !== "undefined" && window.__TMDB_GENRES_MAP__) {
-        genresValue = serie.genre_ids.map(id => window.__TMDB_GENRES_MAP__[id] || id);
+        genresValue = serie.genre_ids.map((id: number | string) => (window.__TMDB_GENRES_MAP__?.[id] ?? id));
       }
       // Fallbacks
       if (!creatorValue) creatorValue = "";
@@ -385,7 +413,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
           end_year: data.last_air_date
             ? data.last_air_date.slice(0, 4)
             : f.end_year,
-          genres: data.genres ? data.genres.map((g) => g.name) : f.genres,
+          genres: data.genres ? data.genres.map((g: { name: string }) => g.name) : f.genres,
           vote_average: data.vote_average ?? f.vote_average,
           description: data.overview ?? f.description,
           creator: extractCreator(data) || f.creator,
@@ -490,32 +518,34 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
                 role="listbox"
                 aria-label="Suggestions de séries"
               >
-                {serieLoading && (
+                {serieLoading ? (
                   <li className="p-2 text-sm text-gray-400">Chargement…</li>
-                )}
-                {serieSuggestions.map((suggestion, idx) => (
-                  <li
-                    key={suggestion.id}
-                    className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
-                    role="option"
-                    aria-selected={activeSerieSuggestion === idx}
-                    tabIndex={0}
-                    onMouseEnter={() => setActiveSerieSuggestion(idx)}
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      setActiveSerieSuggestion(idx);
-                      setTmdbSearchValue(suggestion.name);
-                      setShowSerieSuggestions(false);
-                    }}
-                  >
-                    <span className="font-medium">{suggestion.name}</span>
-                    {suggestion.first_air_date && (
-                      <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                ) : (
+                  <>
+                    {serieSuggestions.map((suggestion, idx) => (
+                      <li
+                        key={suggestion.id}
+                        className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeSerieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
+                        role="option"
+                        aria-selected={activeSerieSuggestion === idx ? "true" : "false"}
+                        onMouseEnter={() => setActiveSerieSuggestion(idx)}
+                        onMouseDown={e => {
+                          e.preventDefault();
+                          setActiveSerieSuggestion(idx);
+                          setTmdbSearchValue(suggestion.name);
+                          setShowSerieSuggestions(false);
+                        }}
+                      >
+                        <span className="font-medium">{suggestion.name}</span>
+                        {suggestion.first_air_date && (
+                          <span className="text-xs text-gray-400 ml-1">({suggestion.first_air_date.slice(0, 4)})</span>
+                        )}
+                      </li>
+                    ))}
+                    {serieSuggestions.length === 0 && (
+                      <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
                     )}
-                  </li>
-                ))}
-                {!serieLoading && serieSuggestions.length === 0 && (
-                  <li className="p-2 text-sm text-gray-400">Aucune série trouvée…</li>
+                  </>
                 )}
               </ul>
             )}
@@ -911,7 +941,7 @@ export default function SeriesModal({ open, onClose, onSave, initialData = {}, e
           <Button
             type="submit"
             form="series-form"
-            variant="success"
+            variant="default"
             disabled={loading}
             aria-label="Enregistrer la série"
             onClick={handleSubmit}

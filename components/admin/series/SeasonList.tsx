@@ -2,6 +2,17 @@ import React from "react";
 import SeasonRow from "./SeasonRow";
 import { Clapperboard } from "lucide-react";
 
+type SeasonListProps = {
+  seasons: Array<any>; // Replace 'any' with your Season type if available
+  seriesId: string | number;
+  expandedSeason: string | number | null;
+  setExpandedSeason: (id: string | number | null) => void;
+  fetchEpisodesForSeason: (seasonId: string | number) => void;
+  seasonEpisodes: { [seasonId: string]: any[] }; // Replace 'any' with your Episode type if available
+  seasonEpisodesLoading: { [seasonId: string]: boolean };
+  onAction: (action: any) => void; // Replace 'any' with a more specific action type if available
+};
+
 export default function SeasonList({
   seasons,
   seriesId,
@@ -11,7 +22,7 @@ export default function SeasonList({
   seasonEpisodes,
   seasonEpisodesLoading,
   onAction
-}) {
+}: SeasonListProps) {
   return (
     <div className="rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 shadow-lg mb-2 overflow-x-auto">
       <table className="min-w-full text-sm rounded-xl" role="table" aria-label="Liste des saisons">

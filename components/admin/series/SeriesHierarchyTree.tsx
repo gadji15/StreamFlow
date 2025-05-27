@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from "react";
 import SeasonList from "./SeasonList";
 
+type Serie = {
+  id: string;
+  title?: string;
+  // Add other properties if needed
+};
+
+interface SeriesHierarchyTreeProps {
+  series: Serie[];
+  seriesSeasons?: Record<string, any[]>;
+  fetchSeasonsForSeries: (seriesId: string) => void;
+  fetchEpisodesForSeason: (seasonId: string) => void;
+  seasonEpisodes?: Record<string, any[]>;
+  seasonEpisodesLoading?: Record<string, boolean>;
+  setModal: (modalState: any) => void;
+}
+
 export default function SeriesHierarchyTree({
   series, 
   seriesSeasons = {}, 
@@ -9,7 +25,7 @@ export default function SeriesHierarchyTree({
   seasonEpisodes = {}, 
   seasonEpisodesLoading = {},
   setModal
-}) {
+}: SeriesHierarchyTreeProps) {
   const [expandedSeries, setExpandedSeries] = useState<string | null>(null);
   const [expandedSeason, setExpandedSeason] = useState<string | null>(null);
 
@@ -62,14 +78,12 @@ export default function SeriesHierarchyTree({
               <SeasonList
                 seasons={seriesSeasons[serie.id] || []}
                 seriesId={serie.id}
-                fetchSeasonsForSeries={fetchSeasonsForSeries}
                 fetchEpisodesForSeason={fetchEpisodesForSeason}
                 seasonEpisodes={seasonEpisodes}
                 seasonEpisodesLoading={seasonEpisodesLoading}
                 expandedSeason={expandedSeason}
                 setExpandedSeason={setExpandedSeason}
-                refreshSeasons={() => fetchSeasonsForSeries(serie.id)}
-                setModal={setModal}
+                onAction={setModal}
               />
             </div>
           )}
