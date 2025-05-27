@@ -41,6 +41,14 @@ function getUserRole(payload: any): string | undefined {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // --- REDIRECT /watch/:id => /films/:id/watch ---
+  const watchMatch = pathname.match(/^\/watch\/([^\/]+)$/);
+  if (watchMatch) {
+    const id = watchMatch[1];
+    return NextResponse.redirect(new URL(`/films/${id}/watch`, request.url), 308);
+  }
+
   if (!isRouteProtected(pathname)) return NextResponse.next();
 
   const token = extractToken(request);
@@ -62,7 +70,7 @@ export async function middleware(request: NextRequest) {
     // Rôles autorisés (tu peux en ajouter)
     const allowedRoles = ['admin', 'super_admin'];
 
-    if (allowedRoles.includes(role)) {
+    if (role && allowedRoles.includes(role)) {
       return NextResponse.next();
     }
 
