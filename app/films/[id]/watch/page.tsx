@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import LoadingScreen from "@/components/loading-screen";
 import FilmInfo from "@/components/FilmInfo";
 import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
+import Link from "next/link";
+import { getMoviesByGenre, Movie } from "@/lib/supabaseFilms";
 import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { ArrowLeft } from "lucide-react";
@@ -45,9 +47,11 @@ export default function WatchFilmPage() {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
 
   useEffect(() => {
-    async function fetchMovie() {
+    async function fetchMovieAndSimilar() {
       setLoading(true);
       setError(null);
       try {
@@ -60,7 +64,7 @@ export default function WatchFilmPage() {
         if (movieError || !data) {
           setError("Film non trouvé.");
         } else {
-          setMovie({
+          const currentMovie: Movie = {
             ...data,
             backdropUrl: normalizeBackdropUrl(data.backdrop),
             posterUrl: data.poster
@@ -68,7 +72,43 @@ export default function WatchFilmPage() {
                 ? data.poster
                 : getTMDBImageUrl(data.poster, "w300")
               : "/placeholder-poster.png",
-          });
+          };
+          setMovie(currentMovie);
+
+          // Fetch similar movies by genre (fallback: no genre = show popular)
+          setLoadingSimilar(true);
+          let similar: Movie[] = [];
+          try {
+            if (currentMovie.genre) {
+              // getMoviesByGenre attend un genreId. Si plusieurs genres, prendre le 1er ou mapper.
+              const genreList = typeof currentMovie.genre === "string"
+                ? currentMovie.genre.split(",").map(g => g.trim())
+                : Array.isArray(currentMovie.genre)
+                  ? currentMovie.genre
+                  : [];
+              const mainGenre = genreList[0] || "";
+              if (mainGenre) {
+                similar = await getMoviesByGenre(mainGenre, 12, "popularity");
+                // Remove the current movie from similar list
+                similar = similar.filter((m) => m.id !== currentMovie.id);
+              }
+            }
+            // Si pas de genre ou pas de résultat, fallback sur populaires hors film en cours
+            if (!similar.length) {
+              const { data: popular } = await supabase
+                .from("films")
+                .select("*")
+                .order("popularity", { ascending: false })
+                .limit(12);
+              if (popular) {
+                similar = popular.filter((m: Movie) => m.id !== currentMovie.id);
+              }
+            }
+          } catch (err) {
+            similar = [];
+          }
+          setSimilarMovies(similar);
+          setLoadingSimilar(false);
         }
       } catch {
         setError("Impossible de charger le film.");
@@ -76,7 +116,7 @@ export default function WatchFilmPage() {
         setLoading(false);
       }
     }
-    if (id) fetchMovie();
+    if (id) fetchMovieAndSimilar();
   }, [id]);
 
   if (loading) return <LoadingScreen />;
@@ -171,10 +211,74 @@ export default function WatchFilmPage() {
           <p className="text-gray-200 text-base whitespace-pre-line mt-1">{movie.description}</p>
         </section>
 
-        {/* Films similaires */}
+        {/* Films similaires améliorés */}
         <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
           <h3 className="font-bold text-xl mb-3 text-primary">Films similaires</h3>
-          <SimilarMoviesGrid tmdbId={movie.tmdb_id || ""} />
+          {loadingSimilar ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-64 bg-gray-800 rounded-xl animate-pulse"
+                  aria-hidden="true"
+                ></div>
+              ))}
+            </div>
+          ) : similarMovies.length === 0 ? (
+            <div className="text-center p-8 text-gray-400">
+              Aucun film similaire trouvé.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {similarMovies.map((film, idx) => (
+                <Link
+                  key={film.id}
+                  href={`/films/${film.id}`}
+                  className="group flex flex-col items-center bg-gray-800 rounded-xl p-3 shadow transition-transform duration-300 hover:scale-[1.045] hover:shadow-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  style={{
+                    opacity: 0,
+                    animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
+                    animationDelay: `${idx * 0.06}s`
+                  }}
+                  tabIndex={0}
+                >
+                  <img
+                    src={film.poster || film.posterUrl || "/placeholder-poster.png"}
+                    alt={film.title}
+                    className="w-full h-48 rounded-lg object-cover mb-2 border-2 border-gray-700 bg-gray-900 transition-transform duration-200 group-hover:scale-105"
+                    onError={e => {
+                      (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png";
+                    }}
+                  />
+                  <span className="font-medium text-gray-100 text-sm text-center line-clamp-2">
+                    {film.title}
+                  </span>
+                  {film.rating !== undefined && film.rating !== null && (
+                    <span className="text-xs text-yellow-400 mt-1">
+                      ★ {film.rating.toFixed(1)}
+                    </span>
+                  )}
+                  {film.is_vip && (
+                    <span className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-2 py-0.5 rounded-full text-xs font-bold">
+                      VIP
+                    </span>
+                  )}
+                </Link>
+              ))}
+              <style>{`
+                @keyframes fadeInUp {
+                  0% {
+                    opacity: 0;
+                    transform: translateY(24px);
+                  }
+                  100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
+            </div>
+          )}
         </section>
       </div>
 
