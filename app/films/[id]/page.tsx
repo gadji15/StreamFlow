@@ -37,6 +37,7 @@ function normalizeBackdropUrl(raw: any) {
 
 import Link from "next/link";
 import { Film } from "lucide-react";
+import SimilarFilmsGrid from "@/components/films/SimilarFilmsGrid";
 /* Suppression du composant local SimilarLocalMovies :
    On utilisera désormais le composant réutilisable à la place. */
 
@@ -370,8 +371,7 @@ export default function FilmDetailPage() {
 
             <TabsContent value="related" className="pt-6">
   <h2 className="text-base font-semibold mb-2">Films similaires</h2>
-  {/* Utilisation du composant réutilisable */}
-  <import('./components/films/SimilarFilmsGrid').then(mod => mod.default) currentMovieId={id} tmdbId={movie.tmdbId} />
+  <SimilarFilmsGrid currentMovieId={id} tmdbId={movie.tmdbId} />
 </TabsContent>
 
             <TabsContent value="comments" className="pt-6">
