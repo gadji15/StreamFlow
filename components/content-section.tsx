@@ -81,7 +81,7 @@ export function ContentSection({
             break;
           case 'series_by_genre':
             if (genreId) {
-              data = await getSeriesByGenre(genreId, count);
+              data = await getSeriesByGenre(genreId, count, sortBy);
             }
             break;
         }

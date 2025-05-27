@@ -434,40 +434,16 @@ export default function SeriesDetailPage() {
             )}
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 w-full min-w-0 mt-4 max-w-xs md:max-w-none mx-auto md:mx-0">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatchFirst}
-                disabled={!canWatch || seasonEpisodes.length === 0}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={
-                  isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
-                }
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
-            </div>
+            <ActionButtons
+              canWatch={canWatch && seasonEpisodes.length > 0}
+              videoUrl={seasonEpisodes.length > 0 ? `/series/${id}/watch/${seasonEpisodes[0].id}` : ""}
+              trailerUrl={series.trailer_url}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+              onShare={handleShare}
+              onPlay={handleWatchFirst}
+              type="series"
+            />
           </div>
 
           {/* Main info & Tabs */}
