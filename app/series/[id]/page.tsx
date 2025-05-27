@@ -432,42 +432,6 @@ export default function SeriesDetailPage() {
                 </div>
               </div>
             )}
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3 w-full min-w-0 mt-4 max-w-xs md:max-w-none mx-auto md:mx-0">
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleWatchFirst}
-                disabled={!canWatch || seasonEpisodes.length === 0}
-                aria-label="Regarder la série"
-              >
-                <Play className="h-5 w-5" />
-                Regarder
-              </Button>
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="lg"
-                className="w-full gap-2"
-                onClick={toggleFavorite}
-                aria-label={
-                  isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
-                }
-              >
-                <Sparkles className="h-5 w-5" />
-                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleShare}
-                aria-label="Partager"
-              >
-                <Share2 className="h-5 w-5" />
-                Partager
-              </Button>
-            </div>
           </div>
 
           {/* Main info & Tabs */}
@@ -480,6 +444,42 @@ export default function SeriesDetailPage() {
               genres={series.genre}
               rating={series.vote_average}
             />
+
+            {/* Actions (déplacés ici pour être comme dans la page film) */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full min-w-0 max-w-2xl">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto gap-2"
+                onClick={handleWatchFirst}
+                disabled={!canWatch || seasonEpisodes.length === 0}
+                aria-label="Regarder la série"
+              >
+                <Play className="h-5 w-5" />
+                Regarder
+              </Button>
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                size="lg"
+                className="w-full sm:w-auto gap-2"
+                onClick={toggleFavorite}
+                aria-label={
+                  isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"
+                }
+              >
+                <Sparkles className="h-5 w-5" />
+                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto gap-2"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share2 className="h-5 w-5" />
+                Partager
+              </Button>
+            </div>
 
             <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
 
