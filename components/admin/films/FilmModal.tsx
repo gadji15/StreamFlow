@@ -2,17 +2,42 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-// Pour upload local (images, vidéos)
-import { supabase } from "@/lib/supabaseClient";
+// Table de correspondance des genres TMDB (adapter selon les genres détectés à l'import)
+const GENRE_NORMALIZATION_MAP = {
+  "sci fi": "Science Fiction",
+  "science fiction": "Science Fiction",
+  "sci-fi": "Science Fiction",
+  "action": "Action",
+  "adventure": "Adventure",
+  "animation": "Animation",
+  "comedy": "Comedy",
+  "crime": "Crime",
+  "documentary": "Documentary",
+  "drama": "Drama",
+  "family": "Family",
+  "fantasy": "Fantasy",
+  "history": "History",
+  "horror": "Horror",
+  "music": "Music",
+  "mystery": "Mystery",
+  "romance": "Romance",
+  "thriller": "Thriller",
+  "war": "War",
+  "western": "Western"
+};
 
-// Petite aide utilitaire
-function getYoutubeTrailer(videos) {
-  if (!Array.isArray(videos)) return "";
-  const yt = videos.find(
-    (v) => v.type === "Trailer" && v.site === "YouTube"
-  );
-  if (yt && yt.key) return `https://www.youtube.com/watch?v=${yt.key}`;
-  return "";
+// Fonction de normalisation
+function normalizeGenre(input) {
+  if (!input) return "";
+  const key = input.trim().toLowerCase().replace(/[\s\-]+/g, " ").replace(/\s+/g, " ");
+  return GENRE_NORMALIZATION_MAP[key] || input.trim();
+};
+
+// Fonction de normalisation
+function normalizeGenre(input) {
+  if (!input) return "";
+  const key = input.trim().toLowerCase().replace(/[\s\-]+/g, " ").replace(/\s+/g, " ");
+  return GENRE_NORMALIZATION_MAP[key] || input.trim();
 }
 
 export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
@@ -951,7 +976,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                   form.genresInput?.trim()
                 ) {
                   e.preventDefault();
-                  const genre = form.genresInput.trim();
+                  let genre = form.genresInput.trim();
+                  genre = normalizeGenre(genre); // normalisation automatique
                   if (genre.length > 0 && !(form.genres || []).includes(genre)) {
                     handleChange("genres", [...(form.genres || []), genre]);
                   }

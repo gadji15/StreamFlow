@@ -29,6 +29,35 @@ type SeriesModalProps = {
   tmdbSearch?: (query: string) => Promise<any>;
 };
 
+const GENRE_NORMALIZATION_MAP = {
+  "sci fi": "Science Fiction",
+  "science fiction": "Science Fiction",
+  "sci-fi": "Science Fiction",
+  "action": "Action",
+  "animation": "Animation",
+  "comedy": "Comedy",
+  "crime": "Crime",
+  "documentary": "Documentary",
+  "drama": "Drama",
+  "family": "Family",
+  "fantasy": "Fantasy",
+  "history": "History",
+  "horror": "Horror",
+  "music": "Music",
+  "mystery": "Mystery",
+  "romance": "Romance",
+  "thriller": "Thriller",
+  "war": "War",
+  "western": "Western"
+};
+
+// Fonction de normalisation
+function normalizeGenre(input: string) {
+  if (!input) return "";
+  const key = input.trim().toLowerCase().replace(/[\s\-]+/g, " ").replace(/\s+/g, " ");
+  return GENRE_NORMALIZATION_MAP[key] || input.trim();
+}
+
 export default function SeriesModal({
   open,
   onClose,
@@ -744,7 +773,8 @@ export default function SeriesModal({
                   form.genresInput?.trim()
                 ) {
                   e.preventDefault();
-                  const genre = form.genresInput.trim();
+                  let genre = form.genresInput.trim();
+                  genre = normalizeGenre(genre); // normalisation automatique
                   if (genre.length > 0 && !(form.genres || []).includes(genre)) {
                     handleChange("genres", [...(form.genres || []), genre]);
                   }
