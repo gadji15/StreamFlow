@@ -173,7 +173,36 @@ export default function WatchFilmPage() {
 
         {/* Films similaires */}
         <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
-          <h3 className="font-bold text-xl mb-3 text-primary">Films similaires</h3>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-bold">Films similaires</h2>
+              <p className="text-gray-400 text-sm mt-1">Découvrez d'autres œuvres que vous pourriez aimer&nbsp;!</p>
+            </div>
+            {/* Optionnel : bouton voir tout vers la catégorie/genre du film */}
+            {movie.genre && (
+              <Link
+                href={`/films?genre=${encodeURIComponent(movie.genre)}`}
+                className={`
+                  text-sm flex items-center font-medium
+                  bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+                  bg-clip-text text-transparent
+                  underline underline-offset-4
+                  transition-all duration-300
+                  hover:bg-none hover:text-violet-400 hover:scale-105
+                  focus:outline-none
+                `}
+                style={{
+                  WebkitTextFillColor: 'transparent',
+                  background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+                  WebkitBackgroundClip: 'text',
+                  padding: 0,
+                  border: "none"
+                }}
+              >
+                <span className="underline underline-offset-4">Voir tout</span>
+              </Link>
+            )}
+          </div>
           <SimilarMoviesGrid tmdbId={movie.tmdb_id || ""} />
         </section>
       </div>
