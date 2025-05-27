@@ -435,7 +435,7 @@ export default function SeriesDetailPage() {
           </div>
 
           {/* Main info & Tabs */}
-          <div className="flex-1 flex flex-col gap-6 w-full">
+          <div className="flex-1 flex flex-col gap-6 w-full min-h-[540px]">
             <SeriesInfo
               title={series.title}
               startYear={series.start_year}
@@ -530,7 +530,11 @@ export default function SeriesDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-gray-400">Aucune bande-annonce disponible.</div>
+                    <div className="flex flex-col items-center justify-center bg-zinc-900/70 rounded-lg aspect-video min-h-[300px] max-w-2xl mx-auto">
+                      <svg width="56" height="56" fill="none" viewBox="0 0 24 24" className="mb-3 text-gray-600"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.25 6.25V4A2.25 2.25 0 0 0 13 1.75h-2A2.25 2.25 0 0 0 8.75 4v2.25M3.5 10.75v7A2.25 2.25 0 0 0 5.75 20h12.5A2.25 2.25 0 0 0 20.5 17.75v-7m-17 0 1.06-4.25A2.25 2.25 0 0 1 6.73 4.75h10.54a2.25 2.25 0 0 1 2.17 1.75l1.06 4.25m-17 0h17"></path></svg>
+                      <p className="text-gray-400 text-lg font-medium mb-1">Aucune bande-annonce disponible</p>
+                      <span className="text-gray-500 text-sm">La bande-annonce sera ajoutée prochainement.</span>
+                    </div>
                   )}
                 </TabsContent>
 
