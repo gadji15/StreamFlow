@@ -31,42 +31,6 @@ function normalizeGenre(input) {
   if (!input) return "";
   const key = input.trim().toLowerCase().replace(/[\s\-]+/g, " ").replace(/\s+/g, " ");
   return GENRE_NORMALIZATION_MAP[key] || input.trim();
-}
-
-// Pour upload local (images, vidéos)
-import { supabase } from "@/lib/supabaseClient";
-
-// Petite aide utilitaire
-function getYoutubeTrailer(videos) {
-  if (!Array.isArray(videos)) return "";
-  const yt = videos.find(
-    (v) => v.type === "Trailer" && v.site === "YouTube"
-  );
-  if (yt && yt.key) return `https://www.youtube.com/watch?v=${yt.key}`;
-  return "";
-}
-
-// Table de correspondance des genres TMDB (adapter selon les genres détectés à l'import)
-const GENRE_NORMALIZATION_MAP = {
-  "sci fi": "Science Fiction",
-  "science fiction": "Science Fiction",
-  "sci-fi": "Science Fiction",
-  "action": "Action",
-  "animation": "Animation",
-  "comedy": "Comedy",
-  "crime": "Crime",
-  "documentary": "Documentary",
-  "drama": "Drama",
-  "family": "Family",
-  "fantasy": "Fantasy",
-  "history": "History",
-  "horror": "Horror",
-  "music": "Music",
-  "mystery": "Mystery",
-  "romance": "Romance",
-  "thriller": "Thriller",
-  "war": "War",
-  "western": "Western"
 };
 
 // Fonction de normalisation
