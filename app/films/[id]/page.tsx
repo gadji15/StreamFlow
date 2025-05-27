@@ -17,8 +17,9 @@ import { fetchTMDBSimilarMovies, getTMDBImageUrl } from "@/lib/tmdb";
 import FilmCard from "@/components/FilmCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { VideoPlayer } from "@/components/video-player";
 import { cn } from "@/lib/utils";
-import { BookText, Users, CopyPlus, MessageSquare } from "lucide-react";
+import { BookText, Users, CopyPlus, MessageSquare, Lock } from "lucide-react";
 
 function normalizePosterUrl(raw: any) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -327,14 +328,60 @@ export default function FilmDetailPage() {
         <FilmBackdrop src={movie.backdropUrl} alt={`Backdrop de ${movie.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
-          {/* Poster et VIP badge */}
+      <div className="container mx-auto px-2 sm:px-4 pt-24 pb-10 relative z-10 flex flex-col gap-8">
+        {/* --- Video Player Section --- */}
+        <section className="flex flex-col items-center w-full">
+          <div className="relative w-full max-w-[98vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl aspect-video mt-2 sm:mt-4 rounded-2xl overflow-hidden shadow-xl bg-black mx-auto transition-all duration-300">
+            {/* Video player or overlayed lock */}
+            {canWatch ? (
+              <VideoPlayer
+                src={movie.videoUrl}
+                poster={movie.posterUrl}
+                title={movie.title}
+                autoPlay={false}
+                onEnded={undefined}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 transition-all duration-300">
+                <Lock className="h-16 w-16 text-amber-400 mb-6 drop-shadow-xl animate-pulse" />
+                <div className="text-xl font-bold text-amber-200 mb-2">Contenu réservé VIP</div>
+                <div className="text-base text-amber-100 mb-4 max-w-xs text-center">
+                  Ce film est réservé aux abonnés VIP. Pour en profiter : 
+                </div>
+                <Button
+                  size="lg"
+                  className="rounded-2xl px-8 py-3 text-lg font-bold bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 shadow-xl"
+                  onClick={() => router.push('/abonnement')}
+                >
+                  Devenir VIP
+                </Button>
+              </div>
+            )}
+            {/* Metadata overlay */}
+            <div className="absolute top-2 left-2 sm:left-4 bg-black/70 rounded px-3 sm:px-5 py-1.5 flex items-center gap-3 pointer-events-none z-10 shadow-lg animate-fade-in">
+              <FilmInfo
+                title={movie.title}
+                year={movie.year}
+                duration={movie.duration}
+                genres={movie.genre}
+                rating={movie.rating}
+              />
+              {movie.isVIP && (
+                <Badge variant="secondary" className="ml-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg rounded-2xl">
+                  VIP
+                </Badge>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* --- Info & actions section --- */}
+        <section className="flex flex-col md:flex-row gap-10 w-full max-w-6xl mx-auto">
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
             {movie.isVIP && (
               <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg rounded-2xl">
                   Contenu VIP
                 </Badge>
                 <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
@@ -346,7 +393,8 @@ export default function FilmDetailPage() {
                   {!isVIP && (
                     <Button
                       size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 rounded-2xl"
+                      onClick={() => router.push('/abonnement')}
                     >
                       Devenir VIP
                     </Button>
@@ -357,14 +405,7 @@ export default function FilmDetailPage() {
           </div>
 
           <div className="flex-1 flex flex-col gap-5">
-            <FilmInfo
-              title={movie.title}
-              year={movie.year}
-              duration={movie.duration}
-              genres={movie.genre}
-              rating={movie.rating}
-            />
-
+            {/* Actions */}
             <ActionButtons
               canWatch={canWatch}
               videoUrl={movie.videoUrl}
@@ -372,7 +413,7 @@ export default function FilmDetailPage() {
               isFavorite={isFavorite}
               onToggleFavorite={toggleFavorite}
               onShare={handleShare}
-              onPlay={handlePlay}
+              onPlay={() => {}}
             />
 
             <p className="text-gray-300 text-base mt-2 mb-3">{movie.description}</p>
@@ -383,76 +424,76 @@ export default function FilmDetailPage() {
               </p>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Onglets premium */}
-        <div className="mt-12">
+        {/* --- Tabs/Sections --- */}
+        <div className="mt-8 w-full max-w-6xl mx-auto">
           <Tabs defaultValue="overview">
-            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <BookText className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Synopsis</span>
-  </TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <Users className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Casting</span>
-  </TabsTrigger>
-  <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <CopyPlus className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Films similaires</span>
-  </TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <MessageSquare className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Commentaires</span>
-  </TabsTrigger>
-</TabsList>
+            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide bg-gray-900/50 rounded-xl shadow">
+              <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-1 flex flex-col items-center rounded-2xl transition hover:bg-gray-800/60">
+                <BookText className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Synopsis</span>
+              </TabsTrigger>
+              <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-1 flex flex-col items-center rounded-2xl transition hover:bg-gray-800/60">
+                <Users className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Casting</span>
+              </TabsTrigger>
+              <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-1 flex flex-col items-center rounded-2xl transition hover:bg-gray-800/60">
+                <CopyPlus className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Films similaires</span>
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-1 flex flex-col items-center rounded-2xl transition hover:bg-gray-800/60">
+                <MessageSquare className="w-5 h-5 inline sm:hidden" />
+                <span className="hidden sm:inline">Commentaires</span>
+              </TabsTrigger>
+            </TabsList>
             {/* 
               Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :
               .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
               .scrollbar-none::-webkit-scrollbar { display: none; }
             */}
-            <TabsContent value="overview" className="pt-6">
-  <div className="mb-4">
-    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
-    <p className="text-gray-300 whitespace-pre-line">{movie.description}</p>
-  </div>
-  {movie.trailerUrl && (
-    <div>
-      <h2 className="text-base font-semibold mb-2">Bande-annonce</h2>
-      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-        <iframe
-          src={
-            movie.trailerUrl.includes("youtube.com/watch")
-              ? movie.trailerUrl.replace("watch?v=", "embed/")
-              : movie.trailerUrl
-          }
-          title={`Bande-annonce de ${movie.title}`}
-          allowFullScreen
-          className="w-full h-full"
-        ></iframe>
-      </div>
-    </div>
-  )}
-</TabsContent>
+            <TabsContent value="overview" className="pt-6 animate-fade-in">
+              <div className="mb-4">
+                <h2 className="text-base font-semibold mb-2">Synopsis</h2>
+                <p className="text-gray-300 whitespace-pre-line">{movie.description}</p>
+              </div>
+              {movie.trailerUrl && (
+                <div>
+                  <h2 className="text-base font-semibold mb-2">Bande-annonce</h2>
+                  <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
+                    <iframe
+                      src={
+                        movie.trailerUrl.includes("youtube.com/watch")
+                          ? movie.trailerUrl.replace("watch?v=", "embed/")
+                          : movie.trailerUrl
+                      }
+                      title={`Bande-annonce de ${movie.title}`}
+                      allowFullScreen
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
-            <TabsContent value="casting" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Casting</h2>
-  {movie.tmdbId ? (
-    <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
-  ) : (
-    <div className="text-gray-400">Aucun casting disponible.</div>
-  )}
-</TabsContent>
+            <TabsContent value="casting" className="pt-6 animate-fade-in">
+              <h2 className="text-base font-semibold mb-2">Casting</h2>
+              {movie.tmdbId ? (
+                <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
+              ) : (
+                <div className="text-gray-400">Aucun casting disponible.</div>
+              )}
+            </TabsContent>
 
-            <TabsContent value="related" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Films similaires</h2>
-  <SimilarLocalMovies currentMovieId={id} tmdbId={movie.tmdbId} />
-</TabsContent>
+            <TabsContent value="related" className="pt-6 animate-fade-in">
+              <h2 className="text-base font-semibold mb-2">Films similaires</h2>
+              <SimilarLocalMovies currentMovieId={id} tmdbId={movie.tmdbId} />
+            </TabsContent>
 
-            <TabsContent value="comments" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Commentaires</h2>
-  <CommentsSection contentId={id} contentType="movie" />
-</TabsContent>
+            <TabsContent value="comments" className="pt-6 animate-fade-in">
+              <h2 className="text-base font-semibold mb-2">Commentaires</h2>
+              <CommentsSection contentId={id} contentType="movie" />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
