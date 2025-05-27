@@ -2,6 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
+// Liste stricte des genres autorisés côté interface
+const GENRES_LIST = [
+  "thriller",
+  "sci-fi",
+  "action",
+  "animation",
+  "comedy",
+  "documentary"
+];
+
 // Ajout de la déclaration de la propriété globale TMDB_GENRES_MAP
 declare global {
   interface Window {
@@ -369,6 +379,11 @@ export default function SeriesModal({
       // Fallbacks
       if (!creatorValue) creatorValue = "";
       // Si aucun genre reconnu, laisser l'état courant
+      // Filtrage strict des genres TMDB sur la liste officielle
+      const genresChecked = (genresValue || [])
+        .map((g: string) => g.trim().toLowerCase())
+        .filter((g: string) => GENRES_LIST.includes(g));
+
       setForm((f) => ({
         ...f,
         title: detail.name || serie.name || f.title,
@@ -419,6 +434,15 @@ export default function SeriesModal({
         const genresChecked = genres
           .map((g: string) => g.toLowerCase())
           .filter((g: string) => GENRES_LIST.includes(g));
+        // Filtrage strict des genres TMDB sur la liste officielle
+        let genres = [];
+        if (Array.isArray(data.genres) && data.genres.length > 0) {
+          genres = data.genres.map((g: { name: string }) => g.name).filter(Boolean);
+        }
+        const genresChecked = genres
+          .map((g: string) => g.trim().toLowerCase())
+          .filter((g: string) => GENRES_LIST.includes(g));
+
         setForm((f) => ({
           ...f,
           title: data.name || f.title,
