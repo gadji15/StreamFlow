@@ -1,19 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Tv } from "lucide-react";
-import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
+import { Film } from "lucide-react";
+import { fetchTMDBSimilarMovies, getTMDBImageUrl } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
 
 /**
- * Grille premium pour les séries similaires (croisement TMDB + Supabase)
- * Affichage harmonisé avec la grille de la page d'accueil.
+ * Grille harmonisée pour les films similaires (croisement TMDB + Supabase)
  */
-export default function SimilarSeriesGrid({
-  currentSeriesId,
+export default function SimilarFilmsGrid({
+  currentMovieId,
   tmdbId,
 }: {
-  currentSeriesId: string;
+  currentMovieId: string;
   tmdbId: string;
 }) {
   const [similarLocal, setSimilarLocal] = useState<any[]>([]);
@@ -27,25 +26,25 @@ export default function SimilarSeriesGrid({
           setSimilarLocal([]);
           return;
         }
-        // 1. Get similar series from TMDB
-        const similarFromTMDB = await fetchTMDBSimilarSeries(tmdbId);
-        const similarTMDBIds = similarFromTMDB.map((s) => s.id);
+        // 1. Get similar movies from TMDB
+        const similarFromTMDB = await fetchTMDBSimilarMovies(tmdbId);
+        const similarTMDBIds = similarFromTMDB.map((m) => m.id);
 
-        // 2. Fetch all local series except the current one
-        const { data: localSeries, error } = await supabase
-          .from("series")
+        // 2. Fetch all local films (except current)
+        const { data: localFilms, error } = await supabase
+          .from("films")
           .select("*")
-          .neq("id", currentSeriesId);
+          .neq("id", currentMovieId);
 
-        if (error || !localSeries) {
+        if (error || !localFilms) {
           setSimilarLocal([]);
           return;
         }
 
-        // 3. Cross-reference: local series whose tmdb_id is in similarTMDBIds
-        const matching = localSeries.filter(
-          (serie: any) =>
-            serie.tmdb_id && similarTMDBIds.includes(Number(serie.tmdb_id))
+        // 3. Cross-reference: local films whose tmdb_id is in similarTMDBIds
+        const matching = localFilms.filter(
+          (film: any) =>
+            film.tmdb_id && similarTMDBIds.includes(Number(film.tmdb_id))
         );
 
         setSimilarLocal(matching);
@@ -56,8 +55,7 @@ export default function SimilarSeriesGrid({
       }
     }
     fetchSimilar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tmdbId, currentSeriesId]);
+  }, [tmdbId, currentMovieId]);
 
   if (loading) {
     return (
@@ -84,7 +82,7 @@ export default function SimilarSeriesGrid({
   if (!similarLocal.length) {
     return (
       <div className="text-center py-10 text-gray-400">
-        Aucune série similaire disponible dans la plateforme.
+        Aucun film similaire disponible dans la plateforme.
       </div>
     );
   }
@@ -98,22 +96,20 @@ export default function SimilarSeriesGrid({
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       "
     >
-      {similarLocal.map((serie) => {
-        // Gestion des données pour harmoniser l'affichage
+      {similarLocal.map((film) => {
         const poster =
-          serie.poster ||
-          serie.poster_url ||
-          serie.posterUrl ||
+          film.poster ||
+          film.poster_url ||
+          film.posterUrl ||
           "/placeholder-poster.png";
-        const title = serie.title || "Sans titre";
-        const startYear = serie.start_year ?? serie.startYear ?? "";
-        const endYear = serie.end_year ?? serie.endYear ?? "";
-        const isVIP = serie.is_vip ?? serie.isVIP ?? false;
+        const title = film.title || "Sans titre";
+        const year = film.year ?? film.release_year ?? "";
+        const isVIP = film.is_vip ?? film.isVIP ?? false;
 
         return (
           <Link
-            key={serie.id}
-            href={`/series/${serie.id}`}
+            key={film.id}
+            href={`/films/${film.id}`}
             className={`
               bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
               flex flex-col items-center
@@ -150,7 +146,7 @@ export default function SimilarSeriesGrid({
                 </div>
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Tv className="w-7 h-7 text-white" />
+                <Film className="w-7 h-7 text-white" />
               </div>
             </div>
             <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
@@ -164,10 +160,7 @@ export default function SimilarSeriesGrid({
               >
                 {title}
               </h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">
-                {startYear}
-                {endYear ? ` - ${endYear}` : ""}
-              </p>
+              <p className="text-[11px] text-gray-400 w-full text-center">{year}</p>
             </div>
           </Link>
         );

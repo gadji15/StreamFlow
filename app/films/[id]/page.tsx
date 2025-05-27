@@ -35,86 +35,11 @@ function normalizeBackdropUrl(raw: any) {
   return "/placeholder-backdrop.jpg";
 }
 
-function SimilarLocalMovies({ currentMovieId, tmdbId }: { currentMovieId: string; tmdbId: string }) {
-  const [similarLocal, setSimilarLocal] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchSimilar() {
-      setLoading(true);
-      try {
-        if (!tmdbId) {
-          setSimilarLocal([]);
-          return;
-        }
-        // 1. Get similar movies from TMDB
-        const similarFromTMDB = await fetchTMDBSimilarMovies(tmdbId);
-        const similarTMDBIds = similarFromTMDB.map((m) => m.id);
-
-        // 2. Fetch all local films
-        const { data: localFilms, error } = await supabase
-          .from("films")
-          .select("*")
-          .neq("id", currentMovieId);
-
-        if (error || !localFilms) {
-          setSimilarLocal([]);
-          return;
-        }
-
-        // 3. Cross-reference: local films whose tmdb_id is in similarTMDBIds
-        const matching = localFilms.filter(
-          (film: any) =>
-            film.tmdb_id && similarTMDBIds.includes(Number(film.tmdb_id))
-        );
-
-        setSimilarLocal(matching);
-      } catch (e) {
-        setSimilarLocal([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSimilar();
-  }, [tmdbId, currentMovieId]);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-64 bg-gray-800 rounded-xl animate-pulse"
-            aria-hidden="true"
-          ></div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!similarLocal.length) {
-    return (
-      <div className="text-center p-8 text-gray-400">
-        Aucun film similaire disponible dans la plateforme.
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {similarLocal.map((film) => (
-        <FilmCard
-          key={film.id}
-          id={film.id}
-          title={film.title}
-          description={film.description}
-          imageUrl={normalizePosterUrl(film.poster)}
-        />
-      ))}
-    </div>
-  );
-}
+import Link from "next/link";
+import { Film } from "lucide-react";
+import SimilarFilmsGrid from "@/components/films/SimilarFilmsGrid";
+/* Suppression du composant local SimilarLocalMovies :
+   On utilisera désormais le composant réutilisable à la place. */
 
 export default function FilmDetailPage() {
   const params = useParams();
@@ -446,7 +371,7 @@ export default function FilmDetailPage() {
 
             <TabsContent value="related" className="pt-6">
   <h2 className="text-base font-semibold mb-2">Films similaires</h2>
-  <SimilarLocalMovies currentMovieId={id} tmdbId={movie.tmdbId} />
+  <SimilarFilmsGrid currentMovieId={id} tmdbId={movie.tmdbId} />
 </TabsContent>
 
             <TabsContent value="comments" className="pt-6">
