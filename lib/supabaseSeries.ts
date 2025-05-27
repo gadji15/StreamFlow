@@ -100,14 +100,14 @@ export async function getSeriesByHomepageCategory(category: string, limit = 6): 
 }
 
 /**
- * Récupère les séries par genre (champ 'genre' requis)
+ * Récupère les séries par genre, triées selon un critère (popularité, note, etc.)
  */
-export async function getSeriesByGenre(genreId: string, limit = 6): Promise<Series[]> {
+export async function getSeriesByGenre(genreId: string, limit = 6, sortBy: "created_at" | "popularity" | "vote_average" = "created_at"): Promise<Series[]> {
   const { data, error } = await supabase
     .from('series')
     .select('*')
     .ilike('genre', `%${genreId}%`)
-    .order('created_at', { ascending: false })
+    .order(sortBy, { ascending: false })
     .limit(limit);
   if (error) {
     console.error('Erreur getSeriesByGenre:', error);

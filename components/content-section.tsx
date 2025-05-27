@@ -38,6 +38,7 @@ interface ContentSectionProps {
   genreId?: string;
   count?: number;
   hideViewAllButton?: boolean;
+  sortBy?: "created_at" | "popularity" | "vote_average";
 }
 
 export function ContentSection({
@@ -50,6 +51,7 @@ export function ContentSection({
   genreId = '',
   count: countProp = 6,
   hideViewAllButton = false,
+  sortBy = "created_at",
 }: ContentSectionProps) {
   const responsiveCount = useResponsiveCount();
   const count = type === 'custom' ? countProp : responsiveCount;
@@ -74,7 +76,7 @@ export function ContentSection({
             break;
           case 'movies_by_genre':
             if (genreId) {
-              data = await getMoviesByGenre(genreId, count);
+              data = await getMoviesByGenre(genreId, count, sortBy);
             }
             break;
           case 'series_by_genre':

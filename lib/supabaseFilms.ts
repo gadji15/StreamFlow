@@ -114,14 +114,14 @@ export async function getMoviesByHomepageCategory(category: string, limit = 6): 
 }
 
 /**
- * Récupère les films par genre (champ 'genre' requis)
+ * Récupère les films par genre, triés selon un critère (popularité, note, etc.)
  */
-export async function getMoviesByGenre(genreId: string, limit = 6): Promise<Movie[]> {
+export async function getMoviesByGenre(genreId: string, limit = 6, sortBy: "created_at" | "popularity" | "vote_average" = "created_at"): Promise<Movie[]> {
   const { data, error } = await supabase
     .from('films')
     .select('*')
     .ilike('genre', `%${genreId}%`)
-    .order('created_at', { ascending: false })
+    .order(sortBy, { ascending: false })
     .limit(limit);
   if (error) {
     console.error('Erreur getMoviesByGenre:', error);
