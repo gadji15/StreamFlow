@@ -10,6 +10,7 @@ import LoadingScreen from "@/components/loading-screen";
 import SeasonModalUser from "@/components/series/SeasonModalUser";
 import { supabase } from "@/lib/supabaseClient";
 import { ChevronLeft, ListPlus } from "lucide-react";
+import Footer from "@/components/footer";
 
 type Episode = {
   id: string;
@@ -21,7 +22,7 @@ type Episode = {
   is_vip?: boolean;
   published?: boolean;
   video_url?: string;
-  thumbnail_url?: string;
+  thumbnail_url: string; // Make required to match SeasonModalUser's Episode type
 };
 
 type Season = {
@@ -427,6 +428,10 @@ export default function WatchEpisodePage() {
           animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
         }
       `}</style>
+      {/* Footer */}
+      <div className="w-full mt-8">
+        <Footer />
+      </div>
     </div>
   );
 }
