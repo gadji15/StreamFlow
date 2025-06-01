@@ -6,6 +6,26 @@ import { useToast } from "@/components/ui/use-toast";
 import EpisodeList from "./EpisodeList";
 import { Edit, Trash2, Plus, Download } from "lucide-react";
 
+type Season = {
+  id: string | number;
+  season_number: number;
+  title?: string;
+  air_date?: string;
+  episode_count?: number;
+  tmdb_series_id?: string | number;
+  [key: string]: any;
+};
+
+interface SeasonRowProps {
+  season: Season;
+  seriesId: string | number;
+  expanded: boolean;
+  onExpand: () => void;
+  seasonEpisodes: any[];
+  seasonEpisodesLoading: boolean;
+  onAction?: (action: string, payload: any) => void;
+}
+
 export default function SeasonRow({
   season,
   seriesId,
@@ -14,15 +34,15 @@ export default function SeasonRow({
   seasonEpisodes,
   seasonEpisodesLoading,
   onAction,
-}) {
+}: SeasonRowProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   // Inline edit handlers
-  const handleUpdateField = async (field, value) => {
+  const handleUpdateField = async (field: string, value: any) => {
     if (season[field] === value) return false;
     setLoading(true);
-    const patch = {};
+    const patch: { [key: string]: any } = {};
     patch[field] = value;
     const { error } = await supabase.from("seasons").update(patch).eq('id', season.id);
     setLoading(false);
@@ -96,15 +116,15 @@ export default function SeasonRow({
         </td>
         <td className="py-2 flex flex-wrap gap-1">
           <Button
-            size="xs"
-            variant={expanded ? "success" : "outline"}
+            size="sm"
+            variant={expanded ? "default" : "outline"}
             onClick={onExpand}
             disabled={loading}
           >
             Episodes
           </Button>
           <Button
-            size="xs"
+            size="sm"
             variant="outline"
             className="ml-1"
             onClick={() => onAction && onAction("edit", { season, seriesId })}
@@ -113,7 +133,7 @@ export default function SeasonRow({
             <Edit className="h-4 w-4" /> Modifier
           </Button>
           <Button
-            size="xs"
+            size="sm"
             variant="destructive"
             className="ml-1"
             onClick={handleDelete}
@@ -124,8 +144,8 @@ export default function SeasonRow({
           {/* Le bouton + Épisode est supprimé ici, EpisodeList le gère contextuellement */}
           {(season.tmdb_series_id && season.season_number) && (
             <Button
-              size="xs"
-              variant="success"
+              size="sm"
+              variant="default"
               className="ml-1"
               onClick={handleImportTMDB}
               disabled={loading}
@@ -146,10 +166,14 @@ export default function SeasonRow({
             ) : (
               <EpisodeList
                 episodes={seasonEpisodes}
-                seasonId={season.id}
-                seriesId={seriesId}
+                seasonId={String(season.id)}
+                seriesId={String(seriesId)}
                 seasonNumber={season.season_number}
-                fetchEpisodesForSeason={() => onAction && onAction("refresh-episodes", { seasonId: season.id })}
+                fetchEpisodesForSeason={async () => {
+                  if (onAction) {
+                    await onAction("refresh-episodes", { seasonId: season.id });
+                  }
+                }}
               />
             )}
           </td>

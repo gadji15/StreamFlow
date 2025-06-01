@@ -129,6 +129,7 @@ export default function SeriesPage() {
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <select
+              aria-label="Filtrer par genre"
               value={genreFilter}
               onChange={e => setGenreFilter(e.target.value)}
               className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
@@ -138,6 +139,7 @@ export default function SeriesPage() {
               ))}
             </select>
             <select
+              aria-label="Filtrer par accès VIP"
               value={showVIP}
               onChange={e => setShowVIP(e.target.value)}
               className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
@@ -194,7 +196,7 @@ export default function SeriesPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {seriesList.map((series) => (
-            <SeriesCard key={series.id} series={series} isUserVIP={isVIP} />
+            <SeriesCard key={series.id} series={series} isUserVIP={!!isVIP} />
           ))}
         </div>
       )}

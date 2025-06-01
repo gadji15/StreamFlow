@@ -729,7 +729,7 @@ export default function SeriesModal({
                     onClick={() =>
                       handleChange(
                         "genres",
-                        form.genres.filter((x, i) => i !== idx)
+                        form.genres.filter((x: string, i: number) => i !== idx)
                       )
                     }
                   >
@@ -948,7 +948,7 @@ export default function SeriesModal({
             variant="default"
             disabled={loading}
             aria-label="Enregistrer la série"
-            onClick={handleSubmit}
+            onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>)}
             className="text-xs py-1 px-2"
           >
             {loading ? "..." : "Enregistrer"}

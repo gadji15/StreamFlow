@@ -455,6 +455,7 @@ export default function AdminSeriesDetailPage() {
         onSave={(values: any) => {
           if (episodeModal.seasonId)
             return handleSaveEpisode(values, episodeModal.seasonId);
+          return Promise.resolve();
         }}
       />
     </div>

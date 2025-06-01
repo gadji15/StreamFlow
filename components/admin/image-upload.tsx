@@ -139,6 +139,7 @@ export function ImageUpload({
         accept={accept}
         className="hidden"
         disabled={isLoading}
+        title={label}
       />
       
       {error && (

@@ -118,15 +118,16 @@ export default function AdminSeriesPage() {
   const totalPages = Math.ceil(series.length / pageSize);
 
   // Sélection
-  const handleSelect = (id: string) => {
-    setSelectedIds(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
+  const handleSelect = (id: string | number) => {
+    const idStr = String(id);
+    setSelectedIds(ids => ids.includes(idStr) ? ids.filter(i => i !== idStr) : [...ids, idStr]);
   };
   const handleSelectAll = () => {
     if (allSelected) {
       setSelectedIds([]);
       setAllSelected(false);
-    } else {
-      setSelectedIds(paginatedSeries.map(s => s.id));
+      setSelectedIds(paginatedSeries.map(s => String(s.id)));
+      setAllSelected(true);
       setAllSelected(true);
     }
   };

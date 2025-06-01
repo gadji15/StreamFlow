@@ -131,7 +131,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
             href="#"
             icon={<Film className="h-5 w-5" />}
             title="Films"
-            isActive={pathname?.startsWith('/admin/films')}
+            isActive={!!pathname && pathname.startsWith('/admin/films')}
             hasDropdown={true}
             isOpen={filmsOpen}
             onClick={() => setFilmsOpen(!filmsOpen)}
@@ -156,7 +156,7 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
             href="#"
             icon={<Tv className="h-5 w-5" />}
             title="Séries"
-            isActive={pathname?.startsWith('/admin/series')}
+            isActive={!!pathname && pathname.startsWith('/admin/series')}
             hasDropdown={true}
             isOpen={seriesOpen}
             onClick={() => setSeriesOpen(!seriesOpen)}

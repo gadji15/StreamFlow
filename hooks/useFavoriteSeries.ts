@@ -21,16 +21,22 @@ export function useFavoriteSeries(seriesId: string, userId?: string | null) {
       return;
     }
     setLoading(true);
-    supabase
-      .from("favorites_series")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("series_id", seriesId)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    const fetchFavorite = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("favorites_series")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("series_id", seriesId)
+          .maybeSingle();
         setIsFavorite(!!data && !error);
-      })
-      .finally(() => setLoading(false));
+      } catch {
+        setIsFavorite(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFavorite();
   }, [seriesId, userId]);
 
   // Ajouter aux favoris

@@ -24,17 +24,21 @@ export function useWatchedEpisodes(seriesId: string, userId?: string | null) {
       return;
     }
     setLoading(true);
-    supabase
-      .from("watched_episodes")
-      .select("episode_id")
-      .eq("user_id", userId)
-      .eq("series_id", seriesId)
-      .then(({ data, error }) => {
+    const fetchWatchedEpisodes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("watched_episodes")
+          .select("episode_id")
+          .eq("user_id", userId)
+          .eq("series_id", seriesId);
         if (!error && Array.isArray(data)) {
           setWatchedIds(new Set(data.map((row) => row.episode_id)));
         }
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWatchedEpisodes();
   }, [seriesId, userId]);
 
   const markWatched = useCallback(

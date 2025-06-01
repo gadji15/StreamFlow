@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Send } from 'lucide-react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +14,17 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  
   const router = useRouter();
-  const { resetPassword } = useAuth();
+  // const { supabase } = useSupabaseAuth();
+  
+  // Correction: Utiliser la méthode appropriée pour la réinitialisation du mot de passe avec Supabase
+  // const { supabase } = useSupabaseAuth();
+  // const { supabase } = useSupabaseAuth();
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) throw error;
+  };
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {

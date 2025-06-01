@@ -7,7 +7,7 @@ import { normalizeGenres } from "../genres-normalizer";
 import { supabase } from "@/lib/supabaseClient";
 
 // Petite aide utilitaire
-function getYoutubeTrailer(videos) {
+function getYoutubeTrailer(videos: any[]) {
   if (!Array.isArray(videos)) return "";
   const yt = videos.find(
     (v) => v.type === "Trailer" && v.site === "YouTube"
@@ -16,10 +16,17 @@ function getYoutubeTrailer(videos) {
   return "";
 }
 
-export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
+type FilmModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onSave: (payload: any) => Promise<void>;
+  initialData?: any;
+};
+
+export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {
   // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
   // Initialisation du champ featured selon homepage_categories
-  function computeFeaturedFromCategories(init = {}) {
+  function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
     const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
     return cats.includes('featured') || !!init.featured;
   }
@@ -32,7 +39,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     genres: Array.isArray(initialData.genres)
       ? initialData.genres
       : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g) => g.trim())
+        ? initialData.genre.split(",").map((g: string) => g.trim())
         : []),
     genresInput: "",
     vote_average: initialData.vote_average || "",
@@ -68,7 +75,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   const [castUploading, setCastUploading] = useState(false);
 
   // VIDEO UPLOAD
-  const [localVideo, setLocalVideo] = useState(null);
+  const [localVideo, setLocalVideo] = useState<File | null>(null);
   const [localVideoUrl, setLocalVideoUrl] = useState("");
 
   // TMDB/TOAST/FOCUS
@@ -96,7 +103,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         genres: Array.isArray(initialData.genres)
           ? initialData.genres
           : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g) => g.trim())
+            ? initialData.genre.split(",").map((g: string) => g.trim())
             : []),
         genresInput: "",
         vote_average: initialData.vote_average || "",
@@ -133,7 +140,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
 
   // --- HANDLERS ---
   // Gestion spéciale pour la case "featured" liée à homepage_categories
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: any) => {
     if (field === "featured") {
       setForm((f) => {
         const categories = Array.isArray(f.homepage_categories) ? [...f.homepage_categories] : [];
@@ -146,11 +153,17 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
         }
         return { ...f, featured: value, homepage_categories: newCats };
       });
-      setErrors((e) => ({ ...e, featured: undefined }));
+      setErrors((e) => {
+        const { featured, ...rest } = e;
+        return rest;
+      });
       return;
     }
     setForm((f) => ({ ...f, [field]: value }));
-    setErrors((e) => ({ ...e, [field]: undefined }));
+    setErrors((e) => {
+      const { [field]: _, ...rest } = e;
+      return rest;
+    });
   };
 
   const validate = () => {
@@ -181,7 +194,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   };
 
   // --- VIDEO UPLOAD ---
-  const handleVideoUpload = async (file) => {
+  const handleVideoUpload = async (file: File) => {
     setCastUploading(true);
     try {
       const ext = file.name.split('.').pop();
@@ -203,7 +216,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   // --- CAST ---
   const handleAddCast = () => {
     if (!castName.trim()) return;
-    setCastList((prev) => [
+    setCastList((prev: typeof castList) => [
       ...prev,
       { name: castName, role: castRole, photo: castPhoto },
     ]);
@@ -211,11 +224,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     setCastRole("");
     setCastPhoto("");
   };
-  const handleDeleteCast = (idx) => {
-    setCastList(castList.filter((_, i) => i !== idx));
+  const handleDeleteCast = (idx: number) => {
+    setCastList(castList.filter((_: any, i: number) => i !== idx));
   };
 
-  const handleCastPhotoUpload = async (file) => {
+  const handleCastPhotoUpload = async (file: File) => {
     setCastUploading(true);
     try {
       const ext = file.name.split('.').pop();
@@ -234,13 +247,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   };
 
   // --- TMDB SEARCH ---
-  const [movieSuggestions, setMovieSuggestions] = useState([]);
+  type MovieSuggestion = { id: number; title: string; release_date?: string };
+  const [movieSuggestions, setMovieSuggestions] = useState<MovieSuggestion[]>([]);
   const [movieLoading, setMovieLoading] = useState(false);
   const [showMovieSuggestions, setShowMovieSuggestions] = useState(false);
   const [activeMovieSuggestion, setActiveMovieSuggestion] = useState(-1);
   const suggestionTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMovieSearchInput = async (e) => {
+  const handleMovieSearchInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setTmdbSearch(value);
     setShowMovieSuggestions(true);
@@ -267,7 +281,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
   };
 
   // --- TMDB IMPORT DÉTAILLÉ ---
-  const importMovieFromTMDB = async (movie) => {
+  const importMovieFromTMDB = async (movie: any) => {
     if (!movie || !movie.id) return;
     setLoading(true);
     try {
@@ -288,13 +302,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       // Director
       let director = "";
       if (detail.credits && Array.isArray(detail.credits.crew)) {
-        const dir = detail.credits.crew.find((c) => c.job === "Director");
+        const dir = detail.credits.crew.find((c: { job: string }) => c.job === "Director");
         if (dir) director = dir.name;
       }
       // Genres
       let genres = [];
       if (Array.isArray(detail.genres) && detail.genres.length > 0) {
-        genres = detail.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+        genres = detail.genres.map((g: any) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
       // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(detail.videos?.results || []);
@@ -304,7 +318,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       // Cast (limité aux principaux, mapping nom/role/photo)
       let castArr = [];
       if (Array.isArray(detail.credits?.cast)) {
-        castArr = detail.credits.cast.slice(0, 10).map((actor) => ({
+        castArr = detail.credits.cast.slice(0, 10).map((actor: any) => ({
           name: actor.name,
           role: actor.character,
           photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "",
@@ -361,13 +375,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       // Director
       let director = "";
       if (data.credits && Array.isArray(data.credits.crew)) {
-        const dir = data.credits.crew.find((c) => c.job === "Director");
+        const dir = data.credits.crew.find((c: { job: string; name: string }) => c.job === "Director");
         if (dir) director = dir.name;
       }
       // Genres
       let genres = [];
       if (Array.isArray(data.genres) && data.genres.length > 0) {
-        genres = data.genres.map((g) => typeof g === "string" ? g : g.name).filter(Boolean);
+        genres = data.genres.map((g: any) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
       // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(data.videos?.results || []);
@@ -377,7 +391,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       // Cast
       let castArr = [];
       if (Array.isArray(data.credits?.cast)) {
-        castArr = data.credits.cast.slice(0, 10).map((actor) => ({
+        castArr = data.credits.cast.slice(0, 10).map((actor: any) => ({
           name: actor.name,
           role: actor.character,
           photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "",
@@ -430,7 +444,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
       genresArr = normalizeGenres(form.genres);
       genre = genresArr.join(",");
     } else if (typeof form.genres === "string") {
-      genresArr = normalizeGenres(form.genres.split(",").map((g) => g.trim()));
+      genresArr = normalizeGenres(form.genres.split(",").map((g: string) => g.trim()));
       genre = genresArr.join(",");
     }
 
@@ -438,7 +452,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     let homepage_categories: string[] = [];
     if (Array.isArray(form.homepage_categories)) {
       homepage_categories = form.homepage_categories.filter(
-        (cat) => typeof cat === "string" && cat.trim() !== ""
+        (cat: string) => typeof cat === "string" && cat.trim() !== ""
       );
     }
 
@@ -531,7 +545,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
     };
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
     setErrors(err);
@@ -653,7 +667,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                     className={`p-2 cursor-pointer hover:bg-blue-600/70 transition-colors ${activeMovieSuggestion === idx ? "bg-blue-600/80 text-white" : ""}`}
                     role="option"
                     aria-selected={activeMovieSuggestion === idx}
-                    tabIndex={0}
                     onMouseEnter={() => setActiveMovieSuggestion(idx)}
                     onMouseDown={e => {
                       e.preventDefault();
@@ -773,7 +786,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
               overflowY: "auto",
             }}
           >
-            {castList.map((actor, idx) => (
+            {castList.map((actor: { name: string; role?: string; photo?: string }, idx: number) => (
               <div key={idx} className="flex flex-col items-center w-16 relative group">
                 <img
                   src={actor.photo || "/no-image.png"}
@@ -936,7 +949,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
                     onClick={() =>
                       handleChange(
                         "genres",
-                        form.genres.filter((x, i) => i !== idx)
+                        form.genres.filter((x: string, i: number) => i !== idx)
                       )
                     }
                   >
@@ -1234,7 +1247,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }) {
           <Button
             type="submit"
             form="film-form"
-            variant="success"
+            variant="default"
             disabled={loading}
             aria-label="Enregistrer le film"
             className="text-xs py-1 px-2"

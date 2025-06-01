@@ -61,7 +61,7 @@ export function useWatchHistory() {
           completed,
           updated_at: new Date().toISOString(),
         }],
-        { onConflict: ['user_id', 'content_id', 'content_type'] }
+        { onConflict: 'user_id,content_id,content_type' }
       );
     if (error) throw new Error(error.message);
     fetchHistory();

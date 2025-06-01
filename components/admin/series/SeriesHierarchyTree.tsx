@@ -11,7 +11,7 @@ interface SeriesHierarchyTreeProps {
   series: Serie[];
   seriesSeasons?: Record<string, any[]>;
   fetchSeasonsForSeries: (seriesId: string) => void;
-  fetchEpisodesForSeason: (seasonId: string) => void;
+  fetchEpisodesForSeason: (seasonId: string | number) => void;
   seasonEpisodes?: Record<string, any[]>;
   seasonEpisodesLoading?: Record<string, boolean>;
   setModal: (modalState: any) => void;
@@ -82,7 +82,7 @@ export default function SeriesHierarchyTree({
                 seasonEpisodes={seasonEpisodes}
                 seasonEpisodesLoading={seasonEpisodesLoading}
                 expandedSeason={expandedSeason}
-                setExpandedSeason={setExpandedSeason}
+                setExpandedSeason={(id: string | number | null) => setExpandedSeason(id !== null ? String(id) : null)}
                 onAction={setModal}
               />
             </div>

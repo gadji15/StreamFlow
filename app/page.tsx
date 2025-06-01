@@ -61,7 +61,7 @@ export default function HomePage() {
         <ContentSection 
           title="Films populaires"
           type="popular_movies"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -70,7 +70,7 @@ export default function HomePage() {
         <ContentSection 
           title="Séries populaires"
           type="popular_series"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -80,7 +80,7 @@ export default function HomePage() {
           title="Suspense"
           type="movies_by_genre"
           genreId="thriller"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -90,7 +90,7 @@ export default function HomePage() {
           title="Science Fiction"
           type="movies_by_genre"
           genreId="sci-fi"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -100,7 +100,7 @@ export default function HomePage() {
           title="Action"
           type="movies_by_genre"
           genreId="action"
-          count={count}
+           count={count.count}
         />
       </section>
 
@@ -110,7 +110,7 @@ export default function HomePage() {
           title="Animation"
           type="movies_by_genre"
           genreId="animation"
-          count={count}
+           count={count.count}
         />
       </section>
 
@@ -120,7 +120,7 @@ export default function HomePage() {
           title="Comédie"
           type="movies_by_genre"
           genreId="comedy"
-          count={count}
+           count={count.count}
         />
       </section>
 
@@ -130,7 +130,7 @@ export default function HomePage() {
           title="Documentaire"
           type="movies_by_genre"
           genreId="documentary"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -140,7 +140,7 @@ export default function HomePage() {
           title="Séries Science Fiction"
           type="series_by_genre"
           genreId="sci-fi"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -150,7 +150,7 @@ export default function HomePage() {
           title="Séries Thriller"
           type="series_by_genre"
           genreId="thriller"
-          count={count}
+          count={count.count}
         />
       </section>
 
@@ -186,12 +186,9 @@ export default function HomePage() {
             </div>
             <div>
               <ContentSection 
-                isRow={false} 
                 title=""
-                type={Math.random() > 0.5 ? "movies" : "series"}
-                filter="vip"
-                limit={count}
-                showHeader={false}
+                type={Math.random() > 0.5 ? "popular_movies" : "popular_series"}
+                count={count.count}
                 hideViewAllButton={true}
               />
             </div>

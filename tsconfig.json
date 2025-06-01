@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5", // Cible ES5 pour compatibilité navigateur
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true, // Autoriser les fichiers JS
     "skipLibCheck": true, // Ignorer la vérification des types des bibliothèques
     "strict": true, // Activer toutes les vérifications strictes
@@ -20,16 +24,23 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"] // Alias de chemin pour les imports
+      "@/*": [
+        "./*"
+      ] // Alias de chemin pour les imports
     },
-    "types": ["node", "@types/react", "@types/react-dom"] // Inclure les types Node et React explicitement
+    "types": [
+      "node",
+      "@types/react",
+      "@types/react-dom"
+    ] // Inclure les types Node et React explicitement
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts", // Important pour les types générés par Next.js App Router
-    "types.d.ts" // Inclure les déclarations personnalisées si elles existent
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"] // Exclure le dossier node_modules
+  "exclude": [
+    "node_modules"
+  ] // Exclure le dossier node_modules
 }
