@@ -197,7 +197,10 @@ export default function WatchFilmPage() {
               </Link>
             )}
           </div>
-          <SimilarMoviesGrid tmdbId={movie.tmdb_id || ""} />
+          {/* Vérification : le composant SimilarMoviesGrid reçoit bien un identifiant valide */}
+          <SimilarMoviesGrid
+            tmdbId={movie.tmdb_id ? String(movie.tmdb_id) : ""}
+          />
         </section>
       </main>
        {/* Animation keyframes */}

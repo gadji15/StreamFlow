@@ -32,6 +32,8 @@ export default function SeriesPage() {
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [showVIP, setShowVIP] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 20;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const searchParams = useSearchParams();
   const { isVIP } = useSupabaseAuth();
@@ -103,6 +105,41 @@ export default function SeriesPage() {
     setGenreFilter('');
     setSearchTerm('');
     setShowVIP('');
+  };
+
+  // Pagination : nombre total de pages
+  const totalPages = Math.ceil(seriesList.length / perPage);
+
+  // Pagination : affichage des séries de la page courante
+  const paginatedSeries = seriesList.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  // Pagination : gestion du changement de page
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Génère les numéros de pages (affiche les 3 premières, 3 dernières, et autour de la page courante)
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - 2 && i <= currentPage + 2) ||
+        (i <= 3 && currentPage <= 4) ||
+        (i >= totalPages - 2 && currentPage >= totalPages - 3)
+      ) {
+        pages.push(i);
+      } else if (
+        (i === currentPage - 3 && currentPage > 4) ||
+        (i === currentPage + 3 && currentPage < totalPages - 3)
+      ) {
+        pages.push('...');
+      }
+    }
+    // Supprime les doublons de "..."
+    return pages.filter((v, i, arr) => v !== '...' || arr[i - 1] !== '...');
   };
 
   return (
@@ -194,11 +231,31 @@ export default function SeriesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {seriesList.map((series) => (
-            <SeriesCard key={series.id} series={series} isUserVIP={!!isVIP} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {paginatedSeries.map((series) => (
+              <SeriesCard key={series.id} series={series} isUserVIP={!!isVIP} />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8 gap-1 flex-wrap">
+              {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                  <span key={idx} className="px-2 text-gray-400">...</span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    className="px-3 py-1 text-sm"
+                    onClick={() => handlePageChange(Number(page))}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

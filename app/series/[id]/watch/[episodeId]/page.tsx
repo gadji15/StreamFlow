@@ -210,7 +210,7 @@ export default function WatchEpisodePage() {
             onClick={() => setIsSeasonModalOpen(true)}
             aria-label="Sélectionner saison/épisode"
           >
-            Sélectionner saison/épisode
+          saison/épisode
           </Button>
           <div className="flex gap-2">
             {previousEpisode && (
@@ -221,7 +221,7 @@ export default function WatchEpisodePage() {
                 aria-label="Épisode précédent"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                Précédent
+                P
               </Button>
             )}
             {nextEpisode && (
@@ -231,7 +231,7 @@ export default function WatchEpisodePage() {
                 onClick={goToNextEpisode}
                 aria-label="Épisode suivant"
               >
-                Suivant
+                S
                 <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
               </Button>
             )}

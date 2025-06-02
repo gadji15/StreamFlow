@@ -31,6 +31,9 @@ export default function FilmsPage() {
   const [selectedGenre, setSelectedGenre] = useState<string>('');
   const [showVIP, setShowVIP] = useState<string>(''); // '', 'true', 'false'
   const [debouncedTerm, setDebouncedTerm] = useState('');
+  const [visibleCount, setVisibleCount] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 20;
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const searchParams = useSearchParams();
   const { isVIP } = useSupabaseAuth();
@@ -106,6 +109,41 @@ export default function FilmsPage() {
     setSelectedGenre('');
     setSearchTerm('');
     setShowVIP('');
+  };
+
+  // Pagination : nombre total de pages
+  const totalPages = Math.ceil(movies.length / perPage);
+
+  // Pagination : affichage des films de la page courante
+  const paginatedMovies = movies.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  // Pagination : gestion du changement de page
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Génère les numéros de pages (affiche les 3 premières, 3 dernières, et autour de la page courante)
+  const getPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - 2 && i <= currentPage + 2) ||
+        (i <= 3 && currentPage <= 4) ||
+        (i >= totalPages - 2 && currentPage >= totalPages - 3)
+      ) {
+        pages.push(i);
+      } else if (
+        (i === currentPage - 3 && currentPage > 4) ||
+        (i === currentPage + 3 && currentPage < totalPages - 3)
+      ) {
+        pages.push('...');
+      }
+    }
+    // Supprime les doublons de "..."
+    return pages.filter((v, i, arr) => v !== '...' || arr[i - 1] !== '...');
   };
 
   return (
@@ -207,11 +245,31 @@ export default function FilmsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {movies.map((movie) => (
-            <FilmCard key={movie.id} movie={movie} isUserVIP={isVIP ?? false} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {paginatedMovies.map((movie) => (
+              <FilmCard key={movie.id} movie={movie} isUserVIP={isVIP ?? false} />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8 gap-1 flex-wrap">
+              {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                  <span key={idx} className="px-2 text-gray-400">...</span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? "default" : "outline"}
+                    className="px-3 py-1 text-sm"
+                    onClick={() => handlePageChange(Number(page))}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -229,40 +287,64 @@ function FilmCard({ movie, isUserVIP }: FilmCardProps) {
   return (
     <Link
       href={`/films/${id}`}
-      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
-        isVIP && !isUserVIP ? 'opacity-70' : ''
-      }`}
+      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-all duration-300
+        hover:scale-[1.04] hover:shadow-2xl hover:ring-2 hover:ring-primary/40
+        focus-visible:ring-4 focus-visible:ring-primary/60
+        ${isVIP && !isUserVIP ? 'opacity-70 grayscale hover:grayscale-0' : ''}
+        `}
       tabIndex={0}
       aria-label={title}
+      style={{ willChange: 'transform, box-shadow' }}
     >
       <div className="relative aspect-[2/3]">
         <img
           src={posterSrc}
           alt={`Affiche de ${title}`}
-          className="w-full h-full object-cover transition group-hover:brightness-90"
+          className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90 group-hover:scale-105"
           loading="lazy"
+          style={{ willChange: 'transform, filter' }}
         />
         {isVIP && (
-          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold shadow">
+          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold shadow animate-pulse">
             VIP
           </div>
         )}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Film className="h-12 w-12 text-white" />
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+          <Film className="h-12 w-12 text-white drop-shadow-lg animate-fade-in-up" />
         </div>
       </div>
-      <div className="p-3">
+      <div className="p-3 transition-colors duration-200 group-hover:bg-gray-900/70">
         <div className="flex justify-between items-start">
-          <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
+          <h3 className="font-semibold truncate text-sm flex-1 group-hover:text-primary transition-colors duration-200">{title}</h3>
           {popularity && (
             <div className="flex items-center ml-2">
-              <Star className="h-3 w-3 text-yellow-400 fill-current" />
+              <Star className="h-3 w-3 text-yellow-400 fill-current animate-bounce-slow" />
               <span className="text-xs ml-0.5">{popularity}</span>
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400">{year}</p>
+        <p className="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-200">{year}</p>
       </div>
     </Link>
   );
 }
+
+// Ajoutez ces animations personnalisées dans votre CSS global si besoin :
+/*
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+  }
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(20px);}
+    100% { opacity: 1; transform: translateY(0);}
+  }
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+}
+*/
