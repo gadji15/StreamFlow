@@ -7,6 +7,8 @@ let genresCache: { id: string; name: string }[] | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 3600000; // 1 heure en millisecondes
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const now = Date.now();

@@ -200,3 +200,4 @@ export const getVideos = async (mediaType: "movie" | "tv", id: number) => {
     throw error;
   }
 };
+

@@ -2,12 +2,15 @@
 
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function ConfirmationEmailPage() {
+// Correction : forcer la page en dynamique pour éviter l’erreur de build SSG avec useSearchParams
+export const dynamic = "force-dynamic";
+
+function ConfirmationEmailInner() {
   const searchParams = useSearchParams();
   const emailFromUrl = searchParams?.get("email") || "";
   const [email, setEmail] = useState(emailFromUrl);
@@ -88,5 +91,13 @@ export default function ConfirmationEmailPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ConfirmationEmailPage() {
+  return (
+    <Suspense>
+      <ConfirmationEmailInner />
+    </Suspense>
   );
 }

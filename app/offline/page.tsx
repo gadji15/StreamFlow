@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+export const dynamic = "force-dynamic";
+
 export default function OfflinePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
