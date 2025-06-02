@@ -148,10 +148,13 @@ export default function Header() {
               <>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative rounded-full h-8 w-8 p-0">
+                    <Button
+                      variant="ghost"
+                      className="relative rounded-full h-8 w-8 p-0 hover:ring-2 hover:ring-fuchsia-400 transition"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={userData?.photoURL || ''} alt={userData?.displayName || ''} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gray-900 hover:bg-gray-800 hover:text-fuchsia-400 transition">
                           {userData?.displayName?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
@@ -160,36 +163,36 @@ export default function Header() {
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="bg-gray-900">
                     <DropdownMenuLabel>
                       {userData?.displayName || 'Utilisateur'}
                       {isVIP && <span className="ml-1 text-amber-400">(VIP)</span>}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="hover:bg-gray-800 transition">
                       <Link href="/mon-compte">Mon compte</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="hover:bg-gray-800 transition">
                       <Link href="/mon-compte/historique">Historique</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="hover:bg-gray-800 transition">
                       <Link href="/favoris">Favoris</Link>
                     </DropdownMenuItem>
                     {!isVIP && (
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem asChild className="hover:bg-gray-800 transition">
                         <Link href="/vip" className="text-amber-400">Devenir VIP</Link>
                       </DropdownMenuItem>
                     )}
                     {isAdmin && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
+                        <DropdownMenuItem asChild className="hover:bg-gray-800 transition">
                           <Link href="/admin">Administration</Link>
                         </DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="hover:bg-gray-800 transition">
                       Se déconnecter
                     </DropdownMenuItem>
                   </DropdownMenuContent>

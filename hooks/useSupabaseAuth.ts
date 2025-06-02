@@ -69,6 +69,19 @@ export function useSupabaseAuth() {
     if (error) throw error;
   }
 
+  // Ajoutez cette fonction dans votre hook :
+  async function updateProfile({ displayName, photoURL }: { displayName?: string; photoURL?: string }) {
+    // Remplacez par la logique adaptée à votre backend
+    // Exemple Supabase :
+    // const user = ... // récupérez l'utilisateur courant
+    // const { error } = await supabase
+    //   .from('users')
+    //   .update({ displayName, photoURL })
+    //   .eq('id', user.id);
+    // if (error) throw error;
+    // await fetchUserData(); // recharge les infos utilisateur
+  }
+
   return {
     user,
     isLoggedIn: !!user,
@@ -78,5 +91,6 @@ export function useSupabaseAuth() {
     isAdmin,
     login,
     logout: signOut,
+    updateProfile, // <-- ajoutez cette ligne
   };
 }

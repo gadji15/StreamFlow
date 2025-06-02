@@ -80,7 +80,7 @@ export default function MonComptePage() {
               
               <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/mon-compte/profil">
+                  <Link href="/mon-compte/edit">
                     <Edit className="w-4 h-4 mr-1" />
                     Modifier le profil
                   </Link>
