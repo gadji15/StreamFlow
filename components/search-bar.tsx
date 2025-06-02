@@ -43,7 +43,7 @@ export default function SearchBar() {
             .limit(5),
           supabase
             .from("series")
-            .select("id,title,poster,startYear,endYear")
+            .select("id,title,poster,start_year,end_year") // Correction: start_year/end_year (snake_case)
             .ilike("title", `%${searchTerm.trim()}%`)
             .limit(5),
         ]);
@@ -60,7 +60,7 @@ export default function SearchBar() {
             id: s.id,
             title: s.title,
             type: "série",
-            year: s.startYear,
+            year: s.start_year, // Correction: start_year
             image: s.poster,
           })) || [];
         setResults([...films, ...series]);
