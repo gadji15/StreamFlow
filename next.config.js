@@ -5,4 +5,7 @@ module.exports = {
   assetPrefix: '',
   // Pour les chemins de base si besoin
   // basePath: '',
+  images: {
+    domains: ['image.tmdb.org'],
+  },
 };
