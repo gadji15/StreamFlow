@@ -183,6 +183,8 @@ const movieData = {
       size: "3.2 GB",
     },
   ],
+  // Correction: ajoutez la clé "recommended" même si vide ou à remplir plus tard
+  recommended: [],
 }
 
 interface MobileCarouselProps {
@@ -277,16 +279,25 @@ export default function MobileCarousel({ category }: MobileCarouselProps) {
                   </Link>
                   {category === "downloads" ? (
                     "downloaded" in movie && movie.downloaded ? (
-                      <button className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full">
+                      <button
+                        className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full"
+                        title="Déjà téléchargé"
+                      >
                         <Check className="h-4 w-4 text-green-500" />
                       </button>
                     ) : (
-                      <button className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full">
+                      <button
+                        className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full"
+                        title="Télécharger"
+                      >
                         <Download className="h-4 w-4 text-white" />
                       </button>
                     )
                   ) : (
-                    <button className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full">
+                    <button
+                      className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full"
+                      title="Ajouter à la liste"
+                    >
                       <Plus className="h-4 w-4 text-white" />
                     </button>
                   )}

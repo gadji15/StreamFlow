@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Play } from "lucide-react"
-import { VIPBadge } from "./vip-badge"
+import { VipBadge } from "./vip-badge"
 import { Button } from "@/components/ui/button"
 
 interface ContentItem {
@@ -34,7 +34,7 @@ export function VIPContentCard({ item, featured = false }: VIPContentCardProps) 
       </div>
 
       <div className="absolute top-2 right-2">
-        <VIPBadge size={featured ? "lg" : "md"} />
+        <VipBadge size={featured ? "large" : "small"} />
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-4">
@@ -59,11 +59,4 @@ export function VIPContentCard({ item, featured = false }: VIPContentCardProps) 
       </div>
     </div>
   )
-}
-export function VipBadge() {
-  return (
-    <span className="ml-1 text-xs bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full font-bold">
-      VIP
-    </span>
-  );
 }

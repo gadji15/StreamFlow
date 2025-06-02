@@ -149,31 +149,32 @@ export default function MonComptePage() {
               {lastWatched.map(item => (
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0">
-                    {item.posterUrl ? (
+                    {/* Correction : utilisez une clé générique pour l'image */}
+                    {typeof (item as any).poster_url === 'string' && (item as any).poster_url ? (
                       <img 
-                        src={item.posterUrl} 
-                        alt={item.title} 
+                        src={(item as any).poster_url} 
+                        alt={(item as any).title || 'Contenu'} 
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500">
-                        {item.contentType === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
+                        {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.title}</p>
+                    <p className="font-medium truncate">{(item as any).title || 'Contenu'}</p>
                     <p className="text-xs text-gray-400 truncate">
                       {new Intl.DateTimeFormat('fr-FR', {
                         day: 'numeric',
                         month: 'short',
                         hour: '2-digit',
                         minute: '2-digit'
-                      }).format(item.watchedAt)}
+                      }).format((item as any).watched_at)}
                       {' • '}
-                      {item.contentType === 'movie' ? 'Film' : item.contentType === 'series' ? 'Série' : 'Épisode'}
+                      {item.content_type === 'movie' ? 'Film' : item.content_type === 'series' ? 'Série' : 'Épisode'}
                       {' • '}
-                      {Math.round(item.progress)}% terminé
+                      {Math.round(item.progress ?? 0)}% terminé
                     </p>
                   </div>
                 </div>

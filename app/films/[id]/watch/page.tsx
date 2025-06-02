@@ -12,7 +12,7 @@ import SimilarMoviesGrid from "@/components/SimilarMoviesGrid";
 import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { ArrowLeft } from "lucide-react";
-import Footer from "@/components/footer";
+
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -97,26 +97,27 @@ export default function WatchFilmPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black text-white flex flex-col justify-center items-center overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Backdrop */}
       {movie.backdropUrl && (
-        <div className="fixed inset-0 z-0 w-full h-full">
+        <div className="fixed inset-0 z-0 w-full h-full pointer-events-none">
           <img
             src={movie.backdropUrl}
             alt={`Backdrop de ${movie.title}`}
-            className="w-full h-full object-cover object-center blur-md brightness-50 scale-105 transition-all duration-500"
+            className="w-full h-full object-cover object-center blur-[3px] brightness-60 scale-105"
             draggable={false}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/60 to-black/95" />
         </div>
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-4xl mx-auto pt-24 pb-10 px-2 sm:px-6 flex flex-col items-center">
+      <main className="relative z-10 flex flex-col items-center flex-1 w-full px-2 sm:px-6 pt-20 pb-8">
         {/* Retour bouton flottant */}
         <Button
           variant="secondary"
-          className="absolute top-6 left-2 sm:left-6 rounded-full shadow-lg bg-black/70 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all"
+          // Correction : bouton non fixe, positionné normalement avec un margin-top
+          className="mt-4 mb-4 left-0 sm:left-0 rounded-full shadow-lg bg-black/80 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all z-20"
           onClick={() => router.push(`/films/${id}`)}
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
@@ -124,7 +125,7 @@ export default function WatchFilmPage() {
         </Button>
 
         {/* Player */}
-        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-8 animate-fadeInUp">
+        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
           <VideoPlayer
             src={movie.video_url || ""}
             poster={movie.posterUrl}
@@ -134,13 +135,13 @@ export default function WatchFilmPage() {
         </div>
 
         {/* Metadata */}
-        <section className="w-full max-w-3xl mx-auto mt-8 bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 animate-fadeInUp">
+        <section className="w-full max-w-3xl mx-auto bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 mb-8 border border-gray-800">
           <div className="flex flex-wrap items-center gap-3 mb-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
               {movie.title}
             </h1>
             {movie.year && (
-              <span className="text-base px-3 py-1 rounded-xl bg-gray-800/50 text-gray-200 font-medium">
+              <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
                 {movie.year}
               </span>
             )}
@@ -174,25 +175,16 @@ export default function WatchFilmPage() {
         </section>
 
         {/* Films similaires */}
-        <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
+        <section className="w-full max-w-6xl mx-auto animate-fadeInUp mb-8">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-xl font-bold">Films similaires</h2>
               <p className="text-gray-400 text-sm mt-1">Découvrez d'autres œuvres que vous pourriez aimer&nbsp;!</p>
             </div>
-            {/* Optionnel : bouton voir tout vers la catégorie/genre du film */}
             {movie.genre && (
               <Link
                 href={`/films?genre=${encodeURIComponent(movie.genre)}`}
-                className={`
-                  text-sm flex items-center font-medium
-                  bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
-                  bg-clip-text text-transparent
-                  underline underline-offset-4
-                  transition-all duration-300
-                  hover:bg-none hover:text-violet-400 hover:scale-105
-                  focus:outline-none
-                `}
+                className="text-sm flex items-center font-medium bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500 bg-clip-text text-transparent underline underline-offset-4 hover:text-violet-400 hover:scale-105 transition-all"
                 style={{
                   WebkitTextFillColor: 'transparent',
                   background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
@@ -207,9 +199,8 @@ export default function WatchFilmPage() {
           </div>
           <SimilarMoviesGrid tmdbId={movie.tmdb_id || ""} />
         </section>
-      </div>
-
-      {/* Animation keyframes */}
+      </main>
+       {/* Animation keyframes */}
       <style>{`
         @keyframes fadeInUp {
           0% {
@@ -224,11 +215,13 @@ export default function WatchFilmPage() {
         .animate-fadeInUp {
           animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
         }
+        /* Correction : assure que le footer est visible au-dessus du backdrop */
+        footer, .footer, #footer {
+          position: relative !important;
+          z-index: 30 !important;
+        }
       `}</style>
-    {/* Footer */}
-        <div className="w-full mt-8">
-          <Footer />
-        </div>
+      
     </div>
   );
 }

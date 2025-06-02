@@ -372,6 +372,8 @@ export default function SeriesDetailPage() {
                 isMobile={isMobile}
                 selectedSeasonId={selectedSeasonId}
                 setSelectedSeasonId={setSelectedSeasonId}
+                renderSeasonsNavMobile={() => <></>}
+                renderSeasonsNavDesktop={() => <></>}
               />
             </TabsContent>
 

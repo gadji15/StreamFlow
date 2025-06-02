@@ -1107,35 +1107,66 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           </div>
           <div>
             <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-              Vidéo du film (URL ou upload)
+              Lien vidéo
             </label>
             <input
               id="video_url"
+              name="video_url"
+              type="text"
               value={form.video_url}
-              onChange={(e) => handleChange("video_url", e.target.value)}
-              className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              onChange={e => setForm({ ...form, video_url: e.target.value })}
               placeholder="https://..."
-              disabled={form.no_video}
+              className="input input-bordered w-full"
+              required
             />
-            <input
-              type="file"
-              accept="video/*"
-              id="video-file"
-              style={{ display: "none" }}
-              onChange={async (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  setLocalVideo(e.target.files[0]);
-                  await handleVideoUpload(e.target.files[0]);
-                }
-              }}
-              disabled={form.no_video}
-            />
-            <label htmlFor="video-file" className={`mt-1 bg-gray-700 text-gray-200 px-2 py-1 rounded text-xs cursor-pointer hover:bg-indigo-600 ${form.no_video ? 'opacity-60 cursor-not-allowed' : ''}`}>
-              Importer une vidéo
-            </label>
+            {/* Aperçu pour les liens Uqload/Doodstream/etc. */}
             {form.video_url && (
-              <div className="text-[11px] text-green-400 mt-1 truncate">
-                {form.video_url}
+              <div className="flex flex-col items-start mt-1">
+                {(form.video_url.startsWith("https://uqload.io/")
+                  || form.video_url.startsWith("https://dood")
+                  || form.video_url.startsWith("https://www.dood")
+                  || form.video_url.startsWith("https://streamtape.com")
+                  || form.video_url.startsWith("https://vidmoly.to")
+                  || form.video_url.startsWith("https://mycloud.to")
+                  || form.video_url.startsWith("https://upstream.to")
+                  || form.video_url.startsWith("https://voe.sx")
+                  || form.video_url.startsWith("https://filelions.to")
+                ) ? (
+                  <iframe
+                    src={form.video_url}
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                    style={{ width: 220, height: 124, maxWidth: "100%" }}
+                    frameBorder={0}
+                    allow="autoplay; fullscreen"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    title="Aperçu vidéo"
+                  />
+                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                  <video
+                    src={form.video_url}
+                    controls
+                    className="h-20 rounded border border-gray-700"
+                    style={{ maxWidth: "100%" }}
+                  />
+                ) : (
+                  <a
+                    href={form.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-400 underline"
+                  >
+                    Voir la vidéo
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => setForm({ ...form, video_url: "" })}
+                  aria-label="Supprimer la vidéo"
+                >
+                  Supprimer la vidéo
+                </button>
               </div>
             )}
           </div>

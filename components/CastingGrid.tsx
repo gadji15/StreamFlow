@@ -110,9 +110,9 @@ export default function CastingGrid({
             {person.name}
           </span>
           {/* Affiche le rôle/personnage même en fallback local */}
-          {(person.character || person.role) && (
+          {person.character && (
             <span className="text-xs text-gray-400 text-center">
-              {person.character || person.role}
+              {person.character}
             </span>
           )}
         </div>

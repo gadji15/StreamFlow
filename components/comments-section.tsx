@@ -265,7 +265,7 @@ export function CommentsSection({
                     />
                   ))}
                   {/* Suppression par auteur ou admin */}
-                  {user && (user.id === comment.author.id || user.role === "admin") && (
+                  {user && (user.id === (comment as any).user_id || user.role === "admin") && (
                     <button
                       onClick={() => handleDelete(comment.id)}
                       className="text-xs text-red-400 underline opacity-0 group-hover:opacity-100 transition-opacity ml-3"

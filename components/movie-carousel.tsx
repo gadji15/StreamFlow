@@ -291,7 +291,8 @@ export default function MovieCarousel({ category }: MovieCarouselProps) {
               />
               <div className="movie-card-overlay" />
 
-              {category === "continue-watching" && movie.progress && (
+              {/* Progress bar for continue watching */}
+              {category === "continue-watching" && "progress" in movie && typeof movie.progress === "number" && (
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-800">
                   <div className="h-full bg-red-600" style={{ width: `${movie.progress}%` }} />
                 </div>

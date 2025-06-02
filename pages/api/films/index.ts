@@ -1,7 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getFilms, addFilm } from '../../../lib/supabaseFilms'
-import { createServerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabaseClient'
 
 /**

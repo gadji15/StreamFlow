@@ -78,7 +78,7 @@ function HeroSection() {
   }
 
   // Extraction des genres
-  const genres = Array.isArray(currentMovie.genre)
+  const genres: string[] = Array.isArray(currentMovie.genre)
     ? currentMovie.genre
     : typeof currentMovie.genre === 'string'
     ? currentMovie.genre.split(',').map((g) => g.trim()).filter(Boolean)
@@ -224,7 +224,7 @@ function HeroSection() {
               )}
             </div>
             <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 drop-shadow-[0_1.5px_4px_rgba(0,0,0,0.92)]">
-              {genres.slice(0, 1).map((genre, index) => (
+              {(genres.slice(0, 1) as string[]).map((genre, index) => (
                 <span
                   key={index}
                   className="px-2 sm:px-3 py-0.5 text-[11px] sm:text-xs rounded-full border border-white/25 text-white/95 block sm:hidden"
@@ -232,7 +232,7 @@ function HeroSection() {
                   {genre}
                 </span>
               ))}
-              {genres.slice(0, 2).map((genre, index) => (
+              {(genres.slice(0, 2) as string[]).map((genre, index) => (
                 <span
                   key={index}
                   className="px-2 sm:px-3 py-0.5 text-[11px] sm:text-xs rounded-full border border-white/25 text-white/95 hidden sm:block"

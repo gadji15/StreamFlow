@@ -3,7 +3,6 @@
 import { Play, Lock, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VipBadge } from '@/components/vip-badge';
-import { formatDuration } from '@/lib/utils';
 
 type Episode = {
   id: string;
@@ -26,6 +25,14 @@ interface EpisodeCardProps {
   onMarkWatched: (id: string) => void;
   onUnmarkWatched: (id: string) => void;
   onWatch: (ep: Episode) => void;
+}
+
+// Fonction utilitaire locale pour formater la durée en "1h 23min"
+function formatDuration(duration: number) {
+  if (!duration || isNaN(duration)) return "Durée inconnue";
+  const h = Math.floor(duration / 60);
+  const m = duration % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
 }
 
 export default function EpisodeCard({

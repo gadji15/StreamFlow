@@ -146,7 +146,7 @@ export default function NouveautePage() {
                     key={movie.id}
                     item={movie}
                     type="film"
-                    isUserVIP={isVIP}
+                    isUserVIP={!!isVIP}
                   />
                 ))}
               </div>
@@ -164,7 +164,7 @@ export default function NouveautePage() {
                     key={serie.id}
                     item={serie}
                     type="serie"
-                    isUserVIP={isVIP}
+                    isUserVIP={!!isVIP}
                   />
                 ))}
               </div>

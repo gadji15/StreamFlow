@@ -775,6 +775,71 @@ export default function EpisodeModal({
               </div>
             )}
           </div>
+          <div>
+            <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
+              Lien vidéo
+            </label>
+            <input
+              id="video_url"
+              name="video_url"
+              type="text"
+              value={form.video_url}
+              onChange={e => setForm({ ...form, video_url: e.target.value })}
+              placeholder="https://..."
+              className="input input-bordered w-full"
+              required
+            />
+            {/* Aperçu pour les liens Uqload/Doodstream/etc. */}
+            {form.video_url && (
+              <div className="flex flex-col items-start mt-1">
+                {(form.video_url.startsWith("https://uqload.io/")
+                  || form.video_url.startsWith("https://dood")
+                  || form.video_url.startsWith("https://www.dood")
+                  || form.video_url.startsWith("https://streamtape.com")
+                  || form.video_url.startsWith("https://vidmoly.to")
+                  || form.video_url.startsWith("https://mycloud.to")
+                  || form.video_url.startsWith("https://upstream.to")
+                  || form.video_url.startsWith("https://voe.sx")
+                  || form.video_url.startsWith("https://filelions.to")
+                ) ? (
+                  <iframe
+                    src={form.video_url}
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                    style={{ width: 220, height: 124, maxWidth: "100%" }}
+                    frameBorder={0}
+                    allow="autoplay; fullscreen"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    title="Aperçu vidéo"
+                  />
+                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                  <video
+                    src={form.video_url}
+                    controls
+                    className="h-20 rounded border border-gray-700"
+                    style={{ maxWidth: "100%" }}
+                  />
+                ) : (
+                  <a
+                    href={form.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-400 underline"
+                  >
+                    Voir la vidéo
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => setForm({ ...form, video_url: "" })}
+                  aria-label="Supprimer la vidéo"
+                >
+                  Supprimer la vidéo
+                </button>
+              </div>
+            )}
+          </div>
           <div className="flex gap-2 items-center">
             <label className="flex items-center gap-1 cursor-pointer text-[11px] text-white/80">
               <input

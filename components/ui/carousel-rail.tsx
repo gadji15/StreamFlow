@@ -61,7 +61,9 @@ export function CarouselRail<T>({
     };
     emblaApi.on('select', onSelect);
     onSelect();
-    return () => emblaApi.off('select', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
   }, [emblaApi]);
 
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);

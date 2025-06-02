@@ -199,8 +199,9 @@ export default function AdminSeriesPage() {
   }, [toast]);
 
   // Fetch episodes for a particular season
-  const fetchEpisodesForSeason = useCallback(async (seasonId: string) => {
-    setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: true }));
+  const fetchEpisodesForSeason = useCallback(async (seasonId: string | number) => {
+    const seasonIdStr = String(seasonId);
+    setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonIdStr]: true }));
     try {
       const { data, error } = await supabase
         .from('episodes')
@@ -210,12 +211,12 @@ export default function AdminSeriesPage() {
       if (error) throw error;
       setSeasonEpisodes((prev) => ({
         ...prev,
-        [seasonId]: data || [],
+        [seasonIdStr]: data || [],
       }));
     } catch (error: any) {
       toast({ title: 'Erreur', description: 'Impossible de charger les épisodes.', variant: 'destructive' });
     } finally {
-      setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonId]: false }));
+      setSeasonEpisodesLoading((prev) => ({ ...prev, [seasonIdStr]: false }));
     }
   }, [toast]);
 

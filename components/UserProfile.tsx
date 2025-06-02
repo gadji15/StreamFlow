@@ -3,7 +3,7 @@ import { useCurrentUser } from '../hooks/useCurrentUser'
 import { getProfile, updateProfile } from '../lib/supabaseProfiles'
 
 export default function UserProfile() {
-  const user = useCurrentUser()
+  const { user } = useCurrentUser() // Correction : destructurez user
   const [profile, setProfile] = useState<any>(null)
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState('')

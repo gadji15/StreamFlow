@@ -85,11 +85,17 @@ export default function VIPPage() {
       
       // In a real app, you would process the payment here
       // Then call the upgradeToVIP function
-      await upgradeToVIP("user123", selectedPlan, {
+      await upgradeToVIP("user123", {
+        planId: selectedPlan,
+        planName: selectedPlan === "monthly" ? "Mensuel" : "Annuel",
+        durationMonths: selectedPlan === "monthly" ? 1 : 12,
+        price: Number(plans[selectedPlan].price.replace(/[^\d.,]/g, '').replace(',', '.')),
+      }, {
         method: "card",
         id: `payment_${Date.now()}`,
         // Don't store the full card details in production!
         last4: paymentInfo.cardNumber.slice(-4),
+        timestamp: new Date(),
       });
       
       // Redirect to success page

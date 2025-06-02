@@ -298,205 +298,245 @@ export function VideoPlayer({
       )}
 
       {/* Video */}
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        className={cn(
-          "w-full h-full object-contain",
-          isMobile ? "rounded-none" : "rounded-xl"
-        )}
-        autoPlay={autoPlay}
-        onClick={e => { e.stopPropagation(); togglePlay(); }}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onProgress={handleProgress}
-        onPlay={() => { setIsPlaying(true); setPlayPauseIcon("play"); setTimeout(() => setPlayPauseIcon(null), 600); }}
-        onPause={() => { setIsPlaying(false); setPlayPauseIcon("pause"); setTimeout(() => setPlayPauseIcon(null), 600); }}
-        onEnded={() => {
-          setIsPlaying(false)
-          if (onEnded) onEnded()
-        }}
-        tabIndex={-1}
-        controls={false}
-        playsInline
-        preload="metadata"
-      />
-      {/* Icône centrale play/pause animée */}
-      {playPauseIcon && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-fade">
-          <div className="bg-black/60 rounded-full p-6 sm:p-8 flex items-center justify-center">
-            {playPauseIcon === "play" ? (
-              <Play size={64} className="text-white drop-shadow" />
-            ) : (
-              <Pause size={64} className="text-white drop-shadow" />
-            )}
+      {(src.startsWith("https://uqload.io/")
+        || src.startsWith("https://www.uqload.io/")
+        || src.startsWith("https://uqload.co/")
+        || src.startsWith("https://www.uqload.co/")
+        || src.startsWith("https://uqload.net/")
+        || src.startsWith("https://www.uqload.net/")
+        // ...autres hébergeurs...
+      ) ? (
+        // Afficher SEULEMENT l'iframe Uqload, sans aucun overlay, barre de progression ou boutons custom
+        <div className="w-full h-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <iframe
+              src={
+                src.match(/uqload\.(io|co|net)\/(embed\-)?([a-zA-Z0-9]+)\.html/)
+                  ? src.includes("/embed-")
+                    ? src
+                    : src.replace(/uqload\.(io|co|net)\/([a-zA-Z0-9]+)\.html/, "uqload.$1/embed-$2.html")
+                  : src
+              }
+              allowFullScreen
+              className="w-full h-full"
+              style={{
+                minHeight: 180,
+                height: "100%",
+                aspectRatio: "16/9",
+                border: 0,
+                display: "block",
+                maxWidth: "100vw",
+                background: "#000"
+              }}
+              frameBorder={0}
+              allow="autoplay; fullscreen"
+              // Pas de sandbox ici
+            />
           </div>
         </div>
-      )}
-
-      {/* Overlay: Title */}
-      {title && showControls && (
-        <div className="absolute top-0 left-0 right-0 p-3 sm:p-5 bg-gradient-to-b from-black/80 to-transparent z-20 pointer-events-none select-none">
-          <h2 className="text-white font-semibold text-base sm:text-lg md:text-xl truncate">{title}</h2>
-        </div>
-      )}
-
-      {/* Barre de progression (une seule ligne, Slider/seekbar) */}
-      <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6 flex flex-col gap-0.5">
-        <Slider
-          value={[currentTime]}
-          min={0}
-          max={duration || 100}
-          step={0.1}
-          onValueChange={handleSeek}
-          className="cursor-pointer"
-          aria-label="Barre de progression"
-        />
-        <div className="flex justify-between items-center text-xs text-gray-300 font-mono w-full">
-          <span>{formatTime(currentTime)}</span>
-          {/* Contrôle vitesse */}
-          <div className="relative flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs px-2 py-1"
-              onClick={() => setShowSpeedMenu(v => !v)}
-              aria-label="Vitesse de lecture"
-              tabIndex={0}
-            >
-              {playbackRate}x
-            </Button>
-            {showSpeedMenu && (
-              <div className="absolute bottom-8 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1">
-                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
-                  <button
-                    key={speed}
-                    onClick={() => {
-                      setShowSpeedMenu(false)
-                      setPlaybackRate(speed)
-                      if (videoRef.current) videoRef.current.playbackRate = speed
-                    }}
-                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${playbackRate===speed?"bg-primary/30 text-primary font-bold": "text-white"}`}
-                  >
-                    {speed}x
-                  </button>
-                ))}
+      ) : (
+        <>
+          <video
+            ref={videoRef}
+            src={src}
+            poster={poster}
+            className={cn(
+              "w-full h-full object-contain",
+              isMobile ? "rounded-none" : "rounded-xl"
+            )}
+            autoPlay={autoPlay}
+            onClick={e => { e.stopPropagation(); togglePlay(); }}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onProgress={handleProgress}
+            onPlay={() => { setIsPlaying(true); setPlayPauseIcon("play"); setTimeout(() => setPlayPauseIcon(null), 600); }}
+            onPause={() => { setIsPlaying(false); setPlayPauseIcon("pause"); setTimeout(() => setPlayPauseIcon(null), 600); }}
+            onEnded={() => {
+              setIsPlaying(false)
+              if (onEnded) onEnded()
+            }}
+            tabIndex={-1}
+            controls={false}
+            playsInline
+            preload="metadata"
+          />
+          {/* Icône centrale play/pause animée */}
+          {playPauseIcon && (
+            <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none animate-fade">
+              <div className="bg-black/60 rounded-full p-6 sm:p-8 flex items-center justify-center">
+                {playPauseIcon === "play" ? (
+                  <Play size={64} className="text-white drop-shadow" />
+                ) : (
+                  <Pause size={64} className="text-white drop-shadow" />
+                )}
               </div>
-            )}
-          </div>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      {/* Controls */}
-      {showControls && (
-        <div
-          className={cn(
-            "absolute bottom-0 left-0 right-0 z-30",
-            "bg-gradient-to-t from-black/80 to-transparent px-2 py-2 md:px-6 md:py-4",
-            "flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0"
-          )}
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Main controls */}
-          <div className="flex items-center gap-2 md:gap-4 justify-center">
-            <ControlButton
-              onClick={togglePlay}
-              ariaLabel={isPlaying ? "Pause" : "Lecture"}
-            >
-              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-            </ControlButton>
-            <ControlButton
-              onClick={skipBackward}
-              ariaLabel="Reculer de 10 secondes"
-            >
-              <SkipBack size={20} />
-            </ControlButton>
-            <ControlButton
-              onClick={skipForward}
-              ariaLabel="Avancer de 10 secondes"
-            >
-              <SkipForward size={20} />
-            </ControlButton>
-          </div>
-          {/* Volume & fullscreen, cinema, PiP, sous-titres */}
-          <div className="flex items-center gap-2 md:gap-4 justify-center">
-            <ControlButton
-              onClick={toggleMute}
-              ariaLabel={isMuted ? "Activer le son" : "Couper le son"}
-            >
-              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-            </ControlButton>
-            <div className="w-20 md:w-36">
-              <Slider
-                value={[isMuted ? 0 : volume]}
-                min={0}
-                max={1}
-                step={0.01}
-                onValueChange={handleVolumeChange}
-                aria-label="Volume"
-              />
             </div>
-            <ControlButton
-              onClick={toggleFullscreen}
-              ariaLabel={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
-            >
-              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-            </ControlButton>
-            {/* Cinema mode */}
-            <ControlButton
-              onClick={() => setCinemaMode(v => !v)}
-              ariaLabel={cinemaMode ? "Quitter le mode cinéma" : "Mode cinéma"}
-            >
-              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
-                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2" />
-                <rect x="7" y="11" width="2" height="2" fill="white" />
-                <rect x="15" y="11" width="2" height="2" fill="white" />
-              </svg>
-            </ControlButton>
-            {/* PiP */}
-            <ControlButton
-              onClick={handlePiP}
-              ariaLabel={isPiP ? "Fermer le mode Picture-in-Picture" : "Picture-in-Picture"}
-            >
-              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
-                <rect x="3" y="5" width="18" height="14" rx="2" stroke="white" strokeWidth="2"/>
-                <rect x="15" y="13" width="4" height="4" rx="1" fill="white"/>
-              </svg>
-            </ControlButton>
-            {/* Sous-titres */}
-            <ControlButton
-              onClick={() => setShowSubMenu(v => !v)}
-              ariaLabel="Sous-titres"
-            >
-              <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
-                <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2"/>
-                <rect x="7" y="11" width="2" height="2" fill="white"/>
-                <rect x="15" y="11" width="2" height="2" fill="white"/>
-              </svg>
-            </ControlButton>
-            {showSubMenu && (
-              <div className="absolute bottom-12 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1 min-w-[120px]">
-                <button
-                  className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${!activeSubtitle?"bg-primary/30 text-primary font-bold": "text-white"}`}
-                  onClick={() => { setActiveSubtitle(null); setShowSubMenu(false); }}
+          )}
+
+          {/* Overlay: Title */}
+          {title && showControls && (
+            <div className="absolute top-0 left-0 right-0 p-3 sm:p-5 bg-gradient-to-b from-black/80 to-transparent z-20 pointer-events-none select-none">
+              <h2 className="text-white font-semibold text-base sm:text-lg md:text-xl truncate">{title}</h2>
+            </div>
+          )}
+
+          {/* Barre de progression (une seule ligne, Slider/seekbar) */}
+          <div className="absolute bottom-[64px] left-0 w-full z-20 px-2 md:px-6 flex flex-col gap-0.5">
+            <Slider
+              value={[currentTime]}
+              min={0}
+              max={duration || 100}
+              step={0.1}
+              onValueChange={handleSeek}
+              className="cursor-pointer"
+              aria-label="Barre de progression"
+            />
+            <div className="flex justify-between items-center text-xs text-gray-300 font-mono w-full">
+              <span>{formatTime(currentTime)}</span>
+              {/* Contrôle vitesse */}
+              <div className="relative flex items-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs px-2 py-1"
+                  onClick={() => setShowSpeedMenu(v => !v)}
+                  aria-label="Vitesse de lecture"
+                  tabIndex={0}
                 >
-                  Désactiver
-                </button>
-                {subtitles.map(sub => (
-                  <button
-                    key={sub.lang}
-                    className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${activeSubtitle===sub.lang?"bg-primary/30 text-primary font-bold": "text-white"}`}
-                    onClick={() => { setActiveSubtitle(sub.lang); setShowSubMenu(false); }}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
+                  {playbackRate}x
+                </Button>
+                {showSpeedMenu && (
+                  <div className="absolute bottom-8 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1">
+                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                      <button
+                        key={speed}
+                        onClick={() => {
+                          setShowSpeedMenu(false)
+                          setPlaybackRate(speed)
+                          if (videoRef.current) videoRef.current.playbackRate = speed
+                        }}
+                        className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${playbackRate===speed?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                      >
+                        {speed}x
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+              <span>{formatTime(duration)}</span>
+            </div>
           </div>
-        </div>
+
+          {/* Controls */}
+          {showControls && (
+            <div
+              className={cn(
+                "absolute bottom-0 left-0 right-0 z-30",
+                "bg-gradient-to-t from-black/80 to-transparent px-2 py-2 md:px-6 md:py-4",
+                "flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0"
+              )}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Main controls */}
+              <div className="flex items-center gap-2 md:gap-4 justify-center">
+                <ControlButton
+                  onClick={togglePlay}
+                  ariaLabel={isPlaying ? "Pause" : "Lecture"}
+                >
+                  {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                </ControlButton>
+                <ControlButton
+                  onClick={skipBackward}
+                  ariaLabel="Reculer de 10 secondes"
+                >
+                  <SkipBack size={20} />
+                </ControlButton>
+                <ControlButton
+                  onClick={skipForward}
+                  ariaLabel="Avancer de 10 secondes"
+                >
+                  <SkipForward size={20} />
+                </ControlButton>
+              </div>
+              {/* Volume & fullscreen, cinema, PiP, sous-titres */}
+              <div className="flex items-center gap-2 md:gap-4 justify-center">
+                <ControlButton
+                  onClick={toggleMute}
+                  ariaLabel={isMuted ? "Activer le son" : "Couper le son"}
+                >
+                  {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                </ControlButton>
+                <div className="w-20 md:w-36">
+                  <Slider
+                    value={[isMuted ? 0 : volume]}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onValueChange={handleVolumeChange}
+                    aria-label="Volume"
+                  />
+                </div>
+                <ControlButton
+                  onClick={toggleFullscreen}
+                  ariaLabel={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+                >
+                  {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                </ControlButton>
+                {/* Cinema mode */}
+                <ControlButton
+                  onClick={() => setCinemaMode(v => !v)}
+                  ariaLabel={cinemaMode ? "Quitter le mode cinéma" : "Mode cinéma"}
+                >
+                  <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                    <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2" />
+                    <rect x="7" y="11" width="2" height="2" fill="white" />
+                    <rect x="15" y="11" width="2" height="2" fill="white" />
+                  </svg>
+                </ControlButton>
+                {/* PiP */}
+                <ControlButton
+                  onClick={handlePiP}
+                  ariaLabel={isPiP ? "Fermer le mode Picture-in-Picture" : "Picture-in-Picture"}
+                >
+                  <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="white" strokeWidth="2"/>
+                    <rect x="15" y="13" width="4" height="4" rx="1" fill="white"/>
+                  </svg>
+                </ControlButton>
+                {/* Sous-titres */}
+                <ControlButton
+                  onClick={() => setShowSubMenu(v => !v)}
+                  ariaLabel="Sous-titres"
+                >
+                  <svg width={22} height={22} fill="none" viewBox="0 0 24 24">
+                    <rect x="3" y="7" width="18" height="10" rx="2" stroke="white" strokeWidth="2"/>
+                    <rect x="7" y="11" width="2" height="2" fill="white"/>
+                    <rect x="15" y="11" width="2" height="2" fill="white"/>
+                  </svg>
+                </ControlButton>
+                {showSubMenu && (
+                  <div className="absolute bottom-12 right-0 bg-black/95 rounded shadow-lg z-50 flex flex-col py-1 min-w-[120px]">
+                    <button
+                      className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${!activeSubtitle?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                      onClick={() => { setActiveSubtitle(null); setShowSubMenu(false); }}
+                    >
+                      Désactiver
+                    </button>
+                    {subtitles.map(sub => (
+                      <button
+                        key={sub.lang}
+                        className={`px-4 py-1 text-left hover:bg-primary/30 text-xs ${activeSubtitle===sub.lang?"bg-primary/30 text-primary font-bold": "text-white"}`}
+                        onClick={() => { setActiveSubtitle(sub.lang); setShowSubMenu(false); }}
+                      >
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Next episode (always accessible on mobile, hover on desktop) */}

@@ -11,6 +11,7 @@ import SeasonModalUser from "@/components/series/SeasonModalUser";
 import { supabase } from "@/lib/supabaseClient";
 import { ChevronLeft } from "lucide-react";
 import Head from "next/head";
+import Footer from "@/components/footer";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -145,7 +146,7 @@ export default function WatchEpisodePage() {
     "/placeholder-backdrop.jpg";
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-black text-white">
       <Head>
         <title>
           {series.title} - S{episode.season}E{episode.episode_number} - {episode.title}
@@ -157,28 +158,29 @@ export default function WatchEpisodePage() {
           <img
             src={backdropUrl}
             alt={`Backdrop de ${series.title}`}
-            className="w-full h-full object-cover object-center blur-md brightness-50 scale-105 transition-all duration-700"
+            className="w-full h-full object-cover object-center blur-[3px] brightness-60 scale-105"
             draggable={false}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90" />
+          {/* Correction : le backdrop ne doit pas masquer le footer */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/60 to-black/95" />
         </div>
       )}
 
-      {/* Main */}
+      {/* Main Content */}
       <main className="relative z-10 flex-1 w-full max-w-4xl mx-auto pt-24 pb-10 px-2 sm:px-6 flex flex-col items-center">
-        {/* Retour */}
+        {/* Retour bouton flottant */}
         <Button
           variant="secondary"
-          className="absolute top-6 left-2 sm:left-6 rounded-full shadow-lg bg-black/70 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all"
+          className="mt-4 mb-4 left-0 sm:left-0 rounded-full shadow-lg bg-black/80 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all z-20"
           onClick={goBackToSeries}
           aria-label="Retour à la fiche série"
         >
           <ChevronLeft className="h-5 w-5 mr-2" />
-          Retour à la fiche série
+          Retour  
         </Button>
 
         {/* Player */}
-        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-8 animate-fadeInUp">
+        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
           <VideoPlayer
             src={episode.video_url || ""}
             poster={episode.thumbnail_url}
@@ -213,8 +215,8 @@ export default function WatchEpisodePage() {
           <div className="flex gap-2">
             {previousEpisode && (
               <Button
-                variant="ghost"
-                className="rounded-full px-4 py-2 text-base"
+                variant="outline"
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all"
                 onClick={goToPreviousEpisode}
                 aria-label="Épisode précédent"
               >
@@ -224,8 +226,8 @@ export default function WatchEpisodePage() {
             )}
             {nextEpisode && (
               <Button
-                variant="ghost"
-                className="rounded-full px-4 py-2 text-base"
+                variant="outline"
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all"
                 onClick={goToNextEpisode}
                 aria-label="Épisode suivant"
               >
@@ -234,23 +236,23 @@ export default function WatchEpisodePage() {
               </Button>
             )}
           </div>
-        <SeasonModalUser
-          open={isSeasonModalOpen}
-          onClose={() => setIsSeasonModalOpen(false)}
-          seasons={seasons}
-          selectedSeasonIndex={selectedSeasonIndex}
-          onSeasonChange={setSelectedSeasonIndex}
-          onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
-        />
+          <SeasonModalUser
+            open={isSeasonModalOpen}
+            onClose={() => setIsSeasonModalOpen(false)}
+            seasons={seasons}
+            selectedSeasonIndex={selectedSeasonIndex}
+            onSeasonChange={setSelectedSeasonIndex}
+            onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
+          />
         </nav>
 
         {/* Metadata */}
-        <section className="w-full max-w-3xl mx-auto mt-8 bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 animate-fadeInUp">
+        <section className="w-full max-w-3xl mx-auto bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 mb-8 border border-gray-800">
           <div className="flex flex-wrap items-center gap-3 mb-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
               {series.title}
             </h1>
-            <span className="text-base px-3 py-1 rounded-xl bg-gray-800/50 text-gray-200 font-medium">
+            <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
               Saison {episode.season}, Épisode {episode.episode_number} <span className="ml-2 text-xs text-gray-400">({`S${String(episode.season).padStart(2, "0")}E${String(episode.episode_number).padStart(2, "0")}`})</span>
             </span>
             {series.genre && (
@@ -278,7 +280,7 @@ export default function WatchEpisodePage() {
         </section>
 
         {/* Séries similaires */}
-        <section className="w-full max-w-6xl mx-auto mt-10 animate-fadeInUp">
+        <section className="w-full max-w-6xl mx-auto mb-8">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h2 className="text-xl font-bold">Séries similaires</h2>
@@ -287,15 +289,7 @@ export default function WatchEpisodePage() {
             {series.genre && (
               <Link
                 href={`/series?genre=${encodeURIComponent(series.genre)}`}
-                className={`
-                  text-sm flex items-center font-medium
-                  bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
-                  bg-clip-text text-transparent
-                  underline underline-offset-4
-                  transition-all duration-300
-                  hover:bg-none hover:text-violet-400 hover:scale-105
-                  focus:outline-none
-                `}
+                className="text-sm flex items-center font-medium bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500 bg-clip-text text-transparent underline underline-offset-4 hover:text-violet-400 hover:scale-105 transition-all"
                 style={{
                   WebkitTextFillColor: 'transparent',
                   background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
@@ -308,48 +302,23 @@ export default function WatchEpisodePage() {
               </Link>
             )}
           </div>
-          <div
-            className={`
-              w-full
-              [display:grid]
-              gap-3
-              [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
-            `}
-          >
+          <div className="w-full grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {similarSeries.map((serie, idx) => (
               <Link
                 key={serie.id}
                 href={`/series/${serie.id}`}
-                className="
-                  bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-                  flex flex-col items-center
-                  rounded-md
-                  sm:rounded-lg md:rounded-xl
-                  h-full
-                "
+                className="bg-gray-800/90 border border-gray-700 rounded-xl overflow-hidden shadow hover:scale-105 group flex flex-col items-center transition-transform duration-200"
                 style={{
                   opacity: 0,
                   animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
                   animationDelay: `${idx * 0.06}s`,
                 }}
               >
-                <div
-                  className="
-                    relative aspect-[2/3]
-                    w-full
-                    h-full
-                    flex flex-col items-center
-                  "
-                >
+                <div className="relative aspect-[2/3] w-full flex flex-col items-center">
                   <img
                     src={serie.poster || "/placeholder-poster.png"}
                     alt={serie.title}
-                    className="
-                      w-full h-full object-cover transition-all duration-300
-                      rounded-md
-                      sm:rounded-lg
-                      md:rounded-xl
-                    "
+                    className="w-full h-full object-cover transition-all duration-300 rounded-xl"
                     onError={e => {
                       (e.target as HTMLImageElement).src = "/placeholder-poster.png";
                     }}
@@ -363,26 +332,18 @@ export default function WatchEpisodePage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-                  <h3 className="
-                    truncate font-medium w-full text-center
-                    text-xs
-                    sm:text-sm
-                    md:text-base
-                  ">{serie.title}</h3>
-                  <p className="text-[11px] text-gray-400 w-full text-center">
-                    {serie.genre || ""}
-                  </p>
+                  <h3 className="truncate font-semibold w-full text-center text-xs sm:text-sm md:text-base">{serie.title}</h3>
+                  <p className="text-[11px] text-gray-400 w-full text-center">{serie.genre || ""}</p>
                 </div>
               </Link>
             ))}
             {similarSeries.length === 0 && (
-              <div className="text-gray-400 py-8 text-center w-full">
+              <div className="text-gray-400 py-8 text-center w-full col-span-full">
                 Aucune suggestion pour le moment.
               </div>
             )}
           </div>
         </section>
-        
       </main>
       {/* Animation keyframes */}
       <style>{`
@@ -399,8 +360,12 @@ export default function WatchEpisodePage() {
         .animate-fadeInUp {
           animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
         }
+        /* Correction : assure que le footer est visible au-dessus du backdrop */
+        footer, .footer, #footer {
+          position: relative !important;
+          z-index: 30 !important;
+        }
       `}</style>
-     
     </div>
   );
 }

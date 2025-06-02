@@ -48,19 +48,6 @@ export default function SeasonEpisodeList({ episodes, seriesId, isVIP }: SeasonE
     );
   }
 
-  const { toast } = useToast();
-  const router = useRouter();
-  const { user } = useCurrentUser();
-
-  // Progression utilisateur
-  const {
-    watchedIds,
-    loading: loadingWatched,
-    markWatched,
-    unmarkWatched,
-    isWatched,
-  } = useWatchedEpisodes(seriesId, user?.id);
-
   const watchedCount = episodes.filter((ep) => isWatched(ep.id)).length;
 
   const handleEpisodeClick = (episode: Episode) => {

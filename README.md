@@ -69,6 +69,10 @@ pnpm dev
 - `pnpm build` - Construire l'application pour la production
 - `pnpm start` - Démarrer l'application construite
 - `pnpm lint` - Lancer le linting
+- Pour vérifier les erreurs TypeScript sur votre projet, utilisez :
+```bash
+pnpm tsc --noEmit
+```
 
 ## Structure du projet
 

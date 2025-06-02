@@ -9,7 +9,7 @@ export default function LayoutVisibility({
   adminOnly?: boolean;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith('/admin');
+  const isAdmin = pathname?.startsWith('/admin') ?? false;
   // Si adminOnly, on affiche les children SEULEMENT dans l'admin
   // Sinon, on affiche les children SEULEMENT si on N'EST PAS dans l'admin
   if (adminOnly) return isAdmin ? <>{children}</> : null;

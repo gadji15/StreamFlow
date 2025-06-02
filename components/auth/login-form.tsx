@@ -18,7 +18,7 @@ export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const router = useRouter();
-  const { login } = useAuth();
+  const { login } = useSupabaseAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {

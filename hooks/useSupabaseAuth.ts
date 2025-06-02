@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useCurrentUser } from './useCurrentUser'
 import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
 import { signOut } from '../lib/supabaseAuth'
+import { supabase } from '../lib/initSupabase'
 
 /**
  * Hook d’auth avancé avec Supabase : expose isLoggedIn, userData, isVIP, isAdmin, logout, etc.
@@ -62,6 +63,12 @@ export function useSupabaseAuth() {
   // - on a un user authentifié MAIS userData (profil complet) n'est pas encore chargé
   const realIsLoading = loading || profileLoading || (user && userData === null);
 
+  async function login(email: string, password: string) {
+    // Remplacez par votre logique réelle si besoin
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
+
   return {
     user,
     isLoggedIn: !!user,
@@ -69,6 +76,7 @@ export function useSupabaseAuth() {
     userData,
     isVIP,
     isAdmin,
+    login,
     logout: signOut,
   };
 }

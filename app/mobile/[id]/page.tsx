@@ -214,12 +214,14 @@ export default function MovieDetailPage() {
                 <button
                   onClick={() => setIsTrailerPlaying(true)}
                   className="btn-secondary"
+                  title="Voir la bande annonce"
                 >
                   <Film className="w-5 h-5" />
                 </button>
                 <button
                   onClick={toggleFavorite}
                   className="btn-secondary"
+                  title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                 >
                   {isFavorite ? (
                     <HeartOff className="w-5 h-5" />
@@ -230,6 +232,7 @@ export default function MovieDetailPage() {
                 <button
                   onClick={shareMovie}
                   className="btn-secondary"
+                  title="Partager"
                 >
                   <Share2 className="w-5 h-5" />
                 </button>
@@ -431,6 +434,7 @@ export default function MovieDetailPage() {
                       <button
                         onClick={() => setIsTrailerPlaying(true)}
                         className="w-20 h-20 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all"
+                        title="Lire la bande annonce"
                       >
                         <Play className="w-10 h-10 text-white" />
                       </button>
@@ -469,9 +473,35 @@ export default function MovieDetailPage() {
             <ContentSection
               title="Films similaires"
               subtitle="Vous aimerez aussi ces films"
-              items={similarMovies}
-              layout="large"
-            />
+              // Utilisez la prop 'children' pour injecter vos éléments personnalisés
+            >
+              {similarMovies.map((movie) => (
+                <div key={movie.id} className="flex flex-col items-center bg-gray-800 rounded-md sm:rounded-lg md:rounded-xl overflow-hidden h-full">
+                  <Link href={`/movies/${movie.id}`} className="w-full h-full flex flex-col items-center">
+                    <div className="relative aspect-[2/3] w-full h-full flex flex-col items-center">
+                      <img
+                        src={movie.posterImage}
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-all duration-300 rounded-md sm:rounded-lg md:rounded-xl"
+                        onError={e => {
+                          (e.target as HTMLImageElement).src = "/placeholder-poster.png";
+                        }}
+                        loading="lazy"
+                      />
+                      {movie.isTop && (
+                        <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
+                          TOP
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
+                      <h3 className="truncate font-medium w-full text-center text-xs sm:text-sm md:text-base">{movie.title}</h3>
+                      <p className="text-[11px] text-gray-400 w-full text-center">{movie.year}</p>
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </ContentSection>
           </div>
         )}
         

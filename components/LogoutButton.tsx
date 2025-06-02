@@ -15,9 +15,7 @@ export default function LogoutButton() {
     toast({
       title: "Déconnexion réussie",
       description: "À bientôt !",
-      status: "info",
-      duration: 4000,
-    })
+    } as any)
     router.push('/login')
   }
 

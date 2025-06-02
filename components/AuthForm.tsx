@@ -21,9 +21,7 @@ export default function AuthForm() {
         toast({
           title: "Erreur d'inscription",
           description: error.message,
-          status: "error",
-          duration: 4000,
-        })
+        } as any)
         setLoading(false)
         return
       }
@@ -33,9 +31,7 @@ export default function AuthForm() {
       toast({
         title: "Inscription réussie",
         description: "Bienvenue sur la plateforme !",
-        status: "success",
-        duration: 4000,
-      })
+      } as any)
       router.push('/') // ou autre page d'accueil
     } else {
       const { error } = await signInWithEmail(email, password)
@@ -43,18 +39,14 @@ export default function AuthForm() {
         toast({
           title: "Erreur de connexion",
           description: error.message,
-          status: "error",
-          duration: 4000,
-        })
+        } as any)
         setLoading(false)
         return
       }
       toast({
         title: "Connexion réussie",
         description: "Bienvenue sur StreamFlow !",
-        status: "success",
-        duration: 4000,
-      })
+      } as any)
       router.push('/') // ou autre page d'accueil
     }
     setLoading(false)

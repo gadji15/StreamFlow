@@ -10,7 +10,7 @@ const theme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: "#18181b", // fond foncé pour coller à ton admin
+      default: "#18181b",
       paper: "#23232a",
     },
     text: {
@@ -18,23 +18,25 @@ const theme = createTheme({
       secondary: "#bbb"
     }
   },
-  components: {
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          color: "#fff",
-          backgroundColor: "#23232a"
-        },
-        cell: {
-          color: "#fff",
-        },
-        columnHeaders: {
-          color: "#fff",
-          backgroundColor: "#23232a"
-        }
-      }
-    }
-  }
+  // Correction : utilisez 'MuiDataGrid' dans 'components' uniquement si @mui/x-data-grid est installé et supporté.
+  // Sinon, retirez ce bloc pour éviter l'erreur TS2353.
+  // components: {
+  //   MuiDataGrid: {
+  //     styleOverrides: {
+  //       root: {
+  //         color: "#fff",
+  //         backgroundColor: "#23232a"
+  //       },
+  //       cell: {
+  //         color: "#fff",
+  //       },
+  //       columnHeaders: {
+  //         color: "#fff",
+  //         backgroundColor: "#23232a"
+  //       }
+  //     }
+  //   }
+  // }
 });
 
 export default function ProImportFilmsPage() {
