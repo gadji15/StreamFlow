@@ -446,33 +446,36 @@ export default function AdminFilmsPage() {
         ) : (
           <>
             {/* Responsive card view for mobile devices */}
-            <div className="sm:hidden flex flex-col gap-4">
+            <div className="sm:hidden flex flex-col gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {paginatedMovies.map((movie) => {
                 const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
                 const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
                 return (
-                  <div key={movie.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-2 py-2 flex flex-col w-full max-w-full overflow-x-hidden">
-                    <div className="flex items-center gap-2 w-full max-w-full">
+                  <div
+                    key={movie.id}
+                    className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-1 py-1 flex flex-col w-full max-w-full min-w-0 overflow-x-hidden"
+                  >
+                    <div className="flex items-center gap-1 w-full max-w-full min-w-0">
                       <img
                         src={posterUrl}
                         alt={movie.title}
-                        className="h-14 w-10 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                        className="h-12 w-9 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
                         onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold truncate text-sm">{movie.title}</div>
-                        <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-0.5">
+                      <div className="flex-1 min-w-0 max-w-full">
+                        <div className="font-bold truncate text-xs max-w-[56vw]">{movie.title}</div>
+                        <div className="text-[11px] text-gray-400 mt-0.5 flex flex-wrap gap-0.5">
                           {genres.slice(0, 2).map(g => (
                             <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
                           ))}
                           {genres.length > 2 && <span>…</span>}
                         </div>
                         <div className="flex items-center gap-1 mt-0.5">
-                          <span className="text-xs text-gray-400">{movie.year}</span>
+                          <span className="text-[11px] text-gray-400">{movie.year}</span>
                           {movie.isvip && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-[10px] font-semibold">VIP</span>
                           )}
-                          <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-xs font-semibold text-gray-400">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-[10px] font-semibold text-gray-400">
                             {movie.published ? 'Publié' : 'Brouillon'}
                           </span>
                         </div>
@@ -481,22 +484,22 @@ export default function AdminFilmsPage() {
                         type="button"
                         aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
                         onClick={() => toggleSelect(movie.id)}
-                        className="ml-1 bg-transparent border-none focus:outline-none"
+                        className="ml-1 bg-transparent border-none focus:outline-none flex-shrink-0"
                       >
                         {isChecked(movie.id) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-500" />
+                          <CheckSquare className="h-4 w-4 text-indigo-500" />
                         ) : (
-                          <Square className="h-5 w-5 text-gray-400" />
+                          <Square className="h-4 w-4 text-gray-400" />
                         )}
                       </button>
                     </div>
-                    <div className="flex gap-1 mt-2 justify-end w-full max-w-full">
+                    <div className="flex gap-1 mt-1 justify-end w-full max-w-full min-w-0">
                       <Button
                         variant="outline"
                         size="icon"
                         aria-label="Aperçu"
                         onClick={() => setSelectedMovie(movie)}
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -505,7 +508,7 @@ export default function AdminFilmsPage() {
                         size="icon"
                         aria-label="Actions"
                         onClick={() => setActionMenuMovie(movie)}
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
