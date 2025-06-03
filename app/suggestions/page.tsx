@@ -354,14 +354,28 @@ export default function SuggestionsPage() {
                 <span>Déjà suggéré</span>
               </span>
             </div>
+            {/* DEBUG affichage */}
+            <div className="mb-2 text-xs text-yellow-400 bg-yellow-950/60 rounded-xl p-2">
+              <div>
+                <b>DEBUG :</b> existingIds (depuis all_content): [
+                {existingIds && existingIds.length > 0 ? existingIds.map((id) => `"${id}"`).join(", ") : "AUCUN"}
+                ]
+              </div>
+              <div>
+                IDs des résultats TMDB : [
+                {results.map((item) => `"${item.id}"`).join(", ")}
+                ]
+              </div>
+              <div>
+                <b>ATTENTION :</b> Si la liste ci-dessus est vide alors que tu as des films/séries sur le site, la vue <b>all_content</b> est cassée ou n’a pas les bons droits Supabase.<br />
+                Si elle n’est pas vide mais qu’aucun id ne matche, c’est un souci de typage ou de valeurs.
+              </div>
+            </div>
             {/* Résultats */}
             <div className="grid gap-7 sm:grid-cols-2">
               {results.map((item, idx) => {
-                // Pour éviter tout problème de typage, on force la comparaison en string
                 const isOnSite = existingIds.map(String).includes(String(item.id));
                 const isSuggested = suggestedIds.includes(item.id);
-                // DEBUG : 
-                // console.debug("existingIds (string):", existingIds.map(String), "item id:", String(item.id));
                 return (
                   <div
                     key={item.id}
