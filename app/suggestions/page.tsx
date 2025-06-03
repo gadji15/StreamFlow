@@ -393,13 +393,13 @@ export default function SuggestionsPage() {
                             : "/placeholder-poster.png"
                         }
                         alt={item.title || item.name}
-                        className="w-20 h-28 object-cover rounded-2xl bg-gray-900 shadow-inner border-2 border-fuchsia-950/20 group-hover:border-fuchsia-600/30 transition"
+                        className="w-16 h-24 sm:w-20 sm:h-28 object-cover rounded-2xl bg-gray-900 shadow-inner border-2 border-fuchsia-950/20 group-hover:border-fuchsia-600/30 transition"
                         loading="lazy"
                       />
                       {/* Badges (toujours visibles sur mobile, sur le poster) */}
                       {isOnSite && (
                         <span
-                          className="absolute -top-3 -right-3 bg-green-700 text-green-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
+                          className="absolute -top-2 -right-2 bg-green-700 text-green-100 font-bold text-[10px] px-2 py-1 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
                           aria-label="Disponible sur le site"
                         >
                           Sur le site
@@ -407,7 +407,7 @@ export default function SuggestionsPage() {
                       )}
                       {!isOnSite && isSuggested && (
                         <span
-                          className="absolute -top-3 -right-3 bg-fuchsia-700 text-fuchsia-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
+                          className="absolute -top-2 -right-2 bg-fuchsia-700 text-fuchsia-100 font-bold text-[10px] px-2 py-1 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
                           aria-label="Déjà suggéré"
                         >
                           Suggéré
@@ -482,12 +482,12 @@ export default function SuggestionsPage() {
                       </Button>
                     </div>
                     {/* Bloc infos mobile only + bouton en ligne */}
-                    <div className="flex w-full min-w-0 items-center sm:hidden gap-2">
+                    <div className="flex w-full min-w-0 items-center sm:hidden gap-1">
                       <div className="flex-1 min-w-0">
                         <div
-                          className="font-extrabold text-base text-primary truncate"
+                          className="font-extrabold text-sm text-primary truncate"
                           style={{
-                            maxWidth: "55vw",
+                            maxWidth: "38vw",
                             minWidth: 0,
                           }}
                         >
@@ -507,7 +507,7 @@ export default function SuggestionsPage() {
                             ? "outline"
                             : "default"
                         }
-                        className="rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition focus-visible:ring-2 focus-visible:ring-fuchsia-400/80 flex-shrink-0"
+                        className="rounded-lg font-semibold border-primary/40 hover:bg-primary/10 transition focus-visible:ring-2 focus-visible:ring-fuchsia-400/80 flex-shrink-0 py-1 px-2 text-xs"
                         style={{ maxWidth: "36vw" }}
                         disabled={
                           isOnSite ||
@@ -537,7 +537,7 @@ export default function SuggestionsPage() {
                           : suggestingId === item.id
                           ? (
                             <span className="flex items-center gap-2">
-                              <Loader2 className="animate-spin" size={18} />
+                              <Loader2 className="animate-spin" size={14} />
                               Envoi...
                             </span>
                           )
