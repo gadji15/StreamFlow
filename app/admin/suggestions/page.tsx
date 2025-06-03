@@ -168,7 +168,7 @@ export default function AdminSuggestionsPage() {
               placeholder="Recherche titre ou utilisateur..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="rounded-xl border border-gray-700 bg-gray-900/70 text-white px-3 py-2 focus:ring-2 focus:ring-fuchsia-400/50 transition min-w-[120px] w-[80vw] max-w-xs sm:min-w-[200px] sm:w-auto pl-10"
+              className="rounded-xl border border-gray-700 bg-gray-900/70 text-white px-2 py-2 focus:ring-2 focus:ring-fuchsia-400/50 transition w-full max-w-[180px] sm:w-auto sm:min-w-[200px] pl-10"
               aria-label="Recherche"
             />
             <Search className="absolute left-2 top-2.5 text-fuchsia-400 w-4 h-4 pointer-events-none" />
