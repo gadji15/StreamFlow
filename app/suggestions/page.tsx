@@ -422,7 +422,7 @@ export default function SuggestionsPage() {
                       `}</style>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-extrabold text-lg text-primary truncate flex items-center gap-2">
+                      <div className="font-extrabold text-lg text-primary break-words line-clamp-2 flex items-center gap-2" style={{wordBreak: "break-word"}}>
                         {item.title || item.name}
                       </div>
                       <div className="text-gray-400 text-sm mb-1">
