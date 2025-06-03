@@ -13,6 +13,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GlobalErrorLogger from "@/components/GlobalErrorLogger";
 import LayoutVisibility from "@/components/LayoutVisibility";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,18 +29,14 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
   icons: {
     icon: [
-      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-      { url: "/logo-icon.svg", type: "image/svg+xml" } // sizes est optionnel pour SVG
+      { url: "/logo-icon.svg", type: "image/svg+xml" }
     ],
     apple: [
       { url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" }
     ],
     other: [
       { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#7c3aed' },
-      { rel: 'icon', url: '/logo-icon.svg', type: 'image/svg+xml' } // sizes est optionnel pour SVG
+      { rel: 'icon', url: '/logo-icon.svg', type: 'image/svg+xml' }
     ],
   },
   appleWebApp: {
@@ -105,6 +102,7 @@ export default function RootLayout({
                 className="bg-[#18181c] max-w-[1440px] mx-auto px-1 xs:px-2 sm:px-4 md:px-8 py-4 sm:py-8 min-h-[calc(100vh-160px)]"
               >
                 {children}
+                <SpeedInsights />
               </main>
               <LayoutVisibility><Footer /></LayoutVisibility>
             </ThemeProvider>
