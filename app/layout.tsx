@@ -32,12 +32,12 @@ export const metadata: Metadata = {
       { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-      { url: "/StreamFlow.svg", sizes: "any", type: "image/svg+xml" }
+      { url: "/StreamFlow.svg", sizes: "512x512", type: "image/svg+xml" } // taille explicite pour SVG
     ],
     apple: [{ url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" }],
     other: [
       { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#7c3aed' },
-      { rel: 'icon', url: '/StreamFlow.svg', type: 'image/svg+xml' } // Ajout favicon SVG explicite
+      { rel: 'icon', url: '/StreamFlow.svg', type: 'image/svg+xml', sizes: "512x512" } // taille explicite aussi ici
     ],
   },
   appleWebApp: {
