@@ -133,7 +133,7 @@ export default function AdminSuggestionsPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-2 sm:px-6 animate-fade-in relative">
+    <div className="w-full max-w-7xl mx-auto py-10 px-2 sm:px-6 animate-fade-in relative overflow-x-hidden">
       {/* BG ultra premium glass + bokeh */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/30 via-blue-900/20 to-black/90 animate-gradientMove" />
@@ -390,8 +390,8 @@ export default function AdminSuggestionsPage() {
             </tbody>
           </table>
         </div>
-        {/* Mobile: cartes empilées */}
-        <div className="block md:hidden">
+        {/* Mobile: cartes empilées sans scroll horizontal */}
+        <div className="block md:hidden w-full max-w-full overflow-x-hidden">
           {loading ? (
             <Loader />
           ) : error ? (
@@ -399,16 +399,16 @@ export default function AdminSuggestionsPage() {
           ) : filtered.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 w-full max-w-full">
               {filtered.map((s, idx) => (
                 <div
                   key={s.id}
-                  className="rounded-2xl bg-gray-900/80 border border-gray-800 shadow-lg p-3 flex flex-col gap-2 animate-fade-in"
+                  className="rounded-2xl bg-gray-900/80 border border-gray-800 shadow-lg p-3 flex flex-col gap-2 animate-fade-in w-full max-w-full"
                   style={{
                     animationDelay: `${idx * 0.045}s`,
                   }}
                 >
-                  <div className="flex gap-3 items-center">
+                  <div className="flex gap-3 items-center flex-wrap w-full max-w-full">
                     <div className="w-14 h-20 rounded-xl overflow-hidden shadow border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex-shrink-0">
                       {s.poster_path ? (
                         <img
@@ -427,9 +427,9 @@ export default function AdminSuggestionsPage() {
                         />
                       )}
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex flex-col min-w-0 w-2/3 flex-1 max-w-full">
                       <div className="font-bold text-primary truncate">{s.title}</div>
-                      <div className="flex items-center gap-1 mt-1 mb-1">
+                      <div className="flex items-center gap-1 mt-1 mb-1 flex-wrap">
                         <Badge
                           variant="secondary"
                           className={`text-xs px-2 py-0.5 ${
@@ -448,7 +448,7 @@ export default function AdminSuggestionsPage() {
                       <div className="text-xs text-gray-500">
                         {new Date(s.created_at).toLocaleString("fr-FR")}
                       </div>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 flex-wrap">
                         <a
                           href={`https://www.themoviedb.org/${s.type === "film" ? "movie" : "tv"}/${s.tmdb_id}`}
                           target="_blank"
@@ -470,7 +470,7 @@ export default function AdminSuggestionsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 w-full max-w-full">
                     <Button
                       size="icon"
                       variant="outline"
