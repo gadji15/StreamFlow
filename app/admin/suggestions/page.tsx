@@ -140,27 +140,34 @@ export default function AdminSuggestionsPage() {
         <div className="flex gap-2 items-center">
           <Button
             variant={filter === "all" ? "default" : "ghost"}
-            className="rounded-xl px-4"
+            className="rounded-xl px-3 flex items-center gap-1"
             onClick={() => setFilter("all")}
             aria-pressed={filter === "all"}
+            aria-label="Tous"
           >
-            Tous
+            {/* Icône mobile, texte desktop */}
+            <span className="sm:hidden"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="2" rx="1" fill="currentColor"/><rect x="4" y="11" width="16" height="2" rx="1" fill="currentColor"/><rect x="4" y="17" width="16" height="2" rx="1" fill="currentColor"/></svg></span>
+            <span className="hidden sm:inline">Tous</span>
           </Button>
           <Button
             variant={filter === "film" ? "default" : "ghost"}
-            className="rounded-xl px-4"
+            className="rounded-xl px-3 flex items-center gap-1"
             onClick={() => setFilter("film")}
             aria-pressed={filter === "film"}
+            aria-label="Films"
           >
-            Films
+            <span className="sm:hidden"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M7 5v14M17 5v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></span>
+            <span className="hidden sm:inline">Films</span>
           </Button>
           <Button
             variant={filter === "serie" ? "default" : "ghost"}
-            className="rounded-xl px-4"
+            className="rounded-xl px-3 flex items-center gap-1"
             onClick={() => setFilter("serie")}
             aria-pressed={filter === "serie"}
+            aria-label="Séries"
           >
-            Séries
+            <span className="sm:hidden"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="15" rx="2" stroke="currentColor" strokeWidth="2"/><rect x="8" y="3" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="2"/></svg></span>
+            <span className="hidden sm:inline">Séries</span>
           </Button>
           <div className="ml-4 relative">
             <input
