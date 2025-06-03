@@ -32,14 +32,14 @@ export const metadata: Metadata = {
       { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-      { url: "/logo-icon.svg", sizes: "512x512", type: "image/svg+xml" } // utilisation de logo-icon.svg
+      { url: "/logo-icon.svg", type: "image/svg+xml" } // sizes est optionnel pour SVG
     ],
     apple: [
       { url: "/icons/apple-icon-180x180.png", sizes: "180x180", type: "image/png" }
     ],
     other: [
       { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#7c3aed' },
-      { rel: 'icon', url: '/logo-icon.svg', type: 'image/svg+xml', sizes: "512x512" } // utilisation de logo-icon.svg
+      { rel: 'icon', url: '/logo-icon.svg', type: 'image/svg+xml' } // sizes est optionnel pour SVG
     ],
   },
   appleWebApp: {
