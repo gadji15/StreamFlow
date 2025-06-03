@@ -134,11 +134,11 @@ export default function SeriesTable({
               <div className="flex gap-1 mt-1">
                 <button
                   type="button"
-                  aria-label="Aperçu"
-                  className="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded px-1 py-1 text-xs"
-                  onClick={() => onAction && onAction("preview", serie)}
+                  aria-label="Supprimer"
+                  className="flex-1 bg-red-700 hover:bg-red-800 text-white rounded px-1 py-1 text-xs"
+                  onClick={() => onAction && onAction("delete", serie)}
                 >
-                  👁️
+                  🗑️
                 </button>
                 <button
                   type="button"
