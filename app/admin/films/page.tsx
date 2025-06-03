@@ -289,11 +289,11 @@ export default function AdminFilmsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
+          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3 hidden sm:flex">
             <Film className="h-8 w-8 text-indigo-400" />
             Gestion des Films
           </h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-sm mt-1 hidden sm:block">
             Recherchez, gérez et structurez tous vos films et leur publication.
           </p>
         </div>
@@ -359,11 +359,12 @@ export default function AdminFilmsPage() {
             Export CSV
           </Button>
           <Button
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform flex items-center"
             onClick={() => setFilmModalOpen(true)}
+            aria-label="Ajouter un film"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un film
+            <Plus className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Ajouter un film</span>
           </Button>
         </div>
       </div>
