@@ -398,13 +398,24 @@ export default function AdminSuggestionsPage() {
                       <div className="flex items-center gap-1 mt-1 mb-1 flex-wrap">
                         <Badge
                           variant="secondary"
-                          className={`text-xs px-2 py-0.5 ${
+                          className={`text-xs px-2 py-0.5 flex items-center gap-1 ${
                             s.type === "film"
                               ? "bg-gradient-to-r from-blue-700/80 to-blue-400/60"
                               : "bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-400/60"
                           }`}
                         >
-                          {s.type === "film" ? "Film" : "Série"}
+                          {/* Icône mobile, texte desktop */}
+                          {s.type === "film" ? (
+                            <>
+                              <span className="sm:hidden"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M7 5v14M17 5v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></span>
+                              <span className="hidden sm:inline">Film</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="sm:hidden"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="15" rx="2" stroke="currentColor" strokeWidth="2"/><rect x="8" y="3" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="2"/></svg></span>
+                              <span className="hidden sm:inline">Série</span>
+                            </>
+                          )}
                         </Badge>
                         <span className="text-xs text-gray-400 ml-2">{s.year || "-"}</span>
                       </div>
