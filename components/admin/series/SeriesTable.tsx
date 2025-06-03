@@ -136,24 +136,27 @@ export default function SeriesTable({
                   aria-label="Aperçu"
                   className="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded px-2 py-1 text-xs"
                   onClick={() => onAction && onAction("preview", serie)}
+                  title="Aperçu"
                 >
-                  👁️ Aperçu
+                  👁️
                 </button>
                 <button
                   type="button"
                   aria-label="Saisons"
                   className="flex-1 bg-purple-700 hover:bg-purple-800 text-white rounded px-2 py-1 text-xs"
                   onClick={() => onAction && onAction("expand", serie)}
+                  title="Saisons"
                 >
-                  📚 Saisons
+                  📚
                 </button>
                 <button
                   type="button"
-                  aria-label="Actions"
+                  aria-label="Modifier"
                   className="flex-1 bg-gray-700 hover:bg-gray-800 text-white rounded px-2 py-1 text-xs"
                   onClick={() => onAction && onAction("edit", serie)}
+                  title="Modifier"
                 >
-                  ✏️ Modifier
+                  ✏️
                 </button>
               </div>
             </div>
