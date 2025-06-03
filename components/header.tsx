@@ -106,16 +106,16 @@ export default function Header() {
               Séries
             </Link>
             <Link
-              href="/categories"
+              href="/suggestions"
               className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
                 ${
-                  pathname === '/categories'
+                  pathname === '/suggestions'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-lg'
                     : 'text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-400 hover:text-white hover:shadow'
                 }`}
             >
-              <Layers className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/categories' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
-              Catégories
+              <Layers className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/suggestions' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
+              Suggestions
             </Link>
             <Link
               href="/nouveates"
@@ -248,11 +248,11 @@ export default function Header() {
                 </div>
               </Link>
               <Link
-                href="/categories"
+                href="/suggestions"
                 className="block py-2 hover:text-white"
                 onClick={() => setNavOpen(false)}
               >
-                Catégories
+                Suggestions
               </Link>
               <Link
                 href="/nouveates"

@@ -16,11 +16,14 @@ function getYoutubeTrailer(videos: any[]) {
   return "";
 }
 
-type FilmModalProps = {
+// Ajoutez ou modifiez le type FilmModalProps pour inclure initialTmdbId
+export type FilmModalProps = {
   open: boolean;
   onClose: () => void;
   onSave: (payload: any) => Promise<void>;
   initialData?: any;
+  initialTmdbId?: number;
+  // autres props éventuelles
 };
 
 export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {

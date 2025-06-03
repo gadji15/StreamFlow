@@ -38,16 +38,20 @@ export default function WatchEpisodePage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Charger l'épisode
+        // Charger l'épisode avec le numéro de saison associé
         const { data: episodeData, error: epErr } = await supabase
           .from("episodes")
-          .select("*")
+          .select("*, season:season_id(season_number)")
           .eq("id", episodeId)
           .single();
         if (epErr || !episodeData) throw new Error("Épisode non trouvé.");
         if (!episodeData.published) throw new Error("Cet épisode n'est pas disponible.");
         if (!isMounted) return;
-        setEpisode(episodeData);
+        // Correction : utiliser le vrai numéro de saison depuis la jointure
+        setEpisode({
+          ...episodeData,
+          season: episodeData.season?.season_number ?? null,
+        });
 
         // Charger la série
         const { data: seriesData } = await supabase
@@ -77,16 +81,25 @@ export default function WatchEpisodePage() {
         );
         setSelectedSeasonIndex(currentSeasonIdx !== -1 ? currentSeasonIdx : 0);
 
-        // Épisodes pour navigation
-        const allEpisodes = sortedSeasons.flatMap((s: any) => s.episodes || []);
-        const publishedEpisodes = allEpisodes
+        // Correction navigation : on récupère tous les épisodes publiés, triés par saison puis numéro d'épisode
+        const publishedEpisodes = sortedSeasons
+          .flatMap((s: any) =>
+            (s.episodes || []).map((ep: any) => ({
+              ...ep,
+              season: s.season_number, // s'assurer que la saison est bien renseignée
+            }))
+          )
           .filter((ep: any) => ep.published)
           .sort((a: any, b: any) =>
             a.season !== b.season
               ? a.season - b.season
               : a.episode_number - b.episode_number
           );
+
+        // Trouver l'index de l'épisode courant dans la liste triée
         const idx = publishedEpisodes.findIndex((ep: any) => ep.id === episodeId);
+
+        // Définir l'épisode précédent et suivant
         setPreviousEpisode(idx > 0 ? publishedEpisodes[idx - 1] : null);
         setNextEpisode(idx !== -1 && idx < publishedEpisodes.length - 1 ? publishedEpisodes[idx + 1] : null);
 
@@ -253,7 +266,9 @@ export default function WatchEpisodePage() {
               {series.title}
             </h1>
             <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-              Saison {episode.season}, Épisode {episode.episode_number} <span className="ml-2 text-xs text-gray-400">({`S${String(episode.season).padStart(2, "0")}E${String(episode.episode_number).padStart(2, "0")}`})</span>
+              Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"} <span className="ml-2 text-xs text-gray-400">({
+                `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}` 
+              })</span>
             </span>
             {series.genre && (
               <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
@@ -275,6 +290,21 @@ export default function WatchEpisodePage() {
                 <b>Durée :</b> {episode.duration} min
               </span>
             )}
+          </div>
+          {/* Description dynamique et claire, bien démarquée */}
+          <div className="my-2">
+            <span
+              className="inline-block px-4 py-2 rounded-lg border-2 border-primary bg-primary/20 text-primary font-bold text-lg shadow"
+              style={{ letterSpacing: "0.03em" }}
+            >
+              Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"}
+              <span className="ml-2 text-xs text-primary font-mono">
+                ({
+                  `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}`
+                })
+              </span>
+              <span className="ml-2 text-primary font-normal">{episode.title && `- ${episode.title}`}</span>
+            </span>
           </div>
           <p className="text-gray-200 text-base whitespace-pre-line mt-1">{episode.description}</p>
         </section>

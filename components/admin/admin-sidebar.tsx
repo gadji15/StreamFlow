@@ -16,6 +16,7 @@ import {
   ExternalLink,
   HelpCircle,
   Bell,
+  MessageCircle, // Ajout de l'icône pour Suggestions
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -81,11 +82,11 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
 
   return (
     <div
-      className={sidebarClass}
-      style={onCloseMobile ? { transform: 'translateX(0)', transition: 'all 0.3s' } : undefined}
+      className={cn(
+        sidebarClass,
+        onCloseMobile ? "admin-sidebar-mobile-visible" : ""
+      )}
       tabIndex={-1}
-      aria-modal={onCloseMobile ? "true" : undefined}
-      role={onCloseMobile ? "dialog" : undefined}
     >
       <div className="p-6 flex items-center justify-between flex-shrink-0">
         <Link href="/admin" className="flex items-center">
@@ -123,6 +124,12 @@ export default function AdminSidebar({ onCloseMobile }: AdminSidebarProps) {
             icon={<Users className="h-5 w-5" />}
             title="Utilisateurs"
             isActive={pathname === '/admin/users'}
+          />
+          <NavItem
+            href="/admin/suggestions"
+            icon={<MessageCircle className="h-5 w-5" />}
+            title="Suggestions"
+            isActive={pathname === '/admin/suggestions'}
           />
         </div>
         <div className="mb-6">

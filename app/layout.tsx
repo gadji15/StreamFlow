@@ -96,15 +96,20 @@ export default function RootLayout({
             <ThemeProvider>
               {/* Header et Footer cachés dans l'admin */}
               <LayoutVisibility>
-            <Header />
+                <Header />
               </LayoutVisibility>
-              <main
-                className="bg-[#18181c] max-w-[1440px] mx-auto px-1 xs:px-2 sm:px-4 md:px-8 py-4 sm:py-8 min-h-[calc(100vh-160px)]"
-              >
-                {children}
-                <SpeedInsights />
-              </main>
-              <LayoutVisibility><Footer /></LayoutVisibility>
+              {/* Utilisation d'un flex-col h-screen pour forcer le footer en bas */}
+              <div className="flex flex-col min-h-screen w-full">
+                <main
+                  className="w-full max-w-[1440px] mx-auto px-2 sm:px-4 md:px-8 py-4 sm:py-8 flex-1"
+                >
+                  {children}
+                  <SpeedInsights />
+                </main>
+                <LayoutVisibility>
+                  <Footer />
+                </LayoutVisibility>
+              </div>
             </ThemeProvider>
           </ErrorBoundary>
         </AuthProvider>
