@@ -168,7 +168,7 @@ export default function AdminSuggestionsPage() {
               placeholder="Recherche titre ou utilisateur..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="rounded-xl border border-gray-700 bg-gray-900/70 text-white px-4 py-2 focus:ring-2 focus:ring-fuchsia-400/50 transition min-w-[200px] pl-10"
+              className="rounded-xl border border-gray-700 bg-gray-900/70 text-white px-3 py-2 focus:ring-2 focus:ring-fuchsia-400/50 transition min-w-[120px] w-[80vw] max-w-xs sm:min-w-[200px] sm:w-auto pl-10"
               aria-label="Recherche"
             />
             <Search className="absolute left-2 top-2.5 text-fuchsia-400 w-4 h-4 pointer-events-none" />
@@ -218,10 +218,10 @@ export default function AdminSuggestionsPage() {
                   <th className="px-4 py-3 text-left">Poster</th>
                   <th className="px-4 py-3 text-left">Titre</th>
                   <th className="px-2 py-3">Type</th>
-                  <th className="px-2 py-3">Année</th>
-                  <th className="px-2 py-3">Utilisateur</th>
-                  <th className="px-2 py-3">Date</th>
-                  <th className="px-2 py-3">Lien</th>
+                  <th className="px-2 py-3 hidden md:table-cell">Année</th>
+                  <th className="px-2 py-3 hidden md:table-cell">Utilisateur</th>
+                  <th className="px-2 py-3 hidden md:table-cell">Date</th>
+                  <th className="px-2 py-3 hidden md:table-cell">Lien</th>
                   <th className="px-2 py-3">TMDB</th>
                   <th className="px-2 py-3">Action</th>
                 </tr>
@@ -293,12 +293,12 @@ export default function AdminSuggestionsPage() {
                           {s.type === "film" ? "Film" : "Série"}
                         </Badge>
                       </td>
-                      <td className="px-2 py-2 max-w-[60px] truncate">{s.year || "-"}</td>
-                      <td className="px-2 py-2 max-w-[110px] truncate">
+                      <td className="px-2 py-2 max-w-[60px] truncate hidden md:table-cell">{s.year || "-"}</td>
+                      <td className="px-2 py-2 max-w-[110px] truncate hidden md:table-cell">
                         {s.user?.full_name || s.user?.email || s.user_id?.slice(0, 8) || "-"}
                       </td>
-                      <td className="px-2 py-2 whitespace-nowrap max-w-[110px] truncate">{new Date(s.created_at).toLocaleString("fr-FR")}</td>
-                      <td className="px-2 py-2 max-w-[80px]">
+                      <td className="px-2 py-2 whitespace-nowrap max-w-[110px] truncate hidden md:table-cell">{new Date(s.created_at).toLocaleString("fr-FR")}</td>
+                      <td className="px-2 py-2 max-w-[80px] hidden md:table-cell">
                         {s.link ? (
                           <a
                             href={s.link}
