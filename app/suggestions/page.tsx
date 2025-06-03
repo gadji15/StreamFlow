@@ -237,30 +237,8 @@ export default function SuggestionsPage() {
   }, [feedback]);
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-[#1e0028] via-[#04001a] to-[#00040c] overflow-x-hidden">
-      {/* Background animation premium */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/30 via-blue-900/20 to-black/90 animate-gradientMove" />
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full opacity-30 bg-fuchsia-500 blur-3xl animate-bokehPulse" />
-        <style>{`
-          @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          @keyframes bokehPulse {
-            0%,100% { opacity: 0.3; transform: scale(1);}
-            50% { opacity: 0.6; transform: scale(1.08);}
-          }
-          .animate-gradientMove {
-            background-size: 200% 200%;
-            animation: gradientMove 14s ease-in-out infinite;
-          }
-          .animate-bokehPulse {
-            animation: bokehPulse 6s ease-in-out infinite;
-          }
-        `}</style>
-      </div>
+    <div className="relative min-h-screen flex flex-col bg-gray-950 overflow-x-hidden">
+      {/* Fond sobre et robuste */}
       <main className="relative z-10 flex flex-col items-center w-full flex-1 pt-28 pb-12 px-2 sm:px-6">
         <div
           className="w-full max-w-3xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.25)] border-0 animate-fadeInUp backdrop-blur-[18px] p-0"
