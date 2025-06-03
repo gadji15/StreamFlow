@@ -289,11 +289,11 @@ export default function AdminFilmsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
+          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3 hidden sm:flex">
             <Film className="h-8 w-8 text-indigo-400" />
             Gestion des Films
           </h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-sm mt-1 hidden sm:block">
             Recherchez, gérez et structurez tous vos films et leur publication.
           </p>
         </div>
@@ -359,11 +359,12 @@ export default function AdminFilmsPage() {
             Export CSV
           </Button>
           <Button
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform flex items-center"
             onClick={() => setFilmModalOpen(true)}
+            aria-label="Ajouter un film"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un film
+            <Plus className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Ajouter un film</span>
           </Button>
         </div>
       </div>
@@ -371,13 +372,13 @@ export default function AdminFilmsPage() {
       <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
         {/* Recherche rapide et avancée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+          <div className="relative w-full max-w-[180px] sm:max-w-xs flex-1">
             <Input
               type="search"
               placeholder="🔍 Recherche rapide (titre film)..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow w-full"
               aria-label="Recherche de film"
             />
             <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
@@ -393,43 +394,7 @@ export default function AdminFilmsPage() {
             Réinitialiser
           </Button>
         </div>
-        <form
-          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}
-        >
-          <Input
-            type="text"
-            placeholder="Titre…"
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Réalisateur…"
-            value={advancedSearch.director}
-            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par réalisateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année…"
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID…"
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
+        {/* Recherche avancée supprimée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <select
             value={genreFilter}
@@ -482,69 +447,68 @@ export default function AdminFilmsPage() {
         ) : (
           <>
             {/* Responsive card view for mobile devices */}
-            <div className="sm:hidden flex flex-col gap-4">
+            <div className="sm:hidden flex flex-col gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
               {paginatedMovies.map((movie) => {
                 const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
                 const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
                 return (
-                  <div key={movie.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-4 py-3 flex flex-col">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={posterUrl}
-                        alt={movie.title}
-                        className="h-16 w-12 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
-                        onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold truncate text-base">{movie.title}</div>
-                        <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
-                          {genres.slice(0, 2).map(g => (
-                            <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
-                          ))}
-                          {genres.length > 2 && <span>…</span>}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-400">{movie.year}</span>
-                          {movie.isvip && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
-                          )}
-                          <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-xs font-semibold text-gray-400">
-                            {movie.published ? 'Publié' : 'Brouillon'}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
-                        onClick={() => toggleSelect(movie.id)}
-                        className="ml-2 bg-transparent border-none focus:outline-none"
-                      >
-                        {isChecked(movie.id) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-500" />
-                        ) : (
-                          <Square className="h-5 w-5 text-gray-400" />
+                  <div
+                    key={movie.id}
+                    className="bg-gray-800 rounded-lg shadow border border-gray-700 px-1 py-1 flex flex-row items-center w-full max-w-full min-w-0 overflow-x-hidden gap-2"
+                  >
+                    <img
+                      src={posterUrl}
+                      alt={movie.title}
+                      className="h-16 w-12 rounded-md object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                      onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
+                    />
+                    <div className="flex-1 min-w-0 max-w-full">
+                      <div className="font-bold truncate text-[15px] max-w-[50vw]">{movie.title}</div>
+                      <div className="flex items-center flex-wrap gap-1 mt-1">
+                        <span className="text-xs text-gray-400">{movie.year}</span>
+                        {movie.isvip && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
                         )}
-                      </button>
-                    </div>
-                    <div className="flex gap-2 mt-3 justify-end">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="Aperçu"
-                        onClick={() => setSelectedMovie(movie)}
-                        className="h-8 w-8"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Actions"
-                        onClick={() => setActionMenuMovie(movie)}
-                        className="h-8 w-8"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                        <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-xs font-semibold text-gray-400">
+                          {movie.published ? 'Publié' : 'Brouillon'}
+                        </span>
+                        {genres.slice(0, 2).map(g => (
+                          <span key={g} className="px-1 bg-gray-700/60 rounded text-xs">{g}</span>
+                        ))}
+                        {genres.length > 2 && <span className="text-xs">…</span>}
+                      </div>
+                      <div className="flex gap-1 mt-1 justify-end items-center">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Aperçu"
+                          onClick={() => setSelectedMovie(movie)}
+                          className="h-6 w-6 p-0 flex items-center justify-center border-gray-600 hover:bg-indigo-900/20 transition"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Actions"
+                          onClick={() => setActionMenuMovie(movie)}
+                          className="h-6 w-6 p-0 flex items-center justify-center hover:bg-gray-700/40 transition"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        <button
+                          type="button"
+                          aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
+                          onClick={() => toggleSelect(movie.id)}
+                          className="ml-1 bg-transparent border-none focus:outline-none flex-shrink-0"
+                        >
+                          {isChecked(movie.id) ? (
+                            <CheckSquare className="h-4 w-4 text-indigo-500" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -612,7 +576,7 @@ export default function AdminFilmsPage() {
                       Film {sortField === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
                     <th
-                      className="pb-3 font-medium cursor-pointer select-none w-20"
+                      className="pb-3 font-medium cursor-pointer select-none w-20 hidden md:table-cell"
                       onClick={() => {
                         setSortField('year');
                         setSortOrder(o => (sortField === 'year' && o === 'asc') ? 'desc' : 'asc');
@@ -621,7 +585,7 @@ export default function AdminFilmsPage() {
                       Année {sortField === 'year' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
                     <th
-                      className="pb-3 font-medium text-center cursor-pointer select-none w-24"
+                      className="pb-3 font-medium text-center cursor-pointer select-none w-24 hidden md:table-cell"
                       onClick={() => {
                         setSortField('vote_average');
                         setSortOrder(o => (sortField === 'vote_average' && o === 'asc') ? 'desc' : 'asc');
@@ -629,9 +593,9 @@ export default function AdminFilmsPage() {
                     >
                       Note {sortField === 'vote_average' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
-                    <th className="pb-3 font-medium text-center w-16">Votes</th>
-                    <th className="pb-3 font-medium text-center w-24">Statut</th>
-                    <th className="pb-3 font-medium text-center w-16">VIP</th>
+                    <th className="pb-3 font-medium text-center w-16 hidden md:table-cell">Votes</th>
+                    <th className="pb-3 font-medium text-center w-24 hidden sm:table-cell">Statut</th>
+                    <th className="pb-3 font-medium text-center w-16 hidden sm:table-cell">VIP</th>
                     <th className="pb-3 font-medium text-right w-32">Actions</th>
                   </tr>
                 </thead>
@@ -676,8 +640,8 @@ export default function AdminFilmsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4">{movie.year}</td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 hidden md:table-cell">{movie.year}</td>
+                        <td className="py-4 text-center hidden md:table-cell">
                           {movie.vote_average ? (
                             <div className="flex items-center justify-center">
                               <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
@@ -687,10 +651,10 @@ export default function AdminFilmsPage() {
                             <span className="text-gray-500">-</span>
                           )}
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden md:table-cell">
                           {movie.vote_count ?? <span className="text-gray-500">-</span>}
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden sm:table-cell">
                           <Button
                             type="button"
                             variant={movie.published ? "default" : "ghost"}
@@ -706,7 +670,7 @@ export default function AdminFilmsPage() {
                             {movie.published ? 'Publié' : 'Brouillon'}
                           </Button>
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden sm:table-cell">
                           <span className={cn(
                             "px-2 py-1 rounded-full text-xs font-semibold",
                             movie.isvip
@@ -890,31 +854,40 @@ export default function AdminFilmsPage() {
       </div>
       {/* Aperçu rapide */}
       <Dialog open={!!selectedMovie} onOpenChange={open => { if (!open) setSelectedMovie(null); }}>
-        <DialogContent className="max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0">
+        <DialogContent className="w-full max-w-[95vw] sm:max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0 min-w-0">
+          {/* Bouton Fermer (mobile) */}
+          <button
+            className="absolute top-3 right-3 z-10 sm:hidden text-gray-400 hover:text-white rounded-full p-1 bg-gray-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            onClick={() => setSelectedMovie(null)}
+            aria-label="Fermer"
+            tabIndex={0}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M18 6 6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round"/></svg>
+          </button>
           <DialogHeader>
-            <DialogTitle>Aperçu du film</DialogTitle>
+            <DialogTitle className="text-base sm:text-xl">Aperçu du film</DialogTitle>
           </DialogHeader>
           {selectedMovie && (
-            <div className="p-5 space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 h-32 w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
+            <div className="p-2 sm:p-5 space-y-2 sm:space-y-4 w-full max-w-full min-w-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full max-w-full min-w-0 items-center sm:items-start text-center sm:text-left">
+                <div className="flex-shrink-0 h-20 w-14 sm:h-32 sm:w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
                   <img
                     src={selectedMovie.poster || '/placeholder-backdrop.jpg'}
                     alt={selectedMovie.title}
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-2xl font-bold truncate">{selectedMovie.title}</div>
-                  <div className="text-xs text-gray-400 mb-2">
+                <div className="flex-1 min-w-0 max-w-full">
+                  <div className="text-base sm:text-2xl font-bold truncate max-w-full">{selectedMovie.title}</div>
+                  <div className="text-xs text-gray-400 mb-1">
                     {selectedMovie.year ?? '-'}
                   </div>
-                  <div className="flex gap-2 flex-wrap mb-1">
+                  <div className="flex gap-1 flex-wrap mb-1 justify-center sm:justify-start">
                     {(selectedMovie.genre || '').split(',').map(g =>
                       <span key={g} className="inline-block bg-purple-800/20 text-purple-200 px-2 py-0.5 rounded-full text-xs">{g.trim()}</span>
                     )}
                   </div>
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-1 mt-1 justify-center sm:justify-start">
                     {selectedMovie.published
                       ? <span className="bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-semibold">Publié</span>
                       : <span className="bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full text-xs font-semibold">Brouillon</span>
@@ -923,23 +896,25 @@ export default function AdminFilmsPage() {
                       <span className="bg-amber-600/20 text-amber-300 px-2 py-0.5 rounded-full text-xs font-semibold">VIP</span>
                     }
                   </div>
-                  <div className="mt-2 text-xs text-gray-400">
-                    TMDB ID: <span className="text-gray-300">{selectedMovie.tmdb_id ?? '-'}</span>
-                  </div>
-                  <div className="mt-1 text-xs text-gray-400">
-                    Réalisateur: <span className="text-gray-200">{selectedMovie.director ?? '-'}</span>
-                  </div>
-                  <div className="mt-1 text-xs text-gray-400">
-                    Durée: <span className="text-gray-300">{selectedMovie.duration ? `${selectedMovie.duration} min` : '-'}</span>
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs text-gray-400 w-full max-w-full">
+                    <div>
+                      <span className="font-medium text-gray-300">TMDB ID:</span> {selectedMovie.tmdb_id ?? '-'}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-300">Réalisateur:</span> {selectedMovie.director ?? '-'}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-300">Durée:</span> {selectedMovie.duration ? `${selectedMovie.duration} min` : '-'}
+                    </div>
                   </div>
                 </div>
               </div>
               <div>
-                <div className="font-semibold mb-1 text-sm text-gray-300">Description</div>
-                <div className="text-sm text-gray-200 leading-relaxed max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
+                <div className="font-semibold mb-1 text-xs sm:text-sm text-gray-300">Description</div>
+                <div className="text-xs sm:text-sm text-gray-200 leading-relaxed max-h-28 sm:max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
               </div>
               {(selectedMovie.trailer_url || selectedMovie.video_url) && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {selectedMovie.trailer_url && (
                     <div>
                       <div className="font-semibold text-xs text-gray-300">Bande-annonce :</div>
@@ -955,16 +930,17 @@ export default function AdminFilmsPage() {
                 </div>
               )}
               {selectedMovie.backdrop && (
-                <div className="mt-4">
+                <div className="mt-2">
                   <img
                     src={selectedMovie.backdrop}
                     alt="Backdrop"
                     className="w-full rounded-lg shadow border border-gray-800 object-cover"
-                    style={{ maxHeight: 200 }}
+                    style={{ maxHeight: 80 }}
                   />
                 </div>
               )}
-              <div className="flex justify-end mt-2">
+              {/* Bouton Fermer desktop/tablette */}
+              <div className="flex justify-end mt-2 hidden sm:flex">
                 <Button variant="outline" onClick={() => setSelectedMovie(null)}>
                   Fermer
                 </Button>
