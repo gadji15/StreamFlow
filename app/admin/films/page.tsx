@@ -854,14 +854,23 @@ export default function AdminFilmsPage() {
       </div>
       {/* Aperçu rapide */}
       <Dialog open={!!selectedMovie} onOpenChange={open => { if (!open) setSelectedMovie(null); }}>
-        <DialogContent className="w-full max-w-[97vw] sm:max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0 min-w-0">
+        <DialogContent className="w-full max-w-[95vw] sm:max-w-lg bg-gray-900/95 backdrop-blur-lg rounded-2xl border-0 p-0 min-w-0">
+          {/* Bouton Fermer (mobile) */}
+          <button
+            className="absolute top-3 right-3 z-10 sm:hidden text-gray-400 hover:text-white rounded-full p-1 bg-gray-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            onClick={() => setSelectedMovie(null)}
+            aria-label="Fermer"
+            tabIndex={0}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M18 6 6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round"/></svg>
+          </button>
           <DialogHeader>
             <DialogTitle className="text-base sm:text-xl">Aperçu du film</DialogTitle>
           </DialogHeader>
           {selectedMovie && (
-            <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 w-full max-w-full min-w-0">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-full min-w-0 items-center sm:items-start text-center sm:text-left">
-                <div className="flex-shrink-0 h-24 w-16 sm:h-32 sm:w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
+            <div className="p-2 sm:p-5 space-y-2 sm:space-y-4 w-full max-w-full min-w-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full max-w-full min-w-0 items-center sm:items-start text-center sm:text-left">
+                <div className="flex-shrink-0 h-20 w-14 sm:h-32 sm:w-24 rounded-lg overflow-hidden border bg-gray-800 shadow">
                   <img
                     src={selectedMovie.poster || '/placeholder-backdrop.jpg'}
                     alt={selectedMovie.title}
@@ -869,7 +878,7 @@ export default function AdminFilmsPage() {
                   />
                 </div>
                 <div className="flex-1 min-w-0 max-w-full">
-                  <div className="text-lg sm:text-2xl font-bold truncate max-w-full">{selectedMovie.title}</div>
+                  <div className="text-base sm:text-2xl font-bold truncate max-w-full">{selectedMovie.title}</div>
                   <div className="text-xs text-gray-400 mb-1">
                     {selectedMovie.year ?? '-'}
                   </div>
@@ -902,7 +911,7 @@ export default function AdminFilmsPage() {
               </div>
               <div>
                 <div className="font-semibold mb-1 text-xs sm:text-sm text-gray-300">Description</div>
-                <div className="text-xs sm:text-sm text-gray-200 leading-relaxed max-h-32 sm:max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
+                <div className="text-xs sm:text-sm text-gray-200 leading-relaxed max-h-28 sm:max-h-40 overflow-y-auto">{selectedMovie.description || <span className="text-gray-600 italic">Aucune description.</span>}</div>
               </div>
               {(selectedMovie.trailer_url || selectedMovie.video_url) && (
                 <div className="flex flex-col gap-1">
@@ -921,16 +930,17 @@ export default function AdminFilmsPage() {
                 </div>
               )}
               {selectedMovie.backdrop && (
-                <div className="mt-3">
+                <div className="mt-2">
                   <img
                     src={selectedMovie.backdrop}
                     alt="Backdrop"
                     className="w-full rounded-lg shadow border border-gray-800 object-cover"
-                    style={{ maxHeight: 120 }}
+                    style={{ maxHeight: 80 }}
                   />
                 </div>
               )}
-              <div className="flex justify-end mt-2">
+              {/* Bouton Fermer desktop/tablette */}
+              <div className="flex justify-end mt-2 hidden sm:flex">
                 <Button variant="outline" onClick={() => setSelectedMovie(null)}>
                   Fermer
                 </Button>
