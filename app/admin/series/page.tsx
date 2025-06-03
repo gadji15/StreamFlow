@@ -225,13 +225,7 @@ export default function AdminSeriesPage() {
       {/* Header + Boutons globaux */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
-            <SeriesIcon className="h-8 w-8 text-indigo-400" />
-            Gestion des Séries
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Visualisez, recherchez, gérez et structurez toutes vos séries et saisons.
-          </p>
+          {/* En-tête supprimé */}
         </div>
         <div className="flex gap-2">
           <Button
@@ -254,15 +248,6 @@ export default function AdminSeriesPage() {
             }
           >
             <ListTree className="h-5 w-5" />
-          </Button>
-          <Button
-            onClick={() => setSeriesModal({ open: true })}
-            aria-label="Ajouter une série"
-            title="Ajouter une nouvelle série"
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une série
           </Button>
         </div>
       </div>
@@ -351,16 +336,9 @@ export default function AdminSeriesPage() {
                 ? `Aucune série ne correspond à votre recherche « ${searchTerm} »`
                 : statusFilter !== 'all'
                   ? `Aucune série avec le statut « ${statusFilter === 'published' ? 'Publiée' : 'Brouillon'} »`
-                  : "Commencez par ajouter votre première série pour enrichir votre catalogue."
+                  : ""
               }
             </p>
-            <Button 
-              onClick={() => setSeriesModal({ open: true })}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter une série
-            </Button>
           </div>
         ) : showTree ? (
           <SeriesHierarchyTree
