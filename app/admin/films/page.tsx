@@ -477,13 +477,13 @@ export default function AdminFilmsPage() {
                         ))}
                         {genres.length > 2 && <span className="text-xs">…</span>}
                       </div>
-                      <div className="flex gap-1 mt-1 justify-start">
+                      <div className="flex gap-1 mt-1 justify-end items-center">
                         <Button
                           variant="outline"
                           size="icon"
                           aria-label="Aperçu"
                           onClick={() => setSelectedMovie(movie)}
-                          className="h-7 w-7"
+                          className="h-6 w-6 p-0 flex items-center justify-center border-gray-600 hover:bg-indigo-900/20 transition"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -492,7 +492,7 @@ export default function AdminFilmsPage() {
                           size="icon"
                           aria-label="Actions"
                           onClick={() => setActionMenuMovie(movie)}
-                          className="h-7 w-7"
+                          className="h-6 w-6 p-0 flex items-center justify-center hover:bg-gray-700/40 transition"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
