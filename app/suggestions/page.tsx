@@ -414,26 +414,72 @@ export default function SuggestionsPage() {
                         </span>
                       )}
                     </div>
-                    {/* Bloc infos desktop/tablette */}
-                    <div className="flex-1 min-w-0 hidden sm:block">
-                      <div
-                        className="font-extrabold text-lg text-primary truncate flex items-center gap-2"
-                        style={{
-                          maxWidth: "60vw",
-                          minWidth: 0,
+                    {/* Bloc infos desktop/tablette (avec bouton à droite) */}
+                    <div className="flex-1 min-w-0 hidden sm:flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="font-extrabold text-lg text-primary truncate"
+                          style={{
+                            maxWidth: "30vw",
+                            minWidth: 0,
+                          }}
+                        >
+                          {item.title || item.name}
+                        </div>
+                        <div className="text-gray-400 text-sm mb-1">
+                          {item.media_type === "movie" ? "Film" : "Série"}{" "}
+                          {item.release_date || item.first_air_date
+                            ? `• ${(item.release_date || item.first_air_date)?.slice(0, 4)}`
+                            : ""}
+                        </div>
+                        <div className="text-gray-300 text-xs line-clamp-2">
+                          {item.overview}
+                        </div>
+                      </div>
+                      <Button
+                        variant={
+                          isOnSite
+                            ? "secondary"
+                            : isSuggested
+                            ? "outline"
+                            : "default"
+                        }
+                        className="rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition focus-visible:ring-2 focus-visible:ring-fuchsia-400/80 flex-shrink-0"
+                        style={{ maxWidth: "170px" }}
+                        disabled={
+                          isOnSite ||
+                          isSuggested ||
+                          suggestingId === item.id ||
+                          !isLoggedIn
+                        }
+                        aria-label={
+                          isOnSite
+                            ? "Déjà sur le site"
+                            : isSuggested
+                            ? "Déjà suggéré"
+                            : suggestingId === item.id
+                            ? "Envoi en cours"
+                            : "Suggérer ce contenu"
+                        }
+                        onClick={() => {
+                          if (!isOnSite && !isSuggested && isLoggedIn) {
+                            suggest(item);
+                          }
                         }}
                       >
-                        {item.title || item.name}
-                      </div>
-                      <div className="text-gray-400 text-sm mb-1">
-                        {item.media_type === "movie" ? "Film" : "Série"}{" "}
-                        {item.release_date || item.first_air_date
-                          ? `• ${(item.release_date || item.first_air_date)?.slice(0, 4)}`
-                          : ""}
-                      </div>
-                      <div className="text-gray-300 text-xs line-clamp-2">
-                        {item.overview}
-                      </div>
+                        {isOnSite
+                          ? "Déjà sur le site"
+                          : isSuggested
+                          ? "Déjà suggéré"
+                          : suggestingId === item.id
+                          ? (
+                            <span className="flex items-center gap-2">
+                              <Loader2 className="animate-spin" size={18} />
+                              Envoi...
+                            </span>
+                          )
+                          : "Suggérer"}
+                      </Button>
                     </div>
                     {/* Bloc infos mobile only + bouton en ligne */}
                     <div className="flex w-full min-w-0 items-center sm:hidden gap-2">
