@@ -358,23 +358,24 @@ export default function SuggestionsPage() {
             <div className="mb-2 text-xs text-yellow-400 bg-yellow-950/60 rounded-xl p-2">
               <div>
                 <b>DEBUG :</b> existingIds (depuis all_content): [
-                {existingIds && existingIds.length > 0 ? existingIds.map((id) => `"${id}"`).join(", ") : "AUCUN"}
+                {existingIds && existingIds.length > 0 ? existingIds.map((id) => `"${id}" [${typeof id}]`).join(", ") : "AUCUN"}
                 ]
               </div>
               <div>
                 IDs des résultats TMDB : [
-                {results.map((item) => `"${item.id}"`).join(", ")}
+                {results.map((item) => `"${item.id}" [${typeof item.id}]`).join(", ")}
                 ]
               </div>
               <div>
                 <b>ATTENTION :</b> Si la liste ci-dessus est vide alors que tu as des films/séries sur le site, la vue <b>all_content</b> est cassée ou n’a pas les bons droits Supabase.<br />
-                Si elle n’est pas vide mais qu’aucun id ne matche, c’est un souci de typage ou de valeurs.
+                Si elle n’est pas vide mais qu’aucun id ne matche, c’est un souci de typage ou de valeurs.<br />
+                Comparaison utilisée : .some(id => String(id).trim() === String(item.id).trim())
               </div>
             </div>
             {/* Résultats */}
             <div className="grid gap-7 sm:grid-cols-2">
               {results.map((item, idx) => {
-                const isOnSite = existingIds.map(String).includes(String(item.id));
+                const isOnSite = existingIds.some(id => String(id).trim() === String(item.id).trim());
                 const isSuggested = suggestedIds.includes(item.id);
                 return (
                   <div
