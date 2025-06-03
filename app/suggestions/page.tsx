@@ -86,25 +86,36 @@ function useSuggestion(user: any) {
     }
   }, [feedback]);
 
-  // Vérifie si déjà existant sur le site (films ou séries) via une seule requête
+  // Vérifie si déjà existant sur le site (films ou séries) avec fallback sans vue
   const checkExisting = useCallback(async (tmdbIds: number[]) => {
     if (tmdbIds.length === 0) {
       setExistingIds([]);
       return;
     }
-    // Vue SQL "all_content" : tous les tmdb_id présents sur le site (films + séries)
-    const { data, error } = await supabase
-      .from("all_content")
-      .select("tmdb_id")
-      .in("tmdb_id", tmdbIds);
-    if (!error && Array.isArray(data)) {
-      // On force le typage en number pour éviter tout souci d'inclusion (égalité stricte)
-      const ids = data.map((d: any) => Number(d.tmdb_id));
-      setExistingIds(ids);
-      // DEBUG
-      // console.debug("existingIds (depuis all_content):", ids, "pour", tmdbIds);
+
+    // 1. On tente la vue all_content (si elle existe)
+    let allContentData: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from("all_content")
+        .select("tmdb_id")
+        .in("tmdb_id", tmdbIds);
+      if (!error && Array.isArray(data) && data.length > 0) {
+        allContentData = data;
+      }
+    } catch {}
+
+    // 2. Si la vue est absente ou vide, fallback sur films + series
+    if (!allContentData.length) {
+      const [filmsRes, seriesRes] = await Promise.all([
+        supabase.from("films").select("tmdb_id").in("tmdb_id", tmdbIds),
+        supabase.from("series").select("tmdb_id").in("tmdb_id", tmdbIds),
+      ]);
+      const filmsIds = Array.isArray(filmsRes.data) ? filmsRes.data.map((f: any) => f.tmdb_id) : [];
+      const seriesIds = Array.isArray(seriesRes.data) ? seriesRes.data.map((s: any) => s.tmdb_id) : [];
+      setExistingIds([...filmsIds, ...seriesIds]);
     } else {
-      setExistingIds([]);
+      setExistingIds(allContentData.map((d: any) => d.tmdb_id));
     }
   }, []);
 
