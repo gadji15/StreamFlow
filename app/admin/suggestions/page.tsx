@@ -133,30 +133,8 @@ export default function AdminSuggestionsPage() {
   );
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-10 px-2 sm:px-6 animate-fade-in relative overflow-x-hidden">
-      {/* BG ultra premium glass + bokeh */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/30 via-blue-900/20 to-black/90 animate-gradientMove" />
-        <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full opacity-20 bg-fuchsia-500 blur-3xl animate-bokehPulse" />
-        <style>{`
-          @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          @keyframes bokehPulse {
-            0%,100% { opacity: 0.20; transform: scale(1);}
-            50% { opacity: 0.32; transform: scale(1.06);}
-          }
-          .animate-gradientMove {
-            background-size: 200% 200%;
-            animation: gradientMove 16s ease-in-out infinite;
-          }
-          .animate-bokehPulse {
-            animation: bokehPulse 9s ease-in-out infinite;
-          }
-        `}</style>
-      </div>
+    <div className="w-full max-w-7xl mx-auto py-10 px-2 sm:px-6 animate-fade-in relative overflow-x-hidden bg-gray-950">
+      {/* Fond sobre – pas d'animation ni de bokeh */}
       {/* Entête */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-5 z-10 relative">
         <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-fuchsia-400 via-blue-400 to-violet-500 bg-clip-text text-transparent drop-shadow animate-slideInDown">
