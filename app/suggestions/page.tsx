@@ -357,8 +357,11 @@ export default function SuggestionsPage() {
             {/* Résultats */}
             <div className="grid gap-7 sm:grid-cols-2">
               {results.map((item, idx) => {
-                const isOnSite = existingIds.includes(item.id);
+                // Pour éviter tout problème de typage, on force la comparaison en string
+                const isOnSite = existingIds.map(String).includes(String(item.id));
                 const isSuggested = suggestedIds.includes(item.id);
+                // DEBUG : 
+                // console.debug("existingIds (string):", existingIds.map(String), "item id:", String(item.id));
                 return (
                   <div
                     key={item.id}
@@ -434,10 +437,10 @@ export default function SuggestionsPage() {
                       className={`ml-2 rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition
                         focus-visible:ring-2 focus-visible:ring-fuchsia-400/80`}
                       disabled={
-                        suggestingId === item.id ||
+                        isOnSite ||
                         isSuggested ||
-                        !isLoggedIn ||
-                        isOnSite
+                        suggestingId === item.id ||
+                        !isLoggedIn
                       }
                       aria-label={
                         isOnSite
@@ -448,7 +451,11 @@ export default function SuggestionsPage() {
                           ? "Envoi en cours"
                           : "Suggérer ce contenu"
                       }
-                      onClick={() => suggest(item)}
+                      onClick={() => {
+                        if (!isOnSite && !isSuggested && isLoggedIn) {
+                          suggest(item);
+                        }
+                      }}
                     >
                       {isOnSite
                         ? "Déjà sur le site"
