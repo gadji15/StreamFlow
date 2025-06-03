@@ -371,6 +371,7 @@ export default function SuggestionsPage() {
               {results.map((item, idx) => {
                 const isOnSite = existingIds.some(id => String(id).trim() === String(item.id).trim());
                 const isSuggested = suggestedIds.includes(item.id);
+
                 return (
                   <div
                     key={item.id}
@@ -383,6 +384,7 @@ export default function SuggestionsPage() {
                     }}
                     tabIndex={0}
                   >
+                    {/* Poster */}
                     <div className="relative shrink-0">
                       <img
                         src={
@@ -394,7 +396,7 @@ export default function SuggestionsPage() {
                         className="w-20 h-28 object-cover rounded-2xl bg-gray-900 shadow-inner border-2 border-fuchsia-950/20 group-hover:border-fuchsia-600/30 transition"
                         loading="lazy"
                       />
-                      {/* Badge site/suggéré */}
+                      {/* Badges (toujours visibles sur mobile, sur le poster) */}
                       {isOnSite && (
                         <span
                           className="absolute -top-3 -right-3 bg-green-700 text-green-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
@@ -411,17 +413,9 @@ export default function SuggestionsPage() {
                           Suggéré
                         </span>
                       )}
-                      <style>{`
-                        @keyframes badgePop {
-                          0% { transform: scale(0.7); opacity: 0;}
-                          100% { transform: scale(1); opacity: 1;}
-                        }
-                        .animate-badgePop {
-                          animation: badgePop 0.45s cubic-bezier(.23,1.02,.25,1) both;
-                        }
-                      `}</style>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    {/* Bloc infos desktop/tablette */}
+                    <div className="flex-1 min-w-0 hidden sm:block">
                       <div
                         className="font-extrabold text-lg text-primary truncate flex items-center gap-2"
                         style={{
@@ -441,6 +435,19 @@ export default function SuggestionsPage() {
                         {item.overview}
                       </div>
                     </div>
+                    {/* Bloc infos mobile only */}
+                    <div className="flex-1 min-w-0 sm:hidden">
+                      <div
+                        className="font-extrabold text-base text-primary truncate flex items-center gap-2"
+                        style={{
+                          maxWidth: "48vw",
+                          minWidth: 0,
+                        }}
+                      >
+                        {item.title || item.name}
+                      </div>
+                    </div>
+                    {/* Bouton Suggérer (toujours visible, logique inchangée) */}
                     <Button
                       variant={
                         isOnSite
@@ -485,6 +492,15 @@ export default function SuggestionsPage() {
                         )
                         : "Suggérer"}
                     </Button>
+                    <style>{`
+                      @keyframes badgePop {
+                        0% { transform: scale(0.7); opacity: 0;}
+                        100% { transform: scale(1); opacity: 1;}
+                      }
+                      .animate-badgePop {
+                        animation: badgePop 0.45s cubic-bezier(.23,1.02,.25,1) both;
+                      }
+                    `}</style>
                   </div>
                 );
               })}
