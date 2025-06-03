@@ -93,22 +93,27 @@ export default function SeriesTable({
         </table>
       </div>
       {/* Card list for mobile */}
-      <div className="sm:hidden flex flex-col gap-3">
+      <div className="sm:hidden flex flex-col gap-3 w-full overflow-x-hidden">
         {series.length === 0 ? (
           <div className="text-gray-500 text-center py-8">Aucune série trouvée.</div>
         ) : (
           series.map(serie => (
-            <div key={serie.id} className="bg-gray-800 rounded-lg shadow border border-gray-700 flex flex-col p-3">
-              <div className="flex items-center gap-3">
+            <div
+              key={serie.id}
+              className="bg-gray-800 rounded-lg shadow border border-gray-700 flex flex-col p-3 w-full max-w-full box-border"
+              style={{ minWidth: 0 }}
+            >
+              <div className="flex items-center gap-3 w-full overflow-x-hidden" style={{ minWidth: 0 }}>
                 <div className="h-12 w-12 rounded overflow-hidden border border-gray-600 flex-shrink-0 bg-gray-700">
                   <img
                     src={serie.poster || '/placeholder-backdrop.jpg'}
                     alt={serie.title}
                     className="h-full w-full object-cover"
+                    style={{ minWidth: 0, maxWidth: "100%" }}
                   />
                 </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-sm">{serie.title}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{serie.title}</div>
                   <div className="text-[11px] text-gray-400 flex gap-2 flex-wrap mt-0.5">
                     {serie.genre && (
                       <span className="bg-gray-700/60 px-1 rounded">{(serie.genre || "").split(',')[0]}</span>
@@ -125,7 +130,8 @@ export default function SeriesTable({
                   type="button"
                   aria-label={selectedIds.includes(serie.id) ? "Désélectionner" : "Sélectionner"}
                   onClick={() => onSelect(serie.id)}
-                  className="ml-2 bg-gray-700 text-white rounded px-2 h-8 flex items-center"
+                  className="ml-2 bg-gray-700 text-white rounded px-2 h-8 flex items-center flex-shrink-0"
+                  style={{ minWidth: 0 }}
                 >
                   {selectedIds.includes(serie.id) ? "☑️" : "⬜"}
                 </button>
@@ -137,6 +143,7 @@ export default function SeriesTable({
                   className="bg-indigo-700 hover:bg-indigo-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("preview", serie)}
                   title="Aperçu"
+                  style={{ minWidth: 0 }}
                 >
                   👁️
                 </button>
@@ -146,6 +153,7 @@ export default function SeriesTable({
                   className="bg-purple-700 hover:bg-purple-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("expand", serie)}
                   title="Saisons"
+                  style={{ minWidth: 0 }}
                 >
                   📚
                 </button>
@@ -155,6 +163,7 @@ export default function SeriesTable({
                   className="bg-gray-700 hover:bg-gray-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("edit", serie)}
                   title="Modifier"
+                  style={{ minWidth: 0 }}
                 >
                   ✏️
                 </button>
