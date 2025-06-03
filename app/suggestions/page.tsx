@@ -438,9 +438,8 @@ export default function SuggestionsPage() {
                     {/* Bloc infos mobile only */}
                     <div className="flex-1 min-w-0 sm:hidden">
                       <div
-                        className="font-extrabold text-base text-primary truncate flex items-center gap-2"
+                        className="font-extrabold text-base text-primary truncate flex items-center gap-2 max-w-[60vw] xs:max-w-[160px] min-w-0"
                         style={{
-                          maxWidth: "48vw",
                           minWidth: 0,
                         }}
                       >
