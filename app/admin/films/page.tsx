@@ -371,13 +371,13 @@ export default function AdminFilmsPage() {
       <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
         {/* Recherche rapide et avancée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+          <div className="relative w-full max-w-[180px] sm:max-w-xs flex-1">
             <Input
               type="search"
               placeholder="🔍 Recherche rapide (titre film)..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow w-full"
               aria-label="Recherche de film"
             />
             <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
@@ -393,43 +393,7 @@ export default function AdminFilmsPage() {
             Réinitialiser
           </Button>
         </div>
-        <form
-          className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}
-        >
-          <Input
-            type="text"
-            placeholder="Titre…"
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Réalisateur…"
-            value={advancedSearch.director}
-            onChange={e => setAdvancedSearch(a => ({ ...a, director: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par réalisateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année…"
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID…"
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
+        {/* Recherche avancée supprimée */}
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <select
             value={genreFilter}
@@ -612,7 +576,7 @@ export default function AdminFilmsPage() {
                       Film {sortField === 'title' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
                     <th
-                      className="pb-3 font-medium cursor-pointer select-none w-20"
+                      className="pb-3 font-medium cursor-pointer select-none w-20 hidden md:table-cell"
                       onClick={() => {
                         setSortField('year');
                         setSortOrder(o => (sortField === 'year' && o === 'asc') ? 'desc' : 'asc');
@@ -621,7 +585,7 @@ export default function AdminFilmsPage() {
                       Année {sortField === 'year' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
                     <th
-                      className="pb-3 font-medium text-center cursor-pointer select-none w-24"
+                      className="pb-3 font-medium text-center cursor-pointer select-none w-24 hidden md:table-cell"
                       onClick={() => {
                         setSortField('vote_average');
                         setSortOrder(o => (sortField === 'vote_average' && o === 'asc') ? 'desc' : 'asc');
@@ -629,9 +593,9 @@ export default function AdminFilmsPage() {
                     >
                       Note {sortField === 'vote_average' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
-                    <th className="pb-3 font-medium text-center w-16">Votes</th>
-                    <th className="pb-3 font-medium text-center w-24">Statut</th>
-                    <th className="pb-3 font-medium text-center w-16">VIP</th>
+                    <th className="pb-3 font-medium text-center w-16 hidden md:table-cell">Votes</th>
+                    <th className="pb-3 font-medium text-center w-24 hidden sm:table-cell">Statut</th>
+                    <th className="pb-3 font-medium text-center w-16 hidden sm:table-cell">VIP</th>
                     <th className="pb-3 font-medium text-right w-32">Actions</th>
                   </tr>
                 </thead>
@@ -676,8 +640,8 @@ export default function AdminFilmsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-4">{movie.year}</td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 hidden md:table-cell">{movie.year}</td>
+                        <td className="py-4 text-center hidden md:table-cell">
                           {movie.vote_average ? (
                             <div className="flex items-center justify-center">
                               <Star className="h-4 w-4 text-yellow-500 mr-1 fill-current" />
@@ -687,10 +651,10 @@ export default function AdminFilmsPage() {
                             <span className="text-gray-500">-</span>
                           )}
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden md:table-cell">
                           {movie.vote_count ?? <span className="text-gray-500">-</span>}
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden sm:table-cell">
                           <Button
                             type="button"
                             variant={movie.published ? "default" : "ghost"}
@@ -706,7 +670,7 @@ export default function AdminFilmsPage() {
                             {movie.published ? 'Publié' : 'Brouillon'}
                           </Button>
                         </td>
-                        <td className="py-4 text-center">
+                        <td className="py-4 text-center hidden sm:table-cell">
                           <span className={cn(
                             "px-2 py-1 rounded-full text-xs font-semibold",
                             movie.isvip
