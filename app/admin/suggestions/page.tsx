@@ -232,62 +232,189 @@ export default function AdminSuggestionsPage() {
           {feedback.message}
         </div>
       )}
-      {/* Tableau ultra design */}
-      <div className="overflow-x-auto rounded-3xl border border-gray-800 bg-gray-900/80 shadow-xl shadow-primary/10 transition-all duration-300">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-gradient-to-r from-gray-800/80 via-gray-900/90 to-gray-800/80 text-gray-200">
-              <th className="px-4 py-3 text-left">Poster</th>
-              <th className="px-4 py-3 text-left">Titre</th>
-              <th className="px-2 py-3">Type</th>
-              <th className="px-2 py-3">Année</th>
-              <th className="px-2 py-3">Utilisateur</th>
-              <th className="px-2 py-3">Date</th>
-              <th className="px-2 py-3">Lien</th>
-              <th className="px-2 py-3">TMDB</th>
-              <th className="px-2 py-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={9}>
-                  <Loader />
-                </td>
+      {/* Responsive suggestions list */}
+      <div>
+        {/* Desktop/tablette : tableau */}
+        <div className="hidden md:block overflow-x-auto rounded-3xl border border-gray-800 bg-gray-900/80 shadow-xl shadow-primary/10 transition-all duration-300">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-gradient-to-r from-gray-800/80 via-gray-900/90 to-gray-800/80 text-gray-200">
+                <th className="px-4 py-3 text-left">Poster</th>
+                <th className="px-4 py-3 text-left">Titre</th>
+                <th className="px-2 py-3">Type</th>
+                <th className="px-2 py-3">Année</th>
+                <th className="px-2 py-3">Utilisateur</th>
+                <th className="px-2 py-3">Date</th>
+                <th className="px-2 py-3">Lien</th>
+                <th className="px-2 py-3">TMDB</th>
+                <th className="px-2 py-3">Action</th>
               </tr>
-            ) : error ? (
-              <tr>
-                <td colSpan={9}>
-                  <ErrorState message={error} />
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={9}>
-                  <EmptyState />
-                </td>
-              </tr>
-            ) : (
-              filtered.map((s, idx) => (
-                <tr
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={9}>
+                    <Loader />
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={9}>
+                    <ErrorState message={error} />
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9}>
+                    <EmptyState />
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s, idx) => (
+                  <tr
+                    key={s.id}
+                    className={`border-t border-gray-800 group hover:bg-gradient-to-r hover:from-fuchsia-900/30 hover:to-blue-900/20 transition-all duration-200
+                      ${idx % 2 === 0 ? "bg-gray-900/60" : "bg-gray-900/80"}`}
+                    style={{
+                      animation: `fadeInUp 0.45s cubic-bezier(.23,1.02,.25,1) forwards`,
+                      animationDelay: `${idx * 0.045}s`,
+                    }}
+                    tabIndex={0}
+                  >
+                    {/* Poster dynamique */}
+                    <td className="px-4 py-2">
+                      <div className="w-16 h-24 rounded-2xl overflow-hidden shadow-lg border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center transition-transform group-hover:scale-105">
+                        {s.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${s.poster_path}`}
+                            alt={s.title}
+                            className="object-cover w-full h-full transition-opacity duration-300"
+                            style={{ background: "#18181b" }}
+                            onError={e => {
+                              (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png";
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src="/placeholder-poster.png"
+                            alt="Aucun poster"
+                            className="object-cover w-full h-full opacity-60"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    {/* Titre */}
+                    <td className="px-4 py-2 font-semibold max-w-[220px] truncate text-primary group-hover:text-fuchsia-400 transition-colors">
+                      {s.title}
+                    </td>
+                    {/* Type */}
+                    <td className="px-2 py-2">
+                      <Badge
+                        variant="secondary"
+                        className={`transition-all duration-200 ${
+                          s.type === "film"
+                            ? "bg-gradient-to-r from-blue-700/80 to-blue-400/60"
+                            : "bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-400/60"
+                        } animate-bounce-in`}
+                      >
+                        {s.type === "film" ? "Film" : "Série"}
+                      </Badge>
+                    </td>
+                    {/* Année */}
+                    <td className="px-2 py-2">{s.year || "-"}</td>
+                    {/* Utilisateur */}
+                    <td className="px-2 py-2 max-w-[180px] truncate">
+                      {s.user?.full_name || s.user?.email || s.user_id?.slice(0, 8) || "-"}
+                    </td>
+                    {/* Date */}
+                    <td className="px-2 py-2 whitespace-nowrap">{new Date(s.created_at).toLocaleString("fr-FR")}</td>
+                    {/* Lien */}
+                    <td className="px-2 py-2">
+                      {s.link ? (
+                        <a
+                          href={s.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 underline break-all hover:text-blue-300 transition"
+                        >
+                          Lien
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    {/* TMDB */}
+                    <td className="px-2 py-2">
+                      <a
+                        href={`https://www.themoviedb.org/${s.type === "film" ? "movie" : "tv"}/${s.tmdb_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline hover:text-fuchsia-400 transition"
+                      >
+                        TMDB
+                      </a>
+                    </td>
+                    {/* Action */}
+                    <td className="px-2 py-2 flex gap-2 items-center">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={`Ajouter ${s.type === "film" ? "film" : "série"}`}
+                        className="rounded-full border-primary/40 hover:bg-primary/10 hover:scale-110 transition-transform duration-150"
+                        onClick={() =>
+                          setModalOpen({ type: s.type === "film" ? "film" : "serie", title: s.title, tmdb_id: s.tmdb_id })
+                        }
+                      >
+                        <PlusCircle className="w-5 h-5 text-primary" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        aria-label="Supprimer la suggestion"
+                        className="rounded-full border-red-400/40 hover:bg-red-900/20 hover:scale-110 transition-transform duration-150"
+                        onClick={async () => {
+                          if (
+                            window.confirm("Supprimer cette suggestion ?")
+                          ) {
+                            await deleteSuggestion(s.id);
+                            setFeedback({ type: "success", message: "Suggestion supprimée !" });
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-5 h-5 text-red-500" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        {/* Mobile: cartes empilées */}
+        <div className="block md:hidden">
+          {loading ? (
+            <Loader />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : filtered.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {filtered.map((s, idx) => (
+                <div
                   key={s.id}
-                  className={`border-t border-gray-800 group hover:bg-gradient-to-r hover:from-fuchsia-900/30 hover:to-blue-900/20 transition-all duration-200
-                    ${idx % 2 === 0 ? "bg-gray-900/60" : "bg-gray-900/80"}`}
+                  className="rounded-2xl bg-gray-900/80 border border-gray-800 shadow-lg p-3 flex flex-col gap-2 animate-fade-in"
                   style={{
-                    animation: `fadeInUp 0.45s cubic-bezier(.23,1.02,.25,1) forwards`,
                     animationDelay: `${idx * 0.045}s`,
                   }}
-                  tabIndex={0}
                 >
-                  {/* Poster dynamique */}
-                  <td className="px-4 py-2">
-                    <div className="w-16 h-24 rounded-2xl overflow-hidden shadow-lg border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center transition-transform group-hover:scale-105">
+                  <div className="flex gap-3 items-center">
+                    <div className="w-14 h-20 rounded-xl overflow-hidden shadow border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex-shrink-0">
                       {s.poster_path ? (
                         <img
                           src={`https://image.tmdb.org/t/p/w185${s.poster_path}`}
                           alt={s.title}
-                          className="object-cover w-full h-full transition-opacity duration-300"
-                          style={{ background: "#18181b" }}
+                          className="object-cover w-full h-full"
                           onError={e => {
                             (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png";
                           }}
@@ -300,60 +427,50 @@ export default function AdminSuggestionsPage() {
                         />
                       )}
                     </div>
-                  </td>
-                  {/* Titre */}
-                  <td className="px-4 py-2 font-semibold max-w-[220px] truncate text-primary group-hover:text-fuchsia-400 transition-colors">
-                    {s.title}
-                  </td>
-                  {/* Type */}
-                  <td className="px-2 py-2">
-                    <Badge
-                      variant="secondary"
-                      className={`transition-all duration-200 ${
-                        s.type === "film"
-                          ? "bg-gradient-to-r from-blue-700/80 to-blue-400/60"
-                          : "bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-400/60"
-                      } animate-bounce-in`}
-                    >
-                      {s.type === "film" ? "Film" : "Série"}
-                    </Badge>
-                  </td>
-                  {/* Année */}
-                  <td className="px-2 py-2">{s.year || "-"}</td>
-                  {/* Utilisateur */}
-                  <td className="px-2 py-2 max-w-[180px] truncate">
-                    {s.user?.full_name || s.user?.email || s.user_id?.slice(0, 8) || "-"}
-                  </td>
-                  {/* Date */}
-                  <td className="px-2 py-2 whitespace-nowrap">{new Date(s.created_at).toLocaleString("fr-FR")}</td>
-                  {/* Lien */}
-                  <td className="px-2 py-2">
-                    {s.link ? (
-                      <a
-                        href={s.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 underline break-all hover:text-blue-300 transition"
-                      >
-                        Lien
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  {/* TMDB */}
-                  <td className="px-2 py-2">
-                    <a
-                      href={`https://www.themoviedb.org/${s.type === "film" ? "movie" : "tv"}/${s.tmdb_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline hover:text-fuchsia-400 transition"
-                    >
-                      TMDB
-                    </a>
-                  </td>
-                  {/* Action */}
-                  <td className="px-2 py-2 flex gap-2 items-center">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="font-bold text-primary truncate">{s.title}</div>
+                      <div className="flex items-center gap-1 mt-1 mb-1">
+                        <Badge
+                          variant="secondary"
+                          className={`text-xs px-2 py-0.5 ${
+                            s.type === "film"
+                              ? "bg-gradient-to-r from-blue-700/80 to-blue-400/60"
+                              : "bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-400/60"
+                          }`}
+                        >
+                          {s.type === "film" ? "Film" : "Série"}
+                        </Badge>
+                        <span className="text-xs text-gray-400 ml-2">{s.year || "-"}</span>
+                      </div>
+                      <div className="text-xs text-gray-400 truncate">
+                        {s.user?.full_name || s.user?.email || s.user_id?.slice(0, 8) || "-"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(s.created_at).toLocaleString("fr-FR")}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <a
+                          href={`https://www.themoviedb.org/${s.type === "film" ? "movie" : "tv"}/${s.tmdb_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary underline hover:text-fuchsia-400 transition"
+                        >
+                          TMDB
+                        </a>
+                        {s.link && (
+                          <a
+                            href={s.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-400 underline hover:text-blue-300 transition ml-2"
+                          >
+                            Lien
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-2">
                     <Button
                       size="icon"
                       variant="outline"
@@ -381,12 +498,12 @@ export default function AdminSuggestionsPage() {
                     >
                       <Trash2 className="w-5 h-5 text-red-500" />
                     </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {/* Modal Film */}
       <FilmModal
