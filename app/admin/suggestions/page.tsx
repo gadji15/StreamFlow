@@ -137,9 +137,6 @@ export default function AdminSuggestionsPage() {
       {/* Fond sobre – pas d'animation ni de bokeh */}
       {/* Entête */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-5 z-10 relative">
-        <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-fuchsia-400 via-blue-400 to-violet-500 bg-clip-text text-transparent drop-shadow animate-slideInDown">
-          Suggestions des utilisateurs
-        </h1>
         <div className="flex gap-2 items-center">
           <Button
             variant={filter === "all" ? "default" : "ghost"}
