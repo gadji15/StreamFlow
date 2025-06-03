@@ -130,11 +130,11 @@ export default function SeriesTable({
                   {selectedIds.includes(serie.id) ? "☑️" : "⬜"}
                 </button>
               </div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex justify-between items-center gap-2 mt-2 w-full">
                 <button
                   type="button"
                   aria-label="Aperçu"
-                  className="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded px-1 py-0.5 text-[11px] h-7 min-w-0"
+                  className="bg-indigo-700 hover:bg-indigo-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("preview", serie)}
                   title="Aperçu"
                 >
@@ -143,7 +143,7 @@ export default function SeriesTable({
                 <button
                   type="button"
                   aria-label="Saisons"
-                  className="flex-1 bg-purple-700 hover:bg-purple-800 text-white rounded px-1 py-0.5 text-[11px] h-7 min-w-0"
+                  className="bg-purple-700 hover:bg-purple-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("expand", serie)}
                   title="Saisons"
                 >
@@ -152,7 +152,7 @@ export default function SeriesTable({
                 <button
                   type="button"
                   aria-label="Modifier"
-                  className="flex-1 bg-gray-700 hover:bg-gray-800 text-white rounded px-1 py-0.5 text-[11px] h-7 min-w-0"
+                  className="bg-gray-700 hover:bg-gray-800 text-white rounded flex-shrink-0 w-8 h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("edit", serie)}
                   title="Modifier"
                 >
