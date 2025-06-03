@@ -337,107 +337,129 @@ export default function SuggestionsPage() {
                 `}</style>
               </div>
             )}
+            {/* Légende statuts */}
+            <div className="flex gap-5 items-center mb-3 mt-2 text-sm text-gray-400 justify-center flex-wrap">
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full bg-green-700 border border-white/10" aria-label="Déjà sur le site"></span>
+                <span>Déjà sur le site</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full bg-fuchsia-700 border border-white/10" aria-label="Déjà suggéré"></span>
+                <span>Déjà suggéré</span>
+              </span>
+            </div>
             {/* Résultats */}
             <div className="grid gap-7 sm:grid-cols-2">
-              {results.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className={`relative flex items-center gap-4 bg-gray-800/80 rounded-3xl p-4 border border-gray-700 shadow-xl group hover:scale-[1.035] hover:shadow-2xl hover:z-20 transition-transform duration-250
-                    outline-none focus-within:ring-2 focus-within:ring-fuchsia-400/60`}
-                  style={{
-                    opacity: 0,
-                    animation: `fadeInUp 0.52s cubic-bezier(.23,1.02,.25,1) forwards`,
-                    animationDelay: `${idx * 0.075}s`,
-                  }}
-                  tabIndex={0}
-                >
-                  <div className="relative shrink-0">
-                    <img
-                      src={
-                        item.poster_path
-                          ? `https://image.tmdb.org/t/p/w154${item.poster_path}`
-                          : "/placeholder-poster.png"
-                      }
-                      alt={item.title || item.name}
-                      className="w-20 h-28 object-cover rounded-2xl bg-gray-900 shadow-inner border-2 border-fuchsia-950/20 group-hover:border-fuchsia-600/30 transition"
-                      loading="lazy"
-                    />
-                    {existingIds.includes(item.id) && (
-                      <span className="absolute -top-3 -right-3 bg-green-700 text-green-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10">
-                        Sur le site
-                      </span>
-                    )}
-                    <style>{`
-                      @keyframes badgePop {
-                        0% { transform: scale(0.7); opacity: 0;}
-                        100% { transform: scale(1); opacity: 1;}
-                      }
-                      .animate-badgePop {
-                        animation: badgePop 0.45s cubic-bezier(.23,1.02,.25,1) both;
-                      }
-                    `}</style>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-lg text-primary truncate flex items-center gap-2">
-                      {item.title || item.name}
-                      {suggestedIds.includes(item.id) && (
-                        <span className="ml-2 px-2 py-0.5 rounded bg-fuchsia-700/70 text-fuchsia-100 text-xs font-semibold animate-badgePop">
+              {results.map((item, idx) => {
+                const isOnSite = existingIds.includes(item.id);
+                const isSuggested = suggestedIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`relative flex items-center gap-4 bg-gray-800/80 rounded-3xl p-4 border border-gray-700 shadow-xl group hover:scale-[1.035] hover:shadow-2xl hover:z-20 transition-transform duration-250
+                      outline-none focus-within:ring-2 focus-within:ring-fuchsia-400/60`}
+                    style={{
+                      opacity: 0,
+                      animation: `fadeInUp 0.52s cubic-bezier(.23,1.02,.25,1) forwards`,
+                      animationDelay: `${idx * 0.075}s`,
+                    }}
+                    tabIndex={0}
+                  >
+                    <div className="relative shrink-0">
+                      <img
+                        src={
+                          item.poster_path
+                            ? `https://image.tmdb.org/t/p/w154${item.poster_path}`
+                            : "/placeholder-poster.png"
+                        }
+                        alt={item.title || item.name}
+                        className="w-20 h-28 object-cover rounded-2xl bg-gray-900 shadow-inner border-2 border-fuchsia-950/20 group-hover:border-fuchsia-600/30 transition"
+                        loading="lazy"
+                      />
+                      {/* Badge site/suggéré */}
+                      {isOnSite && (
+                        <span
+                          className="absolute -top-3 -right-3 bg-green-700 text-green-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
+                          aria-label="Disponible sur le site"
+                        >
+                          Sur le site
+                        </span>
+                      )}
+                      {!isOnSite && isSuggested && (
+                        <span
+                          className="absolute -top-3 -right-3 bg-fuchsia-700 text-fuchsia-100 font-bold text-xs px-3 py-1.5 rounded-full shadow animate-badgePop border-2 border-white/10 z-10"
+                          aria-label="Déjà suggéré"
+                        >
                           Suggéré
                         </span>
                       )}
+                      <style>{`
+                        @keyframes badgePop {
+                          0% { transform: scale(0.7); opacity: 0;}
+                          100% { transform: scale(1); opacity: 1;}
+                        }
+                        .animate-badgePop {
+                          animation: badgePop 0.45s cubic-bezier(.23,1.02,.25,1) both;
+                        }
+                      `}</style>
                     </div>
-                    <div className="text-gray-400 text-sm mb-1">
-                      {item.media_type === "movie" ? "Film" : "Série"}{" "}
-                      {item.release_date || item.first_air_date
-                        ? `• ${(item.release_date || item.first_air_date)?.slice(0, 4)}`
-                        : ""}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-extrabold text-lg text-primary truncate flex items-center gap-2">
+                        {item.title || item.name}
+                      </div>
+                      <div className="text-gray-400 text-sm mb-1">
+                        {item.media_type === "movie" ? "Film" : "Série"}{" "}
+                        {item.release_date || item.first_air_date
+                          ? `• ${(item.release_date || item.first_air_date)?.slice(0, 4)}`
+                          : ""}
+                      </div>
+                      <div className="text-gray-300 text-xs line-clamp-2">
+                        {item.overview}
+                      </div>
                     </div>
-                    <div className="text-gray-300 text-xs line-clamp-2">
-                      {item.overview}
-                    </div>
-                  </div>
-                  <Button
-                    variant={
-                      existingIds.includes(item.id)
-                        ? "secondary"
-                        : suggestedIds.includes(item.id)
-                        ? "outline"
-                        : "default"
-                    }
-                    className={`ml-2 rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition
-                      focus-visible:ring-2 focus-visible:ring-fuchsia-400/80`}
-                    disabled={
-                      suggestingId === item.id ||
-                      suggestedIds.includes(item.id) ||
-                      !isLoggedIn ||
-                      existingIds.includes(item.id)
-                    }
-                    aria-label={
-                      existingIds.includes(item.id)
+                    <Button
+                      variant={
+                        isOnSite
+                          ? "secondary"
+                          : isSuggested
+                          ? "outline"
+                          : "default"
+                      }
+                      className={`ml-2 rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition
+                        focus-visible:ring-2 focus-visible:ring-fuchsia-400/80`}
+                      disabled={
+                        suggestingId === item.id ||
+                        isSuggested ||
+                        !isLoggedIn ||
+                        isOnSite
+                      }
+                      aria-label={
+                        isOnSite
+                          ? "Déjà sur le site"
+                          : isSuggested
+                          ? "Déjà suggéré"
+                          : suggestingId === item.id
+                          ? "Envoi en cours"
+                          : "Suggérer ce contenu"
+                      }
+                      onClick={() => suggest(item)}
+                    >
+                      {isOnSite
                         ? "Déjà sur le site"
-                        : suggestedIds.includes(item.id)
+                        : isSuggested
                         ? "Déjà suggéré"
                         : suggestingId === item.id
-                        ? "Envoi en cours"
-                        : "Suggérer ce contenu"
-                    }
-                    onClick={() => suggest(item)}
-                  >
-                    {existingIds.includes(item.id)
-                      ? "Déjà sur le site"
-                      : suggestedIds.includes(item.id)
-                      ? "Déjà suggéré"
-                      : suggestingId === item.id
-                      ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="animate-spin" size={18} />
-                          Envoi...
-                        </span>
-                      )
-                      : "Suggérer"}
-                  </Button>
-                </div>
-              ))}
+                        ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="animate-spin" size={18} />
+                            Envoi...
+                          </span>
+                        )
+                        : "Suggérer"}
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
             {results.length === 0 && query.trim() && !loading && (
               <div className="text-gray-400 text-center py-12 animate-fadeInUp text-lg">
