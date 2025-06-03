@@ -408,54 +408,118 @@ export default function AdminSeriesPage() {
             setModal={setModal}
           />
         ) : (
-          <SeriesTable
-            series={paginatedSeries}
-            selectedIds={selectedIds}
-            onSelect={handleSelect}
-            onSelectAll={handleSelectAll}
-            allSelected={allSelected}
-            onAction={async (action: string, serie: any) => {
-              console.log("[AdminSeriesPage] ACTION:", action, serie && serie.id);
-              if (action === "preview") {
-                window.open(`/series/${serie.id}`, "_blank");
-                return;
-              }
-              if (action === "expand" || action === "seasons") {
-                const dest = `/admin/series/${serie.id}`;
-                console.log("[AdminSeriesPage] NAVIGATION:", dest);
-                try {
-                  router.push(dest);
-                } catch (e) {
-                  console.error("[AdminSeriesPage] router.push error:", e);
-                }
-                return;
-              }
-              if (action === "edit") setSeriesModal({ open: true, serie });
-              if (action === "delete") {
-                if (window.confirm(`Supprimer la série "${serie.title}" ?`)) {
-                  setDeletingId(serie.id);
-                  try {
-                    const { error } = await supabase.from("series").delete().eq("id", serie.id);
-                    if (error) throw error;
-                    toast({ title: "Série supprimée" });
-                    fetchSeries();
-                  } catch (e: any) {
-                    toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
-                  } finally {
-                    setDeletingId(null);
+          <>
+            {/* Cartes série responsive mobile */}
+            <div className="sm:hidden flex flex-col gap-2 w-full max-w-full min-w-0 overflow-x-hidden">
+              {paginatedSeries.map((serie) => {
+                const posterUrl = serie.poster || '/placeholder-backdrop.jpg';
+                const genres = serie.genre ? serie.genre.split(',').map((g: string) => g.trim()) : [];
+                return (
+                  <div
+                    key={serie.id}
+                    className="bg-gray-800 rounded-lg shadow border border-gray-700 px-1 py-1 flex flex-row items-center w-full max-w-full min-w-0 overflow-x-hidden gap-2"
+                  >
+                    <img
+                      src={posterUrl}
+                      alt={serie.title}
+                      className="h-16 w-12 rounded-md object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                      onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
+                    />
+                    <div className="flex-1 min-w-0 max-w-full">
+                      <div className="font-bold truncate text-[15px] max-w-[50vw]">{serie.title}</div>
+                      <div className="flex items-center flex-wrap gap-1 mt-1">
+                        <span className="text-xs text-gray-400">{serie.start_year || '-'}</span>
+                        {serie.isvip && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
+                        )}
+                        <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-xs font-semibold text-gray-400">
+                          {serie.published ? 'Publiée' : 'Brouillon'}
+                        </span>
+                        {genres.slice(0, 2).map(g => (
+                          <span key={g} className="px-1 bg-gray-700/60 rounded text-xs">{g}</span>
+                        ))}
+                        {genres.length > 2 && <span className="text-xs">…</span>}
+                        {seasonCounts[serie.id] > 0 &&
+                          <span className="ml-1 px-1 bg-indigo-900/30 rounded text-xs text-indigo-400">{seasonCounts[serie.id]} saison{seasonCounts[serie.id] > 1 ? "s" : ""}</span>
+                        }
+                      </div>
+                      <div className="flex gap-1 mt-1 justify-end items-center">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Aperçu"
+                          onClick={() => window.open(`/series/${serie.id}`, "_blank")}
+                          className="h-6 w-6 p-0 flex items-center justify-center border-gray-600 hover:bg-indigo-900/20 transition"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10" strokeOpacity="0.2"/></svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Actions"
+                          onClick={() => setSeriesModal({ open: true, serie })}
+                          className="h-6 w-6 p-0 flex items-center justify-center hover:bg-gray-700/40 transition"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Tableau desktop/tablette */}
+            <div className="hidden sm:block">
+              <SeriesTable
+                series={paginatedSeries}
+                selectedIds={selectedIds}
+                onSelect={handleSelect}
+                onSelectAll={handleSelectAll}
+                allSelected={allSelected}
+                onAction={async (action: string, serie: any) => {
+                  console.log("[AdminSeriesPage] ACTION:", action, serie && serie.id);
+                  if (action === "preview") {
+                    window.open(`/series/${serie.id}`, "_blank");
+                    return;
                   }
-                }
-              }
-            }}
-            page={page}
-            totalPages={totalPages}
-            setPage={setPage}
-            loading={loading}
-            seasonCounts={seasonCounts}
-            genres={genres}
-            deletingId={deletingId}
-            bulkDeleting={bulkDeleting}
-          />
+                  if (action === "expand" || action === "seasons") {
+                    const dest = `/admin/series/${serie.id}`;
+                    console.log("[AdminSeriesPage] NAVIGATION:", dest);
+                    try {
+                      router.push(dest);
+                    } catch (e) {
+                      console.error("[AdminSeriesPage] router.push error:", e);
+                    }
+                    return;
+                  }
+                  if (action === "edit") setSeriesModal({ open: true, serie });
+                  if (action === "delete") {
+                    if (window.confirm(`Supprimer la série "${serie.title}" ?`)) {
+                      setDeletingId(serie.id);
+                      try {
+                        const { error } = await supabase.from("series").delete().eq("id", serie.id);
+                        if (error) throw error;
+                        toast({ title: "Série supprimée" });
+                        fetchSeries();
+                      } catch (e: any) {
+                        toast({ title: "Erreur", description: e.message || String(e), variant: "destructive" });
+                      } finally {
+                        setDeletingId(null);
+                      }
+                    }
+                  }
+                }}
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+                loading={loading}
+                seasonCounts={seasonCounts}
+                genres={genres}
+                deletingId={deletingId}
+                bulkDeleting={bulkDeleting}
+              />
+            </div>
+          </>
         )}
 
         {/* Pagination */}
