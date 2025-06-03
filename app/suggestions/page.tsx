@@ -92,13 +92,19 @@ function useSuggestion(user: any) {
       setExistingIds([]);
       return;
     }
-    // On suppose une vue SQL "all_content" côté Supabase regroupant tous les tmdb_id (films + séries)
+    // Vue SQL "all_content" : tous les tmdb_id présents sur le site (films + séries)
     const { data, error } = await supabase
       .from("all_content")
       .select("tmdb_id")
       .in("tmdb_id", tmdbIds);
-    if (!error) {
-      setExistingIds(data?.map((d: any) => d.tmdb_id) || []);
+    if (!error && Array.isArray(data)) {
+      // On force le typage en number pour éviter tout souci d'inclusion (égalité stricte)
+      const ids = data.map((d: any) => Number(d.tmdb_id));
+      setExistingIds(ids);
+      // DEBUG
+      // console.debug("existingIds (depuis all_content):", ids, "pour", tmdbIds);
+    } else {
+      setExistingIds([]);
     }
   }, []);
 
