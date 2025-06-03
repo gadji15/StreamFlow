@@ -451,23 +451,23 @@ export default function AdminFilmsPage() {
                 const posterUrl = movie.poster || '/placeholder-backdrop.jpg';
                 const genres = movie.genre ? movie.genre.split(',').map(g => g.trim()) : [];
                 return (
-                  <div key={movie.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-4 py-3 flex flex-col">
-                    <div className="flex items-center gap-3">
+                  <div key={movie.id} className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-2 py-2 flex flex-col w-full max-w-full overflow-x-hidden">
+                    <div className="flex items-center gap-2 w-full max-w-full">
                       <img
                         src={posterUrl}
                         alt={movie.title}
-                        className="h-16 w-12 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                        className="h-14 w-10 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
                         onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold truncate text-base">{movie.title}</div>
-                        <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+                        <div className="font-bold truncate text-sm">{movie.title}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-0.5">
                           {genres.slice(0, 2).map(g => (
                             <span key={g} className="px-1 bg-gray-700/60 rounded">{g}</span>
                           ))}
                           {genres.length > 2 && <span>…</span>}
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1 mt-0.5">
                           <span className="text-xs text-gray-400">{movie.year}</span>
                           {movie.isvip && (
                             <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 text-xs font-semibold">VIP</span>
@@ -481,7 +481,7 @@ export default function AdminFilmsPage() {
                         type="button"
                         aria-label={isChecked(movie.id) ? "Désélectionner" : "Sélectionner"}
                         onClick={() => toggleSelect(movie.id)}
-                        className="ml-2 bg-transparent border-none focus:outline-none"
+                        className="ml-1 bg-transparent border-none focus:outline-none"
                       >
                         {isChecked(movie.id) ? (
                           <CheckSquare className="h-5 w-5 text-indigo-500" />
@@ -490,7 +490,7 @@ export default function AdminFilmsPage() {
                         )}
                       </button>
                     </div>
-                    <div className="flex gap-2 mt-3 justify-end">
+                    <div className="flex gap-1 mt-2 justify-end w-full max-w-full">
                       <Button
                         variant="outline"
                         size="icon"
