@@ -145,6 +145,7 @@ function useSuggestion(user: any) {
             null,
           description: item.overview || "",
           user_id: userIdToInsert,
+          poster_path: item.poster_path || null, // Correction pour l'affichage admin
         });
         if (error) throw error;
         setFeedback({
