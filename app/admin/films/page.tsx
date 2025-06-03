@@ -454,13 +454,13 @@ export default function AdminFilmsPage() {
                 return (
                   <div
                     key={movie.id}
-                    className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 px-1 py-1 flex flex-col w-full max-w-full min-w-0 overflow-x-hidden"
+                    className="bg-gray-800 rounded-lg shadow border border-gray-700 px-0.5 py-1 flex flex-col w-full max-w-full min-w-0 overflow-x-hidden"
                   >
                     <div className="flex items-center gap-1 w-full max-w-full min-w-0">
                       <img
                         src={posterUrl}
                         alt={movie.title}
-                        className="h-12 w-9 rounded-lg object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
+                        className="h-16 w-12 rounded-md object-cover border border-gray-700 bg-gray-700 flex-shrink-0"
                         onError={e => { (e.target as HTMLImageElement).src = '/placeholder-backdrop.jpg'; }}
                       />
                       <div className="flex-1 min-w-0 max-w-full">
