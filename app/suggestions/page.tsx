@@ -435,67 +435,69 @@ export default function SuggestionsPage() {
                         {item.overview}
                       </div>
                     </div>
-                    {/* Bloc infos mobile only */}
-                    <div className="flex-1 min-w-0 sm:hidden">
-                      <div
-                        className="font-extrabold text-base text-primary truncate flex items-center gap-2 max-w-[60vw] xs:max-w-[160px] min-w-0"
-                        style={{
-                          minWidth: 0,
+                    {/* Bloc infos mobile only + bouton en ligne */}
+                    <div className="flex w-full min-w-0 items-center sm:hidden gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="font-extrabold text-base text-primary truncate"
+                          style={{
+                            maxWidth: "55vw",
+                            minWidth: 0,
+                          }}
+                        >
+                          {item.title || item.name}
+                        </div>
+                        {(item.release_date || item.first_air_date) && (
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {(item.release_date || item.first_air_date)?.slice(0, 4)}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        variant={
+                          isOnSite
+                            ? "secondary"
+                            : isSuggested
+                            ? "outline"
+                            : "default"
+                        }
+                        className="rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition focus-visible:ring-2 focus-visible:ring-fuchsia-400/80 flex-shrink-0"
+                        style={{ maxWidth: "36vw" }}
+                        disabled={
+                          isOnSite ||
+                          isSuggested ||
+                          suggestingId === item.id ||
+                          !isLoggedIn
+                        }
+                        aria-label={
+                          isOnSite
+                            ? "Déjà sur le site"
+                            : isSuggested
+                            ? "Déjà suggéré"
+                            : suggestingId === item.id
+                            ? "Envoi en cours"
+                            : "Suggérer ce contenu"
+                        }
+                        onClick={() => {
+                          if (!isOnSite && !isSuggested && isLoggedIn) {
+                            suggest(item);
+                          }
                         }}
                       >
-                        {item.title || item.name}
-                      </div>
-                      {(item.release_date || item.first_air_date) && (
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {(item.release_date || item.first_air_date)?.slice(0, 4)}
-                        </div>
-                      )}
-                    </div>
-                    {/* Bouton Suggérer (toujours visible, logique inchangée) */}
-                    <Button
-                      variant={
-                        isOnSite
-                          ? "secondary"
-                          : isSuggested
-                          ? "outline"
-                          : "default"
-                      }
-                      className={`ml-2 rounded-xl font-semibold border-primary/40 hover:bg-primary/10 transition
-                        focus-visible:ring-2 focus-visible:ring-fuchsia-400/80`}
-                      disabled={
-                        isOnSite ||
-                        isSuggested ||
-                        suggestingId === item.id ||
-                        !isLoggedIn
-                      }
-                      aria-label={
-                        isOnSite
+                        {isOnSite
                           ? "Déjà sur le site"
                           : isSuggested
                           ? "Déjà suggéré"
                           : suggestingId === item.id
-                          ? "Envoi en cours"
-                          : "Suggérer ce contenu"
-                      }
-                      onClick={() => {
-                        if (!isOnSite && !isSuggested && isLoggedIn) {
-                          suggest(item);
-                        }
-                      }}
-                    >
-                      {isOnSite
-                        ? "Déjà sur le site"
-                        : isSuggested
-                        ? "Déjà suggéré"
-                        : suggestingId === item.id
-                        ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="animate-spin" size={18} />
-                            Envoi...
-                          </span>
-                        )
-                        : "Suggérer"}
-                    </Button>
+                          ? (
+                            <span className="flex items-center gap-2">
+                              <Loader2 className="animate-spin" size={18} />
+                              Envoi...
+                            </span>
+                          )
+                          : "Suggérer"}
+                      </Button>
+                    </div>
                     <style>{`
                       @keyframes badgePop {
                         0% { transform: scale(0.7); opacity: 0;}
