@@ -446,6 +446,11 @@ export default function SuggestionsPage() {
                       >
                         {item.title || item.name}
                       </div>
+                      {(item.release_date || item.first_air_date) && (
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {(item.release_date || item.first_air_date)?.slice(0, 4)}
+                        </div>
+                      )}
                     </div>
                     {/* Bouton Suggérer (toujours visible, logique inchangée) */}
                     <Button
