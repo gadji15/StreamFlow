@@ -388,44 +388,28 @@ export default function AdminSuggestionsPage() {
           </tbody>
         </table>
       </div>
-      {/* Modal dynamique */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in-fast">
-          <div className="relative w-full max-w-lg mx-auto animate-pop-in">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-2 right-2 z-10"
-              aria-label="Fermer"
-              onClick={() => setModalOpen(null)}
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            {modalOpen.type === "film" ? (
-              <FilmModal
-                open
-                initialTmdbId={modalOpen.tmdb_id}
-                onClose={() => setModalOpen(null)}
-                onSave={async () => {
-                  setModalOpen(null);
-                  await handleRefresh();
-                  setFeedback({ type: "success", message: "Film ajouté !" });
-                }}
-              />
-            ) : (
-              <SerieModal
-                open
-                onClose={() => setModalOpen(null)}
-                onSave={async () => {
-                  setModalOpen(null);
-                  await handleRefresh();
-                  setFeedback({ type: "success", message: "Série ajoutée !" });
-                }}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      {/* Modal Film */}
+      <FilmModal
+        open={!!modalOpen && modalOpen.type === "film"}
+        onClose={() => setModalOpen(null)}
+        onSave={async () => {
+          setModalOpen(null);
+          await handleRefresh();
+          setFeedback({ type: "success", message: "Film ajouté !" });
+        }}
+        initialData={modalOpen && modalOpen.type === "film" ? { tmdb_id: modalOpen.tmdb_id } : {}}
+      />
+      {/* Modal Série */}
+      <SerieModal
+        open={!!modalOpen && modalOpen.type === "serie"}
+        onClose={() => setModalOpen(null)}
+        onSave={async () => {
+          setModalOpen(null);
+          await handleRefresh();
+          setFeedback({ type: "success", message: "Série ajoutée !" });
+        }}
+        initialData={modalOpen && modalOpen.type === "serie" ? { tmdb_id: modalOpen.tmdb_id } : {}}
+      />
       {/* Animations CSS */}
       <style jsx global>{`
         @keyframes fadeInUp {
