@@ -469,7 +469,7 @@ export default function AdminSeriesPage() {
               })}
             </div>
             {/* Tableau desktop/tablette */}
-            <div className="hidden sm:block">
+            <div className="w-full max-w-full min-w-0 overflow-x-auto">
               <SeriesTable
                 series={paginatedSeries}
                 selectedIds={selectedIds}
