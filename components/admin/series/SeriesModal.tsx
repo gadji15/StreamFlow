@@ -398,11 +398,19 @@ export default function SeriesModal({
   };
 
   const handleTMDBById = async () => {
-    if (!form.tmdb_id) return;
+    const cleanId = String(form.tmdb_id).trim();
+    if (!cleanId || isNaN(Number(cleanId)) || Number(cleanId) <= 0) {
+      toast({
+        title: "ID TMDB invalide",
+        description: "Veuillez saisir un identifiant TMDB numérique valide.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(form.tmdb_id)}`);
-      if (!res.ok) throw new Error("Erreur réseau TMDB");
+      const res = await fetch(`/api/tmdb/tv/${encodeURIComponent(cleanId)}`);
+      if (!res.ok) throw new Error("Erreur réseau TMDB ou série non trouvée.");
       const data = await res.json();
       if (data && data.id) {
         setForm((f) => ({
@@ -421,6 +429,7 @@ export default function SeriesModal({
           vote_average: data.vote_average ?? f.vote_average,
           description: data.overview ?? f.description,
           creator: extractCreator(data) || f.creator,
+          tmdb_id: data.id,
         }));
         await fetchCast(data.id);
         toast({
