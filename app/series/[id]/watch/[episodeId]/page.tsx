@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import SeasonModalUser from "@/components/series/SeasonModalUser";
 import { Badge } from "@/components/ui/badge";
 import WatchLayout from "@/components/watch/WatchLayout";
+import dynamic from "next/dynamic";
+const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -61,7 +63,7 @@ export default function WatchEpisodePage() {
           seriesRes,
           seasonsRes,
         ] = await Promise.all([
-          supabase.from("episodes").select("*, season:season_id(season_number)").eq("id", episodeId).single(),
+          supabase.from("episodes").select("*, streamtape_url, uqload_url, season:season_id(season_number)").eq("id", episodeId).single(),
           supabase.from("series").select("*").eq("id", seriesId).single(),
           supabase.from("seasons").select("id, season_number, poster, title, episodes (*)").eq("series_id", seriesId).order("season_number", { ascending: true }),
         ]);
@@ -178,140 +180,147 @@ export default function WatchEpisodePage() {
     "/placeholder-backdrop.jpg";
 
   return (
-    <WatchLayout
-      title={
-        episode && series
-          ? [
-              series.title,
-              `S${episode.season}${episode.episode_number ? "E" + episode.episode_number : ""}`,
-              episode.title,
-            ]
-              .filter(Boolean)
-              .join(" - ")
-          : "Lecture épisode"
-      }
-      seoTitle={
-        episode && series
-          ? `${series.title} - S${episode.season}E${episode.episode_number} - ${episode.title}`
-          : undefined
-      }
-      videoUrl={episode?.video_url || ""}
-      posterUrl={episode?.thumbnail_url}
-      backdropUrl={backdropUrl}
-      loading={loading}
-      error={error || (!episode || !series ? "Épisode ou série introuvable" : undefined)}
-      onBack={goBackToSeries}
-      backLabel="Retour à la fiche série"
-      isVip={series?.is_vip}
-      // Boutons navigation juste après le player
-      afterPlayer={
-        <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
-          <button
-            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-            onClick={() => setIsSeasonModalOpen(true)}
-            aria-label="Sélectionner saison/épisode"
-          >
-            saison/épisode
-          </button>
-          <div className="flex gap-2">
-            {previousEpisode && (
-              <button
-                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-                onClick={goToPreviousEpisode}
-                aria-label="Épisode précédent"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                P
-              </button>
-            )}
-            {nextEpisode && (
-              <button
-                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-                onClick={goToNextEpisode}
-                aria-label="Épisode suivant"
-              >
-                S
-                <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
-              </button>
-            )}
-          </div>
-          <SeasonModalUser
-            open={isSeasonModalOpen}
-            onClose={() => setIsSeasonModalOpen(false)}
-            seasons={seasons}
-            selectedSeasonIndex={selectedSeasonIndex}
-            onSeasonChange={setSelectedSeasonIndex}
-            onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
-          />
-        </nav>
-      }
-      metadata={
-        episode && series && (
-          <>
-            <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-                {series.title}
-              </h1>
-              <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-                Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"} <span className="ml-2 text-xs text-gray-400">({
-                  `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}` 
-                })</span>
-              </span>
-              {series.genre && (
-                <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                  {series.genre}
-                </span>
-              )}
-              {series.is_vip && (
-                <Badge
-                  variant="secondary"
-                  className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+    <>
+      <div className="mb-6">
+        <VideoMultiPlayer
+          streamtapeUrl={episode?.streamtape_url || undefined}
+          uqloadUrl={episode?.uqload_url || undefined}
+        />
+      </div>
+      <WatchLayout
+        title={
+          episode && series
+            ? [
+                series.title,
+                `S${episode.season}${episode.episode_number ? "E" + episode.episode_number : ""}`,
+                episode.title,
+              ]
+                .filter(Boolean)
+                .join(" - ")
+            : "Lecture épisode"
+        }
+        seoTitle={
+          episode && series
+            ? `${series.title} - S${episode.season}E${episode.episode_number} - ${episode.title}`
+            : undefined
+        }
+        videoUrl={episode?.video_url || ""}
+        posterUrl={episode?.thumbnail_url}
+        backdropUrl={backdropUrl}
+        loading={loading}
+        error={error || (!episode || !series ? "Épisode ou série introuvable" : undefined)}
+        onBack={goBackToSeries}
+        backLabel="Retour à la fiche série"
+        isVip={series?.is_vip}
+        afterPlayer={
+          <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
+            <button
+              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+              onClick={() => setIsSeasonModalOpen(true)}
+              aria-label="Sélectionner saison/épisode"
+            >
+              saison/épisode
+            </button>
+            <div className="flex gap-2">
+              {previousEpisode && (
+                <button
+                  className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                  onClick={goToPreviousEpisode}
+                  aria-label="Épisode précédent"
                 >
-                  VIP
-                </Badge>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  P
+                </button>
+              )}
+              {nextEpisode && (
+                <button
+                  className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                  onClick={goToNextEpisode}
+                  aria-label="Épisode suivant"
+                >
+                  S
+                  <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+                </button>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-              {episode.duration && (
-                <span>
-                  <b>Durée :</b> {episode.duration} min
+            <SeasonModalUser
+              open={isSeasonModalOpen}
+              onClose={() => setIsSeasonModalOpen(false)}
+              seasons={seasons}
+              selectedSeasonIndex={selectedSeasonIndex}
+              onSeasonChange={setSelectedSeasonIndex}
+              onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
+            />
+          </nav>
+        }
+        metadata={
+          episode && series && (
+            <>
+              <div className="flex flex-wrap items-center gap-3 mb-1">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
+                  {series.title}
+                </h1>
+                <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
+                  Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"} <span className="ml-2 text-xs text-gray-400">({
+                    `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}` 
+                  })</span>
                 </span>
-              )}
-            </div>
-            <div className="my-2">
-              <span
-                className="inline-block px-4 py-2 rounded-lg border-2 border-primary bg-primary/20 text-primary font-bold text-lg shadow"
-                style={{ letterSpacing: "0.03em" }}
-              >
-                Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"}
-                <span className="ml-2 text-xs text-primary font-mono">
-                  ({
-                    `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}`
-                  })
+                {series.genre && (
+                  <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
+                    {series.genre}
+                  </span>
+                )}
+                {series.is_vip && (
+                  <Badge
+                    variant="secondary"
+                    className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+                  >
+                    VIP
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
+                {episode.duration && (
+                  <span>
+                    <b>Durée :</b> {episode.duration} min
+                  </span>
+                )}
+              </div>
+              <div className="my-2">
+                <span
+                  className="inline-block px-4 py-2 rounded-lg border-2 border-primary bg-primary/20 text-primary font-bold text-lg shadow"
+                  style={{ letterSpacing: "0.03em" }}
+                >
+                  Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"}
+                  <span className="ml-2 text-xs text-primary font-mono">
+                    ({
+                      `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}`
+                    })
+                  </span>
+                  <span className="ml-2 text-primary font-normal">{episode.title && `- ${episode.title}`}</span>
                 </span>
-                <span className="ml-2 text-primary font-normal">{episode.title && `- ${episode.title}`}</span>
-              </span>
-            </div>
-          </>
-        )
-      }
-      description={episode?.description}
-      suggestions={
-        similarSeries.map((serie) => ({
-          id: serie.id,
-          title: serie.title,
-          genre: serie.genre,
-          poster: serie.poster || "/placeholder-poster.png",
-          link: `/series/${serie.id}`,
-          year: (serie as any).start_year ?? ""
-        }))
-      }
-      suggestionsTitle="Séries similaires"
-      suggestionsSubtitle="Découvrez d'autres séries du même univers ou genre !"
-      suggestionsLink={
-        series?.genre ? `/series?genre=${encodeURIComponent(series.genre)}` : undefined
-      }
-      suggestionsLinkLabel="Voir tout"
-    />
+              </div>
+            </>
+          )
+        }
+        description={episode?.description}
+        suggestions={
+          similarSeries.map((serie) => ({
+            id: serie.id,
+            title: serie.title,
+            genre: serie.genre,
+            poster: serie.poster || "/placeholder-poster.png",
+            link: `/series/${serie.id}`,
+            year: (serie as any).start_year ?? ""
+          }))
+        }
+        suggestionsTitle="Séries similaires"
+        suggestionsSubtitle="Découvrez d'autres séries du même univers ou genre !"
+        suggestionsLink={
+          series?.genre ? `/series?genre=${encodeURIComponent(series.genre)}` : undefined
+        }
+        suggestionsLinkLabel="Voir tout"
+      />
+    </>
   );
 }
