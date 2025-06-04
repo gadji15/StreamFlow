@@ -57,6 +57,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     description: initialData.description || "",
     trailer_url: initialData.trailer_url || "",
     video_url: initialData.video_url || "",
+    streamtape_url: initialData.streamtape_url || "",
+    uqload_url: initialData.uqload_url || "",
     language: initialData.language || "",
     homepage_categories: Array.isArray(initialData.homepage_categories)
       ? initialData.homepage_categories
@@ -88,58 +90,74 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
 
+  // NEW: Flag pour bloquer le reset auto après import TMDB
+  const [hasImportedTMDB, setHasImportedTMDB] = useState(false);
+
   // --- ACTUALISATION DU FORMULAIRE ---
   useEffect(() => {
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
     setErrors({});
-    setForm((prev) => {
-      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
-      return {
-        ...prev,
-        title: initialData.title || "",
-        original_title: initialData.original_title || "",
-        director: initialData.director || "",
-        year: initialData.year || "",
-        duration: initialData.duration || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g: string) => g.trim())
-            : []),
-        genresInput: "",
-        vote_average: initialData.vote_average || "",
-        vote_count: initialData.vote_count || "",
-        published: !!initialData.published,
-        isvip: !!initialData.isvip,
-        featured: !!initialData.featured, // NOUVEAU CHAMP
-        poster: initialData.poster || "",
-        backdrop: initialData.backdrop || "",
-        tmdb_id,
-        imdb_id: initialData.imdb_id || "",
-        description: initialData.description || "",
-        trailer_url: initialData.trailer_url || "",
-        video_url: initialData.video_url || "",
-        language: initialData.language || "",
-        homepage_categories: Array.isArray(initialData.homepage_categories)
-          ? initialData.homepage_categories
-          : [],
-        popularity: initialData.popularity || "",
-        cast: Array.isArray(initialData.cast)
-          ? initialData.cast
-          : (typeof initialData.cast === "string"
-            ? JSON.parse(initialData.cast)
-            : []),
-        no_video: !!initialData.no_video,
-      };
-    });
-    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
-    setTmdbSearch(initialData.title || "");
-    setLocalVideo(null);
-    setLocalVideoUrl("");
+    // <-- Correction : reset seulement si pas d'import TMDB récent
+    if (!hasImportedTMDB) {
+      setForm((prev) => {
+        let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+        return {
+          ...prev,
+          title: initialData.title || "",
+          original_title: initialData.original_title || "",
+          director: initialData.director || "",
+          year: initialData.year || "",
+          duration: initialData.duration || "",
+          genres: Array.isArray(initialData.genres)
+            ? initialData.genres
+            : (typeof initialData.genre === "string"
+              ? initialData.genre.split(",").map((g: string) => g.trim())
+              : []),
+          genresInput: "",
+          vote_average: initialData.vote_average || "",
+          vote_count: initialData.vote_count || "",
+          published: !!initialData.published,
+          isvip: !!initialData.isvip,
+          featured: !!initialData.featured, // NOUVEAU CHAMP
+          poster: initialData.poster || "",
+          backdrop: initialData.backdrop || "",
+          tmdb_id,
+          imdb_id: initialData.imdb_id || "",
+          description: initialData.description || "",
+          trailer_url: initialData.trailer_url || "",
+          video_url: initialData.video_url || "",
+          streamtape_url: initialData.streamtape_url || "",
+          uqload_url: initialData.uqload_url || "",
+          language: initialData.language || "",
+          homepage_categories: Array.isArray(initialData.homepage_categories)
+            ? initialData.homepage_categories
+            : [],
+          popularity: initialData.popularity || "",
+          cast: Array.isArray(initialData.cast)
+            ? initialData.cast
+            : (typeof initialData.cast === "string"
+              ? JSON.parse(initialData.cast)
+              : []),
+          no_video: !!initialData.no_video,
+        };
+      });
+      setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+      setTmdbSearch(initialData.title || "");
+      setLocalVideo(null);
+      setLocalVideoUrl("");
+    }
+    // <-- /
     // eslint-disable-next-line
   }, [open, initialData && initialData.id]);
+
+  // Reset le flag après fermeture de la modale
+  useEffect(() => {
+    if (!open && hasImportedTMDB) {
+      setHasImportedTMDB(false);
+    }
+  }, [open, hasImportedTMDB]);
 
   // --- HANDLERS ---
   // Gestion spéciale pour la case "featured" liée à homepage_categories
@@ -288,7 +306,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     if (!movie || !movie.id) return;
     setLoading(true);
     try {
-      // Appel enrichi
       const detailRes = await fetch(`/api/tmdb/movie/${movie.id}?append_to_response=credits,videos,images`);
       let detail = null;
       if (detailRes.ok) {
@@ -302,23 +319,18 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         setLoading(false);
         return;
       }
-      // Director
       let director = "";
       if (detail.credits && Array.isArray(detail.credits.crew)) {
         const dir = detail.credits.crew.find((c: { job: string }) => c.job === "Director");
         if (dir) director = dir.name;
       }
-      // Genres
       let genres = [];
       if (Array.isArray(detail.genres) && detail.genres.length > 0) {
         genres = detail.genres.map((g: any) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
-      // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(detail.videos?.results || []);
-      // Images
       let poster = detail.poster_path ? `https://image.tmdb.org/t/p/w500${detail.poster_path}` : "";
       let backdrop = detail.backdrop_path ? `https://image.tmdb.org/t/p/w780${detail.backdrop_path}` : "";
-      // Cast (limité aux principaux, mapping nom/role/photo)
       let castArr = [];
       if (Array.isArray(detail.credits?.cast)) {
         castArr = detail.credits.cast.slice(0, 10).map((actor: any) => ({
@@ -327,7 +339,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "",
         }));
       }
-      // Vidéo principale (champ video_url) : TMDB ne fournit pas de vidéo directe, on laisse vide.
       setForm((f) => ({
         ...f,
         title: detail.title || movie.title || f.title,
@@ -352,6 +363,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         // video_url: "", // volontairement laissé vide : l'admin peut uploader ou cocher "pas de vidéo"
       }));
       setCastList(castArr.length > 0 ? castArr : []);
+      setHasImportedTMDB(true); // <- Pour empêcher le reset automatique après import
       toast({
         title: "Import TMDB réussi",
         description: "Champs pré-remplis depuis TMDB !",
@@ -532,14 +544,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       vote_count,
       published,
       isvip,
-      // featured: !!form.featured, // Optionnel, pour backward compat
+      // featured: !!form.featured,
       poster: form.poster || null,
       backdrop: form.backdrop || null,
       tmdb_id,
       imdb_id: form.imdb_id || null,
       description: form.description?.trim() || null,
       trailer_url: form.trailer_url || null,
-      video_url: no_video ? null : (form.video_url || localVideoUrl || null),
+      streamtape_url: no_video ? null : (form.streamtape_url || null),
+      uqload_url: no_video ? null : (form.uqload_url || null),
       language: form.language || null,
       homepage_categories: homepage_categories_sync,
       popularity,
@@ -853,6 +866,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
+          autoComplete="off"
         >
           <div>
             <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
@@ -1109,66 +1123,83 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
             />
           </div>
           <div>
-            <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-              Lien vidéo
+            <label htmlFor="streamtape_url" className="block text-[11px] font-medium text-white/80">
+              Lien Streamtape
             </label>
             <input
-              id="video_url"
-              name="video_url"
+              id="streamtape_url"
+              name="streamtape_url"
               type="text"
-              value={form.video_url}
-              onChange={e => setForm({ ...form, video_url: e.target.value })}
-              placeholder="https://..."
-              className="input input-bordered w-full"
-              required
+              value={form.streamtape_url}
+              onChange={e => setForm({ ...form, streamtape_url: e.target.value })}
+              placeholder="https://streamtape.com/v/..."
+              className={`input input-bordered w-full ${errors.streamtape_url ? "border-red-500" : ""}`}
+              autoComplete="off"
+              aria-invalid={!!errors.streamtape_url}
             />
-            {/* Aperçu pour les liens Uqload/Doodstream/etc. */}
-            {form.video_url && (
+            {errors.streamtape_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.streamtape_url}</div>
+            )}
+            {form.streamtape_url && (
               <div className="flex flex-col items-start mt-1">
-                {(form.video_url.startsWith("https://uqload.io/")
-                  || form.video_url.startsWith("https://dood")
-                  || form.video_url.startsWith("https://www.dood")
-                  || form.video_url.startsWith("https://streamtape.com")
-                  || form.video_url.startsWith("https://vidmoly.to")
-                  || form.video_url.startsWith("https://mycloud.to")
-                  || form.video_url.startsWith("https://upstream.to")
-                  || form.video_url.startsWith("https://voe.sx")
-                  || form.video_url.startsWith("https://filelions.to")
-                ) ? (
-                  <iframe
-                    src={form.video_url}
-                    allowFullScreen
-                    className="rounded border border-gray-700"
-                    style={{ width: 220, height: 124, maxWidth: "100%" }}
-                    frameBorder={0}
-                    allow="autoplay; fullscreen"
-                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                    title="Aperçu vidéo"
-                  />
-                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
-                  <video
-                    src={form.video_url}
-                    controls
-                    className="h-20 rounded border border-gray-700"
-                    style={{ maxWidth: "100%" }}
-                  />
-                ) : (
-                  <a
-                    href={form.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-indigo-400 underline"
-                  >
-                    Voir la vidéo
-                  </a>
-                )}
+                <iframe
+                  src={form.streamtape_url.replace("/v/", "/e/")}
+                  allowFullScreen
+                  className="rounded border border-gray-700"
+                  style={{ width: 220, height: 124, maxWidth: "100%" }}
+                  frameBorder={0}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title="Aperçu Streamtape"
+                />
                 <button
                   type="button"
                   className="text-[10px] text-red-400 hover:underline mt-1"
-                  onClick={() => setForm({ ...form, video_url: "" })}
-                  aria-label="Supprimer la vidéo"
+                  onClick={() => setForm({ ...form, streamtape_url: "" })}
+                  aria-label="Supprimer la vidéo Streamtape"
                 >
-                  Supprimer la vidéo
+                  Supprimer Streamtape
+                </button>
+              </div>
+            )}
+          </div>
+          <div>
+            <label htmlFor="uqload_url" className="block text-[11px] font-medium text-white/80">
+              Lien Uqload
+            </label>
+            <input
+              id="uqload_url"
+              name="uqload_url"
+              type="text"
+              value={form.uqload_url}
+              onChange={e => setForm({ ...form, uqload_url: e.target.value })}
+              placeholder="https://uqload.io/..."
+              className={`input input-bordered w-full ${errors.uqload_url ? "border-red-500" : ""}`}
+              autoComplete="off"
+              aria-invalid={!!errors.uqload_url}
+            />
+            {errors.uqload_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.uqload_url}</div>
+            )}
+            {form.uqload_url && (
+              <div className="flex flex-col items-start mt-1">
+                <iframe
+                  src={form.uqload_url}
+                  allowFullScreen
+                  className="rounded border border-gray-700"
+                  style={{ width: 220, height: 124, maxWidth: "100%" }}
+                  frameBorder={0}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title="Aperçu Uqload"
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => setForm({ ...form, uqload_url: "" })}
+                  aria-label="Supprimer la vidéo Uqload"
+                >
+                  Supprimer Uqload
                 </button>
               </div>
             )}
@@ -1278,16 +1309,16 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           >
             Annuler
           </Button>
-          <Button
+          {/* On s'assure que ce bouton est bien type="submit" */}
+          <button
             type="submit"
             form="film-form"
-            variant="default"
             disabled={loading}
             aria-label="Enregistrer le film"
-            className="text-xs py-1 px-2"
+            className="text-xs py-1 px-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-white font-semibold transition"
           >
             {loading ? "..." : "Enregistrer"}
-          </Button>
+          </button>
         </div>
       </div>
       <style jsx global>{`
