@@ -356,7 +356,7 @@ export default function NouveautePage() {
                   <Film className="w-6 h-6 text-primary" /> Films récents
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                  {filteredMovies.map((movie) => (
+                  {filteredMovies.slice(0, 20).map((movie) => (
                     <NouveauteCard
                       key={movie.id}
                       item={movie}
@@ -391,7 +391,7 @@ export default function NouveautePage() {
                   <Tv className="w-6 h-6 text-purple-400" /> Séries récentes
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                  {filteredSeries.map((serie) => (
+                  {filteredSeries.slice(0, 20).map((serie) => (
                     <NouveauteCard
                       key={serie.id}
                       item={serie}
