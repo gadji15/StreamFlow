@@ -93,13 +93,16 @@ export default function SeriesTable({
         </table>
       </div>
       {/* Card list for mobile */}
-      <div className="sm:hidden flex flex-col gap-3">
+      <div className="sm:hidden flex flex-col gap-3 w-full">
         {series.length === 0 ? (
           <div className="text-gray-500 text-center py-8">Aucune série trouvée.</div>
         ) : (
           series.map(serie => (
-            <div key={serie.id} className="bg-gray-800 rounded-lg shadow border border-gray-700 flex flex-col p-3">
-              <div className="flex items-center gap-3">
+            <div
+              key={serie.id}
+              className="bg-gray-800 rounded-lg shadow border border-gray-700 flex flex-col p-3 w-full"
+            >
+              <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="h-12 w-12 rounded overflow-hidden border border-gray-600 flex-shrink-0 bg-gray-700">
                   <img
                     src={serie.poster || '/placeholder-backdrop.jpg'}
@@ -107,8 +110,8 @@ export default function SeriesTable({
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-sm">{serie.title}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{serie.title}</div>
                   <div className="text-[11px] text-gray-400 flex gap-2 flex-wrap mt-0.5">
                     {serie.genre && (
                       <span className="bg-gray-700/60 px-1 rounded">{(serie.genre || "").split(',')[0]}</span>
@@ -125,35 +128,38 @@ export default function SeriesTable({
                   type="button"
                   aria-label={selectedIds.includes(serie.id) ? "Désélectionner" : "Sélectionner"}
                   onClick={() => onSelect(serie.id)}
-                  className="ml-2 bg-gray-700 text-white rounded px-2 h-8 flex items-center"
+                  className="ml-2 bg-gray-700 text-white rounded px-2 h-8 flex items-center flex-shrink-0"
                 >
                   {selectedIds.includes(serie.id) ? "☑️" : "⬜"}
                 </button>
               </div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 w-full">
                 <button
                   type="button"
                   aria-label="Aperçu"
-                  className="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white rounded px-2 py-1 text-xs"
+                  className="flex-1 min-w-0 bg-indigo-700 hover:bg-indigo-800 text-white rounded h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("preview", serie)}
+                  title="Aperçu"
                 >
-                  👁️ Aperçu
+                  👁️
                 </button>
                 <button
                   type="button"
                   aria-label="Saisons"
-                  className="flex-1 bg-purple-700 hover:bg-purple-800 text-white rounded px-2 py-1 text-xs"
+                  className="flex-1 min-w-0 bg-purple-700 hover:bg-purple-800 text-white rounded h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("expand", serie)}
+                  title="Saisons"
                 >
-                  📚 Saisons
+                  📚
                 </button>
                 <button
                   type="button"
-                  aria-label="Actions"
-                  className="flex-1 bg-gray-700 hover:bg-gray-800 text-white rounded px-2 py-1 text-xs"
+                  aria-label="Modifier"
+                  className="flex-1 min-w-0 bg-gray-700 hover:bg-gray-800 text-white rounded h-8 flex items-center justify-center text-base"
                   onClick={() => onAction && onAction("edit", serie)}
+                  title="Modifier"
                 >
-                  ✏️ Modifier
+                  ✏️
                 </button>
               </div>
             </div>

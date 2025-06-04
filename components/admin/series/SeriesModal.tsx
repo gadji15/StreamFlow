@@ -646,6 +646,7 @@ export default function SeriesModal({
         )}
         {/* Content scrollable */}
         <form
+          id="series-form"
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
@@ -957,7 +958,6 @@ export default function SeriesModal({
             variant="default"
             disabled={loading}
             aria-label="Enregistrer la série"
-            onClick={() => handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>)}
             className="text-xs py-1 px-2"
           >
             {loading ? "..." : "Enregistrer"}

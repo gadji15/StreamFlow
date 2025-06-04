@@ -2,16 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { VideoPlayer } from "@/components/video-player";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import LoadingScreen from "@/components/loading-screen";
-import SeasonModalUser from "@/components/series/SeasonModalUser";
-import { supabase } from "@/lib/supabaseClient";
 import { ChevronLeft } from "lucide-react";
-import Head from "next/head";
-import Footer from "@/components/footer";
+import { supabase } from "@/lib/supabaseClient";
+import SeasonModalUser from "@/components/series/SeasonModalUser";
+import { Badge } from "@/components/ui/badge";
+import WatchLayout from "@/components/watch/WatchLayout";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -28,65 +23,57 @@ export default function WatchEpisodePage() {
   const [nextEpisode, setNextEpisode] = useState<EpisodeType | null>(null);
   const [previousEpisode, setPreviousEpisode] = useState<EpisodeType | null>(null);
   const [similarSeries, setSimilarSeries] = useState<Series[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Chargement des données
+  // Chargement en parallèle pour le gain de performance
   useEffect(() => {
     let isMounted = true;
-    const loadData = async () => {
-      setIsLoading(true);
+    const fetchAll = async () => {
+      setLoading(true);
       setError(null);
       try {
-        // Charger l'épisode avec le numéro de saison associé
-        const { data: episodeData, error: epErr } = await supabase
-          .from("episodes")
-          .select("*, season:season_id(season_number)")
-          .eq("id", episodeId)
-          .single();
-        if (epErr || !episodeData) throw new Error("Épisode non trouvé.");
+        const [
+          episodeRes,
+          seriesRes,
+          seasonsRes,
+          similarRes
+        ] = await Promise.all([
+          supabase.from("episodes").select("*, season:season_id(season_number)").eq("id", episodeId).single(),
+          supabase.from("series").select("*").eq("id", seriesId).single(),
+          supabase.from("seasons").select("id, season_number, poster, title, episodes (*)").eq("series_id", seriesId).order("season_number", { ascending: true }),
+          supabase.from("series").select("id, title, genre, poster").neq("id", seriesId).order("popularity", { ascending: false }).limit(12)
+        ]);
+        const episodeData = episodeRes.data;
+        const seriesData = seriesRes.data;
+        const seasonsData = seasonsRes.data;
+        const similar = similarRes.data;
+
+        if (!episodeData) throw new Error("Épisode non trouvé");
+        if (!seriesData) throw new Error("Série non trouvée");
+        if (!seasonsData) throw new Error("Aucune saison trouvée");
         if (!episodeData.published) throw new Error("Cet épisode n'est pas disponible.");
+
         if (!isMounted) return;
-        // Correction : utiliser le vrai numéro de saison depuis la jointure
         setEpisode({
           ...episodeData,
           season: episodeData.season?.season_number ?? null,
         });
-
-        // Charger la série
-        const { data: seriesData } = await supabase
-          .from("series")
-          .select("*")
-          .eq("id", seriesId)
-          .single();
-        if (!seriesData) throw new Error("Série non trouvée.");
         setSeries(seriesData);
 
-        // Charger les saisons et épisodes
-        const { data: seasonsData } = await supabase
-          .from("seasons")
-          .select("id, season_number, poster, title, episodes (*)")
-          .eq("series_id", seriesId)
-          .order("season_number", { ascending: true });
-        if (!seasonsData) throw new Error("Aucune saison trouvée.");
         const sortedSeasons = seasonsData.map((s: any) => ({
           ...s,
-          episodes: (s.episodes || []).sort(
-            (a: any, b: any) => a.episode_number - b.episode_number
-          ),
+          episodes: (s.episodes || []).sort((a: any, b: any) => a.episode_number - b.episode_number)
         }));
         setSeasons(sortedSeasons);
-        const currentSeasonIdx = sortedSeasons.findIndex(
-          (s: any) => s.season_number === episodeData.season
-        );
+        const currentSeasonIdx = sortedSeasons.findIndex((s: any) => s.season_number === episodeData.season?.season_number);
         setSelectedSeasonIndex(currentSeasonIdx !== -1 ? currentSeasonIdx : 0);
 
-        // Correction navigation : on récupère tous les épisodes publiés, triés par saison puis numéro d'épisode
         const publishedEpisodes = sortedSeasons
           .flatMap((s: any) =>
             (s.episodes || []).map((ep: any) => ({
               ...ep,
-              season: s.season_number, // s'assurer que la saison est bien renseignée
+              season: s.season_number,
             }))
           )
           .filter((ep: any) => ep.published)
@@ -95,29 +82,18 @@ export default function WatchEpisodePage() {
               ? a.season - b.season
               : a.episode_number - b.episode_number
           );
-
-        // Trouver l'index de l'épisode courant dans la liste triée
         const idx = publishedEpisodes.findIndex((ep: any) => ep.id === episodeId);
-
-        // Définir l'épisode précédent et suivant
         setPreviousEpisode(idx > 0 ? publishedEpisodes[idx - 1] : null);
         setNextEpisode(idx !== -1 && idx < publishedEpisodes.length - 1 ? publishedEpisodes[idx + 1] : null);
 
-        // Séries similaires
-        const { data: similar } = await supabase
-          .from("series")
-          .select("*")
-          .neq("id", seriesId)
-          .order("popularity", { ascending: false })
-          .limit(12);
         setSimilarSeries(similar || []);
       } catch (err: any) {
         if (isMounted) setError(err.message || "Erreur lors du chargement.");
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    loadData();
+    fetchAll();
     return () => { isMounted = false; };
   }, [seriesId, episodeId]);
 
@@ -136,117 +112,136 @@ export default function WatchEpisodePage() {
     router.push(`/series/${seriesId}/watch/${episode.id}`);
   }, [router, seriesId]);
 
-  // Loading & Error
-  if (isLoading) return <LoadingScreen />;
-  if (error || !episode || !series) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black/90 px-4">
-        <div className="bg-red-900/50 border border-red-700 rounded-lg p-6 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold mb-2">Erreur</h2>
-          <p className="text-gray-300">{error || "Épisode non trouvé"}</p>
-          <Button onClick={goBackToSeries} className="mt-4 rounded-2xl text-lg px-6 py-3">
-            <ChevronLeft className="h-5 w-5 mr-2" /> Retour à la fiche série
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Backdrop
   const backdropUrl =
-    episode.thumbnail_url ||
-    series.poster ||
+    episode?.thumbnail_url ||
+    series?.poster ||
     "/placeholder-backdrop.jpg";
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
-      <Head>
-        <title>
-          {series.title} - S{episode.season}E{episode.episode_number} - {episode.title}
-        </title>
-      </Head>
-      {/* Backdrop */}
-      {backdropUrl && (
-        <div className="fixed inset-0 z-0 w-full h-full pointer-events-none">
-          <img
-            src={backdropUrl}
-            alt={`Backdrop de ${series.title}`}
-            className="w-full h-full object-cover object-center blur-[3px] brightness-60 scale-105"
-            draggable={false}
-          />
-          {/* Correction : le backdrop ne doit pas masquer le footer */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/60 to-black/95" />
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 w-full max-w-4xl mx-auto pt-24 pb-10 px-2 sm:px-6 flex flex-col items-center">
-        {/* Retour bouton flottant */}
-        <Button
-          variant="secondary"
-          className="mt-4 mb-4 left-0 sm:left-0 rounded-full shadow-lg bg-black/80 text-lg px-5 py-3 hover:scale-105 hover:bg-black/90 transition-all z-20"
-          onClick={goBackToSeries}
-          aria-label="Retour à la fiche série"
-        >
-          <ChevronLeft className="h-5 w-5 mr-2" />
-          Retour  
-        </Button>
-
-        {/* Player */}
-        <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
-          <VideoPlayer
-            src={episode.video_url || ""}
-            poster={episode.thumbnail_url}
-            title={[
+    <WatchLayout
+      title={
+        episode && series
+          ? [
               series.title,
               `S${episode.season}${episode.episode_number ? "E" + episode.episode_number : ""}`,
               episode.title,
-            ].filter(Boolean).join(" - ")}
-            autoPlay
-            onEnded={nextEpisode ? goToNextEpisode : undefined}
-            nextEpisode={
-              nextEpisode
-                ? {
-                    title: nextEpisode.title,
-                    onPlay: goToNextEpisode,
-                  }
-                : undefined
-            }
-          />
-        </div>
-
-        {/* Navigation épisodes */}
+            ]
+              .filter(Boolean)
+              .join(" - ")
+          : "Lecture épisode"
+      }
+      seoTitle={
+        episode && series
+          ? `${series.title} - S${episode.season}E${episode.episode_number} - ${episode.title}`
+          : undefined
+      }
+      videoUrl={episode?.video_url || ""}
+      posterUrl={episode?.thumbnail_url}
+      backdropUrl={backdropUrl}
+      loading={loading}
+      error={error || (!episode || !series ? "Épisode ou série introuvable" : undefined)}
+      onBack={goBackToSeries}
+      backLabel={
+        <span className="flex items-center"><ChevronLeft className="h-5 w-5 mr-2" /> Retour à la fiche série</span>
+      }
+      isVip={series?.is_vip}
+      metadata={
+        episode && series && (
+          <>
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
+                {series.title}
+              </h1>
+              <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
+                Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"} <span className="ml-2 text-xs text-gray-400">({
+                  `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}` 
+                })</span>
+              </span>
+              {series.genre && (
+                <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
+                  {series.genre}
+                </span>
+              )}
+              {series.is_vip && (
+                <Badge
+                  variant="secondary"
+                  className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+                >
+                  VIP
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
+              {episode.duration && (
+                <span>
+                  <b>Durée :</b> {episode.duration} min
+                </span>
+              )}
+            </div>
+            <div className="my-2">
+              <span
+                className="inline-block px-4 py-2 rounded-lg border-2 border-primary bg-primary/20 text-primary font-bold text-lg shadow"
+                style={{ letterSpacing: "0.03em" }}
+              >
+                Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"}
+                <span className="ml-2 text-xs text-primary font-mono">
+                  ({
+                    `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}`
+                  })
+                </span>
+                <span className="ml-2 text-primary font-normal">{episode.title && `- ${episode.title}`}</span>
+              </span>
+            </div>
+          </>
+        )
+      }
+      description={episode?.description}
+      suggestions={
+        similarSeries.map((serie) => ({
+          id: serie.id,
+          title: serie.title,
+          genre: serie.genre,
+          poster: serie.poster || "/placeholder-poster.png",
+          link: `/series/${serie.id}`,
+        }))
+      }
+      suggestionsTitle="Séries similaires"
+      suggestionsSubtitle="Découvrez d'autres séries du même univers ou genre !"
+      suggestionsLink={
+        series?.genre ? `/series?genre=${encodeURIComponent(series.genre)}` : undefined
+      }
+      suggestionsLinkLabel="Voir tout"
+      afterPlayer={
+        // Navigation épisodes
         <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
-          <Button
-            variant="outline"
-            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all"
+          <button
+            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
             onClick={() => setIsSeasonModalOpen(true)}
             aria-label="Sélectionner saison/épisode"
           >
-          saison/épisode
-          </Button>
+            saison/épisode
+          </button>
           <div className="flex gap-2">
             {previousEpisode && (
-              <Button
-                variant="outline"
-                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all"
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
                 onClick={goToPreviousEpisode}
                 aria-label="Épisode précédent"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 P
-              </Button>
+              </button>
             )}
             {nextEpisode && (
-              <Button
-                variant="outline"
-                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all"
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
                 onClick={goToNextEpisode}
                 aria-label="Épisode suivant"
               >
                 S
                 <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
-              </Button>
+              </button>
             )}
           </div>
           <SeasonModalUser
@@ -258,144 +253,7 @@ export default function WatchEpisodePage() {
             onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
           />
         </nav>
-
-        {/* Metadata */}
-        <section className="w-full max-w-3xl mx-auto bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-lg px-6 py-6 flex flex-col gap-2 mb-8 border border-gray-800">
-          <div className="flex flex-wrap items-center gap-3 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-              {series.title}
-            </h1>
-            <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-              Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"} <span className="ml-2 text-xs text-gray-400">({
-                `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}` 
-              })</span>
-            </span>
-            {series.genre && (
-              <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                {series.genre}
-              </span>
-            )}
-            {series.is_vip && (
-              <Badge
-                variant="secondary"
-                className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
-              >
-                VIP
-              </Badge>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-            {episode.duration && (
-              <span>
-                <b>Durée :</b> {episode.duration} min
-              </span>
-            )}
-          </div>
-          {/* Description dynamique et claire, bien démarquée */}
-          <div className="my-2">
-            <span
-              className="inline-block px-4 py-2 rounded-lg border-2 border-primary bg-primary/20 text-primary font-bold text-lg shadow"
-              style={{ letterSpacing: "0.03em" }}
-            >
-              Saison {episode.season ?? "?"}, Épisode {episode.episode_number ?? "?"}
-              <span className="ml-2 text-xs text-primary font-mono">
-                ({
-                  `S${episode.season !== undefined && episode.season !== null ? String(episode.season).padStart(2, "0") : "??"}E${episode.episode_number !== undefined && episode.episode_number !== null ? String(episode.episode_number).padStart(2, "0") : "??"}`
-                })
-              </span>
-              <span className="ml-2 text-primary font-normal">{episode.title && `- ${episode.title}`}</span>
-            </span>
-          </div>
-          <p className="text-gray-200 text-base whitespace-pre-line mt-1">{episode.description}</p>
-        </section>
-
-        {/* Séries similaires */}
-        <section className="w-full max-w-6xl mx-auto mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-bold">Séries similaires</h2>
-              <p className="text-gray-400 text-sm mt-1">Découvrez d'autres séries du même univers ou genre&nbsp;!</p>
-            </div>
-            {series.genre && (
-              <Link
-                href={`/series?genre=${encodeURIComponent(series.genre)}`}
-                className="text-sm flex items-center font-medium bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500 bg-clip-text text-transparent underline underline-offset-4 hover:text-violet-400 hover:scale-105 transition-all"
-                style={{
-                  WebkitTextFillColor: 'transparent',
-                  background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
-                  WebkitBackgroundClip: 'text',
-                  padding: 0,
-                  border: "none"
-                }}
-              >
-                <span className="underline underline-offset-4">Voir tout</span>
-              </Link>
-            )}
-          </div>
-          <div className="w-full grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {similarSeries.map((serie, idx) => (
-              <Link
-                key={serie.id}
-                href={`/series/${serie.id}`}
-                className="bg-gray-800/90 border border-gray-700 rounded-xl overflow-hidden shadow hover:scale-105 group flex flex-col items-center transition-transform duration-200"
-                style={{
-                  opacity: 0,
-                  animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
-                  animationDelay: `${idx * 0.06}s`,
-                }}
-              >
-                <div className="relative aspect-[2/3] w-full flex flex-col items-center">
-                  <img
-                    src={serie.poster || "/placeholder-poster.png"}
-                    alt={serie.title}
-                    className="w-full h-full object-cover transition-all duration-300 rounded-xl"
-                    onError={e => {
-                      (e.target as HTMLImageElement).src = "/placeholder-poster.png";
-                    }}
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <rect x="4" y="4" width="16" height="16" rx="2" strokeWidth="2" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 8h8v8H8z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-                  <h3 className="truncate font-semibold w-full text-center text-xs sm:text-sm md:text-base">{serie.title}</h3>
-                  <p className="text-[11px] text-gray-400 w-full text-center">{serie.genre || ""}</p>
-                </div>
-              </Link>
-            ))}
-            {similarSeries.length === 0 && (
-              <div className="text-gray-400 py-8 text-center w-full col-span-full">
-                Aucune suggestion pour le moment.
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes fadeInUp {
-          0% {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.6s cubic-bezier(.23,1.02,.25,1) both;
-        }
-        /* Correction : assure que le footer est visible au-dessus du backdrop */
-        footer, .footer, #footer {
-          position: relative !important;
-          z-index: 30 !important;
-        }
-      `}</style>
-    </div>
+      }
+    />
   );
 }
