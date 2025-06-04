@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Eye, EyeOff, Mail, User, Lock, UserPlus, Loader2 } from 'lucide-react';
@@ -20,51 +20,45 @@ export default function RegisterPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ajout état pour erreurs inline
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [passwordStrength, setPasswordStrength] = useState<'faible' | 'moyen' | 'fort' | ''>('');
+  
   const router = useRouter();
   const { toast } = useToast();
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Optionally, redirect if user is already logged in
     // if (isLoggedIn) router.push('/');
+    // Focus auto sur le champ nom
+    nameInputRef.current?.focus();
   }, [router]);
 
   const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
     if (!name) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir votre nom.",
-        variant: "destructive",
-      });
-      return false;
+      newErrors.name = "Veuillez saisir votre nom.";
     }
     if (!email) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez saisir votre adresse email.",
-        variant: "destructive",
-      });
-      return false;
+      newErrors.email = "Veuillez saisir votre adresse email.";
     }
     if (password.length < 6) {
-      toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
-        variant: "destructive",
-      });
-      return false;
+      newErrors.password = "Le mot de passe doit contenir au moins 6 caractères.";
     }
     if (password !== confirmPassword) {
-      toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas.",
-        variant: "destructive",
-      });
-      return false;
+      newErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
     }
     if (!agreedToTerms) {
+      newErrors.terms = "Vous devez accepter les conditions d'utilisation.";
+    }
+    setErrors(newErrors);
+
+    // Toast général en cas d'erreur
+    if (Object.keys(newErrors).length > 0) {
       toast({
         title: "Erreur",
-        description: "Vous devez accepter les conditions d'utilisation.",
+        description: Object.values(newErrors)[0],
         variant: "destructive",
       });
       return false;
@@ -89,6 +83,7 @@ export default function RegisterPage() {
       });
 
       if (error) {
+        setErrors({ global: error.message || "Une erreur est survenue lors de l'inscription." });
         toast({
           title: "Erreur d'inscription",
           description: error.message || "Une erreur est survenue lors de l'inscription.",
@@ -106,6 +101,7 @@ export default function RegisterPage() {
       // Redirection immédiate vers la page de confirmation avec l'email
       router.replace(`/confirmation-email?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
+      setErrors({ global: error.message || "Une erreur est survenue lors de l'inscription." });
       toast({
         title: "Erreur d'inscription",
         description: error.message || "Une erreur est survenue lors de l'inscription.",
@@ -119,6 +115,23 @@ export default function RegisterPage() {
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  // Barre de force du mot de passe
+  useEffect(() => {
+    if (!password) {
+      setPasswordStrength('');
+      return;
+    }
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    if (score <= 2) setPasswordStrength('faible');
+    else if (score === 3 || score === 4) setPasswordStrength('moyen');
+    else setPasswordStrength('fort');
+  }, [password]);
 
   // Google Sign Up
   const handleGoogleSignup = async () => {
@@ -186,8 +199,13 @@ export default function RegisterPage() {
                 required
                 disabled={isSubmitting}
                 autoComplete="name"
+                ref={nameInputRef}
+                aria-invalid={!!errors.name}
               />
             </div>
+            {errors.name && (
+              <div className="text-red-500 text-xs mt-1">{errors.name}</div>
+            )}
           </div>
           {/* Email */}
           <div>
@@ -206,8 +224,12 @@ export default function RegisterPage() {
                 required
                 disabled={isSubmitting}
                 autoComplete="email"
+                aria-invalid={!!errors.email}
               />
             </div>
+            {errors.email && (
+              <div className="text-red-500 text-xs mt-1">{errors.email}</div>
+            )}
           </div>
           {/* Mot de passe */}
           <div>
@@ -227,6 +249,7 @@ export default function RegisterPage() {
                 minLength={6}
                 disabled={isSubmitting}
                 autoComplete="new-password"
+                aria-invalid={!!errors.password}
               />
               <button
                 type="button"
@@ -243,6 +266,40 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
+            {/* Barre de force du mot de passe */}
+            {password && (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-full h-1 rounded bg-gray-700 overflow-hidden">
+                  <div
+                    className={
+                      "h-full transition-all duration-300 " +
+                      (passwordStrength === "faible"
+                        ? "bg-red-500 w-1/3"
+                        : passwordStrength === "moyen"
+                        ? "bg-yellow-400 w-2/3"
+                        : passwordStrength === "fort"
+                        ? "bg-green-500 w-full"
+                        : "")
+                    }
+                  ></div>
+                </div>
+                <span className={
+                  "text-xs ml-2 " +
+                  (passwordStrength === "faible"
+                    ? "text-red-500"
+                    : passwordStrength === "moyen"
+                    ? "text-yellow-400"
+                    : passwordStrength === "fort"
+                    ? "text-green-500"
+                    : "")
+                }>
+                  {passwordStrength && ("Mot de passe " + passwordStrength)}
+                </span>
+              </div>
+            )}
+            {errors.password && (
+              <div className="text-red-500 text-xs mt-1">{errors.password}</div>
+            )}
           </div>
           {/* Confirmer mot de passe */}
           <div>
@@ -256,13 +313,48 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
                 placeholder="••••••••"
                 required
                 disabled={isSubmitting}
                 autoComplete="new-password"
+                aria-invalid={!!errors.confirmPassword}
               />
+              {/* Bouton show/hide identique au champ principal */}
+              <button
+                type="button"
+                onClick={toggleShowPassword}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
+                tabIndex={-1}
+                disabled={isSubmitting}
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
+            {/* Correspondance des mots de passe */}
+            {confirmPassword && (
+              <div className="flex items-center gap-2 mt-1">
+                {password === confirmPassword ? (
+                  <span className="text-green-500 text-xs flex items-center gap-1">
+                    <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Les mots de passe correspondent
+                  </span>
+                ) : (
+                  <span className="text-red-500 text-xs flex items-center gap-1">
+                    <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Les mots de passe ne correspondent pas
+                  </span>
+                )}
+              </div>
+            )}
+            {errors.confirmPassword && (
+              <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
+            )}
           </div>
           {/* Conditions */}
           <div className="flex items-center space-x-2 mt-1 mb-1">
@@ -272,6 +364,7 @@ export default function RegisterPage() {
               onCheckedChange={checked => setAgreedToTerms(checked === true)}
               required
               disabled={isSubmitting}
+              aria-invalid={!!errors.terms}
             />
             <label htmlFor="terms" className="text-sm text-gray-400">
               J'accepte les{' '}
@@ -284,6 +377,9 @@ export default function RegisterPage() {
               </Link>
             </label>
           </div>
+          {errors.terms && (
+            <div className="text-red-500 text-xs mb-2">{errors.terms}</div>
+          )}
 
           <Button
             type="submit"
@@ -302,6 +398,9 @@ export default function RegisterPage() {
               </>
             )}
           </Button>
+          {errors.global && (
+            <div className="text-red-500 text-xs mt-2 text-center">{errors.global}</div>
+          )}
 
           <div className="text-center mt-4 text-sm text-gray-400">
             Vous avez déjà un compte ?{" "}
