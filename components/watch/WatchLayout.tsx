@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ContentSection from "@/components/content-section";
 
 type SuggestionItem = {
   id: string;
