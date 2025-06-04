@@ -324,13 +324,23 @@ export default function Header() {
               </div>
               <nav className="space-y-4 overflow-y-auto pr-2 flex-1">
                 <Link
+                  href="/"
+                  className="block py-2 hover:text-white"
+                  onClick={() => setNavOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <Home className={`mr-2 h-5 w-5 ${pathname === '/' ? 'text-white' : 'text-fuchsia-300'}`} />
+                    Accueil
+                  </div>
+                </Link>
+                <Link
                   href="/films"
                   className="block py-2 hover:text-white"
                   onClick={() => setNavOpen(false)}
                   ref={firstMenuLinkRef}
                 >
                   <div className="flex items-center">
-                    <Film className="mr-2 h-5 w-5" />
+                    <Film className={`mr-2 h-5 w-5 ${pathname === '/films' ? 'text-white' : 'text-indigo-300'}`} />
                     Films
                   </div>
                 </Link>
@@ -340,7 +350,7 @@ export default function Header() {
                   onClick={() => setNavOpen(false)}
                 >
                   <div className="flex items-center">
-                    <Tv className="mr-2 h-5 w-5" />
+                    <Tv className={`mr-2 h-5 w-5 ${pathname === '/series' ? 'text-white' : 'text-pink-300'}`} />
                     Séries
                   </div>
                 </Link>
@@ -350,7 +360,7 @@ export default function Header() {
                   onClick={() => setNavOpen(false)}
                 >
                   <div className="flex items-center">
-                    <Sparkles className="mr-2 h-5 w-5" />
+                    <Sparkles className={`mr-2 h-5 w-5 ${pathname === '/suggestions' ? 'text-white' : 'text-emerald-200'}`} />
                     Suggestions
                   </div>
                 </Link>
@@ -359,7 +369,10 @@ export default function Header() {
                   className="block py-2 hover:text-white"
                   onClick={() => setNavOpen(false)}
                 >
-                  Nouveautés
+                  <div className="flex items-center">
+                    <Bell className={`mr-2 h-5 w-5 ${pathname === '/nouveates' ? 'text-white' : 'text-yellow-300'}`} />
+                    Nouveautés
+                  </div>
                 </Link>
                 {isVIP && (
                   <Link
@@ -368,7 +381,7 @@ export default function Header() {
                     onClick={() => setNavOpen(false)}
                   >
                     <div className="flex items-center">
-                      <Sparkles className="mr-2 h-5 w-5" />
+                      <Sparkles className="mr-2 h-5 w-5 text-amber-600" />
                       Contenu exclusif
                     </div>
                   </Link>
