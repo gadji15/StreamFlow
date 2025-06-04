@@ -14,12 +14,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
   const { login } = useAuth();
-
-  // For Google button loading state
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Handle email/password login via context/provider
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +54,6 @@ export default function LoginPage() {
           </h1>
           <p className="text-center text-gray-400 mb-6">Connectez-vous à votre compte StreamFlow</p>
 
-          {/* Google Button */}
           <Button
             type="button"
             variant="outline"
@@ -186,3 +183,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+    </main>
+  );
+}
