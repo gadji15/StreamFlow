@@ -65,7 +65,7 @@ export function useSupabaseAuth() {
 
   async function login(email: string, password: string) {
     // Remplacez par votre logique réelle si besoin
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase!.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }
 
