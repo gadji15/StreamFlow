@@ -27,7 +27,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   // Hauteur du header en pixels (correspond à h-16 = 64px)
   const HEADER_HEIGHT = 64;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const content = (
     <div className="min-h-screen flex bg-gray-900">
