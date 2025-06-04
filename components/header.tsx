@@ -285,7 +285,7 @@ export default function Header() {
         {navOpen && (
           <motion.div
             ref={mobileMenuRef}
-            className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -298,7 +298,7 @@ export default function Header() {
             }}
           >
             <motion.div
-              className="w-full max-w-md mx-auto mt-20 rounded-2xl bg-gray-900/90 shadow-xl border border-gray-700 relative px-6 py-8"
+              className="w-[95vw] max-w-sm max-h-[90vh] mx-auto rounded-2xl bg-gray-900/90 shadow-xl border border-gray-700 relative px-4 py-6 flex flex-col"
               initial={{ scale: 0.96, y: 40, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 40, opacity: 0 }}
@@ -322,7 +322,7 @@ export default function Header() {
                   Accédez rapidement aux différentes rubriques du site.
                 </p>
               </div>
-              <nav className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+              <nav className="space-y-4 overflow-y-auto pr-2 flex-1">
                 <Link
                   href="/films"
                   className="block py-2 hover:text-white"
