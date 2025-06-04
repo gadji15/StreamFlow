@@ -57,6 +57,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     description: initialData.description || "",
     trailer_url: initialData.trailer_url || "",
     video_url: initialData.video_url || "",
+    streamtape_url: initialData.streamtape_url || "",
+    uqload_url: initialData.uqload_url || "",
     language: initialData.language || "",
     homepage_categories: Array.isArray(initialData.homepage_categories)
       ? initialData.homepage_categories
@@ -88,58 +90,74 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
 
+  // NEW: Flag pour bloquer le reset auto après import TMDB
+  const [hasImportedTMDB, setHasImportedTMDB] = useState(false);
+
   // --- ACTUALISATION DU FORMULAIRE ---
   useEffect(() => {
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
     setErrors({});
-    setForm((prev) => {
-      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
-      return {
-        ...prev,
-        title: initialData.title || "",
-        original_title: initialData.original_title || "",
-        director: initialData.director || "",
-        year: initialData.year || "",
-        duration: initialData.duration || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g: string) => g.trim())
-            : []),
-        genresInput: "",
-        vote_average: initialData.vote_average || "",
-        vote_count: initialData.vote_count || "",
-        published: !!initialData.published,
-        isvip: !!initialData.isvip,
-        featured: !!initialData.featured, // NOUVEAU CHAMP
-        poster: initialData.poster || "",
-        backdrop: initialData.backdrop || "",
-        tmdb_id,
-        imdb_id: initialData.imdb_id || "",
-        description: initialData.description || "",
-        trailer_url: initialData.trailer_url || "",
-        video_url: initialData.video_url || "",
-        language: initialData.language || "",
-        homepage_categories: Array.isArray(initialData.homepage_categories)
-          ? initialData.homepage_categories
-          : [],
-        popularity: initialData.popularity || "",
-        cast: Array.isArray(initialData.cast)
-          ? initialData.cast
-          : (typeof initialData.cast === "string"
-            ? JSON.parse(initialData.cast)
-            : []),
-        no_video: !!initialData.no_video,
-      };
-    });
-    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
-    setTmdbSearch(initialData.title || "");
-    setLocalVideo(null);
-    setLocalVideoUrl("");
+    // <-- Correction : reset seulement si pas d'import TMDB récent
+    if (!hasImportedTMDB) {
+      setForm((prev) => {
+        let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+        return {
+          ...prev,
+          title: initialData.title || "",
+          original_title: initialData.original_title || "",
+          director: initialData.director || "",
+          year: initialData.year || "",
+          duration: initialData.duration || "",
+          genres: Array.isArray(initialData.genres)
+            ? initialData.genres
+            : (typeof initialData.genre === "string"
+              ? initialData.genre.split(",").map((g: string) => g.trim())
+              : []),
+          genresInput: "",
+          vote_average: initialData.vote_average || "",
+          vote_count: initialData.vote_count || "",
+          published: !!initialData.published,
+          isvip: !!initialData.isvip,
+          featured: !!initialData.featured, // NOUVEAU CHAMP
+          poster: initialData.poster || "",
+          backdrop: initialData.backdrop || "",
+          tmdb_id,
+          imdb_id: initialData.imdb_id || "",
+          description: initialData.description || "",
+          trailer_url: initialData.trailer_url || "",
+          video_url: initialData.video_url || "",
+          streamtape_url: initialData.streamtape_url || "",
+          uqload_url: initialData.uqload_url || "",
+          language: initialData.language || "",
+          homepage_categories: Array.isArray(initialData.homepage_categories)
+            ? initialData.homepage_categories
+            : [],
+          popularity: initialData.popularity || "",
+          cast: Array.isArray(initialData.cast)
+            ? initialData.cast
+            : (typeof initialData.cast === "string"
+              ? JSON.parse(initialData.cast)
+              : []),
+          no_video: !!initialData.no_video,
+        };
+      });
+      setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+      setTmdbSearch(initialData.title || "");
+      setLocalVideo(null);
+      setLocalVideoUrl("");
+    }
+    // <-- /
     // eslint-disable-next-line
   }, [open, initialData && initialData.id]);
+
+  // Reset le flag après fermeture de la modale
+  useEffect(() => {
+    if (!open && hasImportedTMDB) {
+      setHasImportedTMDB(false);
+    }
+  }, [open, hasImportedTMDB]);
 
   // --- HANDLERS ---
   // Gestion spéciale pour la case "featured" liée à homepage_categories
@@ -288,7 +306,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     if (!movie || !movie.id) return;
     setLoading(true);
     try {
-      // Appel enrichi
       const detailRes = await fetch(`/api/tmdb/movie/${movie.id}?append_to_response=credits,videos,images`);
       let detail = null;
       if (detailRes.ok) {
@@ -302,23 +319,18 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         setLoading(false);
         return;
       }
-      // Director
       let director = "";
       if (detail.credits && Array.isArray(detail.credits.crew)) {
         const dir = detail.credits.crew.find((c: { job: string }) => c.job === "Director");
         if (dir) director = dir.name;
       }
-      // Genres
       let genres = [];
       if (Array.isArray(detail.genres) && detail.genres.length > 0) {
         genres = detail.genres.map((g: any) => typeof g === "string" ? g : g.name).filter(Boolean);
       }
-      // Trailer (YouTube)
       let trailer_url = getYoutubeTrailer(detail.videos?.results || []);
-      // Images
       let poster = detail.poster_path ? `https://image.tmdb.org/t/p/w500${detail.poster_path}` : "";
       let backdrop = detail.backdrop_path ? `https://image.tmdb.org/t/p/w780${detail.backdrop_path}` : "";
-      // Cast (limité aux principaux, mapping nom/role/photo)
       let castArr = [];
       if (Array.isArray(detail.credits?.cast)) {
         castArr = detail.credits.cast.slice(0, 10).map((actor: any) => ({
@@ -327,7 +339,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "",
         }));
       }
-      // Vidéo principale (champ video_url) : TMDB ne fournit pas de vidéo directe, on laisse vide.
       setForm((f) => ({
         ...f,
         title: detail.title || movie.title || f.title,
@@ -352,6 +363,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         // video_url: "", // volontairement laissé vide : l'admin peut uploader ou cocher "pas de vidéo"
       }));
       setCastList(castArr.length > 0 ? castArr : []);
+      setHasImportedTMDB(true); // <- Pour empêcher le reset automatique après import
       toast({
         title: "Import TMDB réussi",
         description: "Champs pré-remplis depuis TMDB !",
