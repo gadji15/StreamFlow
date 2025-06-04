@@ -112,7 +112,7 @@ export default function WatchEpisodePage() {
         if (genre) {
           const similarRes = await supabase
             .from("series")
-            .select("id, title, genre, poster, startYear, endYear")
+            .select("id, title, genre, poster, start_year, end_year")
             .neq("id", seriesId)
             .eq("genre", genre)
             .order("popularity", { ascending: false })
@@ -123,7 +123,7 @@ export default function WatchEpisodePage() {
           if (similar.length < maxSuggestions) {
             const fallbackRes = await supabase
               .from("series")
-              .select("id, title, genre, poster, startYear, endYear")
+              .select("id, title, genre, poster, start_year, end_year")
               .neq("id", seriesId)
               .order("popularity", { ascending: false })
               .limit(maxSuggestions - similar.length);
@@ -137,7 +137,7 @@ export default function WatchEpisodePage() {
           // Fallback populaire
           const similarRes = await supabase
             .from("series")
-            .select("id, title, genre, poster, startYear, endYear")
+            .select("id, title, genre, poster, start_year, end_year")
             .neq("id", seriesId)
             .order("popularity", { ascending: false })
             .limit(maxSuggestions);
