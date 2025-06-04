@@ -159,59 +159,66 @@ export default function WatchLayout({
 
         {/* Suggestions similaires */}
         {suggestions && suggestions.length > 0 && (
-          <section className="w-full max-w-6xl mx-auto animate-fadeInUp mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-bold">{suggestionsTitle}</h2>
-                {suggestionsSubtitle && (
-                  <p className="text-gray-400 text-sm mt-1">{suggestionsSubtitle}</p>
-                )}
-              </div>
-              {suggestionsLink && (
-                <a
-                  href={suggestionsLink}
-                  className="text-sm flex items-center font-medium bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500 bg-clip-text text-transparent underline underline-offset-4 hover:text-violet-400 hover:scale-105 transition-all"
-                  style={{
-                    WebkitTextFillColor: 'transparent',
-                    background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
-                    WebkitBackgroundClip: 'text',
-                    padding: 0,
-                    border: "none"
-                  }}
-                >
-                  <span className="underline underline-offset-4">{suggestionsLinkLabel}</span>
-                </a>
-              )}
-            </div>
-            <div className="w-full grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {suggestions.map((item, idx) => (
+          <div className="w-full max-w-6xl mx-auto mb-8">
+            <ContentSection
+              title={suggestionsTitle}
+              subtitle={suggestionsSubtitle}
+              viewAllLink={suggestionsLink}
+              type="custom"
+              hideViewAllButton={!suggestionsLink}
+            >
+              {suggestions.map((item) => (
                 <a
                   key={item.id}
                   href={item.link}
-                  className="bg-gray-800/90 border border-gray-700 rounded-xl overflow-hidden shadow hover:scale-105 group flex flex-col items-center transition-transform duration-200"
-                  style={{
-                    opacity: 0,
-                    animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
-                    animationDelay: `${idx * 0.06}s`,
-                  }}
+                  className={`
+                    bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
+                    flex flex-col items-center
+                    rounded-md
+                    sm:rounded-lg md:rounded-xl
+                    h-full
+                  `}
                   aria-label={item.title}
                 >
-                  <div className="relative aspect-[2/3] w-full flex flex-col items-center">
+                  <div
+                    className={`
+                      relative aspect-[2/3]
+                      w-full
+                      h-full
+                      flex flex-col items-center
+                    `}
+                  >
                     <img
                       src={item.poster || "/placeholder-poster.png"}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-all duration-300 rounded-xl"
+                      className={`
+                        w-full h-full object-cover transition-all duration-300
+                        rounded-md
+                        sm:rounded-lg
+                        md:rounded-xl
+                      `}
                       loading="lazy"
                     />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      {/* Icône contextuelle : Film ou Série */}
+                      {/* On peut ajouter une prop pour différencier si besoin */}
+                    </div>
                   </div>
                   <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-                    <h3 className="truncate font-semibold w-full text-center text-xs sm:text-sm md:text-base">{item.title}</h3>
-                    <p className="text-[11px] text-gray-400 w-full text-center">{item.genre || ""}</p>
+                    <h3 className={`
+                      truncate font-medium w-full text-center
+                      text-xs
+                      sm:text-sm
+                      md:text-base
+                    `}>{item.title}</h3>
+                    <p className="text-[11px] text-gray-400 w-full text-center">
+                      {item.genre || ""}
+                    </p>
                   </div>
                 </a>
               ))}
-            </div>
-          </section>
+            </ContentSection>
+          </div>
         )}
       </main>
       {/* Animation keyframes */}
