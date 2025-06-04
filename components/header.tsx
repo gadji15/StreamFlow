@@ -322,7 +322,7 @@ export default function Header() {
                   Accédez rapidement aux différentes rubriques du site.
                 </p>
               </div>
-              <nav className="space-y-4">
+              <nav className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
                 <Link
                   href="/films"
                   className="block py-2 hover:text-white"
