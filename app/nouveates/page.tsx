@@ -26,6 +26,32 @@ export default function NouveautePage() {
   const { isVIP } = useSupabaseAuth();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Genres pour chaque catégorie
+  const GENRES_FILMS = [
+    { value: '', label: 'Tous les genres' },
+    { value: 'action', label: 'Action' },
+    { value: 'comedy', label: 'Comédie' },
+    { value: 'drama', label: 'Drame' },
+    { value: 'animation', label: 'Animation' },
+    { value: 'family', label: 'Famille' },
+    { value: 'sci-fi', label: 'Science-Fiction' },
+    { value: 'adventure', label: 'Aventure' },
+    { value: 'documentary', label: 'Documentaire' }
+  ];
+  const GENRES_SERIES = [
+    { value: '', label: 'Tous les genres' },
+    { value: 'action', label: 'Action' },
+    { value: 'comedy', label: 'Comédie' },
+    { value: 'drama', label: 'Drame' },
+    { value: 'animation', label: 'Animation' },
+    { value: 'family', label: 'Famille' },
+    { value: 'sci-fi', label: 'Science-Fiction' },
+    { value: 'adventure', label: 'Aventure' },
+    { value: 'documentary', label: 'Documentaire' }
+  ];
+  const [selectedGenre, setSelectedGenre] = useState<string>('');
+  const [showVIP, setShowVIP] = useState<string>(''); // '', 'true', 'false'
+
   // Initial load
   useEffect(() => {
     const fetchData = async () => {
@@ -82,12 +108,46 @@ export default function NouveautePage() {
     fetchData();
   }, []);
 
-  // Debounced search effect adapté à l'onglet actif
+  // Debounced search effect adapté à l'onglet actif et aux filtres
   useEffect(() => {
     if (loading) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (searchTerm.trim() === '') {
+    const filterItems = () => {
+      const term = searchTerm.trim().toLowerCase();
+
+      if (activeTab === 'films') {
+        let filtered = [...movies];
+        if (selectedGenre) {
+          filtered = filtered.filter(m => (m.genre || '').toLowerCase().includes(selectedGenre.toLowerCase()));
+        }
+        if (showVIP === 'true') {
+          filtered = filtered.filter(m => !!m.isVIP);
+        } else if (showVIP === 'false') {
+          filtered = filtered.filter(m => !m.isVIP);
+        }
+        if (term) {
+          filtered = filtered.filter(m => m.title.toLowerCase().includes(term));
+        }
+        setFilteredMovies(filtered);
+      } else {
+        let filtered = [...series];
+        if (selectedGenre) {
+          filtered = filtered.filter(s => (s.genre || '').toLowerCase().includes(selectedGenre.toLowerCase()));
+        }
+        if (showVIP === 'true') {
+          filtered = filtered.filter(s => !!s.isVIP);
+        } else if (showVIP === 'false') {
+          filtered = filtered.filter(s => !s.isVIP);
+        }
+        if (term) {
+          filtered = filtered.filter(s => s.title.toLowerCase().includes(term));
+        }
+        setFilteredSeries(filtered);
+      }
+    };
+
+    if (searchTerm.trim() === '' && !selectedGenre && !showVIP) {
       if (activeTab === 'films') {
         setFilteredMovies(movies);
       } else {
@@ -100,20 +160,7 @@ export default function NouveautePage() {
     setSearching(true);
 
     debounceRef.current = setTimeout(() => {
-      const term = searchTerm.trim().toLowerCase();
-      if (activeTab === 'films') {
-        setFilteredMovies(
-          movies.filter((m) =>
-            m.title.toLowerCase().includes(term)
-          )
-        );
-      } else {
-        setFilteredSeries(
-          series.filter((s) =>
-            s.title.toLowerCase().includes(term)
-          )
-        );
-      }
+      filterItems();
       setSearching(false);
     }, 400);
 
@@ -121,7 +168,7 @@ export default function NouveautePage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line
-  }, [searchTerm, movies, series, loading, activeTab]);
+  }, [searchTerm, movies, series, loading, activeTab, selectedGenre, showVIP]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -165,7 +212,7 @@ export default function NouveautePage() {
       <div className="bg-gray-800 rounded-lg p-4 mb-6 shadow max-w-2xl mx-auto">
         <form
           onSubmit={e => e.preventDefault()}
-          className="flex"
+          className="flex flex-col md:flex-row gap-4"
         >
           <div className="relative flex-1">
             <Input
@@ -199,6 +246,49 @@ export default function NouveautePage() {
               >
                 &#10006;
               </button>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label htmlFor="genre-select" className="sr-only">
+              Genre
+            </label>
+            <select
+              id="genre-select"
+              aria-label="Genre"
+              value={selectedGenre}
+              onChange={e => setSelectedGenre(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              {(activeTab === 'films' ? GENRES_FILMS : GENRES_SERIES).map(g => (
+                <option key={g.value} value={g.value}>{g.label}</option>
+              ))}
+            </select>
+            <label htmlFor="vip-select" className="sr-only">
+              Filtrer par VIP
+            </label>
+            <select
+              id="vip-select"
+              aria-label="Filtrer par VIP"
+              value={showVIP}
+              onChange={e => setShowVIP(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">Tous les contenus</option>
+              <option value="false">Contenus gratuits</option>
+              <option value="true">Contenus VIP</option>
+            </select>
+            {(selectedGenre || searchTerm || showVIP) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSelectedGenre('');
+                  setSearchTerm('');
+                  setShowVIP('');
+                }}
+                className="text-sm"
+              >
+                Réinitialiser
+              </Button>
             )}
           </div>
         </form>
