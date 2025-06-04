@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Film, Tv } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import PosterGridItem from './PosterGridItem';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
 import { getPopularSeries, getSeriesByGenre, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -156,72 +157,25 @@ export function ContentSection({
         `}
       >
         {items.slice(0, count).map((item, idx) => (
-          <Link
+          <PosterGridItem
             key={item.id}
-            href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className={`
-              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-              flex flex-col items-center
-              rounded-md
-              sm:rounded-lg md:rounded-xl
-              h-full
-            `}
-          >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-              `}
-            >
-              <img
-                src={
-                  (item as Movie | Series).poster ||
-                  (item as any).posterUrl ||
-                  '/placeholder-poster.png'
-                }
-                alt={item.title}
-                className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
-                `}
-                onError={e => {
-                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                }}
-                loading="lazy"
-              />
-              {'isVIP' in item && item.isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                {isMovie ? (
-                  <Film className="w-7 h-7 text-white" />
-                ) : (
-                  <Tv className="w-7 h-7 text-white" />
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-              <h3 className={`
-                truncate font-medium w-full text-center
-                text-xs
-                sm:text-sm
-                md:text-base
-              `}>{item.title}</h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">
-                {isMovie
-                  ? (item as Movie).year
-                  : `${(item as Series).startYear ?? ''}${
-                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                    }`}
-              </p>
-            </div>
-          </Link>
+            id={item.id}
+            title={item.title}
+            poster={(item as Movie | Series).poster || (item as any).posterUrl || '/placeholder-poster.png'}
+            link={`/${isMovie ? 'films' : 'series'}/${item.id}`}
+            genre={isMovie ? (item as Movie).genre : (item as Series).genre}
+            yearOrPeriod={
+              isMovie
+                ? (item as Movie).year
+                  ? String((item as Movie).year)
+                  : undefined
+                : ((item as Series).startYear
+                    ? `${(item as Series).startYear}${(item as Series).endYear ? ` - ${(item as Series).endYear}` : ''}`
+                    : undefined)
+            }
+            isVIP={"isVIP" in item ? (item as any).isVIP : undefined}
+            type={isMovie ? "movie" : "series"}
+          />
         ))}
       </div>
     );

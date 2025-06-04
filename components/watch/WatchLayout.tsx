@@ -166,54 +166,16 @@ export default function WatchLayout({
               hideViewAllButton={!suggestionsLink}
             >
               {suggestions.map((item) => (
-                <a
+                <PosterGridItem
                   key={item.id}
-                  href={item.link}
-                  className={`
-                    bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-                    flex flex-col items-center
-                    rounded-md
-                    sm:rounded-lg md:rounded-xl
-                    h-full
-                  `}
-                  aria-label={item.title}
-                >
-                  <div
-                    className={`
-                      relative aspect-[2/3]
-                      w-full
-                      h-full
-                      flex flex-col items-center
-                    `}
-                  >
-                    <img
-                      src={item.poster || "/placeholder-poster.png"}
-                      alt={item.title}
-                      className={`
-                        w-full h-full object-cover transition-all duration-300
-                        rounded-md
-                        sm:rounded-lg
-                        md:rounded-xl
-                      `}
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {/* Icône contextuelle : Film ou Série */}
-                      {/* On peut ajouter une prop pour différencier si besoin */}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-                    <h3 className={`
-                      truncate font-medium w-full text-center
-                      text-xs
-                      sm:text-sm
-                      md:text-base
-                    `}>{item.title}</h3>
-                    <p className="text-[11px] text-gray-400 w-full text-center">
-                      {item.genre || ""}
-                    </p>
-                  </div>
-                </a>
+                  id={item.id}
+                  title={item.title}
+                  poster={item.poster || "/placeholder-poster.png"}
+                  link={item.link}
+                  genre={item.genre}
+                  // Les pages films/series peuvent fournir le type via une prop ou via le parent :
+                  type={item.link.includes('/films/') ? "movie" : "series"}
+                />
               ))}
             </ContentSection>
           </div>
