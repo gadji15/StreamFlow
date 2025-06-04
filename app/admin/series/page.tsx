@@ -224,134 +224,27 @@ export default function AdminSeriesPage() {
     <div className="space-y-6">
       {/* Header + Boutons globaux */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary drop-shadow-sm flex items-center gap-3">
-            <SeriesIcon className="h-8 w-8 text-indigo-400" />
-            Gestion des Séries
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Visualisez, recherchez, gérez et structurez toutes vos séries et saisons.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            aria-label="Rafraîchir"
-            title="Rafraîchir la liste"
-            onClick={handleRefresh}
-            className="hover:bg-indigo-50/10 border border-transparent hover:border-indigo-400 transition"
-          >
-            <RefreshCw className="h-5 w-5" />
-          </Button>
-          <Button
-            variant={showTree ? "outline" : "ghost"}
-            aria-label="Vue arborescente"
-            title={showTree ? "Vue tableau" : "Vue arborescente"}
-            onClick={() => setShowTree(v => !v)}
-            className={showTree
-              ? "border-indigo-400 bg-indigo-900/30 text-indigo-200"
-              : "hover:bg-indigo-50/10 border border-transparent hover:border-indigo-400 transition"
-            }
-          >
-            <ListTree className="h-5 w-5" />
-          </Button>
-          <Button
-            onClick={() => setSeriesModal({ open: true })}
-            aria-label="Ajouter une série"
-            title="Ajouter une nouvelle série"
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une série
-          </Button>
-        </div>
+        {/* Enlevé l'en-tête et le bouton d'ajout */}
       </div>
 
       {/* Filtres/recherche */}
-      <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+      <div className="bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-700">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-3">
+          <div className="relative flex-1 min-w-0">
             <Input
               type="search"
               placeholder="🔍 Recherche rapide (titre série)..."
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow text-base sm:text-sm"
               aria-label="Recherche de série"
             />
             <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="8" r="7" /><path d="m16 16-3.5-3.5" /></svg>
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="hidden sm:block border-indigo-400 text-indigo-300 hover:bg-indigo-900/20"
-            aria-label="Réinitialiser les filtres"
-            title="Réinitialiser les filtres"
-          >
-            Réinitialiser
-          </Button>
         </div>
-        <form className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}>
-          <Input
-            type="text"
-            placeholder="Titre…"
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Créateur…"
-            value={advancedSearch.creator}
-            onChange={e => setAdvancedSearch(a => ({ ...a, creator: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par créateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année début…"
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID…"
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <select
-            value={genreFilter}
-            onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
-            aria-label="Filtrer par genre"
-          >
-            <option value="all">Tous les genres</option>
-            {genres.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-          <select
-            value={statusFilter}
-            onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
-            aria-label="Filtrer par statut"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="published">Publiées</option>
-            <option value="draft">Brouillons</option>
-          </select>
-        </div>
+      </div>
 
         {/* Bulk actions */}
         {selectedIds.length > 0 && (
@@ -373,29 +266,20 @@ export default function AdminSeriesPage() {
 
         {/* Vue listing ou arborescence */}
         {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-400 border-t-transparent mb-6"></div>
+          <div className="py-16 flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-400 border-t-transparent mb-4"></div>
             <span className="text-indigo-300 font-medium">Chargement des séries…</span>
           </div>
         ) : series.length === 0 ? (
-          <div className="text-center py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl shadow-lg border-2 border-dashed border-indigo-400">
-            <SeriesIcon className="h-16 w-16 mx-auto mb-6 text-indigo-500/60 drop-shadow" />
-            <h2 className="text-2xl font-bold mb-2 text-indigo-200">Aucune série trouvée</h2>
-            <p className="text-gray-400 mb-8">
+          <div className="text-center py-10 sm:py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl shadow-lg border-2 border-dashed border-indigo-400">
+            <SeriesIcon className="h-12 w-12 mx-auto mb-4 text-indigo-500/60 drop-shadow" />
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-indigo-200">Aucune série trouvée</h2>
+            <p className="text-gray-400 mb-4">
               {searchTerm
                 ? `Aucune série ne correspond à votre recherche « ${searchTerm} »`
-                : statusFilter !== 'all'
-                  ? `Aucune série avec le statut « ${statusFilter === 'published' ? 'Publiée' : 'Brouillon'} »`
-                  : "Commencez par ajouter votre première série pour enrichir votre catalogue."
+                : "Aucune série n'est actuellement enregistrée dans le catalogue."
               }
             </p>
-            <Button 
-              onClick={() => setSeriesModal({ open: true })}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:scale-105 transition-transform"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter une série
-            </Button>
           </div>
         ) : showTree ? (
           <SeriesHierarchyTree
