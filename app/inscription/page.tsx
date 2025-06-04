@@ -152,10 +152,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
-      <div className="w-full max-w-3xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 max-h-[95vh] flex flex-col md:flex-row overflow-hidden">
+      <div className="w-full max-w-3xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden">
         {/* Section gauche : Formulaire */}
-        <div className="flex-1 p-6 md:p-10 overflow-y-auto">
-          <div className="mb-6 flex flex-col items-center">
+        <div className="flex-1 p-4 md:p-8 overflow-visible">
+          <div className="mb-4 flex flex-col items-center">
             <Link
               href="/"
               className="inline-flex items-center text-sm text-gray-400 hover:text-white mb-4"
@@ -183,180 +183,184 @@ export default function RegisterPage() {
             Continuer avec Google
           </Button>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Nom */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
-                Nom
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="pl-10"
-                  placeholder="Votre nom"
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="name"
-                  ref={nameInputRef}
-                  aria-invalid={!!errors.name}
-                />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Nom */}
+              <div className="flex-1">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                  Nom
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="pl-10"
+                    placeholder="Votre nom"
+                    required
+                    disabled={isSubmitting}
+                    autoComplete="name"
+                    ref={nameInputRef}
+                    aria-invalid={!!errors.name}
+                  />
+                </div>
+                {errors.name && (
+                  <div className="text-red-500 text-xs mt-1">{errors.name}</div>
+                )}
               </div>
-              {errors.name && (
-                <div className="text-red-500 text-xs mt-1">{errors.name}</div>
-              )}
+              {/* Email */}
+              <div className="flex-1">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="pl-10"
+                    placeholder="votre@email.com"
+                    required
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                    aria-invalid={!!errors.email}
+                  />
+                </div>
+                {errors.email && (
+                  <div className="text-red-500 text-xs mt-1">{errors.email}</div>
+                )}
+              </div>
             </div>
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="pl-10"
-                  placeholder="votre@email.com"
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                />
-              </div>
-              {errors.email && (
-                <div className="text-red-500 text-xs mt-1">{errors.email}</div>
-              )}
-            </div>
-            {/* Mot de passe */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                  disabled={isSubmitting}
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.password}
-                />
-                <button
-                  type="button"
-                  onClick={toggleShowPassword}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
-                  tabIndex={-1}
-                  disabled={isSubmitting}
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              {/* Barre de force du mot de passe */}
-              {password && (
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-full h-1 rounded bg-gray-700 overflow-hidden">
-                    <div
-                      className={
-                        "h-full transition-all duration-300 " +
-                        (passwordStrength === "faible"
-                          ? "bg-red-500 w-1/3"
-                          : passwordStrength === "moyen"
-                          ? "bg-yellow-400 w-2/3"
-                          : passwordStrength === "fort"
-                          ? "bg-green-500 w-full"
-                          : "")
-                      }
-                    ></div>
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Mot de passe */}
+              <div className="flex-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="pl-10 pr-10"
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    disabled={isSubmitting}
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.password}
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleShowPassword}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
+                    tabIndex={-1}
+                    disabled={isSubmitting}
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {/* Barre de force du mot de passe */}
+                {password && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-full h-1 rounded bg-gray-700 overflow-hidden">
+                      <div
+                        className={
+                          "h-full transition-all duration-300 " +
+                          (passwordStrength === "faible"
+                            ? "bg-red-500 w-1/3"
+                            : passwordStrength === "moyen"
+                            ? "bg-yellow-400 w-2/3"
+                            : passwordStrength === "fort"
+                            ? "bg-green-500 w-full"
+                            : "")
+                        }
+                      ></div>
+                    </div>
+                    <span className={
+                      "text-xs ml-2 " +
+                      (passwordStrength === "faible"
+                        ? "text-red-500"
+                        : passwordStrength === "moyen"
+                        ? "text-yellow-400"
+                        : passwordStrength === "fort"
+                        ? "text-green-500"
+                        : "")
+                    }>
+                      {passwordStrength && ("Mot de passe " + passwordStrength)}
+                    </span>
                   </div>
-                  <span className={
-                    "text-xs ml-2 " +
-                    (passwordStrength === "faible"
-                      ? "text-red-500"
-                      : passwordStrength === "moyen"
-                      ? "text-yellow-400"
-                      : passwordStrength === "fort"
-                      ? "text-green-500"
-                      : "")
-                  }>
-                    {passwordStrength && ("Mot de passe " + passwordStrength)}
-                  </span>
-                </div>
-              )}
-              {errors.password && (
-                <div className="text-red-500 text-xs mt-1">{errors.password}</div>
-              )}
-            </div>
-            {/* Confirmer mot de passe */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
-                Confirmer le mot de passe
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  placeholder="••••••••"
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.confirmPassword}
-                />
-                {/* Bouton show/hide identique au champ principal */}
-                <button
-                  type="button"
-                  onClick={toggleShowPassword}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
-                  tabIndex={-1}
-                  disabled={isSubmitting}
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
+                )}
+                {errors.password && (
+                  <div className="text-red-500 text-xs mt-1">{errors.password}</div>
+                )}
               </div>
-              {/* Correspondance des mots de passe */}
-              {confirmPassword && (
-                <div className="flex items-center gap-2 mt-1">
-                  {password === confirmPassword ? (
-                    <span className="text-green-500 text-xs flex items-center gap-1">
-                      <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                      Les mots de passe correspondent
-                    </span>
-                  ) : (
-                    <span className="text-red-500 text-xs flex items-center gap-1">
-                      <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                      Les mots de passe ne correspondent pas
-                    </span>
-                  )}
+              {/* Confirmer mot de passe */}
+              <div className="flex-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+                  Confirmer le mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10"
+                    placeholder="••••••••"
+                    required
+                    disabled={isSubmitting}
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.confirmPassword}
+                  />
+                  {/* Bouton show/hide identique au champ principal */}
+                  <button
+                    type="button"
+                    onClick={toggleShowPassword}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-300 focus:outline-none"
+                    tabIndex={-1}
+                    disabled={isSubmitting}
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
-              )}
-              {errors.confirmPassword && (
-                <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
-              )}
+                {/* Correspondance des mots de passe */}
+                {confirmPassword && (
+                  <div className="flex items-center gap-2 mt-1">
+                    {password === confirmPassword ? (
+                      <span className="text-green-500 text-xs flex items-center gap-1">
+                        <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Les mots de passe correspondent
+                      </span>
+                    ) : (
+                      <span className="text-red-500 text-xs flex items-center gap-1">
+                        <svg className="inline h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Les mots de passe ne correspondent pas
+                      </span>
+                    )}
+                  </div>
+                )}
+                {errors.confirmPassword && (
+                  <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
+                )}
+              </div>
             </div>
             {/* Conditions */}
             <div className="flex items-center space-x-2 mt-1 mb-1">
