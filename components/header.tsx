@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, User, Film, Tv, Search, Bell, Sparkles, Home } from 'lucide-react';
@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Header() {
   const [navOpen, setNavOpen] = useState(false);
@@ -280,146 +281,180 @@ export default function Header() {
       </div>
 
       {/* Menu mobile - contenu */}
-      {navOpen && (
-        <div
-          className="md:hidden bg-background border-t border-gray-800 fixed inset-0 z-50 overflow-auto animate-fade-in"
-          ref={mobileMenuRef}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="container mx-auto px-4 py-4">
-            <nav className="space-y-4">
-              <Link
-                href="/films"
-                className="block py-2 hover:text-white"
-                onClick={() => setNavOpen(false)}
-                ref={firstMenuLinkRef}
-              >
-                <div className="flex items-center">
-                  <Film className="mr-2 h-5 w-5" />
-                  Films
-                </div>
-              </Link>
-              <Link
-                href="/series"
-                className="block py-2 hover:text-white"
-                onClick={() => setNavOpen(false)}
-              >
-                <div className="flex items-center">
-                  <Tv className="mr-2 h-5 w-5" />
-                  Séries
-                </div>
-              </Link>
-              <Link
-                href="/suggestions"
-                className="block py-2 hover:text-white"
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            ref={mobileMenuRef}
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            role="dialog"
+            aria-modal="true"
+            onClick={e => {
+              // Ferme si on clique sur l'overlay (pas sur la carte)
+              if (e.target === mobileMenuRef.current) setNavOpen(false);
+            }}
+          >
+            <motion.div
+              className="w-full max-w-md mx-auto mt-20 rounded-2xl bg-gray-900/90 shadow-xl border border-gray-700 relative px-6 py-8"
+              initial={{ scale: 0.96, y: 40, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 340, damping: 26, duration: 0.25 }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Bouton fermer */}
+              <button
+                type="button"
+                aria-label="Fermer le menu"
+                className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-700 transition"
                 onClick={() => setNavOpen(false)}
               >
-                <div className="flex items-center">
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Suggestions
-                </div>
-              </Link>
-              <Link
-                href="/nouveates"
-                className="block py-2 hover:text-white"
-                onClick={() => setNavOpen(false)}
-              >
-                Nouveautés
-              </Link>
-              {isVIP && (
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-center text-white mb-2 flex items-center gap-2 justify-center">
+                  <Menu className="w-6 h-6 text-primary" /> Menu
+                </h2>
+                <p className="text-center text-gray-400">
+                  Accédez rapidement aux différentes rubriques du site.
+                </p>
+              </div>
+              <nav className="space-y-4">
                 <Link
-                  href="/exclusif"
-                  className="block py-2 text-amber-400 hover:text-amber-300"
+                  href="/films"
+                  className="block py-2 hover:text-white"
+                  onClick={() => setNavOpen(false)}
+                  ref={firstMenuLinkRef}
+                >
+                  <div className="flex items-center">
+                    <Film className="mr-2 h-5 w-5" />
+                    Films
+                  </div>
+                </Link>
+                <Link
+                  href="/series"
+                  className="block py-2 hover:text-white"
+                  onClick={() => setNavOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <Tv className="mr-2 h-5 w-5" />
+                    Séries
+                  </div>
+                </Link>
+                <Link
+                  href="/suggestions"
+                  className="block py-2 hover:text-white"
                   onClick={() => setNavOpen(false)}
                 >
                   <div className="flex items-center">
                     <Sparkles className="mr-2 h-5 w-5" />
-                    Contenu exclusif
+                    Suggestions
                   </div>
                 </Link>
-              )}
-              
-              <div className="border-t border-gray-800 pt-4 mt-4">
-                {isLoggedIn ? (
-                  <>
-                    <Link
-                      href="/mon-compte"
-                      className="block py-2 hover:text-white"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      <div className="flex items-center">
-                        <User className="mr-2 h-5 w-5" />
-                        Mon compte {isVIP && <span className="ml-1 text-amber-400">(VIP)</span>}
-                      </div>
-                    </Link>
-                    <Link
-                      href="/mon-compte/historique"
-                      className="block py-2 hover:text-white"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      Historique
-                    </Link>
-                    <Link
-                      href="/favoris"
-                      className="block py-2 hover:text-white"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      Favoris
-                    </Link>
-                    {!isVIP && (
+                <Link
+                  href="/nouveates"
+                  className="block py-2 hover:text-white"
+                  onClick={() => setNavOpen(false)}
+                >
+                  Nouveautés
+                </Link>
+                {isVIP && (
+                  <Link
+                    href="/exclusif"
+                    className="block py-2 text-amber-400 hover:text-amber-300"
+                    onClick={() => setNavOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Contenu exclusif
+                    </div>
+                  </Link>
+                )}
+                
+                <div className="border-t border-gray-800 pt-4 mt-4">
+                  {isLoggedIn ? (
+                    <>
                       <Link
-                        href="/vip"
-                        className="block py-2 text-amber-400 hover:text-amber-300"
-                        onClick={() => setNavOpen(false)}
-                      >
-                        Devenir VIP
-                      </Link>
-                    )}
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
+                        href="/mon-compte"
                         className="block py-2 hover:text-white"
                         onClick={() => setNavOpen(false)}
                       >
-                        Administration
+                        <div className="flex items-center">
+                          <User className="mr-2 h-5 w-5" />
+                          Mon compte {isVIP && <span className="ml-1 text-amber-400">(VIP)</span>}
+                        </div>
                       </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setNavOpen(false);
-                      }}
-                      className="block w-full text-left py-2 hover:text-white"
-                    >
-                      Se déconnecter
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/login"
-                      className="block py-2 hover:text-white"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      Connexion
-                    </Link>
-                    <Link
-                      href="/inscription"
-                      className="block py-2 hover:text-white"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      S'inscrire
-                    </Link>
-                  </>
-                )}
-                
-                {/* ModeToggle supprimé */}
-              </div>
-            </nav>
-          </div>
-        </div>
-      )}
+                      <Link
+                        href="/mon-compte/historique"
+                        className="block py-2 hover:text-white"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        Historique
+                      </Link>
+                      <Link
+                        href="/favoris"
+                        className="block py-2 hover:text-white"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        Favoris
+                      </Link>
+                      {!isVIP && (
+                        <Link
+                          href="/vip"
+                          className="block py-2 text-amber-400 hover:text-amber-300"
+                          onClick={() => setNavOpen(false)}
+                        >
+                          Devenir VIP
+                        </Link>
+                      )}
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          className="block py-2 hover:text-white"
+                          onClick={() => setNavOpen(false)}
+                        >
+                          Administration
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setNavOpen(false);
+                        }}
+                        className="block w-full text-left py-2 hover:text-white"
+                      >
+                        Se déconnecter
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className="block py-2 hover:text-white"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        Connexion
+                      </Link>
+                      <Link
+                        href="/inscription"
+                        className="block py-2 hover:text-white"
+                        onClick={() => setNavOpen(false)}
+                      >
+                        S'inscrire
+                      </Link>
+                    </>
+                  )}
+                  
+                  {/* ModeToggle supprimé */}
+                </div>
+              </nav>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
