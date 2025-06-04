@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ContentSection from "@/components/content-section";
-import SuggestionGrid, { SuggestionItem } from "@/components/SuggestionGrid";
+import MinimalPosterGrid, { MinimalPosterItem } from "@/components/MinimalPosterGrid";
 
 type SuggestionItem = {
   id: string;
@@ -166,13 +166,15 @@ export default function WatchLayout({
               type="custom"
               hideViewAllButton={!suggestionsLink}
             >
-              <SuggestionGrid
+              <MinimalPosterGrid
                 items={suggestions.map((item) => ({
-                  ...item,
-                  // Optionally, you can add more logic to detect type or year
-                  type: item.link.includes("/films/") ? "movie" : item.link.includes("/series/") ? "series" : undefined,
+                  id: item.id,
+                  title: item.title,
+                  poster: item.poster,
+                  link: item.link,
+                  // Pour la cohérence, on affiche l'année si elle existe (côté films/séries)
+                  year: (item as any).year ?? "",
                 }))}
-                isMovie={suggestions.length > 0 ? suggestions[0].link.includes("/films/") : undefined}
               />
             </ContentSection>
           </div>
