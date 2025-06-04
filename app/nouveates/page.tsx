@@ -17,6 +17,8 @@ export default function NouveautePage() {
   const [error, setError] = useState<string | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [series, setSeries] = useState<Series[]>([]);
+  const [moviesError, setMoviesError] = useState<string | null>(null);
+  const [seriesError, setSeriesError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
@@ -28,23 +30,48 @@ export default function NouveautePage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setMoviesError(null);
+      setSeriesError(null);
       try {
-        // Prend les 30 dernières nouveautés
-        const moviesData = await getFilms();
-        const seriesData = await getSeries();
+        // Parallélisation des fetchs
+        const [moviesDataResult, seriesDataResult] = await Promise.allSettled([
+          getFilms(),
+          getSeries(),
+        ]);
 
-        const moviesSorted = moviesData
-          .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
-          .slice(0, 30);
+        let moviesSorted: Movie[] = [];
+        let seriesSorted: Series[] = [];
 
-        const seriesSorted = seriesData
-          .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
-          .slice(0, 30);
+        if (moviesDataResult.status === "fulfilled") {
+          moviesSorted = moviesDataResult.value
+            .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
+            .slice(0, 30);
+          setMovies(moviesSorted);
+          setFilteredMovies(moviesSorted);
+        } else {
+          setMovies([]);
+          setFilteredMovies([]);
+          setMoviesError("Impossible de charger les films.");
+        }
 
-        setMovies(moviesSorted);
-        setSeries(seriesSorted);
-        setFilteredMovies(moviesSorted);
-        setFilteredSeries(seriesSorted);
+        if (seriesDataResult.status === "fulfilled") {
+          seriesSorted = seriesDataResult.value
+            .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
+            .slice(0, 30);
+          setSeries(seriesSorted);
+          setFilteredSeries(seriesSorted);
+        } else {
+          setSeries([]);
+          setFilteredSeries([]);
+          setSeriesError("Impossible de charger les séries.");
+        }
+
+        if (
+          moviesDataResult.status === "rejected" &&
+          seriesDataResult.status === "rejected"
+        ) {
+          setError("Impossible de charger les nouveautés. Veuillez réessayer.");
+        }
       } catch (e) {
         setError("Impossible de charger les nouveautés. Veuillez réessayer.");
       } finally {
@@ -57,8 +84,9 @@ export default function NouveautePage() {
   // Debounced search effect
   useEffect(() => {
     if (loading) return;
+    // Nettoyer le timeout au début de l'effet
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    
+
     if (searchTerm.trim() === '') {
       setFilteredMovies(movies);
       setFilteredSeries(series);
@@ -104,20 +132,46 @@ export default function NouveautePage() {
       <div className="flex justify-center mb-10">
         <form
           onSubmit={e => { e.preventDefault(); }}
-          className="w-full max-w-lg flex"
+          className="w-full max-w-lg flex relative"
         >
           <Input
             placeholder="Rechercher une nouveauté (film ou série)..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="flex-1 pl-10"
+            aria-label="Rechercher une nouveauté"
+            autoComplete="off"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              aria-label="Effacer la recherche"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 transition"
+            >
+              &#10006;
+            </button>
+          )}
         </form>
       </div>
       {error && (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6 text-center">
           {error}
         </div>
+      )}
+      {!error && (
+        <>
+          {moviesError && (
+            <div className="bg-red-900/30 border border-red-700 rounded-lg p-2 mb-4 text-center text-sm">
+              {moviesError}
+            </div>
+          )}
+          {seriesError && (
+            <div className="bg-red-900/30 border border-red-700 rounded-lg p-2 mb-4 text-center text-sm">
+              {seriesError}
+            </div>
+          )}
+        </>
       )}
 
       {(filteredMovies.length === 0 && filteredSeries.length === 0 && !searching) ? (
@@ -202,8 +256,9 @@ function NouveauteCard({
       <div className="relative aspect-[2/3]">
         <img
           src={poster}
-          alt={item.title}
+          alt={`Poster ${type === 'film' ? 'du film' : 'de la série'} "${item.title}"`}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
         {isVIP && (
           <div className="absolute top-2 right-2">
