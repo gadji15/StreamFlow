@@ -82,10 +82,11 @@ export default function MinimalPosterGrid({ items }: MinimalPosterGridProps) {
                 src={itemData.poster || "/placeholder-poster.png"}
                 alt={itemData.title}
                 className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
+                  w-full h-full object-cover
+                  rounded-md sm:rounded-lg md:rounded-xl
+                  transition-transform duration-300 ease-out
+                  group-hover:scale-105
+                  will-change-transform
                 `}
                 loading="lazy"
                 onError={e => {
