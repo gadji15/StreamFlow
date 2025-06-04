@@ -152,9 +152,9 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
-      <div className="w-full max-w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden">
+      <div className="w-[95vw] max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden mx-auto">
         {/* Section gauche : Formulaire */}
-        <div className="flex-1 p-3 sm:p-4 md:p-8 overflow-visible">
+        <div className="flex-1 p-3 md:p-8 overflow-visible">
           <div className="mb-4 flex flex-col items-center">
             <Link
               href="/"
