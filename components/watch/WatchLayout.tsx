@@ -130,12 +130,8 @@ export default function WatchLayout({
 
         {/* Player */}
         <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
-          {/* Lazy load du player vidéo */}
           {videoUrl ? (
-            <React.Suspense fallback={<div className="h-full flex items-center justify-center">Chargement du player…</div>}>
-              {/* @ts-expect-error - dynamic import (SSR-safe) */}
-              <VideoPlayerLazy src={videoUrl} poster={posterUrl} title={title} autoPlay />
-            </React.Suspense>
+            <VideoPlayer src={videoUrl} poster={posterUrl} title={title} autoPlay />
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">Aucune vidéo disponible.</div>
           )}
@@ -245,7 +241,4 @@ export default function WatchLayout({
   );
 }
 
-// Dynamic import du player vidéo pour lazy load (évite SSR et accélère le first paint)
-const VideoPlayerLazy = React.lazy(() =>
-  import("@/components/video-player").then(mod => ({ default: mod.VideoPlayer }))
-);
+import { VideoPlayer } from "@/components/video-player";
