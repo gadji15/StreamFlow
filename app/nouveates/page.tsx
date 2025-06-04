@@ -129,7 +129,13 @@ export default function NouveautePage() {
         if (term) {
           filtered = filtered.filter(m => m.title.toLowerCase().includes(term));
         }
-        setFilteredMovies(filtered);
+        setFilteredMovies(
+          filtered.sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          )
+        );
       } else {
         let filtered = [...series];
         if (selectedGenre) {
@@ -143,15 +149,33 @@ export default function NouveautePage() {
         if (term) {
           filtered = filtered.filter(s => s.title.toLowerCase().includes(term));
         }
-        setFilteredSeries(filtered);
+        setFilteredSeries(
+          filtered.sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          )
+        );
       }
     };
 
     if (searchTerm.trim() === '' && !selectedGenre && !showVIP) {
       if (activeTab === 'films') {
-        setFilteredMovies(movies);
+        setFilteredMovies(
+          [...movies].sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          )
+        );
       } else {
-        setFilteredSeries(series);
+        setFilteredSeries(
+          [...series].sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          )
+        );
       }
       setSearching(false);
       return;
