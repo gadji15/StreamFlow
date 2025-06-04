@@ -162,30 +162,66 @@ export default function NouveautePage() {
         </button>
       </div>
 
-      <div className="flex justify-center mb-10">
+      <div className="bg-gray-800 rounded-lg p-4 mb-6 shadow max-w-2xl mx-auto">
         <form
-          onSubmit={e => { e.preventDefault(); }}
-          className="w-full max-w-lg flex relative"
+          onSubmit={e => e.preventDefault()}
+          className="flex"
         >
-          <Input
-            placeholder={`Rechercher une nouveauté (${activeTab === 'films' ? 'film' : 'série'})...`}
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="flex-1 pl-10"
-            aria-label={`Rechercher une nouveauté (${activeTab === 'films' ? 'film' : 'série'})`}
-            autoComplete="off"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => setSearchTerm('')}
-              aria-label="Effacer la recherche"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 transition"
+          <div className="relative flex-1">
+            <Input
+              type="search"
+              placeholder={`Rechercher un ${activeTab === 'films' ? 'film' : 'série'}...`}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+              autoFocus
+              aria-label={`Rechercher un ${activeTab === 'films' ? 'film' : 'série'}`}
+              autoComplete="off"
+            />
+            <svg
+              viewBox="0 0 24 24"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              &#10006;
-            </button>
-          )}
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                aria-label="Effacer la recherche"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 transition"
+              >
+                &#10006;
+              </button>
+            )}
+          </div>
         </form>
+        {searching && (
+          <div className="flex items-center gap-2 mt-2 text-gray-400 text-sm">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"
+              ></path>
+            </svg>
+            Recherche...
+          </div>
+        )}
       </div>
       {error && (
         <div className="bg-red-900/50 border border-red-700 rounded-lg p-4 mb-6 text-center">
