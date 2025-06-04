@@ -57,6 +57,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     description: initialData.description || "",
     trailer_url: initialData.trailer_url || "",
     video_url: initialData.video_url || "",
+    streamtape_url: initialData.streamtape_url || "",
+    uqload_url: initialData.uqload_url || "",
     language: initialData.language || "",
     homepage_categories: Array.isArray(initialData.homepage_categories)
       ? initialData.homepage_categories
@@ -191,8 +193,21 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       err.duration = "Durée invalide";
     if (form.tmdb_id && isNaN(Number(form.tmdb_id)))
       err.tmdb_id = "ID TMDB invalide";
-    if (!form.no_video && !form.video_url && !localVideo)
-      err.video_url = "Veuillez fournir une vidéo ou cocher la case \"Pas de vidéo\"";
+    if (
+      !form.no_video &&
+      !form.video_url &&
+      !form.streamtape_url &&
+      !form.uqload_url &&
+      !localVideo
+    )
+      err.video_url = "Veuillez fournir au moins une source vidéo ou cocher 'Pas de vidéo'";
+
+    // Validation spécifique par plateforme
+    if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url))
+      err.streamtape_url = "Lien Streamtape invalide";
+    if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.io\//.test(form.uqload_url))
+      err.uqload_url = "Lien Uqload invalide";
+
     return err;
   };
 
@@ -532,7 +547,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       vote_count,
       published,
       isvip,
-      // featured: !!form.featured, // Optionnel, pour backward compat
       poster: form.poster || null,
       backdrop: form.backdrop || null,
       tmdb_id,
@@ -540,6 +554,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       description: form.description?.trim() || null,
       trailer_url: form.trailer_url || null,
       video_url: no_video ? null : (form.video_url || localVideoUrl || null),
+      streamtape_url: no_video ? null : (form.streamtape_url || null),
+      uqload_url: no_video ? null : (form.uqload_url || null),
       language: form.language || null,
       homepage_categories: homepage_categories_sync,
       popularity,
@@ -1109,8 +1125,89 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
             />
           </div>
           <div>
+            <label className="block text-[11px] font-bold text-white/90 mb-1">
+              Liens vidéo par plateforme
+            </label>
+            <div className="flex flex-col gap-1 mb-2">
+              <label htmlFor="streamtape_url" className="block text-[11px] font-medium text-white/80">
+                Streamtape (ex: https://streamtape.com/v/xxxxxx/)
+              </label>
+              <input
+                id="streamtape_url"
+                name="streamtape_url"
+                type="text"
+                value={form.streamtape_url}
+                onChange={e => setForm({ ...form, streamtape_url: e.target.value })}
+                placeholder="Lien Streamtape..."
+                className={`input input-bordered w-full ${errors.streamtape_url ? "border-red-500" : ""}`}
+              />
+              {form.streamtape_url && (
+                <div className="flex flex-col items-start mt-1">
+                  <iframe
+                    src={form.streamtape_url.replace("/v/", "/e/")}
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                    style={{ width: 220, height: 124, maxWidth: "100%" }}
+                    frameBorder={0}
+                    allow="autoplay; fullscreen"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    title="Aperçu Streamtape"
+                  />
+                  <button
+                    type="button"
+                    className="text-[10px] text-red-400 hover:underline mt-1"
+                    onClick={() => setForm({ ...form, streamtape_url: "" })}
+                    aria-label="Supprimer Streamtape"
+                  >
+                    Supprimer Streamtape
+                  </button>
+                </div>
+              )}
+              {errors.streamtape_url && (
+                <div className="text-xs text-red-400 mt-0.5">{errors.streamtape_url}</div>
+              )}
+            </div>
+            <div className="flex flex-col gap-1 mb-2">
+              <label htmlFor="uqload_url" className="block text-[11px] font-medium text-white/80">
+                Uqload (ex: https://uqload.io/xxxxxx.html)
+              </label>
+              <input
+                id="uqload_url"
+                name="uqload_url"
+                type="text"
+                value={form.uqload_url}
+                onChange={e => setForm({ ...form, uqload_url: e.target.value })}
+                placeholder="Lien Uqload..."
+                className={`input input-bordered w-full ${errors.uqload_url ? "border-red-500" : ""}`}
+              />
+              {form.uqload_url && (
+                <div className="flex flex-col items-start mt-1">
+                  <iframe
+                    src={form.uqload_url}
+                    allowFullScreen
+                    className="rounded border border-gray-700"
+                    style={{ width: 220, height: 124, maxWidth: "100%" }}
+                    frameBorder={0}
+                    allow="autoplay; fullscreen"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    title="Aperçu Uqload"
+                  />
+                  <button
+                    type="button"
+                    className="text-[10px] text-red-400 hover:underline mt-1"
+                    onClick={() => setForm({ ...form, uqload_url: "" })}
+                    aria-label="Supprimer Uqload"
+                  >
+                    Supprimer Uqload
+                  </button>
+                </div>
+              )}
+              {errors.uqload_url && (
+                <div className="text-xs text-red-400 mt-0.5">{errors.uqload_url}</div>
+              )}
+            </div>
             <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-              Lien vidéo
+              Lien vidéo générique (autre plateforme, mp4, etc.)
             </label>
             <input
               id="video_url"
@@ -1119,49 +1216,20 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
               value={form.video_url}
               onChange={e => setForm({ ...form, video_url: e.target.value })}
               placeholder="https://..."
-              className="input input-bordered w-full"
-              required
+              className={`input input-bordered w-full ${errors.video_url ? "border-red-500" : ""}`}
             />
-            {/* Aperçu pour les liens Uqload/Doodstream/etc. */}
             {form.video_url && (
               <div className="flex flex-col items-start mt-1">
-                {(form.video_url.startsWith("https://uqload.io/")
-                  || form.video_url.startsWith("https://dood")
-                  || form.video_url.startsWith("https://www.dood")
-                  || form.video_url.startsWith("https://streamtape.com")
-                  || form.video_url.startsWith("https://vidmoly.to")
-                  || form.video_url.startsWith("https://mycloud.to")
-                  || form.video_url.startsWith("https://upstream.to")
-                  || form.video_url.startsWith("https://voe.sx")
-                  || form.video_url.startsWith("https://filelions.to")
-                ) ? (
-                  <iframe
-                    src={form.video_url}
-                    allowFullScreen
-                    className="rounded border border-gray-700"
-                    style={{ width: 220, height: 124, maxWidth: "100%" }}
-                    frameBorder={0}
-                    allow="autoplay; fullscreen"
-                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                    title="Aperçu vidéo"
-                  />
-                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
-                  <video
-                    src={form.video_url}
-                    controls
-                    className="h-20 rounded border border-gray-700"
-                    style={{ maxWidth: "100%" }}
-                  />
-                ) : (
-                  <a
-                    href={form.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-indigo-400 underline"
-                  >
-                    Voir la vidéo
-                  </a>
-                )}
+                <iframe
+                  src={form.video_url}
+                  allowFullScreen
+                  className="rounded border border-gray-700"
+                  style={{ width: 220, height: 124, maxWidth: "100%" }}
+                  frameBorder={0}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title="Aperçu vidéo"
+                />
                 <button
                   type="button"
                   className="text-[10px] text-red-400 hover:underline mt-1"
@@ -1171,6 +1239,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
                   Supprimer la vidéo
                 </button>
               </div>
+            )}
+            {errors.video_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.video_url}</div>
             )}
           </div>
           <div className="flex flex-wrap gap-2 items-center">
