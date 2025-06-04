@@ -7,13 +7,15 @@ export function useAdminSessionMonitor() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+    const unsubscribe = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         setShowModal(true);
       }
     });
     return () => {
-      subscription?.unsubscribe();
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
     };
   }, []);
 
