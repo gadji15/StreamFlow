@@ -129,16 +129,19 @@ export default function WatchFilmPage() {
 
           suggestionsData = similarRes.data || [];
 
-          // Si pas assez de suggestions, compléter avec les plus populaires hors genre
+          // Si pas assez de suggestions, compléter AVEC une deuxième requête SANS le genre (popularité seulement)
           if (suggestionsData.length < maxSuggestions) {
             const fallbackRes = await supabase
               .from("films")
               .select("id, title, genre, poster, year")
               .neq("id", id)
-              .neq("genre", genre)
               .order("popularity", { ascending: false })
               .limit(maxSuggestions - suggestionsData.length);
-            suggestionsData = suggestionsData.concat(fallbackRes.data || []);
+            // Ajouter seulement les films qui n'ont pas déjà été proposés
+            const fallbackFiltered = (fallbackRes.data || []).filter(f => 
+              !suggestionsData.some(s => s.id === f.id)
+            );
+            suggestionsData = suggestionsData.concat(fallbackFiltered);
           }
         } else {
           // Fallback : suggestions les plus populaires hors film courant

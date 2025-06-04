@@ -119,16 +119,19 @@ export default function WatchEpisodePage() {
             .limit(maxSuggestions);
           similar = similarRes.data || [];
 
-          // Si pas assez de suggestions, compléter avec les plus populaires hors genre
+          // Si pas assez de suggestions, compléter AVEC une deuxième requête SANS le genre (popularité seulement)
           if (similar.length < maxSuggestions) {
             const fallbackRes = await supabase
               .from("series")
               .select("id, title, genre, poster, startYear, endYear")
               .neq("id", seriesId)
-              .neq("genre", genre)
               .order("popularity", { ascending: false })
               .limit(maxSuggestions - similar.length);
-            similar = similar.concat(fallbackRes.data || []);
+            // Ajouter seulement les séries non déjà proposées
+            const fallbackFiltered = (fallbackRes.data || []).filter(f => 
+              !similar.some(s => s.id === f.id)
+            );
+            similar = similar.concat(fallbackFiltered);
           }
         } else {
           // Fallback populaire
