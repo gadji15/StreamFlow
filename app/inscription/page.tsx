@@ -151,8 +151,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-4">
-      <div className="w-full max-w-md bg-gray-900/95 rounded-2xl shadow-2xl p-8 border border-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
+      <div className="w-full max-w-md bg-gray-900/95 rounded-2xl shadow-2xl p-6 border border-gray-800 max-h-[95vh] overflow-y-auto">
         <div className="mb-6 flex flex-col items-center">
           <Link
             href="/"
