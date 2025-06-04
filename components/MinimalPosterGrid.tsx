@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Film, Tv } from "lucide-react";
 
 export type MinimalPosterItem = {
   id: string;
@@ -26,6 +27,16 @@ export default function MinimalPosterGrid({ items }: MinimalPosterGridProps) {
   const item = {
     hidden: { opacity: 0, y: 16 },
     show: { opacity: 1, y: 0 }
+  };
+
+  // Détecte si c'est un film ou une série à partir du lien
+  const getTypeIcon = (link: string) => {
+    if (link.includes("/films/")) {
+      return <Film className="w-7 h-7 text-white" />;
+    } else if (link.includes("/series/")) {
+      return <Tv className="w-7 h-7 text-white" />;
+    }
+    return null;
   };
 
   return (
@@ -81,6 +92,10 @@ export default function MinimalPosterGrid({ items }: MinimalPosterGridProps) {
                   (e.target as HTMLImageElement).src = '/placeholder-poster.png';
                 }}
               />
+              {/* Effet hover overlay + icône comme sur la home */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {getTypeIcon(itemData.link)}
+              </div>
             </div>
             <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
               <h3 className={`
