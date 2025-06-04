@@ -42,6 +42,7 @@ export default function WatchLayout({
   backdropUrl,
   description,
   metadata,
+  afterPlayer,
   children,
   suggestions = [],
   suggestionsTitle = "Suggestions",
