@@ -22,6 +22,7 @@ export default function NouveautePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
+  const [activeTab, setActiveTab] = useState<'films' | 'series'>('films');
   const { isVIP } = useSupabaseAuth();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,15 +82,17 @@ export default function NouveautePage() {
     fetchData();
   }, []);
 
-  // Debounced search effect
+  // Debounced search effect adapté à l'onglet actif
   useEffect(() => {
     if (loading) return;
-    // Nettoyer le timeout au début de l'effet
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (searchTerm.trim() === '') {
-      setFilteredMovies(movies);
-      setFilteredSeries(series);
+      if (activeTab === 'films') {
+        setFilteredMovies(movies);
+      } else {
+        setFilteredSeries(series);
+      }
       setSearching(false);
       return;
     }
@@ -98,16 +101,19 @@ export default function NouveautePage() {
 
     debounceRef.current = setTimeout(() => {
       const term = searchTerm.trim().toLowerCase();
-      setFilteredMovies(
-        movies.filter((m) =>
-          m.title.toLowerCase().includes(term)
-        )
-      );
-      setFilteredSeries(
-        series.filter((s) =>
-          s.title.toLowerCase().includes(term)
-        )
-      );
+      if (activeTab === 'films') {
+        setFilteredMovies(
+          movies.filter((m) =>
+            m.title.toLowerCase().includes(term)
+          )
+        );
+      } else {
+        setFilteredSeries(
+          series.filter((s) =>
+            s.title.toLowerCase().includes(term)
+          )
+        );
+      }
       setSearching(false);
     }, 400);
 
@@ -115,7 +121,7 @@ export default function NouveautePage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line
-  }, [searchTerm, movies, series, loading]);
+  }, [searchTerm, movies, series, loading, activeTab]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -129,17 +135,44 @@ export default function NouveautePage() {
       <p className="text-center text-gray-400 mb-8 max-w-2xl mx-auto">
         Découvrez les derniers films et séries ajoutés à notre catalogue. Profitez de nouveautés exclusives et des incontournables fraîchement arrivés !
       </p>
+
+      {/* Onglets */}
+      <div className="flex justify-center mb-6 gap-2">
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'films'
+              ? 'bg-gray-900 border-primary text-primary shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
+          }`}
+          onClick={() => setActiveTab('films')}
+          aria-selected={activeTab === 'films'}
+        >
+          <Film className="inline-block mr-2 h-5 w-5" /> Films
+        </button>
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'series'
+              ? 'bg-gray-900 border-purple-400 text-purple-400 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-purple-400'
+          }`}
+          onClick={() => setActiveTab('series')}
+          aria-selected={activeTab === 'series'}
+        >
+          <Tv className="inline-block mr-2 h-5 w-5" /> Séries
+        </button>
+      </div>
+
       <div className="flex justify-center mb-10">
         <form
           onSubmit={e => { e.preventDefault(); }}
           className="w-full max-w-lg flex relative"
         >
           <Input
-            placeholder="Rechercher une nouveauté (film ou série)..."
+            placeholder={`Rechercher une nouveauté (${activeTab === 'films' ? 'film' : 'série'})...`}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="flex-1 pl-10"
-            aria-label="Rechercher une nouveauté"
+            aria-label={`Rechercher une nouveauté (${activeTab === 'films' ? 'film' : 'série'})`}
             autoComplete="off"
           />
           {searchTerm && (
@@ -174,57 +207,77 @@ export default function NouveautePage() {
         </>
       )}
 
-      {(filteredMovies.length === 0 && filteredSeries.length === 0 && !searching) ? (
-        <div className="text-center py-16">
-          <Sparkles className="h-10 w-10 mx-auto mb-4 text-gray-500" />
-          <h2 className="text-xl font-semibold mb-2">Aucune nouveauté trouvée</h2>
-          <p className="text-gray-400 mb-6">
-            {searchTerm
-              ? `Aucun résultat pour "${searchTerm}".`
-              : `Revenez bientôt pour découvrir les nouveaux contenus ajoutés !`}
-          </p>
-        </div>
+      {/* Affichage contenu selon l'onglet actif */}
+      {activeTab === 'films' ? (
+        (filteredMovies.length === 0 && !searching) ? (
+          <div className="text-center py-16">
+            <Film className="h-10 w-10 mx-auto mb-4 text-gray-500" />
+            <h2 className="text-xl font-semibold mb-2">Aucun film trouvé</h2>
+            <p className="text-gray-400 mb-6">
+              {searchTerm
+                ? `Aucun résultat pour "${searchTerm}".`
+                : `Revenez bientôt pour découvrir les nouveaux films ajoutés !`}
+            </p>
+          </div>
+        ) : (
+          <>
+            {searching && (
+              <div className="text-center text-gray-400 mb-6">Recherche...</div>
+            )}
+            {filteredMovies.length > 0 && (
+              <>
+                <h2 className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
+                  <Film className="w-6 h-6 text-primary" /> Films récents
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                  {filteredMovies.map((movie) => (
+                    <NouveauteCard
+                      key={movie.id}
+                      item={movie}
+                      type="film"
+                      isUserVIP={!!isVIP}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )
       ) : (
-        <>
-          {searching && (
-            <div className="text-center text-gray-400 mb-6">Recherche...</div>
-          )}
-          {filteredMovies.length > 0 && (
-            <>
-              <h2 className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
-                <Film className="w-6 h-6 text-primary" /> Films récents
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {filteredMovies.map((movie) => (
-                  <NouveauteCard
-                    key={movie.id}
-                    item={movie}
-                    type="film"
-                    isUserVIP={!!isVIP}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          {filteredSeries.length > 0 && (
-            <>
-              <h2 className="text-2xl font-bold mt-12 mb-4 flex items-center gap-2">
-                <Tv className="w-6 h-6 text-purple-400" /> Séries récentes
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {filteredSeries.map((serie) => (
-                  <NouveauteCard
-                    key={serie.id}
-                    item={serie}
-                    type="serie"
-                    isUserVIP={!!isVIP}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </>
+        (filteredSeries.length === 0 && !searching) ? (
+          <div className="text-center py-16">
+            <Tv className="h-10 w-10 mx-auto mb-4 text-gray-500" />
+            <h2 className="text-xl font-semibold mb-2">Aucune série trouvée</h2>
+            <p className="text-gray-400 mb-6">
+              {searchTerm
+                ? `Aucun résultat pour "${searchTerm}".`
+                : `Revenez bientôt pour découvrir les nouvelles séries ajoutées !`}
+            </p>
+          </div>
+        ) : (
+          <>
+            {searching && (
+              <div className="text-center text-gray-400 mb-6">Recherche...</div>
+            )}
+            {filteredSeries.length > 0 && (
+              <>
+                <h2 className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
+                  <Tv className="w-6 h-6 text-purple-400" /> Séries récentes
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                  {filteredSeries.map((serie) => (
+                    <NouveauteCard
+                      key={serie.id}
+                      item={serie}
+                      type="serie"
+                      isUserVIP={!!isVIP}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )
       )}
     </main>
   );
