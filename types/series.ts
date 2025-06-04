@@ -9,6 +9,9 @@ export type Episode = {
   published?: boolean;
   video_url?: string;
   thumbnail_url: string;
+  streamtape_url?: string;
+  uqload_url?: string;
+  // ...autres propriétés éventuelles
 };
 
 export type Season = {

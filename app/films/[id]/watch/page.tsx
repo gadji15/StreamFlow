@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import WatchLayout from "@/components/watch/WatchLayout";
+import dynamic from "next/dynamic";
+const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -28,6 +30,8 @@ type Movie = {
   backdrop?: string;
   poster?: string;
   video_url?: string;
+  streamtape_url?: string;
+  uqload_url?: string;
   tmdb_id?: string;
   backdropUrl?: string;
   posterUrl?: string;
@@ -100,7 +104,7 @@ export default function WatchFilmPage() {
         // Charger le film courant
         const movieRes = await supabase
           .from("films")
-          .select("*")
+          .select("*, streamtape_url, uqload_url")
           .eq("id", id)
           .single();
 
@@ -177,80 +181,88 @@ export default function WatchFilmPage() {
   const goBack = () => router.push(`/films/${id}`);
 
   return (
-    <WatchLayout
-      title={movie?.title || "Lecture film"}
-      seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
-      videoUrl={movie?.video_url || ""}
-      posterUrl={movie?.posterUrl}
-      backdropUrl={movie?.backdropUrl}
-      loading={loading}
-      error={error || (!movie ? "Film introuvable" : undefined)}
-      onBack={goBack}
-      backLabel={
-        <span className="flex items-center"><ArrowLeft className="h-5 w-5 mr-2" /> Retour à la fiche film</span>
-      }
-      isVip={movie?.is_vip}
-      metadata={
-        movie && (
-          <>
-            <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-                {movie.title}
-              </h1>
-              {movie.year && (
-                <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-                  {movie.year}
-                </span>
-              )}
-              {movie.genre && (
-                <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                  {movie.genre}
-                </span>
-              )}
-              {movie.is_vip && (
-                <Badge
-                  variant="secondary"
-                  className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
-                >
-                  VIP
-                </Badge>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-              {movie.duration && (
-                <span>
-                  <b>Durée :</b> {movie.duration} min
-                </span>
-              )}
-              {movie.rating && (
-                <span>
-                  <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
-                </span>
-              )}
-            </div>
-          </>
-        )
-      }
-      description={movie?.description}
-      suggestions={
-        suggestions.map((film) => ({
-          id: film.id,
-          title: film.title,
-          genre: film.genre,
-          poster: film.poster
-            ? /^https?:\/\//.test(film.poster)
-              ? film.poster
-              : getTMDBImageUrl(film.poster, "w300")
-            : "/placeholder-poster.png",
-          link: `/films/${film.id}`,
-        }))
-      }
-      suggestionsTitle="Films similaires"
-      suggestionsSubtitle="Découvrez d'autres œuvres que vous pourriez aimer !"
-      suggestionsLink={
-        movie?.genre ? `/films?genre=${encodeURIComponent(movie.genre)}` : undefined
-      }
-      suggestionsLinkLabel="Voir tout"
-    />
+    <>
+      <div className="mb-6">
+        <VideoMultiPlayer
+          streamtapeUrl={movie?.streamtape_url || undefined}
+          uqloadUrl={movie?.uqload_url || undefined}
+        />
+      </div>
+      <WatchLayout
+        title={movie?.title || "Lecture film"}
+        seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
+        videoUrl={movie?.video_url || ""}
+        posterUrl={movie?.posterUrl}
+        backdropUrl={movie?.backdropUrl}
+        loading={loading}
+        error={error || (!movie ? "Film introuvable" : undefined)}
+        onBack={goBack}
+        backLabel={
+          <span className="flex items-center"><ArrowLeft className="h-5 w-5 mr-2" /> Retour à la fiche film</span>
+        }
+        isVip={movie?.is_vip}
+        metadata={
+          movie && (
+            <>
+              <div className="flex flex-wrap items-center gap-3 mb-1">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
+                  {movie.title}
+                </h1>
+                {movie.year && (
+                  <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
+                    {movie.year}
+                  </span>
+                )}
+                {movie.genre && (
+                  <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
+                    {movie.genre}
+                  </span>
+                )}
+                {movie.is_vip && (
+                  <Badge
+                    variant="secondary"
+                    className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+                  >
+                    VIP
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
+                {movie.duration && (
+                  <span>
+                    <b>Durée :</b> {movie.duration} min
+                  </span>
+                )}
+                {movie.rating && (
+                  <span>
+                    <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
+                  </span>
+                )}
+              </div>
+            </>
+          )
+        }
+        description={movie?.description}
+        suggestions={
+          suggestions.map((film) => ({
+            id: film.id,
+            title: film.title,
+            genre: film.genre,
+            poster: film.poster
+              ? /^https?:\/\//.test(film.poster)
+                ? film.poster
+                : getTMDBImageUrl(film.poster, "w300")
+              : "/placeholder-poster.png",
+            link: `/films/${film.id}`,
+          }))
+        }
+        suggestionsTitle="Films similaires"
+        suggestionsSubtitle="Découvrez d'autres œuvres que vous pourriez aimer !"
+        suggestionsLink={
+          movie?.genre ? `/films?genre=${encodeURIComponent(movie.genre)}` : undefined
+        }
+        suggestionsLinkLabel="Voir tout"
+      />
+    </>
   );
 }
