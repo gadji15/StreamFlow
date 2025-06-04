@@ -105,20 +105,37 @@ export default function Header() {
   };
 
   return (
-    <header className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
-      scrolled ? 'bg-black/90 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
-    }`}>
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo dynamique */}
-          <Link href="/" className="flex items-center group select-none">
-            <Home className="w-7 h-7 mr-2 text-fuchsia-400 group-hover:animate-bounce group-hover:text-blue-400 transition-colors" />
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-fuchsia-500 via-blue-500 to-purple-600 text-transparent bg-clip-text group-hover:scale-105 transition-transform">
-              StreamFlow
-            </span>
-          </Link>
+    <>
+      <header className={`fixed w-full top-0 z-50 transition-colors duration-300 ${
+        scrolled ? 'bg-black/90 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
+      }`}>
+        {/* ...header contents... */}
+      </header>
 
-          {/* Navigation principale - Desktop */}
+      {/* Menu mobile - contenu */}
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            ref={mobileMenuRef}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            role="dialog"
+            aria-modal="true"
+            onClick={e => {
+              // Ferme si on clique sur l'overlay (pas sur la carte)
+              if (e.target === mobileMenuRef.current) setNavOpen(false);
+            }}
+          >
+            {/* ...modal content... */}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
           <nav className="hidden md:flex space-x-2">
             <Link
               href="/"
