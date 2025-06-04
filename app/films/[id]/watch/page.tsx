@@ -69,42 +69,98 @@ export default function WatchFilmPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Hook pour responsive count (mêmes seuils que ContentSection)
+  function useResponsiveColumns() {
+    const [columns, setColumns] = useState(5);
+    useEffect(() => {
+      function handleResize() {
+        const width = window.innerWidth;
+        if (width < 400) setColumns(2);
+        else if (width < 600) setColumns(3);
+        else if (width < 900) setColumns(4);
+        else if (width < 1080) setColumns(5);
+        else if (width < 1400) setColumns(6);
+        else if (width < 1800) setColumns(7);
+        else setColumns(8);
+      }
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+    return columns;
+  }
+  const columns = useResponsiveColumns();
+  const maxSuggestions = columns * 2;
+
   useEffect(() => {
     async function fetchMovieAndSuggestions() {
       setLoading(true);
       setError(null);
       try {
-        const [movieRes, suggestionsRes] = await Promise.all([
-          supabase
-            .from("films")
-            .select("*")
-            .eq("id", id)
-            .single(),
-          supabase
-            .from("films")
-            .select("id, title, genre, poster")
-            .neq("id", id)
-            .order("popularity", { ascending: false })
-            .limit(12),
-        ]);
+        // Charger le film courant
+        const movieRes = await supabase
+          .from("films")
+          .select("*")
+          .eq("id", id)
+          .single();
 
         const data = movieRes.data;
-        const suggestionsData = suggestionsRes.data;
 
         if (!data) {
           setError("Film non trouvé.");
-        } else {
-          setMovie({
-            ...data,
-            backdropUrl: normalizeBackdropUrl(data.backdrop),
-            posterUrl: data.poster
-              ? /^https?:\/\//.test(data.poster)
-                ? data.poster
-                : getTMDBImageUrl(data.poster, "w300")
-              : "/placeholder-poster.png",
-          });
-          setSuggestions(suggestionsData || []);
+          setMovie(null);
+          setSuggestions([]);
+          setLoading(false);
+          return;
         }
+        // Préparer le genre pour la requête de suggestions
+        const genre = data.genre;
+
+        let suggestionsData: Movie[] = [];
+        if (genre) {
+          // Suggestions du même genre, exclut le film courant, triées par popularité
+          const similarRes = await supabase
+            .from("films")
+            .select("id, title, genre, poster, year")
+            .neq("id", id)
+            .eq("genre", genre)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+
+          suggestionsData = similarRes.data || [];
+
+          // Si pas assez de suggestions, compléter avec les plus populaires hors genre
+          if (suggestionsData.length < maxSuggestions) {
+            const fallbackRes = await supabase
+              .from("films")
+              .select("id, title, genre, poster, year")
+              .neq("id", id)
+              .neq("genre", genre)
+              .order("popularity", { ascending: false })
+              .limit(maxSuggestions - suggestionsData.length);
+            suggestionsData = suggestionsData.concat(fallbackRes.data || []);
+          }
+        } else {
+          // Fallback : suggestions les plus populaires hors film courant
+          const suggestionsRes = await supabase
+            .from("films")
+            .select("id, title, genre, poster, year")
+            .neq("id", id)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+          suggestionsData = suggestionsRes.data || [];
+        }
+
+        setMovie({
+          ...data,
+          backdropUrl: normalizeBackdropUrl(data.backdrop),
+          posterUrl: data.poster
+            ? /^https?:\/\//.test(data.poster)
+              ? data.poster
+              : getTMDBImageUrl(data.poster, "w300")
+            : "/placeholder-poster.png",
+        });
+        setSuggestions(suggestionsData);
       } catch {
         setError("Impossible de charger le film.");
       } finally {
@@ -112,7 +168,8 @@ export default function WatchFilmPage() {
       }
     }
     if (id) fetchMovieAndSuggestions();
-  }, [id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, columns]);
 
   const goBack = () => router.push(`/films/${id}`);
 

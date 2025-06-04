@@ -26,6 +26,29 @@ export default function WatchEpisodePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Hook pour responsive columns (mêmes seuils que ContentSection)
+  function useResponsiveColumns() {
+    const [columns, setColumns] = useState(5);
+    useEffect(() => {
+      function handleResize() {
+        const width = window.innerWidth;
+        if (width < 400) setColumns(2);
+        else if (width < 600) setColumns(3);
+        else if (width < 900) setColumns(4);
+        else if (width < 1080) setColumns(5);
+        else if (width < 1400) setColumns(6);
+        else if (width < 1800) setColumns(7);
+        else setColumns(8);
+      }
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+    return columns;
+  }
+  const columns = useResponsiveColumns();
+  const maxSuggestions = columns * 2;
+
   // Chargement en parallèle pour le gain de performance
   useEffect(() => {
     let isMounted = true;
@@ -37,17 +60,14 @@ export default function WatchEpisodePage() {
           episodeRes,
           seriesRes,
           seasonsRes,
-          similarRes
         ] = await Promise.all([
           supabase.from("episodes").select("*, season:season_id(season_number)").eq("id", episodeId).single(),
           supabase.from("series").select("*").eq("id", seriesId).single(),
           supabase.from("seasons").select("id, season_number, poster, title, episodes (*)").eq("series_id", seriesId).order("season_number", { ascending: true }),
-          supabase.from("series").select("id, title, genre, poster").neq("id", seriesId).order("popularity", { ascending: false }).limit(12)
         ]);
         const episodeData = episodeRes.data;
         const seriesData = seriesRes.data;
         const seasonsData = seasonsRes.data;
-        const similar = similarRes.data;
 
         if (!episodeData) throw new Error("Épisode non trouvé");
         if (!seriesData) throw new Error("Série non trouvée");
@@ -86,7 +106,42 @@ export default function WatchEpisodePage() {
         setPreviousEpisode(idx > 0 ? publishedEpisodes[idx - 1] : null);
         setNextEpisode(idx !== -1 && idx < publishedEpisodes.length - 1 ? publishedEpisodes[idx + 1] : null);
 
-        setSimilarSeries(similar || []);
+        // Suggestions séries similaires : priorité au même genre
+        let similar: Series[] = [];
+        const genre = seriesData.genre;
+        if (genre) {
+          const similarRes = await supabase
+            .from("series")
+            .select("id, title, genre, poster, startYear, endYear")
+            .neq("id", seriesId)
+            .eq("genre", genre)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+          similar = similarRes.data || [];
+
+          // Si pas assez de suggestions, compléter avec les plus populaires hors genre
+          if (similar.length < maxSuggestions) {
+            const fallbackRes = await supabase
+              .from("series")
+              .select("id, title, genre, poster, startYear, endYear")
+              .neq("id", seriesId)
+              .neq("genre", genre)
+              .order("popularity", { ascending: false })
+              .limit(maxSuggestions - similar.length);
+            similar = similar.concat(fallbackRes.data || []);
+          }
+        } else {
+          // Fallback populaire
+          const similarRes = await supabase
+            .from("series")
+            .select("id, title, genre, poster, startYear, endYear")
+            .neq("id", seriesId)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+          similar = similarRes.data || [];
+        }
+
+        setSimilarSeries(similar);
       } catch (err: any) {
         if (isMounted) setError(err.message || "Erreur lors du chargement.");
       } finally {
@@ -95,7 +150,8 @@ export default function WatchEpisodePage() {
     };
     fetchAll();
     return () => { isMounted = false; };
-  }, [seriesId, episodeId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesId, episodeId, columns]);
 
   // Navigation
   const goToNextEpisode = useCallback(() => {
