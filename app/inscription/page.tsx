@@ -152,9 +152,9 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
-      <div className="w-full max-w-3xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden">
+      <div className="w-full max-w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden">
         {/* Section gauche : Formulaire */}
-        <div className="flex-1 p-4 md:p-8 overflow-visible">
+        <div className="flex-1 p-3 sm:p-4 md:p-8 overflow-visible">
           <div className="mb-4 flex flex-col items-center">
             <Link
               href="/"
@@ -417,7 +417,7 @@ export default function RegisterPage() {
           </form>
         </div>
         {/* Section droite : Illustration ou informations */}
-        <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-gray-800 p-10 flex-1">
+        <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-gray-800 p-6 lg:p-10 flex-1">
           <div className="max-w-xs mx-auto text-center">
             <UserPlus className="w-16 h-16 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2 text-white">Bienvenue sur StreamFlow !</h2>
