@@ -26,6 +26,29 @@ export default function WatchEpisodePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Hook pour responsive columns (mêmes seuils que ContentSection)
+  function useResponsiveColumns() {
+    const [columns, setColumns] = useState(5);
+    useEffect(() => {
+      function handleResize() {
+        const width = window.innerWidth;
+        if (width < 400) setColumns(2);
+        else if (width < 600) setColumns(3);
+        else if (width < 900) setColumns(4);
+        else if (width < 1080) setColumns(5);
+        else if (width < 1400) setColumns(6);
+        else if (width < 1800) setColumns(7);
+        else setColumns(8);
+      }
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+    return columns;
+  }
+  const columns = useResponsiveColumns();
+  const maxSuggestions = columns * 2;
+
   // Chargement en parallèle pour le gain de performance
   useEffect(() => {
     let isMounted = true;
@@ -37,17 +60,14 @@ export default function WatchEpisodePage() {
           episodeRes,
           seriesRes,
           seasonsRes,
-          similarRes
         ] = await Promise.all([
           supabase.from("episodes").select("*, season:season_id(season_number)").eq("id", episodeId).single(),
           supabase.from("series").select("*").eq("id", seriesId).single(),
           supabase.from("seasons").select("id, season_number, poster, title, episodes (*)").eq("series_id", seriesId).order("season_number", { ascending: true }),
-          supabase.from("series").select("id, title, genre, poster").neq("id", seriesId).order("popularity", { ascending: false }).limit(12)
         ]);
         const episodeData = episodeRes.data;
         const seriesData = seriesRes.data;
         const seasonsData = seasonsRes.data;
-        const similar = similarRes.data;
 
         if (!episodeData) throw new Error("Épisode non trouvé");
         if (!seriesData) throw new Error("Série non trouvée");
@@ -86,7 +106,45 @@ export default function WatchEpisodePage() {
         setPreviousEpisode(idx > 0 ? publishedEpisodes[idx - 1] : null);
         setNextEpisode(idx !== -1 && idx < publishedEpisodes.length - 1 ? publishedEpisodes[idx + 1] : null);
 
-        setSimilarSeries(similar || []);
+        // Suggestions séries similaires : priorité au même genre
+        let similar: Series[] = [];
+        const genre = seriesData.genre;
+        if (genre) {
+          const similarRes = await supabase
+            .from("series")
+            .select("id, title, genre, poster, start_year, end_year")
+            .neq("id", seriesId)
+            .eq("genre", genre)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+          similar = similarRes.data || [];
+
+          // Si pas assez de suggestions, compléter AVEC une deuxième requête SANS le genre (popularité seulement)
+          if (similar.length < maxSuggestions) {
+            const fallbackRes = await supabase
+              .from("series")
+              .select("id, title, genre, poster, start_year, end_year")
+              .neq("id", seriesId)
+              .order("popularity", { ascending: false })
+              .limit(maxSuggestions - similar.length);
+            // Ajouter seulement les séries non déjà proposées
+            const fallbackFiltered = (fallbackRes.data || []).filter(f => 
+              !similar.some(s => s.id === f.id)
+            );
+            similar = similar.concat(fallbackFiltered);
+          }
+        } else {
+          // Fallback populaire
+          const similarRes = await supabase
+            .from("series")
+            .select("id, title, genre, poster, start_year, end_year")
+            .neq("id", seriesId)
+            .order("popularity", { ascending: false })
+            .limit(maxSuggestions);
+          similar = similarRes.data || [];
+        }
+
+        setSimilarSeries(similar);
       } catch (err: any) {
         if (isMounted) setError(err.message || "Erreur lors du chargement.");
       } finally {
@@ -95,7 +153,8 @@ export default function WatchEpisodePage() {
     };
     fetchAll();
     return () => { isMounted = false; };
-  }, [seriesId, episodeId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seriesId, episodeId, columns]);
 
   // Navigation
   const goToNextEpisode = useCallback(() => {
@@ -144,6 +203,48 @@ export default function WatchEpisodePage() {
       onBack={goBackToSeries}
       backLabel="Retour à la fiche série"
       isVip={series?.is_vip}
+      // Boutons navigation juste après le player
+      afterPlayer={
+        <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
+          <button
+            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+            onClick={() => setIsSeasonModalOpen(true)}
+            aria-label="Sélectionner saison/épisode"
+          >
+            saison/épisode
+          </button>
+          <div className="flex gap-2">
+            {previousEpisode && (
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                onClick={goToPreviousEpisode}
+                aria-label="Épisode précédent"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                P
+              </button>
+            )}
+            {nextEpisode && (
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                onClick={goToNextEpisode}
+                aria-label="Épisode suivant"
+              >
+                S
+                <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+              </button>
+            )}
+          </div>
+          <SeasonModalUser
+            open={isSeasonModalOpen}
+            onClose={() => setIsSeasonModalOpen(false)}
+            seasons={seasons}
+            selectedSeasonIndex={selectedSeasonIndex}
+            onSeasonChange={setSelectedSeasonIndex}
+            onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
+          />
+        </nav>
+      }
       metadata={
         episode && series && (
           <>
@@ -202,6 +303,7 @@ export default function WatchEpisodePage() {
           genre: serie.genre,
           poster: serie.poster || "/placeholder-poster.png",
           link: `/series/${serie.id}`,
+          year: (serie as any).start_year ?? ""
         }))
       }
       suggestionsTitle="Séries similaires"
@@ -210,47 +312,6 @@ export default function WatchEpisodePage() {
         series?.genre ? `/series?genre=${encodeURIComponent(series.genre)}` : undefined
       }
       suggestionsLinkLabel="Voir tout"
-    >
-      {/* Navigation épisodes */}
-      <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
-        <button
-          className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-          onClick={() => setIsSeasonModalOpen(true)}
-          aria-label="Sélectionner saison/épisode"
-        >
-          saison/épisode
-        </button>
-        <div className="flex gap-2">
-          {previousEpisode && (
-            <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-              onClick={goToPreviousEpisode}
-              aria-label="Épisode précédent"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              P
-            </button>
-          )}
-          {nextEpisode && (
-            <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-              onClick={goToNextEpisode}
-              aria-label="Épisode suivant"
-            >
-              S
-              <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
-            </button>
-          )}
-        </div>
-        <SeasonModalUser
-          open={isSeasonModalOpen}
-          onClose={() => setIsSeasonModalOpen(false)}
-          seasons={seasons}
-          selectedSeasonIndex={selectedSeasonIndex}
-          onSeasonChange={setSelectedSeasonIndex}
-          onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
-        />
-      </nav>
-    </WatchLayout>
+    />
   );
 }
