@@ -866,6 +866,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto px-3 pb-2 pt-1 space-y-1"
           style={{ minHeight: 0 }}
+          autoComplete="off"
         >
           <div>
             <label htmlFor="title" className="block text-[11px] font-medium text-white/80">
@@ -1308,16 +1309,16 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           >
             Annuler
           </Button>
-          <Button
+          {/* On s'assure que ce bouton est bien type="submit" */}
+          <button
             type="submit"
             form="film-form"
-            variant="default"
             disabled={loading}
             aria-label="Enregistrer le film"
-            className="text-xs py-1 px-2"
+            className="text-xs py-1 px-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-white font-semibold transition"
           >
             {loading ? "..." : "Enregistrer"}
-          </Button>
+          </button>
         </div>
       </div>
       <style jsx global>{`
