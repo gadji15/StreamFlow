@@ -39,11 +39,14 @@ export const metadata: Metadata = {
       { rel: 'icon', url: '/logo-icon.svg', type: 'image/svg+xml' }
     ],
   },
-  appleWebApp: {
-    capable: true,
-    title: "StreamFlow",
-    statusBarStyle: "default",
-  },
+  other: [
+    { name: "mobile-web-app-capable", content: "yes" }
+  ],
+  // appleWebApp: {
+  //   capable: true,
+  //   title: "StreamFlow",
+  //   statusBarStyle: "default",
+  // },
   openGraph: {
     title: "StreamFlow - Plateforme de streaming Films et Séries",
     description: "Regardez des films et séries en ligne sur StreamFlow.",
