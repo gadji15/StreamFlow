@@ -532,14 +532,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       vote_count,
       published,
       isvip,
-      // featured: !!form.featured, // Optionnel, pour backward compat
+      // featured: !!form.featured,
       poster: form.poster || null,
       backdrop: form.backdrop || null,
       tmdb_id,
       imdb_id: form.imdb_id || null,
       description: form.description?.trim() || null,
       trailer_url: form.trailer_url || null,
-      video_url: no_video ? null : (form.video_url || localVideoUrl || null),
+      streamtape_url: no_video ? null : (form.streamtape_url || null),
+      uqload_url: no_video ? null : (form.uqload_url || null),
       language: form.language || null,
       homepage_categories: homepage_categories_sync,
       popularity,
@@ -1109,66 +1110,83 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
             />
           </div>
           <div>
-            <label htmlFor="video_url" className="block text-[11px] font-medium text-white/80">
-              Lien vidéo
+            <label htmlFor="streamtape_url" className="block text-[11px] font-medium text-white/80">
+              Lien Streamtape
             </label>
             <input
-              id="video_url"
-              name="video_url"
+              id="streamtape_url"
+              name="streamtape_url"
               type="text"
-              value={form.video_url}
-              onChange={e => setForm({ ...form, video_url: e.target.value })}
-              placeholder="https://..."
-              className="input input-bordered w-full"
-              required
+              value={form.streamtape_url}
+              onChange={e => setForm({ ...form, streamtape_url: e.target.value })}
+              placeholder="https://streamtape.com/v/..."
+              className={`input input-bordered w-full ${errors.streamtape_url ? "border-red-500" : ""}`}
+              autoComplete="off"
+              aria-invalid={!!errors.streamtape_url}
             />
-            {/* Aperçu pour les liens Uqload/Doodstream/etc. */}
-            {form.video_url && (
+            {errors.streamtape_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.streamtape_url}</div>
+            )}
+            {form.streamtape_url && (
               <div className="flex flex-col items-start mt-1">
-                {(form.video_url.startsWith("https://uqload.io/")
-                  || form.video_url.startsWith("https://dood")
-                  || form.video_url.startsWith("https://www.dood")
-                  || form.video_url.startsWith("https://streamtape.com")
-                  || form.video_url.startsWith("https://vidmoly.to")
-                  || form.video_url.startsWith("https://mycloud.to")
-                  || form.video_url.startsWith("https://upstream.to")
-                  || form.video_url.startsWith("https://voe.sx")
-                  || form.video_url.startsWith("https://filelions.to")
-                ) ? (
-                  <iframe
-                    src={form.video_url}
-                    allowFullScreen
-                    className="rounded border border-gray-700"
-                    style={{ width: 220, height: 124, maxWidth: "100%" }}
-                    frameBorder={0}
-                    allow="autoplay; fullscreen"
-                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                    title="Aperçu vidéo"
-                  />
-                ) : form.video_url.match(/\.(mp4|webm|ogg)$/i) ? (
-                  <video
-                    src={form.video_url}
-                    controls
-                    className="h-20 rounded border border-gray-700"
-                    style={{ maxWidth: "100%" }}
-                  />
-                ) : (
-                  <a
-                    href={form.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-indigo-400 underline"
-                  >
-                    Voir la vidéo
-                  </a>
-                )}
+                <iframe
+                  src={form.streamtape_url.replace("/v/", "/e/")}
+                  allowFullScreen
+                  className="rounded border border-gray-700"
+                  style={{ width: 220, height: 124, maxWidth: "100%" }}
+                  frameBorder={0}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title="Aperçu Streamtape"
+                />
                 <button
                   type="button"
                   className="text-[10px] text-red-400 hover:underline mt-1"
-                  onClick={() => setForm({ ...form, video_url: "" })}
-                  aria-label="Supprimer la vidéo"
+                  onClick={() => setForm({ ...form, streamtape_url: "" })}
+                  aria-label="Supprimer la vidéo Streamtape"
                 >
-                  Supprimer la vidéo
+                  Supprimer Streamtape
+                </button>
+              </div>
+            )}
+          </div>
+          <div>
+            <label htmlFor="uqload_url" className="block text-[11px] font-medium text-white/80">
+              Lien Uqload
+            </label>
+            <input
+              id="uqload_url"
+              name="uqload_url"
+              type="text"
+              value={form.uqload_url}
+              onChange={e => setForm({ ...form, uqload_url: e.target.value })}
+              placeholder="https://uqload.io/..."
+              className={`input input-bordered w-full ${errors.uqload_url ? "border-red-500" : ""}`}
+              autoComplete="off"
+              aria-invalid={!!errors.uqload_url}
+            />
+            {errors.uqload_url && (
+              <div className="text-xs text-red-400 mt-0.5">{errors.uqload_url}</div>
+            )}
+            {form.uqload_url && (
+              <div className="flex flex-col items-start mt-1">
+                <iframe
+                  src={form.uqload_url}
+                  allowFullScreen
+                  className="rounded border border-gray-700"
+                  style={{ width: 220, height: 124, maxWidth: "100%" }}
+                  frameBorder={0}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title="Aperçu Uqload"
+                />
+                <button
+                  type="button"
+                  className="text-[10px] text-red-400 hover:underline mt-1"
+                  onClick={() => setForm({ ...form, uqload_url: "" })}
+                  aria-label="Supprimer la vidéo Uqload"
+                >
+                  Supprimer Uqload
                 </button>
               </div>
             )}

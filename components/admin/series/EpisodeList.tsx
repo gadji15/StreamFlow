@@ -17,7 +17,19 @@ interface EpisodeFormInput {
   id?: string;
   episode_number: number;
   title: string;
-  // autres champs nécessaires (compléter selon vos besoins)
+  description?: string;
+  published?: boolean;
+  isvip?: boolean;
+  air_date?: string | null;
+  thumbnail_url?: string | null;
+  streamtape_url?: string | null;
+  uqload_url?: string | null;
+  trailer_url?: string | null;
+  video_unavailable?: boolean;
+  tmdb_id?: number | null;
+  tmdb_series_id?: string | null;
+  sort_order?: number | null;
+  // ajoute ici tous les champs éditables côté admin épisode
 }
 
 interface EpisodeListProps {
@@ -165,11 +177,31 @@ export default function EpisodeList({
   async function handleEditEpisode(form: EpisodeFormInput) {
     setActionLoading(true);
     try {
-      const { id, ...updateObj } = form;
+      const { id, ...rest } = form;
       if (!id) {
         toast({ title: "Erreur", description: "ID d'épisode manquant", variant: "destructive" });
         return;
       }
+      // On prépare explicitement tous les champs à mettre à jour
+      const updateObj: any = {
+        episode_number: rest.episode_number,
+        title: rest.title,
+        description: rest.description ?? '',
+        published: rest.published ?? false,
+        isvip: rest.isvip ?? false,
+        air_date: rest.air_date || null,
+        thumbnail_url: rest.thumbnail_url || null,
+        streamtape_url: rest.streamtape_url || null,
+        uqload_url: rest.uqload_url || null,
+        trailer_url: rest.trailer_url || null,
+        video_unavailable: rest.video_unavailable ?? false,
+        tmdb_id: rest.tmdb_id ?? null,
+        tmdb_series_id: rest.tmdb_series_id ?? null,
+        sort_order: rest.sort_order ?? null,
+        // ajoute ici tout autre champ éditable
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase.from("episodes").update(updateObj).eq("id", id);
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
