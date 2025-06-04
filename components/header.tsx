@@ -24,6 +24,9 @@ export default function Header() {
   const pathname = usePathname();
   const { isLoggedIn, isLoading, userData, isVIP, logout, isAdmin } = useSupabaseAuth();
 
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const firstMenuLinkRef = useRef<HTMLAnchorElement | null>(null);
+
   // Gérer le scroll pour changer l'apparence du header
   useEffect(() => {
     const handleScroll = () => {
@@ -42,6 +45,53 @@ export default function Header() {
   useEffect(() => {
     setNavOpen(false);
   }, [pathname]);
+
+  // Focus automatique + focus trap + fermeture sur click dehors/Escape
+  useEffect(() => {
+    if (!navOpen) return;
+
+    // Focus sur le premier lien du menu mobile à l'ouverture
+    firstMenuLinkRef.current?.focus();
+
+    // Fonction pour trapper le focus dans le menu mobile
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setNavOpen(false);
+      }
+      if (e.key === "Tab" && mobileMenuRef.current) {
+        const focusableEls = mobileMenuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const focusable = Array.from(focusableEls).filter(el => el.offsetParent !== null);
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    };
+
+    // Fermeture sur click en dehors
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setNavOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [navOpen]);
   
   // Gérer la déconnexion
   const handleLogout = async () => {
@@ -215,7 +265,14 @@ export default function Header() {
           <div className="flex items-center md:hidden">
             <SearchModal />
             
-            <Button variant="ghost" size="icon" onClick={() => setNavOpen(!navOpen)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setNavOpen(!navOpen)}
+              aria-label={navOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-haspopup="menu"
+              aria-expanded={navOpen}
+            >
               {navOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
@@ -224,13 +281,19 @@ export default function Header() {
 
       {/* Menu mobile - contenu */}
       {navOpen && (
-        <div className="md:hidden bg-background border-t border-gray-800">
+        <div
+          className="md:hidden bg-background border-t border-gray-800 fixed inset-0 z-50 overflow-auto animate-fade-in"
+          ref={mobileMenuRef}
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="container mx-auto px-4 py-4">
             <nav className="space-y-4">
               <Link
                 href="/films"
                 className="block py-2 hover:text-white"
                 onClick={() => setNavOpen(false)}
+                ref={firstMenuLinkRef}
               >
                 <div className="flex items-center">
                   <Film className="mr-2 h-5 w-5" />
