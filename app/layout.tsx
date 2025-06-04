@@ -91,7 +91,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      {/* Remove manual <head> and use metadata API for icons */}
+      <head>
+        {/* Balises meta pour une PWA immersive avec barre de statut transparente */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#00000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#00000000" media="(prefers-color-scheme: light)" />
+      </head>
       <body className={`${inter.className} min-h-screen flex flex-col bg-[#18181c] text-foreground`}>
         <AuthProvider>
           <ErrorBoundary>
