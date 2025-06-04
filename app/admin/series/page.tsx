@@ -269,14 +269,14 @@ export default function AdminSeriesPage() {
 
       {/* Filtres/recherche */}
       <div className="bg-gray-900/80 rounded-xl shadow-xl p-6 border border-gray-700">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 mb-6 w-full">
+          <div className="relative flex-1 w-full">
             <Input
               type="search"
               placeholder="🔍 Recherche rapide (titre série)..."
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow"
+              className="pl-10 bg-gray-800 border-2 border-gray-700 focus:border-indigo-500 shadow w-full"
               aria-label="Recherche de série"
             />
             <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
@@ -287,53 +287,18 @@ export default function AdminSeriesPage() {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            className="hidden sm:block border-indigo-400 text-indigo-300 hover:bg-indigo-900/20"
+            className="sm:ml-2 border-indigo-400 text-indigo-300 hover:bg-indigo-900/20 w-full sm:w-auto"
             aria-label="Réinitialiser les filtres"
             title="Réinitialiser les filtres"
           >
             Réinitialiser
           </Button>
         </div>
-        <form className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4"
-          onSubmit={e => { e.preventDefault(); setPage(1); }}>
-          <Input
-            type="text"
-            placeholder="Titre…"
-            value={advancedSearch.title}
-            onChange={e => setAdvancedSearch(a => ({ ...a, title: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par titre"
-          />
-          <Input
-            type="text"
-            placeholder="Créateur…"
-            value={advancedSearch.creator}
-            onChange={e => setAdvancedSearch(a => ({ ...a, creator: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par créateur"
-          />
-          <Input
-            type="number"
-            placeholder="Année début…"
-            value={advancedSearch.year}
-            onChange={e => setAdvancedSearch(a => ({ ...a, year: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par année"
-          />
-          <Input
-            type="number"
-            placeholder="TMDB ID…"
-            value={advancedSearch.tmdb}
-            onChange={e => setAdvancedSearch(a => ({ ...a, tmdb: e.target.value }))}
-            className="w-full bg-gray-800 border-gray-700 focus:border-indigo-400"
-            aria-label="Recherche par TMDB ID"
-          />
-        </form>
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 mb-4 w-full">
           <select
             value={genreFilter}
             onChange={e => { setGenreFilter(e.target.value); setPage(1); }}
-            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200 w-full sm:w-auto"
             aria-label="Filtrer par genre"
           >
             <option value="all">Tous les genres</option>
@@ -344,7 +309,7 @@ export default function AdminSeriesPage() {
           <select
             value={statusFilter}
             onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200"
+            className="bg-gray-800 border border-indigo-400 rounded-md px-3 py-2 text-sm text-indigo-200 w-full sm:w-auto"
             aria-label="Filtrer par statut"
           >
             <option value="all">Tous les statuts</option>
