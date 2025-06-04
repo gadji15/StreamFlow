@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, User, Film, Tv, Search, Bell, Sparkles, Home, Layers } from 'lucide-react';
+import { Menu, X, User, Film, Tv, Search, Bell, Sparkles, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // import { ModeToggle } from '@/components/mode-toggle';
@@ -114,7 +114,7 @@ export default function Header() {
                     : 'text-gray-300 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-400 hover:text-white hover:shadow'
                 }`}
             >
-              <Layers className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/suggestions' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
+              <Sparkles className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/suggestions' ? 'text-white drop-shadow' : 'text-emerald-200 group-hover:text-white'}`} />
               Suggestions
             </Link>
             <Link
@@ -252,7 +252,10 @@ export default function Header() {
                 className="block py-2 hover:text-white"
                 onClick={() => setNavOpen(false)}
               >
-                Suggestions
+                <div className="flex items-center">
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Suggestions
+                </div>
               </Link>
               <Link
                 href="/nouveates"
