@@ -132,7 +132,7 @@ function MobileRegisterForm(props: any) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2 mt-8 md:mt-12">
       <div className="w-[95vw] max-w-xs bg-gray-900/95 rounded-2xl shadow-xl p-3 border border-gray-800 mx-auto">
         <div className="mb-3 flex flex-col items-center">
           <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2 justify-center">
@@ -483,7 +483,7 @@ function DesktopRegisterForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2 mt-8 md:mt-12">
       <div className="w-[95vw] max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl bg-gray-900/95 rounded-2xl shadow-2xl p-0 border border-gray-800 flex flex-col md:flex-row overflow-hidden mx-auto">
         {/* Section gauche : Formulaire */}
         <div className="flex-1 p-3 md:p-8 overflow-visible">
