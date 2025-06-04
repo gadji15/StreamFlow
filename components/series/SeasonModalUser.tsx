@@ -27,6 +27,8 @@ interface SeasonModalUserProps {
   selectedSeasonIndex: number;
   onSeasonChange: (index: number) => void;
   onEpisodeClick: (episode: Episode) => void;
+  currentEpisodeId?: string;
+  triggerRef?: React.RefObject<HTMLElement>;
 }
 
 const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
@@ -36,6 +38,8 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
   selectedSeasonIndex,
   onSeasonChange,
   onEpisodeClick,
+  currentEpisodeId,
+  triggerRef,
 }) => {
   const season = seasons[selectedSeasonIndex];
 
@@ -45,6 +49,25 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
 
   // For focus trap
   const modalRef = useRef<HTMLDivElement | null>(null);
+
+  // Store grid column count for navigation
+  const [cols, setCols] = React.useState(2);
+
+  // Detect columns on mount/update (responsive)
+  useEffect(() => {
+    if (!open) return;
+    // Try to detect the grid columns when rendered
+    setTimeout(() => {
+      const grid = modalRef.current?.querySelector(".episode-grid");
+      if (grid) {
+        const style = window.getComputedStyle(grid);
+        const template = style.getPropertyValue("grid-template-columns");
+        if (template) {
+          setCols(template.split(" ").length);
+        }
+      }
+    }, 60);
+  }, [open, selectedSeasonIndex, season?.episodes?.length]);
 
   useEffect(() => {
     if (selectedSeasonIndex > prevSeasonIdx.current) setDirection("right");
@@ -98,6 +121,7 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
+      // Season navigation
       if (e.key === "ArrowLeft" && canGoPrev) {
         setDirection("left");
         onSeasonChange(selectedSeasonIndex - 1);
@@ -106,11 +130,17 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
         setDirection("right");
         onSeasonChange(selectedSeasonIndex + 1);
       }
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        // Focus return on close
+        setTimeout(() => {
+          if (triggerRef?.current) triggerRef.current.focus();
+        }, 50);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, selectedSeasonIndex, canGoPrev, canGoNext, onSeasonChange, onClose]);
+  }, [open, selectedSeasonIndex, canGoPrev, canGoNext, onSeasonChange, onClose, triggerRef]);
 
   // For a11y: label id
   const titleId = `season-modal-title-${season?.id || "x"}`;
@@ -212,7 +242,12 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
                 </button>
               </div>
               <button
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => {
+                    if (triggerRef?.current) triggerRef.current.focus();
+                  }, 50);
+                }}
                 aria-label="Fermer"
                 className="p-1 rounded hover:bg-gray-800 transition-colors absolute right-4"
                 tabIndex={0}
@@ -244,17 +279,35 @@ const SeasonModalUser: React.FC<SeasonModalUserProps> = ({
                 {/* Episodes grid */}
                 <div className="flex-1 overflow-y-auto px-4 pb-4">
                   {season?.episodes && season.episodes.length > 0 ? (
-                    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                      {season.episodes.map((ep) => (
+                    <div
+                      className="episode-grid grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                      tabIndex={-1}
+                    >
+                      {season.episodes.map((ep, idx) => (
                         <button
                           key={ep.id}
                           tabIndex={0}
-                          className="text-left focus:outline-none focus:ring-2 focus:ring-primary/80 rounded"
+                          className={cn(
+                            "text-left focus:outline-none focus:ring-2 focus:ring-primary/80 rounded transition",
+                            currentEpisodeId === ep.id && "ring-2 ring-primary/80 ring-offset-2 ring-offset-gray-900"
+                          )}
                           onClick={() => onEpisodeClick(ep)}
                           onKeyDown={e => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               onEpisodeClick(ep);
+                            }
+                            // Navigation grille au clavier
+                            if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) {
+                              e.preventDefault();
+                              const total = season.episodes.length;
+                              let nextIdx = idx;
+                              if (e.key === "ArrowRight") nextIdx = (idx + 1) % total;
+                              if (e.key === "ArrowLeft") nextIdx = (idx - 1 + total) % total;
+                              if (e.key === "ArrowDown") nextIdx = Math.min(idx + cols, total - 1);
+                              if (e.key === "ArrowUp") nextIdx = Math.max(idx - cols, 0);
+                              const btns = (e.currentTarget.parentElement?.querySelectorAll("button") || []);
+                              (btns[nextIdx] as HTMLElement | undefined)?.focus();
                             }
                           }}
                           aria-label={ep.title ? `Épisode ${ep.episode_number} : ${ep.title}` : `Épisode ${ep.episode_number}`}
