@@ -19,6 +19,7 @@ type WatchLayoutProps = {
   backdropUrl?: string;
   description?: string;
   metadata?: React.ReactNode;
+  afterPlayer?: React.ReactNode; // NOUVEAU : pour placer du contenu juste après le player
   children?: React.ReactNode;
   suggestions?: SuggestionItem[];
   suggestionsTitle?: string;
@@ -139,6 +140,9 @@ export default function WatchLayout({
             <div className="flex h-full items-center justify-center text-gray-400">Aucune vidéo disponible.</div>
           )}
         </div>
+
+        {/* Bloc custom juste après le player */}
+        {afterPlayer}
 
         {/* Metadata et infos */}
         {metadata && (

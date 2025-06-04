@@ -212,47 +212,48 @@ export default function WatchEpisodePage() {
         series?.genre ? `/series?genre=${encodeURIComponent(series.genre)}` : undefined
       }
       suggestionsLinkLabel="Voir tout"
-    >
-      {/* Navigation épisodes */}
-      <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
-        <button
-          className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-          onClick={() => setIsSeasonModalOpen(true)}
-          aria-label="Sélectionner saison/épisode"
-        >
-          saison/épisode
-        </button>
-        <div className="flex gap-2">
-          {previousEpisode && (
-            <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-              onClick={goToPreviousEpisode}
-              aria-label="Épisode précédent"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              P
-            </button>
-          )}
-          {nextEpisode && (
-            <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
-              onClick={goToNextEpisode}
-              aria-label="Épisode suivant"
-            >
-              S
-              <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
-            </button>
-          )}
-        </div>
-        <SeasonModalUser
-          open={isSeasonModalOpen}
-          onClose={() => setIsSeasonModalOpen(false)}
-          seasons={seasons}
-          selectedSeasonIndex={selectedSeasonIndex}
-          onSeasonChange={setSelectedSeasonIndex}
-          onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
-        />
-      </nav>
-    </WatchLayout>
+      afterPlayer={
+        // Navigation épisodes
+        <nav className="w-full flex justify-between items-center mt-4 gap-2" aria-label="Navigation épisodes">
+          <button
+            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+            onClick={() => setIsSeasonModalOpen(true)}
+            aria-label="Sélectionner saison/épisode"
+          >
+            saison/épisode
+          </button>
+          <div className="flex gap-2">
+            {previousEpisode && (
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                onClick={goToPreviousEpisode}
+                aria-label="Épisode précédent"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                P
+              </button>
+            )}
+            {nextEpisode && (
+              <button
+                className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+                onClick={goToNextEpisode}
+                aria-label="Épisode suivant"
+              >
+                S
+                <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+              </button>
+            )}
+          </div>
+          <SeasonModalUser
+            open={isSeasonModalOpen}
+            onClose={() => setIsSeasonModalOpen(false)}
+            seasons={seasons}
+            selectedSeasonIndex={selectedSeasonIndex}
+            onSeasonChange={setSelectedSeasonIndex}
+            onEpisodeClick={(ep) => handleEpisodeClick(ep as EpisodeType)}
+          />
+        </nav>
+      }
+    />
   );
 }
