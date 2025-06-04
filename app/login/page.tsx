@@ -47,24 +47,25 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-gray-900/95 shadow-2xl p-8 border border-gray-800">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 px-2 mt-8 md:mt-12">
+      <div className="w-[95vw] max-w-sm bg-gray-900/95 rounded-2xl shadow-2xl p-4 md:p-8 border border-gray-800 mx-auto">
         <h1 className="text-2xl font-bold mb-1 text-center flex items-center gap-2 justify-center">
           <LogIn className="w-6 h-6 text-primary" /> Connexion
         </h1>
         <p className="text-center text-gray-400 mb-6">Connectez-vous à votre compte StreamFlow</p>
 
         {/* Google Button */}
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 py-2.5 text-sm font-semibold text-gray-100 hover:bg-gray-700 transition mb-5 shadow-sm"
+          className="w-full flex items-center justify-center gap-2 text-gray-200 border-gray-700 hover:bg-gray-700/70 transition mb-5"
           disabled={googleLoading}
           aria-label="Connexion avec Google"
         >
-          <FcGoogle className="w-6 h-6" />
+          <FcGoogle className="h-5 w-5 mr-2" />
           {googleLoading ? "Connexion..." : "Se connecter avec Google"}
-        </button>
+        </Button>
 
         <div className="flex items-center my-6">
           <div className="flex-1 h-px bg-gray-700" />
