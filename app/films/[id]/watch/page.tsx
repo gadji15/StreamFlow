@@ -394,26 +394,24 @@ export default function WatchFilmPage() {
             )}
           </div>
           <div
-            className="grid gap-3"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))",
-            }}
+            className="flex flex-wrap gap-x-5 gap-y-6"
           >
             {suggestions.map((film, idx) => (
-              <FilmCard
-                key={film.id}
-                movie={{
-                  ...film,
-                  poster: film.poster
-                    ? /^https?:\/\//.test(film.poster)
-                      ? film.poster
-                      : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png",
-                  isVIP: film.isvip ?? film.is_vip,
-                }}
-                isUserVIP={false}
-                animationDelay={`${idx * 0.06}s`}
-              />
+              <div key={film.id} style={{ width: 134, flex: '0 0 auto' }}>
+                <FilmCard
+                  movie={{
+                    ...film,
+                    poster: film.poster
+                      ? /^https?:\/\//.test(film.poster)
+                        ? film.poster
+                        : getTMDBImageUrl(film.poster, "w300")
+                      : "/placeholder-poster.png",
+                    isVIP: film.isvip ?? film.is_vip,
+                  }}
+                  isUserVIP={false}
+                  animationDelay={`${idx * 0.06}s`}
+                />
+              </div>
             ))}
           </div>
         </div>

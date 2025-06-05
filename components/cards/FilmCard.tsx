@@ -36,7 +36,7 @@ export default function FilmCard({ movie, isUserVIP, animationDelay }: FilmCardP
         aspectRatio: "2/3"
       }}
     >
-      <div className="relative aspect-[2/3]">
+      <div className="relative aspect-[2/3] flex flex-col justify-end">
         <img
           src={posterSrc}
           alt={`Affiche de ${title}`}
@@ -45,19 +45,22 @@ export default function FilmCard({ movie, isUserVIP, animationDelay }: FilmCardP
           style={{ willChange: 'transform, filter' }}
         />
         {isVIP && (
-          <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-[11px] font-bold shadow animate-pulse">
+          <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-[11px] font-bold shadow animate-pulse z-20">
             VIP
           </div>
         )}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
           <Film className="h-8 w-8 text-white drop-shadow-lg" />
         </div>
-      </div>
-      <div className="p-2 transition-colors duration-200 group-hover:bg-gray-900/70">
-        <div className="flex items-center w-full">
-          <h3 className="font-semibold text-xs truncate flex-1 group-hover:text-primary transition-colors">{title}</h3>
-          <span className="ml-2 text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors whitespace-nowrap">{year ?? ""}</span>
+        {/* Badge Titre + Année */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/80 px-2 py-1 flex items-center justify-between z-20">
+          <span className="font-semibold text-xs truncate text-white flex-1">{title}</span>
+          <span className="ml-2 text-[11px] text-white/80 whitespace-nowrap">{year ?? ""}</span>
         </div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/80 px-2 py-1 flex items-center justify-between z-10">
+        <span className="font-semibold text-xs truncate text-white flex-1">{title}</span>
+        <span className="ml-2 text-[11px] text-white/80 whitespace-nowrap">{year ?? ""}</span>
       </div>
     </Link>
   );
