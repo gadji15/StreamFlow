@@ -52,18 +52,30 @@ export default function HistoriquePage() {
       const seriesIds = history.filter(h => h.series_id).map(h => h.series_id as string);
       const episodeIds = history.filter(h => h.episode_id).map(h => h.episode_id as string);
 
-      // Batch fetch for each type (évite les requêtes multiples)
-      const [filmsRes, seriesRes, episodesRes] = await Promise.all([
-        filmIds.length
-          ? fetch(`/api/fetch-multiple?table=films&ids=${filmIds.join(",")}`).then(r => r.json())
-          : [],
-        seriesIds.length
-          ? fetch(`/api/fetch-multiple?table=series&ids=${seriesIds.join(",")}`).then(r => r.json())
-          : [],
-        episodeIds.length
-          ? fetch(`/api/fetch-multiple?table=episodes&ids=${episodeIds.join(",")}`).then(r => r.json())
-          : [],
-      ]);
+      // Nouvelle version : un seul fetch POST dynamique
+      let filmsRes: any[] = [], seriesRes: any[] = [], episodesRes: any[] = [];
+      try {
+        const apiResponse = await fetch("/api/fetch-multiple", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requests: [
+              filmIds.length ? { table: "films", ids: filmIds } : null,
+              seriesIds.length ? { table: "series", ids: seriesIds } : null,
+              episodeIds.length ? { table: "episodes", ids: episodeIds } : null,
+            ].filter(Boolean)
+          }),
+        });
+        const { films = [], series = [], episodes = [] } = await apiResponse.json();
+        filmsRes = films;
+        seriesRes = series;
+        episodesRes = episodes;
+      } catch (err) {
+        // Vous pouvez afficher une erreur si besoin
+        filmsRes = [];
+        seriesRes = [];
+        episodesRes = [];
+      }
 
       // Build map: key = `${type}:${id}`
       const map: Record<string, ContentData> = {};
