@@ -275,7 +275,12 @@ export default function WatchFilmPage() {
               })()}
             </h2>
             {/* Grille des parties incluant le film courant */}
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))",
+              }}
+            >
               {/* Film actuel en premier */}
               {movie && (
                 <div className="relative group flex flex-col">
@@ -388,7 +393,12 @@ export default function WatchFilmPage() {
               })()
             )}
           </div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))",
+            }}
+          >
             {suggestions.map((film, idx) => (
               <FilmCard
                 key={film.id}

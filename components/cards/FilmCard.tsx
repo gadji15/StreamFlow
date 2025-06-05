@@ -54,8 +54,10 @@ export default function FilmCard({ movie, isUserVIP, animationDelay }: FilmCardP
         </div>
       </div>
       <div className="p-2 transition-colors duration-200 group-hover:bg-gray-900/70">
-        <h3 className="font-semibold truncate text-xs group-hover:text-primary transition-colors">{title}</h3>
-        <p className="text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors">{year ?? ""}</p>
+        <div className="flex items-center w-full">
+          <h3 className="font-semibold text-xs truncate flex-1 group-hover:text-primary transition-colors">{title}</h3>
+          <span className="ml-2 text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors whitespace-nowrap">{year ?? ""}</span>
+        </div>
       </div>
     </Link>
   );
