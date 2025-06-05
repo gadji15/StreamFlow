@@ -118,6 +118,8 @@ export default function EpisodeList({
         title: form.title,
         description: form.description || '',
         video_url: form.video_url || null,
+        streamtape_url: form.streamtape_url || null,
+        uqload_url: form.uqload_url || null,
         trailer_url: form.trailer_url || null,
         thumbnail_url: form.thumbnail_url || null,
         air_date: form.air_date || null,
@@ -134,9 +136,7 @@ export default function EpisodeList({
         vote_count: form.vote_count ? Number(form.vote_count) : null,
         vote_average: form.vote_average ? Number(form.vote_average) : null
       };
-      if (process.env.NODE_ENV === "development") {
-        console.log("handleAddEpisode: insertObj for Supabase", insertObj);
-      }
+      console.log("handleAddEpisode: insertObj for Supabase", insertObj);
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
