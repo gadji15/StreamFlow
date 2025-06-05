@@ -27,8 +27,26 @@ export type FilmModalProps = {
 };
 
 export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {
+  // --- SAGAS ---
+  const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    // Charger la liste des sagas au montage du modal
+    async function fetchSagas() {
+      try {
+        const { data, error } = await supabase
+          .from("sagas")
+          .select("id, name")
+          .order("name", { ascending: true });
+        if (!error && Array.isArray(data)) setSagas(data);
+        else setSagas([]);
+      } catch {
+        setSagas([]);
+      }
+    }
+    if (open) fetchSagas();
+  }, [open]);
+
   // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
-  // Initialisation du champ featured selon homepage_categories
   function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
     const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
     return cats.includes('featured') || !!init.featured;
@@ -70,6 +88,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         ? JSON.parse(initialData.cast)
         : []),
     no_video: !!initialData.no_video, // flag pour absence de vidéo
+
+    // Ajout saga/partie :
+    saga_id: initialData.saga_id || "",
+    part_number: initialData.part_number || "",
   });
 
   // CAST UI STATE
@@ -122,7 +144,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         imdb_id: initialData.imdb_id || "",
         description: initialData.description || "",
         trailer_url: initialData.trailer_url || "",
-        video_url: initialData.video_url || "",
         language: initialData.language || "",
         homepage_categories: Array.isArray(initialData.homepage_categories)
           ? initialData.homepage_categories
@@ -134,6 +155,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
             ? JSON.parse(initialData.cast)
             : []),
         no_video: !!initialData.no_video,
+        saga_id: initialData.saga_id || "",
+        part_number: initialData.part_number || "",
       };
     });
     setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
@@ -547,6 +570,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       homepage_categories_sync = homepage_categories_sync.filter((cat) => cat !== "featured");
     }
 
+    // Ajout saga_id et part_number
+    let saga_id: string | null = form.saga_id && `${form.saga_id}`.trim() !== "" ? form.saga_id : null;
+    let part_number: number | null = form.part_number !== undefined && form.part_number !== "" ? Number(form.part_number) : null;
+
     return {
       title: form.title?.trim() || "",
       original_title: form.original_title?.trim() || null,
@@ -573,6 +600,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       popularity,
       cast,
       no_video,
+      saga_id,
+      part_number,
     };
   }
 
@@ -960,6 +989,42 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
               {errors.duration && (
                 <div className="text-xs text-red-400 mt-0.5">{errors.duration}</div>
               )}
+            </div>
+          </div>
+
+          {/* --- SAGA & PARTIE --- */}
+          <div className="flex flex-col sm:flex-row gap-1">
+            <div className="flex-1">
+              <label htmlFor="saga_id" className="block text-[11px] font-medium text-white/80">
+                Saga / Continuité
+              </label>
+              <select
+                id="saga_id"
+                value={form.saga_id}
+                onChange={e => handleChange("saga_id", e.target.value)}
+                className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+              >
+                <option value="">Aucune (film indépendant)</option>
+                {sagas.map(saga => (
+                  <option key={saga.id} value={saga.id}>
+                    {saga.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label htmlFor="part_number" className="block text-[11px] font-medium text-white/80">
+                Numéro de partie (dans la saga)
+              </label>
+              <input
+                id="part_number"
+                type="number"
+                min="1"
+                value={form.part_number}
+                onChange={e => handleChange("part_number", e.target.value)}
+                className="mt-0.5 w-full rounded-lg border border-neutral-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/40 px-2 py-1 bg-gray-800 text-white text-xs transition-shadow"
+                placeholder="1, 2, 3..."
+              />
             </div>
           </div>
           <div>
