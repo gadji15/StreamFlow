@@ -182,29 +182,13 @@ export default function WatchFilmPage() {
 
   return (
     <>
-      <div className="w-full max-w-3xl mx-auto aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
+      <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
-          videoUrl={movie?.video_url || undefined}
-          posterUrl={movie?.posterUrl}
         />
       </div>
-      <WatchLayout
-        title={movie?.title || "Lecture film"}
-        seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
-        videoUrl={""} {/* on ne passe plus rien ici, le player est géré au-dessus */}
-        posterUrl={movie?.posterUrl}
-        backdropUrl={movie?.backdropUrl}
-        loading={loading}
-        error={error || (!movie ? "Film introuvable" : undefined)}
-        onBack={goBack}
-        backLabel={
-          <span className="flex items-center"><ArrowLeft className="h-5 w-5 mr-2" /> Retour à la fiche film</span>
-        }
-        isVip={movie?.is_vip}
-        metadata={
-          movie && (
+      {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
             <>
               <div className="flex flex-wrap items-center gap-3 mb-1">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
