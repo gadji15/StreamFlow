@@ -102,35 +102,35 @@ export default function SearchBar() {
           </div>
         ) : (
           <div
-            className="grid gap-3"
+            className="grid gap-2"
             style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+              gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))"
             }}
           >
             {results.map(result =>
-              result.type === "film" ? (
-                <FilmCard
-                  key={result.id}
-                  movie={{
-                    id: result.id,
-                    title: result.title,
-                    poster: result.image,
-                    year: result.year,
-                    isVIP: false,
-                  }}
-                />
-              ) : (
-                <SeriesCard
-                  key={result.id}
-                  series={{
-                    id: result.id,
-                    title: result.title,
-                    poster: result.image,
-                    year: result.year,
-                    isVIP: false,
-                  }}
-                />
-              )
+              <div key={result.id} className="w-[110px] mx-auto">
+                {result.type === "film" ? (
+                  <FilmCard
+                    movie={{
+                      id: result.id,
+                      title: result.title,
+                      poster: result.image,
+                      year: result.year,
+                      isVIP: false,
+                    }}
+                  />
+                ) : (
+                  <SeriesCard
+                    series={{
+                      id: result.id,
+                      title: result.title,
+                      poster: result.image,
+                      year: result.year,
+                      isVIP: false,
+                    }}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}
