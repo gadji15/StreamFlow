@@ -190,6 +190,7 @@ export default function WatchEpisodePage() {
           videoUrl={episode?.video_url || undefined}
           streamtapeUrl={episode?.streamtape_url || undefined}
           uqloadUrl={episode?.uqload_url || undefined}
+          loading={loading}
         />
       </div>
 
