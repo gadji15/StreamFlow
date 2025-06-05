@@ -118,6 +118,8 @@ export default function EpisodeList({
         title: form.title,
         description: form.description || '',
         video_url: form.video_url || null,
+        streamtape_url: form.streamtape_url || null,
+        uqload_url: form.uqload_url || null,
         trailer_url: form.trailer_url || null,
         thumbnail_url: form.thumbnail_url || null,
         air_date: form.air_date || null,
@@ -134,9 +136,7 @@ export default function EpisodeList({
         vote_count: form.vote_count ? Number(form.vote_count) : null,
         vote_average: form.vote_average ? Number(form.vote_average) : null
       };
-      if (process.env.NODE_ENV === "development") {
-        console.log("handleAddEpisode: insertObj for Supabase", insertObj);
-      }
+      console.log("handleAddEpisode: insertObj for Supabase", insertObj);
       const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase.from("episodes").insert([insertObj]).select().single();
       if (error) {
@@ -182,7 +182,8 @@ export default function EpisodeList({
         toast({ title: "Erreur", description: "ID d'épisode manquant", variant: "destructive" });
         return;
       }
-      // On prépare explicitement tous les champs à mettre à jour
+      // On prépare explicitement tous les champs à mettre à jour,
+      // y compris toutes les sources vidéo
       const updateObj: any = {
         episode_number: rest.episode_number,
         title: rest.title,
@@ -191,6 +192,7 @@ export default function EpisodeList({
         isvip: rest.isvip ?? false,
         air_date: rest.air_date || null,
         thumbnail_url: rest.thumbnail_url || null,
+        video_url: rest.video_url || null,
         streamtape_url: rest.streamtape_url || null,
         uqload_url: rest.uqload_url || null,
         trailer_url: rest.trailer_url || null,
@@ -198,9 +200,11 @@ export default function EpisodeList({
         tmdb_id: rest.tmdb_id ?? null,
         tmdb_series_id: rest.tmdb_series_id ?? null,
         sort_order: rest.sort_order ?? null,
-        // ajoute ici tout autre champ éditable
+        // autres champs éditables
         updated_at: new Date().toISOString(),
       };
+
+      console.log("handleEditEpisode: updateObj for Supabase", updateObj);
 
       const { error } = await supabase.from("episodes").update(updateObj).eq("id", id);
       if (error) {

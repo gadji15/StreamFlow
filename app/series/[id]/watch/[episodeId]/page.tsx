@@ -281,20 +281,20 @@ export default function WatchEpisodePage() {
         <h2 className="text-xl font-bold mb-2">Séries similaires</h2>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-          {similarSeries.map((serie) => (
-            <a
+          {similarSeries.map((serie, idx) => (
+            <MediaPosterCard
               key={serie.id}
               href={`/series/${serie.id}`}
-              className="block group"
-            >
-              <img
-                src={serie.poster || "/placeholder-poster.png"}
-                alt={serie.title}
-                className="w-full h-56 object-cover rounded-lg group-hover:scale-105 transition"
-              />
-              <h3 className="mt-2 text-gray-200 font-semibold text-sm">{serie.title}</h3>
-              <div className="text-xs text-gray-400">{serie.genre}</div>
-            </a>
+              poster={serie.poster}
+              title={serie.title}
+              year={
+                (serie.start_year ?? serie.startYear ?? "") +
+                ((serie.end_year ?? serie.endYear) ? ` - ${(serie.end_year ?? serie.endYear)}` : "")
+              }
+              isVIP={serie.is_vip}
+              isMovie={false}
+              animationDelay={`${idx * 0.06}s`}
+            />
           ))}
         </div>
       </div>

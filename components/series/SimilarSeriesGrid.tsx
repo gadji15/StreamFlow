@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Tv } from "lucide-react";
+import MediaPosterCard from "../MediaPosterCard";
 import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -98,7 +97,7 @@ export default function SimilarSeriesGrid({
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       "
     >
-      {similarLocal.map((serie) => {
+      {similarLocal.map((serie, idx) => {
         // Gestion des données pour harmoniser l'affichage
         const poster =
           serie.poster ||
@@ -110,66 +109,24 @@ export default function SimilarSeriesGrid({
         const endYear = serie.end_year ?? serie.endYear ?? "";
         const isVIP = serie.is_vip ?? serie.isVIP ?? false;
 
+        // Affichage identique à la home : année ou période
+        const subtitle = startYear
+          ? endYear
+            ? `${startYear} - ${endYear}`
+            : `${startYear}`
+          : "";
+
         return (
-          <Link
+          <MediaPosterCard
             key={serie.id}
             href={`/series/${serie.id}`}
-            className={`
-              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-              flex flex-col items-center
-              rounded-md
-              sm:rounded-lg md:rounded-xl
-              h-full
-            `}
-          >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-              `}
-            >
-              <img
-                src={poster}
-                alt={title}
-                className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
-                `}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder-poster.png";
-                }}
-                loading="lazy"
-              />
-              {isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Tv className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-              <h3
-                className={`
-                  truncate font-medium w-full text-center
-                  text-xs
-                  sm:text-sm
-                  md:text-base
-                `}
-              >
-                {title}
-              </h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">
-                {startYear}
-                {endYear ? ` - ${endYear}` : ""}
-              </p>
-            </div>
-          </Link>
+            poster={poster}
+            title={title}
+            subtitle={subtitle}
+            isVIP={isVIP}
+            isMovie={false}
+            animationDelay={`${idx * 0.06}s`}
+          />
         );
       })}
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchTMDBSimilarMovies, getTMDBImageUrl, TMDBMovie } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
+import MediaPosterCard from "./MediaPosterCard";
 
 /**
  * Affiche les films similaires disponibles dans la base interne,
@@ -101,65 +101,16 @@ export default function SimilarMoviesGrid({ tmdbId }: { tmdbId: string }) {
       `}
     >
       {internalMovies.map((item, idx) => (
-        <Link
+        <MediaPosterCard
           key={item.id}
           href={`/films/${item.id}`}
-          className={`
-            bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-            flex flex-col items-center
-            rounded-md
-            sm:rounded-lg md:rounded-xl
-            h-full
-          `}
-          style={{
-            opacity: 0,
-            animation: `fadeInUp 0.54s cubic-bezier(.23,1.02,.25,1) forwards`,
-            animationDelay: `${idx * 0.06}s`
-          }}
-        >
-          <div
-            className={`
-              relative aspect-[2/3]
-              w-full
-              h-full
-              flex flex-col items-center
-            `}
-          >
-            <img
-              src={item.poster || "/placeholder-poster.png"}
-              alt={item.title}
-              className={`
-                w-full h-full object-cover transition-all duration-300
-                rounded-md
-                sm:rounded-lg
-                md:rounded-xl
-              `}
-              onError={e => {
-                (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-              }}
-              loading="lazy"
-            />
-            {item.is_vip && (
-              <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                VIP
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v16h16V4H4zm4 4h8v8H8V8z"></path></svg>
-            </div>
-          </div>
-          <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-            <h3 className={`
-              truncate font-medium w-full text-center
-              text-xs
-              sm:text-sm
-              md:text-base
-            `}>{item.title}</h3>
-            <p className="text-[11px] text-gray-400 w-full text-center">
-              {item.year}
-            </p>
-          </div>
-        </Link>
+          poster={item.poster}
+          title={item.title}
+          year={item.year}
+          isVIP={item.is_vip}
+          isMovie={true}
+          animationDelay={`${idx * 0.06}s`}
+        />
       ))}
       <style>{`
         @keyframes fadeInUp {
