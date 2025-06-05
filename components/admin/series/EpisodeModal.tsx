@@ -398,6 +398,9 @@ export default function EpisodeModal({
         uqloadUrlToSave = null;
       }
 
+      // Log du state brut du formulaire juste avant le mapping
+      console.log("DEBUG FORM AVANT SUBMIT", form);
+
       // On transmet explicitement toutes les sources, même si video_url est vide
       const submitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
