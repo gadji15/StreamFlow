@@ -1,5 +1,17 @@
 import React, { useState } from "react";
 
+// Helper pour transformer une URL Uqload en URL embed
+function getUqloadEmbedUrl(url: string) {
+  try {
+    // Match ID dans l'URL: https://uqload.net/xyz123.html ou https://uqload.io/xyz123.html
+    const match = url.match(/uqload\.(?:net|io)\/([a-zA-Z0-9]+)/);
+    if (match && match[1]) {
+      return `https://uqload.${url.includes('.io') ? 'io' : 'net'}/embed-${match[1]}.html`;
+    }
+  } catch {}
+  return url; // fallback
+}
+
 /**
  * Composant pour afficher un lecteur Streamtape/Uqload avec switch.
  * 
@@ -73,7 +85,7 @@ export default function VideoMultiPlayer({
         )}
         {active === "uqload" && uqloadUrl && (
           <iframe
-            src={uqloadUrl}
+            src={getUqloadEmbedUrl(uqloadUrl)}
             allowFullScreen
             className="absolute top-0 left-0 w-full h-full"
             frameBorder={0}
@@ -81,6 +93,9 @@ export default function VideoMultiPlayer({
             title="Lecteur Uqload"
           />
         )}
+
+        {/* Helper pour générer le lien embed Uqload */}
+        {/* Place ce helper tout en haut du fichier */}
       </div>
     </div>
   );
