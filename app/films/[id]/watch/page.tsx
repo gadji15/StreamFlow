@@ -182,6 +182,7 @@ export default function WatchFilmPage() {
 
   return (
     <>
+      {console.log("MOVIE DEBUG", movie)}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
