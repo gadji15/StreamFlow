@@ -182,6 +182,8 @@ export default function WatchEpisodePage() {
   return (
     <>
       {/* Player harmonisé */}
+      {/* Debug : log des données épisode */}
+      {console.log("EPISODE DEBUG", episode)}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           videoUrl={episode?.video_url || undefined}
