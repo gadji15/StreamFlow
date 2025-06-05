@@ -23,11 +23,13 @@ export default function VideoMultiPlayer({
   streamtapeUrl,
   uqloadUrl,
   height = 420,
+  loading = false,
 }: {
   videoUrl?: string;
   streamtapeUrl?: string;
   uqloadUrl?: string;
   height?: number;
+  loading?: boolean;
 }) {
   // Inclure toutes les sources disponibles
   const available = [
@@ -46,7 +48,15 @@ export default function VideoMultiPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoUrl, streamtapeUrl, uqloadUrl]);
 
-  if (available.length === 0) {
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center items-center min-h-[200px]">
+        <span className="text-gray-400 animate-pulse">Chargement du lecteur vidéo...</span>
+      </div>
+    );
+  }
+
+  if (!loading && available.length === 0) {
     return <div className="text-center text-red-500">Aucune source vidéo disponible.</div>;
   }
 

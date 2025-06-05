@@ -188,6 +188,7 @@ export default function WatchFilmPage() {
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
+          loading={loading}
         />
       </div>
       {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
@@ -235,7 +236,58 @@ export default function WatchFilmPage() {
         </div>
         {/* Suggestions */}
         <div className="mt-8">
-          <h2 className="text-xl font-bold text-white mb-2">Films similaires</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+            <h2 className="text-2xl font-extrabold text-primary flex items-center gap-2 tracking-wide drop-shadow mb-0">
+              <span className="inline-block">
+                <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
+              </span>
+              Films similaires
+            </h2>
+            {movie?.genre && (
+              (() => {
+                // Mapping du label ou du champ genre vers le slug utilisé dans l'URL
+                const GENRE_SLUGS: Record<string, string> = {
+                  "Action": "action",
+                  "Comédie": "comedy",
+                  "Drame": "drama",
+                  "Animation": "animation",
+                  "Famille": "family",
+                  "Science-Fiction": "sci-fi",
+                  "Aventure": "adventure",
+                  "Documentaire": "documentary",
+                  // Ajoutez d'autres mappings si nécessaire
+                };
+                // Utilise le slug si trouvé, sinon fallback sur la version minuscule sans espaces
+                const genreSlug = GENRE_SLUGS[movie.genre] ?? (movie.genre || "").toLowerCase().replace(/\s+/g, "-");
+                return (
+                  <a
+                    href={`/films?genre=${encodeURIComponent(genreSlug)}`}
+                    className={`
+                      text-sm flex items-center font-medium
+                      bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+                      bg-clip-text text-transparent
+                      underline underline-offset-4
+                      transition-all duration-300
+                      hover:bg-none hover:text-violet-400 hover:scale-105
+                      focus:outline-none
+                    `}
+                    style={{
+                      WebkitTextFillColor: 'transparent',
+                      background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+                      WebkitBackgroundClip: 'text',
+                      padding: 0,
+                      border: "none"
+                    }}
+                  >
+                    <span className="underline underline-offset-4">
+                      Voir tout
+                    </span>
+                    <svg className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </a>
+                );
+              })()
+            )}
+          </div>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
             {suggestions.map((film, idx) => (
               <MediaPosterCard
@@ -256,16 +308,6 @@ export default function WatchFilmPage() {
               />
             ))}
           </div>
-          {movie?.genre && (
-            <div className="mt-4">
-              <a
-                href={`/films?genre=${encodeURIComponent(movie.genre)}`}
-                className="text-primary underline"
-              >
-                Voir tout
-              </a>
-            </div>
-          )}
         </div>
       </>
   );

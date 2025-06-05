@@ -316,12 +316,6 @@ function FilmCard({ movie, isUserVIP }: FilmCardProps) {
       <div className="p-3 transition-colors duration-200 group-hover:bg-gray-900/70">
         <div className="flex justify-between items-start">
           <h3 className="font-semibold truncate text-sm flex-1 group-hover:text-primary transition-colors duration-200">{title}</h3>
-          {popularity && (
-            <div className="flex items-center ml-2">
-              <Star className="h-3 w-3 text-yellow-400 fill-current animate-bounce-slow" />
-              <span className="text-xs ml-0.5">{popularity}</span>
-            </div>
-          )}
         </div>
         <p className="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-200">{year}</p>
       </div>

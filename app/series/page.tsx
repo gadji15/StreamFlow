@@ -268,41 +268,43 @@ interface SeriesCardProps {
 }
 
 function SeriesCard({ series, isUserVIP }: SeriesCardProps) {
-  const { id, title, poster, startYear, endYear, isVIP } = series;
+  const { id, title, poster, year, isVIP } = series as Series & { year?: number };
   const posterSrc = poster || '/placeholder-poster.png';
 
   return (
     <Link
       href={`/series/${id}`}
-      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-lg ${
-        isVIP && !isUserVIP ? 'opacity-70' : ''
-      }`}
+      className={`group block bg-gray-800 rounded-lg overflow-hidden transition-all duration-300
+        hover:scale-[1.04] hover:shadow-2xl hover:ring-2 hover:ring-purple-400/40
+        focus-visible:ring-4 focus-visible:ring-purple-400/60
+        ${isVIP && !isUserVIP ? 'opacity-70 grayscale hover:grayscale-0' : ''}
+        `}
       tabIndex={0}
       aria-label={title}
+      style={{ willChange: 'transform, box-shadow' }}
     >
       <div className="relative aspect-[2/3]">
         <img
           src={posterSrc}
           alt={`Affiche de ${title}`}
-          className="w-full h-full object-cover transition group-hover:brightness-90"
+          className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90 group-hover:scale-105"
           loading="lazy"
+          style={{ willChange: 'transform, filter' }}
         />
         {isVIP && (
-          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold shadow">
+          <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold shadow animate-pulse">
             VIP
           </div>
         )}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <Tv className="h-12 w-12 text-white" />
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+          <Tv className="h-12 w-12 text-white drop-shadow-lg animate-fade-in-up" />
         </div>
       </div>
-      <div className="p-3">
+      <div className="p-3 transition-colors duration-200 group-hover:bg-gray-900/70">
         <div className="flex justify-between items-start">
-          <h3 className="font-semibold truncate text-sm flex-1">{title}</h3>
+          <h3 className="font-semibold truncate text-sm flex-1 group-hover:text-purple-400 transition-colors duration-200">{title}</h3>
         </div>
-        <p className="text-xs text-gray-400">
-          {startYear}{endYear ? ` - ${endYear}` : ''}
-        </p>
+        <p className="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-200">{year ?? ''}</p>
       </div>
     </Link>
   );
