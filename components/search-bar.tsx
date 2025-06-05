@@ -101,34 +101,37 @@ export default function SearchBar() {
             Aucun résultat trouvé pour "{searchTerm}"
           </div>
         ) : (
-          <div className="space-y-1">
-            {results.map(result => (
-              <Link
-                key={result.id + result.type}
-                href={result.type === "film" ? `/films/${result.id}` : `/series/${result.id}`}
-                className="flex items-center p-2 rounded-md hover:bg-gray-800 cursor-pointer transition"
-              >
-                <div className="w-10 h-14 rounded overflow-hidden bg-gray-800 flex-shrink-0 flex items-center justify-center">
-                  {result.image ? (
-                    <img src={result.image} alt={result.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs text-gray-500">
-                      {result.type === "film" ? (
-                        <Film className="w-5 h-5" />
-                      ) : (
-                        <Tv className="w-5 h-5" />
-                      )}
-                    </span>
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className="text-white font-medium">{result.title}</p>
-                  <p className="text-xs text-gray-400">
-                    {result.type} • {result.year}
-                  </p>
-                </div>
-              </Link>
-            ))}
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
+            {results.map(result =>
+              result.type === "film" ? (
+                <FilmCard
+                  key={result.id}
+                  movie={{
+                    id: result.id,
+                    title: result.title,
+                    poster: result.image,
+                    year: result.year,
+                    isVIP: false,
+                  }}
+                />
+              ) : (
+                <SeriesCard
+                  key={result.id}
+                  series={{
+                    id: result.id,
+                    title: result.title,
+                    poster: result.image,
+                    year: result.year,
+                    isVIP: false,
+                  }}
+                />
+              )
+            )}
           </div>
         )}
 
