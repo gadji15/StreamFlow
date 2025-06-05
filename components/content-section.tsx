@@ -155,74 +155,34 @@ export function ContentSection({
           [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
         `}
       >
-        {items.slice(0, count).map((item, idx) => (
-          <Link
-            key={item.id}
-            href={`/${isMovie ? 'films' : 'series'}/${item.id}`}
-            className={`
-              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-              flex flex-col items-center
-              rounded-md
-              sm:rounded-lg md:rounded-xl
-              h-full
-            `}
-          >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-              `}
-            >
-              <img
-                src={
-                  (item as Movie | Series).poster ||
-                  (item as any).posterUrl ||
-                  '/placeholder-poster.png'
-                }
-                alt={item.title}
-                className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
-                `}
-                onError={e => {
-                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                }}
-                loading="lazy"
-              />
-              {'isVIP' in item && item.isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                {isMovie ? (
-                  <Film className="w-7 h-7 text-white" />
-                ) : (
-                  <Tv className="w-7 h-7 text-white" />
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-              <h3 className={`
-                truncate font-medium w-full text-center
-                text-xs
-                sm:text-sm
-                md:text-base
-              `}>{item.title}</h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">
-                {isMovie
-                  ? (item as Movie).year
-                  : `${(item as Series).startYear ?? ''}${
-                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                    }`}
-              </p>
-            </div>
-          </Link>
-        ))}
+        {items.slice(0, count).map((item, idx) =>
+          isMovie ? (
+            <MediaPosterCard
+              key={item.id}
+              href={`/films/${item.id}`}
+              poster={(item as Movie).poster || (item as any).posterUrl || '/placeholder-poster.png'}
+              title={item.title}
+              year={(item as Movie).year}
+              isVIP={'isVIP' in item ? (item as any).isVIP : false}
+              isMovie={true}
+              animationDelay={`${idx * 0.06}s`}
+            />
+          ) : (
+            <MediaPosterCard
+              key={item.id}
+              href={`/series/${item.id}`}
+              poster={(item as Series).poster || (item as any).posterUrl || '/placeholder-poster.png'}
+              title={item.title}
+              year={
+                ((item as Series).startYear ?? '') +
+                ((item as Series).endYear ? ` - ${(item as Series).endYear}` : '')
+              }
+              isVIP={'isVIP' in item ? (item as any).isVIP : false}
+              isMovie={false}
+              animationDelay={`${idx * 0.06}s`}
+            />
+          )
+        )}
       </div>
     );
   };
