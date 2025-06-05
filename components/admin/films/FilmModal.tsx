@@ -378,6 +378,36 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         }));
       }
       // Vidéo principale (champ video_url) : TMDB ne fournit pas de vidéo directe, on laisse vide.
+      // --- AUTOMATISATION SAGA AVEC COLLECTION TMDB ---
+      let collectionSagaId = "";
+      if (detail.belongs_to_collection && detail.belongs_to_collection.name) {
+        const collectionName = detail.belongs_to_collection.name.trim();
+        // 1. Vérifier si une saga existe déjà avec ce nom
+        let { data: existingSagas, error: sagaError } = await supabase
+          .from("sagas")
+          .select("id")
+          .eq("name", collectionName)
+          .limit(1);
+        if (!sagaError && existingSagas && existingSagas.length > 0) {
+          collectionSagaId = existingSagas[0].id;
+        } else {
+          // 2. Sinon, créer la saga
+          const { data: newSaga, error: newSagaError } = await supabase
+            .from("sagas")
+            .insert([
+              {
+                name: collectionName,
+                description: detail.belongs_to_collection.overview || null,
+              },
+            ])
+            .select("id")
+            .single();
+          if (!newSagaError && newSaga) {
+            collectionSagaId = newSaga.id;
+          }
+        }
+      }
+
       setForm((f) => ({
         ...f,
         title: detail.title || movie.title || f.title,
@@ -400,11 +430,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         popularity: detail.popularity ?? f.popularity,
         cast: castArr.length > 0 ? castArr : f.cast,
         // video_url: "", // volontairement laissé vide : l'admin peut uploader ou cocher "pas de vidéo"
+        saga_id: collectionSagaId || f.saga_id || "",
+        // part_number reste à saisir par l'admin !
       }));
       setCastList(castArr.length > 0 ? castArr : []);
       toast({
         title: "Import TMDB réussi",
-        description: "Champs pré-remplis depuis TMDB !",
+        description: "Champs pré-remplis depuis TMDB !"
+          + (collectionSagaId ? " Saga détectée automatiquement !" : ""),
       });
     } catch (e) {
       setCastList([]);
