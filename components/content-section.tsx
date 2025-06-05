@@ -60,6 +60,13 @@ export function ContentSection({
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
 
+  // Log de diagnostic pour comprendre la structure des données reçues
+  React.useEffect(() => {
+    if (items.length) {
+      console.log('Contenu reçu par ContentSection:', items);
+    }
+  }, [items]);
+
   useEffect(() => {
     if (type === 'custom') return;
 
