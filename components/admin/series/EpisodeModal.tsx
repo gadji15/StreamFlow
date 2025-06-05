@@ -335,12 +335,12 @@ export default function EpisodeModal({
         local_video_file,
         parentSeasonNumber,
         thumbnail_url,
-        video_url,
+        video_url: rawVideoUrl,
         trailer_url,
         ...restForm
       } = form;
 
-      let finalVideoUrl = clean(video_url);
+      let finalVideoUrl = clean(rawVideoUrl);
 
       // Si un fichier vidéo local a été uploadé, on l'upload dans Supabase Storage et on récupère l'URL publique
       if (local_video_file && !form.video_unavailable) {
@@ -368,15 +368,15 @@ export default function EpisodeModal({
       }
 
       // Harmonisation FilmModal: mapping propre et explicite des champs vidéo
-      let video_url = finalVideoUrl;
-      let streamtape_url = form.streamtape_url || null;
-      let uqload_url = form.uqload_url || null;
+      let videoUrlToSave = finalVideoUrl;
+      let streamtapeUrlToSave = form.streamtape_url || null;
+      let uqloadUrlToSave = form.uqload_url || null;
 
       // Si vidéo indisponible, forcer tous les champs vidéo à null
       if (form.video_unavailable) {
-        video_url = null;
-        streamtape_url = null;
-        uqload_url = null;
+        videoUrlToSave = null;
+        streamtapeUrlToSave = null;
+        uqloadUrlToSave = null;
       }
 
       const submitData = {
@@ -384,9 +384,9 @@ export default function EpisodeModal({
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
         thumbnail_url: clean(thumbnail_url),
-        video_url,
-        streamtape_url,
-        uqload_url,
+        video_url: videoUrlToSave,
+        streamtape_url: streamtapeUrlToSave,
+        uqload_url: uqloadUrlToSave,
         trailer_url: clean(trailer_url),
         title: clean(form.title),
         description: clean(form.description),
