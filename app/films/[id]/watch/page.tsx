@@ -248,6 +248,7 @@ export default function WatchFilmPage() {
                     : "/placeholder-poster.png"
                 }
                 title={film.title}
+                year={film.year}
                 isVIP={film.is_vip}
                 isMovie={true}
                 animationDelay={`${idx * 0.06}s`}

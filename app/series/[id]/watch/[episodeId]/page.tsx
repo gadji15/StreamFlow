@@ -287,6 +287,10 @@ export default function WatchEpisodePage() {
               href={`/series/${serie.id}`}
               poster={serie.poster}
               title={serie.title}
+              year={
+                (serie.start_year ?? serie.startYear ?? "") +
+                ((serie.end_year ?? serie.endYear) ? ` - ${(serie.end_year ?? serie.endYear)}` : "")
+              }
               isVIP={serie.is_vip}
               isMovie={false}
               animationDelay={`${idx * 0.06}s`}
