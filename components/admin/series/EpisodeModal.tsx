@@ -210,31 +210,53 @@ export default function EpisodeModal({
   }, [open, initialData?.id, seriesTitle, parentSeasonNumber]);
 
   const handleChange = (field: string, value: any) => {
-    // Si on remplit un champ vidéo, désactiver automatiquement video_unavailable
-    if (
-      ["video_url", "streamtape_url", "uqload_url"].includes(field) &&
-      value && value.trim() !== ""
-    ) {
-      setForm(f => ({ ...f, [field]: value, video_unavailable: false }));
-    } else {
-      setForm(f => ({ ...f, [field]: value }));
-    }
-    setErrors((e) => {
+    setForm(prevForm => {
+      let updatedForm = { ...prevForm, [field]: value };
+
+      // Gestion atomique des états vidéo
+      if (["video_url", "streamtape_url", "uqload_url"].includes(field)) {
+        // Si on saisit une source vidéo, désactiver video_unavailable
+        if (value && value.trim() !== "") {
+          updatedForm.video_unavailable = false;
+        }
+        // Si on remplit video_url, vider local_video_file
+        if (field === "video_url" && value) {
+          updatedForm.local_video_file = null;
+        }
+        // Si on remplit local_video_file, vider video_url
+        if (field === "local_video_file" && value) {
+          updatedForm.video_url = "";
+        }
+      }
+
+      // Si on upload un fichier vidéo, désactiver video_unavailable et vider video_url
+      if (field === "local_video_file") {
+        if (value) {
+          updatedForm.video_url = "";
+          updatedForm.video_unavailable = false;
+        }
+      }
+
+      // Si on coche/décoche vidéo indisponible
+      if (field === "video_unavailable") {
+        if (value) {
+          updatedForm.video_url = "";
+          updatedForm.streamtape_url = "";
+          updatedForm.uqload_url = "";
+          updatedForm.local_video_file = null;
+        }
+      }
+
+      return updatedForm;
+    });
+
+    setErrors(e => {
       const { [field]: _removed, ...rest } = e;
       return rest;
     });
-    if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url") setTmdbError(null);
-    if (field === "local_video_file" && value) {
-      // Si upload local, vider video_url
-      setForm(f => ({ ...f, video_url: "" }));
-      // Désactiver aussi le flag video_unavailable
-      setForm(f => ({ ...f, video_unavailable: false }));
-    }
-    if (field === "video_url" && value) {
-      // Si lien vidéo, vider upload local
-      setForm(f => ({ ...f, local_video_file: null }));
-      setForm(f => ({ ...f, video_unavailable: false }));
-    }
+
+    if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url")
+      setTmdbError(null);
   };
 
   const validate = () => {
