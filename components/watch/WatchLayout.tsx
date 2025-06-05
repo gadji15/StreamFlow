@@ -133,8 +133,54 @@ export default function WatchLayout({
 
         {/* Player */}
         <div className="w-full max-w-3xl aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
+          {/* Player dynamique selon la nature du lien vidéo */}
           {videoUrl ? (
-            <VideoPlayer src={videoUrl} poster={posterUrl} title={title} autoPlay />
+            (() => {
+              // Détection du type de player à utiliser
+              const isStreamtape = videoUrl.includes("streamtape.com");
+              const isUqload = videoUrl.includes("uqload.");
+              const isFile = /\.(mp4|webm|ogg)$/i.test(videoUrl);
+              if (isStreamtape) {
+                return (
+                  <iframe
+                    src={videoUrl}
+                    allowFullScreen
+                    className="w-full h-full aspect-video rounded-xl border-0"
+                    title="Streamtape Player"
+                  />
+                );
+              }
+              if (isUqload) {
+                return (
+                  <iframe
+                    src={videoUrl}
+                    allowFullScreen
+                    className="w-full h-full aspect-video rounded-xl border-0"
+                    title="Uqload Player"
+                  />
+                );
+              }
+              if (isFile) {
+                return (
+                  <video
+                    src={videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full aspect-video rounded-xl border-0 bg-black"
+                    poster={posterUrl}
+                  />
+                );
+              }
+              // Fallback : embed générique
+              return (
+                <iframe
+                  src={videoUrl}
+                  allowFullScreen
+                  className="w-full h-full aspect-video rounded-xl border-0"
+                  title="Lecteur vidéo"
+                />
+              );
+            })()
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">Aucune vidéo disponible.</div>
           )}
