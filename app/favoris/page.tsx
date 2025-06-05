@@ -119,7 +119,12 @@ export default function FavorisPage() {
             Aucun film favori pour l’instant.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
             {filmFavorites.map((film) => (
               <FilmCard
                 key={film.id}
@@ -142,7 +147,12 @@ export default function FavorisPage() {
             Aucune série favorite pour l’instant.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
             {seriesFavorites.map((serie) => (
               <SeriesCard
                 key={serie.id}
