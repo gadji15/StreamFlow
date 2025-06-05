@@ -249,14 +249,15 @@ export default function SeriesPage() {
               else year = (series as any).year ?? "";
 
               return (
-                <SeriesCard
-                  key={series.id}
-                  series={{
-                    ...series,
-                    year,
-                  }}
-                  isUserVIP={!!isVIP}
-                />
+                <div key={series.id} className="w-[140px] mx-auto">
+                  <SeriesCard
+                    series={{
+                      ...series,
+                      year,
+                    }}
+                    isUserVIP={!!isVIP}
+                  />
+                </div>
               );
             })}
           </div>

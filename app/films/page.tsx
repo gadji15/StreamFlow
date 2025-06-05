@@ -253,7 +253,9 @@ export default function FilmsPage() {
             }}
           >
             {paginatedMovies.map((movie) => (
-              <FilmCard key={movie.id} movie={movie} isUserVIP={isVIP ?? false} />
+              <div key={movie.id} className="w-[140px] mx-auto">
+                <FilmCard movie={movie} isUserVIP={isVIP ?? false} />
+              </div>
             ))}
           </div>
           {totalPages > 1 && (
