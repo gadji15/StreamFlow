@@ -378,6 +378,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         }));
       }
       // Vidéo principale (champ video_url) : TMDB ne fournit pas de vidéo directe, on laisse vide.
+      // --- LOG POUR DEBUG AUTOMATISATION SAGA ---
+      console.log('TMDB detail:', detail);
+      console.log('TMDB belongs_to_collection:', detail.belongs_to_collection);
       // --- AUTOMATISATION SAGA AVEC COLLECTION TMDB ---
       let collectionSagaId = "";
       if (detail.belongs_to_collection && detail.belongs_to_collection.name) {
@@ -390,6 +393,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           .limit(1);
         if (!sagaError && existingSagas && existingSagas.length > 0) {
           collectionSagaId = existingSagas[0].id;
+          console.log('Saga trouvée dans Supabase:', collectionName, '=> saga_id:', collectionSagaId);
         } else {
           // 2. Sinon, créer la saga
           const { data: newSaga, error: newSagaError } = await supabase
@@ -404,8 +408,13 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
             .single();
           if (!newSagaError && newSaga) {
             collectionSagaId = newSaga.id;
+            console.log('Saga créée dans Supabase:', collectionName, '=> saga_id:', collectionSagaId);
+          } else {
+            console.log('Erreur création saga ou résultat inattendu:', newSagaError, newSaga);
           }
         }
+      } else {
+        console.log('Aucune collection TMDB détectée pour ce film.');
       }
 
       setForm((f) => ({
