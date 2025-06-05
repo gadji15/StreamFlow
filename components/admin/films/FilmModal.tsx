@@ -205,7 +205,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     // Validation spécifique par plateforme
     if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url))
       err.streamtape_url = "Lien Streamtape invalide";
-    if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.io\//.test(form.uqload_url))
+    if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.(io|net)\//.test(form.uqload_url))
       err.uqload_url = "Lien Uqload invalide";
 
     return err;
