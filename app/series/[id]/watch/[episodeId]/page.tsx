@@ -10,6 +10,7 @@ import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
+import SeriesCard from "@/components/SeriesCard";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -331,24 +332,28 @@ export default function WatchEpisodePage() {
           )}
         </div>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-            {similarSeries.map((serie, idx) => (
-            <MediaPosterCard
+        <div
+          className="grid gap-3"
+          style={{
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+          }}
+        >
+          {similarSeries.map((serie) => (
+            <SeriesCard
               key={serie.id}
-              href={`/series/${serie.id}`}
-              poster={serie.poster}
-              title={serie.title}
-              year={
-              (serie as any).start_year
-                ? (serie as any).start_year +
-                ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
-                : ""
-              }
-              isVIP={serie.is_vip}
-              isMovie={false}
-              animationDelay={`${idx * 0.06}s`}
+              series={{
+                id: String(serie.id),
+                title: serie.title,
+                poster: serie.poster,
+                year:
+                  (serie as any).start_year
+                    ? (serie as any).start_year +
+                      ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
+                    : "",
+                isVIP: serie.is_vip ?? false,
+              }}
             />
-            ))}
+          ))}
         </div>
       </div>
     </>
