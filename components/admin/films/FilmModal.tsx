@@ -164,7 +164,19 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       });
       return;
     }
-    setForm((f) => ({ ...f, [field]: value }));
+    // Si on modifie un champ vidéo et qu'il n'est pas vide, on force no_video à false
+    if (
+      ["video_url", "streamtape_url", "uqload_url"].includes(field) &&
+      value && value.trim() !== ""
+    ) {
+      setForm((f) => ({
+        ...f,
+        [field]: value,
+        no_video: false
+      }));
+    } else {
+      setForm((f) => ({ ...f, [field]: value }));
+    }
     setErrors((e) => {
       const { [field]: _, ...rest } = e;
       return rest;
