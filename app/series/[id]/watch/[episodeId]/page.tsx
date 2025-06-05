@@ -338,22 +338,26 @@ export default function WatchEpisodePage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
           }}
         >
-          {similarSeries.map((serie) => (
-            <SeriesCard
-              key={serie.id}
-              series={{
-                id: String(serie.id),
-                title: serie.title,
-                poster: serie.poster,
-                year:
-                  (serie as any).start_year
-                    ? (serie as any).start_year +
-                      ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
-                    : "",
-                isVIP: serie.is_vip ?? false,
-              }}
-            />
-          ))}
+          {similarSeries.map((serie) => {
+            const sy = (serie as any).start_year;
+            const ey = (serie as any).end_year;
+            let year = "";
+            if (sy && ey) year = `${sy} - ${ey}`;
+            else if (sy) year = String(sy);
+            else if (ey) year = String(ey);
+            return (
+              <SeriesCard
+                key={serie.id}
+                series={{
+                  id: String(serie.id),
+                  title: serie.title,
+                  poster: serie.poster,
+                  year,
+                  isVIP: serie.is_vip ?? false,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     </>
