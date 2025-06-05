@@ -9,7 +9,7 @@ import { getTMDBImageUrl } from "@/lib/tmdb";
 import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
-import MediaPosterCard from "@/components/MediaPosterCard";
+import FilmCard from "@/components/cards/FilmCard";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -279,25 +279,28 @@ export default function WatchFilmPage() {
               {/* Film actuel en premier */}
               {movie && (
                 <div className="relative group flex flex-col">
-                  <MediaPosterCard
-                    key={movie.id}
-                    href={`/films/${movie.id}/watch`}
-                    poster={
-                      movie.posterUrl
-                        ? movie.posterUrl
-                        : "/placeholder-poster.png"
-                    }
-                    title={
-                      movie.title +
-                      (movie.part_number
-                        ? ` (Partie ${movie.part_number})`
-                        : "")
-                    }
-                    year={movie.year}
-                    isVIP={movie.isvip}
-                    isMovie={true}
-                  />
-                  {/* Badge FILM ACTUEL */}
+                  <div style={{ width: 124, minWidth: 112, maxWidth: 144 }}>
+                    <FilmCard
+                      movie={{
+                        ...movie,
+                        poster: movie.posterUrl,
+                        title:
+                          movie.title +
+                          (movie.part_number
+                            ? ` (Partie ${movie.part_number})`
+                            : ""),
+                        isVIP: movie.isvip ?? movie.is_vip,
+                      }}
+                      isUserVIP={false}
+                    />
+                    {/* Badge FILM ACTUEL */}
+                    <span
+                      className="absolute top-2 left-2 bg-indigo-600/90 text-white font-bold text-xs px-2 py-1 rounded shadow-lg border border-indigo-700 uppercase pointer-events-none"
+                      style={{ zIndex: 2, letterSpacing: 0.5 }}
+                    >
+                      Film actuel
+                    </span>
+                  </div>
                   <span
                     className="absolute top-2 left-2 bg-indigo-600/90 text-white font-bold text-xs px-2 py-1 rounded shadow-lg border border-indigo-700 uppercase pointer-events-none"
                     style={{ zIndex: 2, letterSpacing: 0.5 }}
@@ -308,25 +311,23 @@ export default function WatchFilmPage() {
               )}
               {/* Autres parties */}
               {continuities.map((part) => (
-                <MediaPosterCard
+                <FilmCard
                   key={part.id}
-                  href={`/films/${part.id}/watch`}
-                  poster={
-                    part.poster
+                  movie={{
+                    ...part,
+                    poster: part.poster
                       ? /^https?:\/\//.test(part.poster)
                         ? part.poster
                         : getTMDBImageUrl(part.poster, "w300")
-                      : "/placeholder-poster.png"
-                  }
-                  title={
-                    part.title +
-                    (part.part_number
-                      ? ` (Partie ${part.part_number})`
-                      : "")
-                  }
-                  year={part.year}
-                  isVIP={part.isvip}
-                  isMovie={true}
+                      : "/placeholder-poster.png",
+                    title:
+                      part.title +
+                      (part.part_number
+                        ? ` (Partie ${part.part_number})`
+                        : ""),
+                    isVIP: part.isvip ?? part.is_vip,
+                  }}
+                  isUserVIP={false}
                 />
               ))}
             </div>
@@ -389,20 +390,18 @@ export default function WatchFilmPage() {
           </div>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
             {suggestions.map((film, idx) => (
-              <MediaPosterCard
+              <FilmCard
                 key={film.id}
-                href={`/films/${film.id}`}
-                poster={
-                  film.poster
+                movie={{
+                  ...film,
+                  poster: film.poster
                     ? /^https?:\/\//.test(film.poster)
                       ? film.poster
                       : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png"
-                }
-                title={film.title}
-                year={film.year}
-                isVIP={film.is_vip}
-                isMovie={true}
+                    : "/placeholder-poster.png",
+                  isVIP: film.isvip ?? film.is_vip,
+                }}
+                isUserVIP={false}
                 animationDelay={`${idx * 0.06}s`}
               />
             ))}
