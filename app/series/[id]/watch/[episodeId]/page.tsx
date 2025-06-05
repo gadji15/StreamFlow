@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
 import SeriesCard from "@/components/SeriesCard";
+import { useWatchProgress } from "@/components/ui/useWatchProgress";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -181,17 +182,23 @@ export default function WatchEpisodePage() {
     series?.poster ||
     "/placeholder-backdrop.jpg";
 
+  // Ajout du suivi de progression pour les épisodes
+  const { handleProgress, markAsWatched } = useWatchProgress({
+    type: "episode",
+    id: episodeId,
+  });
+
   return (
     <>
       {/* Player harmonisé */}
-      {/* Debug : log des données épisode */}
-      {console.log("EPISODE DEBUG", episode)}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           videoUrl={episode?.video_url || undefined}
           streamtapeUrl={episode?.streamtape_url || undefined}
           uqloadUrl={episode?.uqload_url || undefined}
           loading={loading}
+          onVideoProgress={handleProgress}
+          onIframeActivate={markAsWatched}
         />
       </div>
 
