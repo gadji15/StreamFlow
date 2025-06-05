@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
 import FilmCard from "@/components/FilmCard";
+import { useWatchProgress } from "@/components/ui/useWatchProgress";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -204,14 +205,23 @@ export default function WatchFilmPage() {
 
   const goBack = () => router.push(`/films/${id}`);
 
+  // Gestion du suivi de la progression
+  const { handleProgress, markAsWatched } = useWatchProgress({
+    type: "film",
+    id,
+  });
+
   return (
     <>
-      {console.log("MOVIE DEBUG", movie)}
+      {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
+          videoUrl={movie?.video_url || undefined}
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
           loading={loading}
+          onVideoProgress={handleProgress}
+          onIframeActivate={markAsWatched}
         />
       </div>
       {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
