@@ -216,7 +216,7 @@ export function ContentSection({
               <p className="text-[11px] text-gray-400 w-full text-center">
                 {isMovie
                   ? (item as Movie).year ?? ''
-                  : (item as Series).startYear ?? ''}
+                  : (item as Series).year ?? ''}
               </p>
             </div>
           </Link>
