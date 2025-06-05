@@ -188,6 +188,7 @@ export default function WatchFilmPage() {
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
+          loading={loading}
         />
       </div>
       {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
