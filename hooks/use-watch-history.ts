@@ -22,17 +22,29 @@ export function useWatchHistory() {
 
   // Fetch watch history for current user
   const fetchHistory = useCallback(async () => {
-    if (!user) return;
+    console.log("[useWatchHistory] fetchHistory: called", { user });
+    if (!user) {
+      console.log("[useWatchHistory] No user, abort fetchHistory");
+      return;
+    }
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase
-      .from('view_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('watched_at', { ascending: false });
-    if (error) setError(error.message);
-    setHistory(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('view_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('watched_at', { ascending: false });
+      console.log("[useWatchHistory] Supabase response", { data, error });
+      if (error) setError(error.message);
+      setHistory(data || []);
+    } catch (err) {
+      console.error("[useWatchHistory] Exception in fetchHistory", err);
+      setError((err as Error).message || "Unknown error");
+    } finally {
+      setLoading(false);
+      console.log("[useWatchHistory] fetchHistory: loading set to false");
+    }
   }, [user]);
 
   useEffect(() => {
@@ -64,16 +76,49 @@ export function useWatchHistory() {
     if (series_id) entry.series_id = series_id;
     if (episode_id) entry.episode_id = episode_id;
 
-    // OnConflict: only allow one entry per user/content
-    const onConflict = film_id
-      ? 'user_id,film_id'
-      : series_id
-      ? 'user_id,series_id'
-      : 'user_id,episode_id';
+    // Détecter s'il existe déjà une ligne correspondante
+    let existingRow = null;
+    if (film_id) {
+      const { data } = await supabase
+        .from('view_history')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('film_id', film_id)
+        .maybeSingle();
+      existingRow = data;
+    } else if (series_id) {
+      const { data } = await supabase
+        .from('view_history')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('series_id', series_id)
+        .maybeSingle();
+      existingRow = data;
+    } else if (episode_id) {
+      const { data } = await supabase
+        .from('view_history')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('episode_id', episode_id)
+        .maybeSingle();
+      existingRow = data;
+    }
 
-    const { error } = await supabase
-      .from('view_history')
-      .upsert([entry], { onConflict });
+    let error = null;
+    if (existingRow && existingRow.id) {
+      // update
+      const { error: updateErr } = await supabase
+        .from('view_history')
+        .update(entry)
+        .eq('id', existingRow.id);
+      error = updateErr;
+    } else {
+      // insert
+      const { error: insertErr } = await supabase
+        .from('view_history')
+        .insert([entry]);
+      error = insertErr;
+    }
     if (error) throw new Error(error.message);
     fetchHistory();
   };
