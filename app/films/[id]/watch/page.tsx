@@ -394,10 +394,14 @@ export default function WatchFilmPage() {
             )}
           </div>
           <div
-            className="flex flex-wrap gap-x-5 gap-y-6"
+            className="flex flex-wrap gap-x-5 gap-y-6 justify-start"
           >
             {suggestions.map((film, idx) => (
-              <div key={film.id} style={{ width: 134, flex: '0 0 auto' }}>
+              <div
+                key={film.id}
+                className="w-[150px] flex-shrink-0"
+                style={{ maxWidth: "100%" }}
+              >
                 <FilmCard
                   movie={{
                     ...film,
