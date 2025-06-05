@@ -281,49 +281,17 @@ export default function WatchEpisodePage() {
         <h2 className="text-xl font-bold mb-2">Séries similaires</h2>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-          {similarSeries.map((serie, idx) => {
-            // Extraction années
-            const startYear = serie.start_year ?? serie.startYear ?? "";
-            const endYear = serie.end_year ?? serie.endYear ?? "";
-            // Formatage genre(s)
-            let genre = serie.genre || "";
-            // On supporte plusieurs formats : array, string CSV, string collé, etc.
-            let genresArr: string[] = [];
-            if (Array.isArray(genre)) {
-              genresArr = genre;
-            } else if (typeof genre === "string" && genre.includes(",")) {
-              genresArr = genre.split(",");
-            } else if (typeof genre === "string" && genre.match(/[A-Z][a-z]+/g)?.length > 1) {
-              // CamelCase to words (optionnel)
-              genresArr = genre.match(/[A-Z][a-z]+/g) || [genre];
-            } else if (typeof genre === "string" && genre.trim()) {
-              genresArr = [genre];
-            }
-            // Nettoyage
-            genresArr = genresArr
-              .map(g => g.replace(/_/g, " ").replace(/([a-z])([A-Z])/g, '$1 $2').trim())
-              .map(g => g.charAt(0).toUpperCase() + g.slice(1).toLowerCase());
-            const genresStr = genresArr.filter(Boolean).join(", ");
-
-            // Subtitle = genres (formatés) ou années + genres si souhaité
-            let subtitle = genresStr;
-            // Si tu veux aussi l'année :
-            // const period = startYear ? (endYear ? `${startYear} - ${endYear}` : `${startYear}`) : "";
-            // subtitle = period ? (genresStr ? `${period}, ${genresStr}` : period) : genresStr;
-
-            return (
-              <MediaPosterCard
-                key={serie.id}
-                href={`/series/${serie.id}`}
-                poster={serie.poster}
-                title={serie.title}
-                subtitle={subtitle}
-                isVIP={serie.is_vip}
-                isMovie={false}
-                animationDelay={`${idx * 0.06}s`}
-              />
-            );
-          })}
+          {similarSeries.map((serie, idx) => (
+            <MediaPosterCard
+              key={serie.id}
+              href={`/series/${serie.id}`}
+              poster={serie.poster}
+              title={serie.title}
+              isVIP={serie.is_vip}
+              isMovie={false}
+              animationDelay={`${idx * 0.06}s`}
+            />
+          ))}
         </div>
       </div>
     </>
