@@ -278,6 +278,8 @@ export default function WatchEpisodePage() {
         </div>
       )}
 
+      
+
       {/* Bloc suggestions harmonisé */}
       <div className="w-full max-w-6xl mx-auto my-12">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
