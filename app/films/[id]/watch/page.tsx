@@ -182,16 +182,18 @@ export default function WatchFilmPage() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="w-full max-w-3xl mx-auto aspect-video rounded-2xl shadow-2xl overflow-hidden bg-black mt-10 mb-6 border border-gray-800">
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
+          videoUrl={movie?.video_url || undefined}
+          posterUrl={movie?.posterUrl}
         />
       </div>
       <WatchLayout
         title={movie?.title || "Lecture film"}
         seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
-        videoUrl={movie?.video_url || movie?.streamtape_url || movie?.uqload_url || ""}
+        videoUrl={""} {/* on ne passe plus rien ici, le player est géré au-dessus */}
         posterUrl={movie?.posterUrl}
         backdropUrl={movie?.backdropUrl}
         loading={loading}
