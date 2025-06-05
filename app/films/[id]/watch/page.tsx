@@ -236,7 +236,12 @@ export default function WatchFilmPage() {
         </div>
         {/* Suggestions */}
         <div className="mt-8">
-          <h2 className="text-xl font-bold text-white mb-2">Films similaires</h2>
+          <h2 className="text-2xl font-extrabold text-primary mb-4 flex items-center gap-2 tracking-wide drop-shadow">
+            <span className="inline-block">
+              <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
+            </span>
+            Films similaires
+          </h2>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
             {suggestions.map((film, idx) => (
               <MediaPosterCard
