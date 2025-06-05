@@ -390,23 +390,26 @@ export default function WatchFilmPage() {
               })()
             )}
           </div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-            {suggestions.map((film, idx) => (
-              <MediaPosterCard
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
+            {suggestions.map((film) => (
+              <FilmCard
                 key={film.id}
-                href={`/films/${film.id}`}
-                poster={
-                  film.poster
+                movie={{
+                  id: String(film.id),
+                  title: film.title,
+                  poster: film.poster
                     ? /^https?:\/\//.test(film.poster)
                       ? film.poster
                       : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png"
-                }
-                title={film.title}
-                year={film.year}
-                isVIP={film.is_vip}
-                isMovie={true}
-                animationDelay={`${idx * 0.06}s`}
+                    : "/placeholder-poster.png",
+                  year: film.year,
+                  isVIP: film.is_vip ?? false,
+                }}
               />
             ))}
           </div>
