@@ -73,6 +73,12 @@ export default function SearchModal() {
               role="dialog"
               aria-modal="true"
               className="w-full max-w-xl mx-auto mt-24 rounded-2xl bg-gray-900/80 shadow-xl border border-gray-700 relative px-6 py-8"
+              style={{
+                maxHeight: "90vh",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column"
+              }}
               initial={{ scale: 0.96, y: 40, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 40, opacity: 0 }}

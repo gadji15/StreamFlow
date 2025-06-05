@@ -90,7 +90,7 @@ export default function SearchBar() {
         />
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto p-2">
+      <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto p-2">
         {loading ? (
           <div className="p-4 text-center text-gray-400 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin h-5 w-5" />
