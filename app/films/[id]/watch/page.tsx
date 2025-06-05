@@ -182,87 +182,100 @@ export default function WatchFilmPage() {
 
   return (
     <>
-      <div className="mb-6">
+      {console.log("MOVIE DEBUG", movie)}
+      <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
         />
       </div>
-      <WatchLayout
-        title={movie?.title || "Lecture film"}
-        seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
-        videoUrl={movie?.video_url || ""}
-        posterUrl={movie?.posterUrl}
-        backdropUrl={movie?.backdropUrl}
-        loading={loading}
-        error={error || (!movie ? "Film introuvable" : undefined)}
-        onBack={goBack}
-        backLabel={
-          <span className="flex items-center"><ArrowLeft className="h-5 w-5 mr-2" /> Retour à la fiche film</span>
-        }
-        isVip={movie?.is_vip}
-        metadata={
-          movie && (
-            <>
-              <div className="flex flex-wrap items-center gap-3 mb-1">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-                  {movie.title}
-                </h1>
-                {movie.year && (
-                  <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-                    {movie.year}
-                  </span>
-                )}
-                {movie.genre && (
-                  <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                    {movie.genre}
-                  </span>
-                )}
-                {movie.is_vip && (
-                  <Badge
-                    variant="secondary"
-                    className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
-                  >
-                    VIP
-                  </Badge>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-                {movie.duration && (
-                  <span>
-                    <b>Durée :</b> {movie.duration} min
-                  </span>
-                )}
-                {movie.rating && (
-                  <span>
-                    <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
-                  </span>
-                )}
-              </div>
-            </>
-          )
-        }
-        description={movie?.description}
-        suggestions={
-          suggestions.map((film) => ({
-            id: film.id,
-            title: film.title,
-            genre: film.genre,
-            poster: film.poster
-              ? /^https?:\/\//.test(film.poster)
-                ? film.poster
-                : getTMDBImageUrl(film.poster, "w300")
-              : "/placeholder-poster.png",
-            link: `/films/${film.id}`,
-          }))
-        }
-        suggestionsTitle="Films similaires"
-        suggestionsSubtitle="Découvrez d'autres œuvres que vous pourriez aimer !"
-        suggestionsLink={
-          movie?.genre ? `/films?genre=${encodeURIComponent(movie.genre)}` : undefined
-        }
-        suggestionsLinkLabel="Voir tout"
-      />
-    </>
+      {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
+            {movie && (
+              <>
+                <div className="flex flex-wrap items-center gap-3 mb-1">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
+                    {movie.title}
+                  </h1>
+                  {movie.year && (
+                    <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
+                      {movie.year}
+                    </span>
+                  )}
+                  {movie.genre && (
+                    <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
+                      {movie.genre}
+                    </span>
+                  )}
+                  {movie.is_vip && (
+                    <Badge
+                      variant="secondary"
+                      className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+                    >
+                      VIP
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
+                  {movie.duration && (
+                    <span>
+                      <b>Durée :</b> {movie.duration} min
+                    </span>
+                  )}
+                  {movie.rating && (
+                    <span>
+                      <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+        <div className="mt-6">
+          <p className="text-gray-300">{movie?.description}</p>
+        </div>
+        {/* Suggestions */}
+        <div className="mt-8">
+          <h2 className="text-xl font-bold text-white mb-2">Films similaires</h2>
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+            {suggestions.map((film) => (
+              <a
+                key={film.id}
+                href={`/films/${film.id}`}
+                className="block bg-gray-800/60 rounded-lg overflow-hidden hover:shadow-lg transition"
+              >
+                <img
+                  src={
+                    film.poster
+                      ? /^https?:\/\//.test(film.poster)
+                        ? film.poster
+                        : getTMDBImageUrl(film.poster, "w300")
+                      : "/placeholder-poster.png"
+                  }
+                  alt={film.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-2">
+                  <div className="font-semibold text-white">{film.title}</div>
+                  {film.genre && (
+                    <div className="text-xs text-primary">{film.genre}</div>
+                  )}
+                  {film.year && (
+                    <div className="text-xs text-gray-400">{film.year}</div>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+          {movie?.genre && (
+            <div className="mt-4">
+              <a
+                href={`/films?genre=${encodeURIComponent(movie.genre)}`}
+                className="text-primary underline"
+              >
+                Voir tout
+              </a>
+            </div>
+          )}
+        </div>
+      </>
   );
 }

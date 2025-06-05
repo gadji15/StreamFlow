@@ -76,11 +76,15 @@ export default function FilmDetailPage() {
             posterUrl: normalizePosterUrl(fetchedMovie.poster),
             backdropUrl: normalizeBackdropUrl(fetchedMovie.backdrop),
             trailerUrl: fetchedMovie.trailer_url || "",
-            videoUrl: fetchedMovie.video_url || "",
+            // Priorité : video_url > streamtape_url > uqload_url
+            videoUrl: fetchedMovie.video_url
+              || fetchedMovie.streamtape_url
+              || fetchedMovie.uqload_url
+              || "",
             duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
             rating: fetchedMovie.vote_average ?? null,
             tmdbId: fetchedMovie.tmdb_id || "",
-            isVIP: fetchedMovie.is_vip,
+            isvip: fetchedMovie.isvip, // mapping natif pour cohérence
           };
           setMovie(normalizedMovie);
 
@@ -244,7 +248,9 @@ export default function FilmDetailPage() {
     return notFound();
   }
 
-  const canWatch = !movie.isVIP || isVIP;
+  // Accès : si le film n'est PAS VIP, canWatch = true même si isVIP est indéfini ou profil absent
+  // Si le film est VIP, il faut explicitement isVIP === true (profil existant et VIP)
+  const canWatch = !movie.isvip || isVIP === true;
 
   return (
     <>
@@ -257,7 +263,7 @@ export default function FilmDetailPage() {
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
-            {movie.isVIP && (
+            {movie.isvip && (
               <div className="mt-4 w-full flex flex-col items-center">
                 <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
                   Contenu VIP
