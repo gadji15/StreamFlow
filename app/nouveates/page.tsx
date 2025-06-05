@@ -379,7 +379,12 @@ export default function NouveautePage() {
                 <h2 className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
                   <Film className="w-6 h-6 text-primary" /> Films récents
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  }}
+                >
                   {filteredMovies.slice(0, 20).map((movie) => (
                     <NouveauteCard
                       key={movie.id}
@@ -414,7 +419,12 @@ export default function NouveautePage() {
                 <h2 className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2">
                   <Tv className="w-6 h-6 text-purple-400" /> Séries récentes
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  }}
+                >
                   {filteredSeries.slice(0, 20).map((serie) => (
                     <NouveauteCard
                       key={serie.id}

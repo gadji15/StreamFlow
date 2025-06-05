@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Film } from "lucide-react";
 import { fetchTMDBSimilarMovies, getTMDBImageUrl } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
+import FilmCard from "../FilmCard";
 
 /**
  * Grille harmonisée pour les films similaires (croisement TMDB + Supabase)
@@ -96,75 +97,22 @@ export default function SimilarFilmsGrid({
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       "
     >
-      {similarLocal.map((film) => {
-        const poster =
-          film.poster ||
-          film.poster_url ||
-          film.posterUrl ||
-          "/placeholder-poster.png";
-        const title = film.title || "Sans titre";
-        const year = film.year ?? film.release_year ?? "";
-        const isVIP = film.is_vip ?? film.isVIP ?? false;
-
-        return (
-          <Link
-            key={film.id}
-            href={`/films/${film.id}`}
-            className={`
-              bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-              flex flex-col items-center
-              rounded-md
-              sm:rounded-lg md:rounded-xl
-              h-full
-            `}
-          >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-              `}
-            >
-              <img
-                src={poster}
-                alt={title}
-                className={`
-                  w-full h-full object-cover transition-all duration-300
-                  rounded-md
-                  sm:rounded-lg
-                  md:rounded-xl
-                `}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder-poster.png";
-                }}
-                loading="lazy"
-              />
-              {isVIP && (
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-xs font-bold">
-                  VIP
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Film className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-              <h3
-                className={`
-                  truncate font-medium w-full text-center
-                  text-xs
-                  sm:text-sm
-                  md:text-base
-                `}
-              >
-                {title}
-              </h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">{year}</p>
-            </div>
-          </Link>
-        );
-      })}
+      {similarLocal.map((film) => (
+        <FilmCard
+          key={film.id}
+          movie={{
+            id: String(film.id),
+            title: film.title || "Sans titre",
+            poster:
+              film.poster ||
+              film.poster_url ||
+              film.posterUrl ||
+              "/placeholder-poster.png",
+            year: film.year ?? film.release_year ?? "",
+            isVIP: film.is_vip ?? film.isVIP ?? false,
+          }}
+        />
+      ))}
     </div>
   );
 }

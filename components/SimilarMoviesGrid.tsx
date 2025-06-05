@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import MediaPosterCard from "./MediaPosterCard";
 import { fetchTMDBSimilarSeries } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
+import FilmCard from "./MediaPosterCard";
 
 /**
  * Grille premium pour les séries similaires (croisement TMDB + Supabase)
@@ -97,38 +98,16 @@ export default function SimilarSeriesGrid({
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       "
     >
-      {similarLocal.map((serie, idx) => {
-        // Gestion des données pour harmoniser l'affichage
-        const poster =
-          serie.poster ||
-          serie.poster_url ||
-          serie.posterUrl ||
-          "/placeholder-poster.png";
-        const title = serie.title || "Sans titre";
-        const startYear = serie.start_year ?? serie.startYear ?? "";
-        const endYear = serie.end_year ?? serie.endYear ?? "";
-        const isVIP = serie.is_vip ?? serie.isVIP ?? false;
-
-        // Affichage identique à la home : année ou période
-        const subtitle = startYear
-          ? endYear
-            ? `${startYear} - ${endYear}`
-            : `${startYear}`
-          : "";
-
-        return (
-          <MediaPosterCard
-            key={serie.id}
-            href={`/series/${serie.id}`}
-            poster={poster}
-            title={title}
-            subtitle={subtitle}
-            isVIP={isVIP}
-            isMovie={false}
-            animationDelay={`${idx * 0.06}s`}
-          />
-        );
-      })}
+      {similarLocal.map((movie) => (
+        <FilmCard
+          key={movie.id}
+          href={`/series/${movie.id}`}
+          title={movie.title || "Sans titre"}
+          poster={movie.poster || movie.poster_url || movie.posterUrl || "/placeholder-poster.png"}
+          year={movie.year}
+          isVIP={movie.is_vip ?? movie.isVIP}
+        />
+      ))}
     </div>
   );
 }

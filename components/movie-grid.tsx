@@ -6,6 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Play, Plus, Info, Star } from "lucide-react"
 import { motion } from "framer-motion"
+import FilmCard from "@/components/FilmCard"
+import SeriesCard from "@/components/SeriesCard"
 
 // Mock data for movies and series
 const allContent = [
@@ -344,7 +346,10 @@ export default function MovieGrid({ type }: MovieGridProps) {
   return (
     <div>
       <motion.div
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
+        className="grid gap-3"
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+        }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -354,48 +359,28 @@ export default function MovieGrid({ type }: MovieGridProps) {
             key={item.id}
             className="relative movie-card"
             variants={itemVariants}
-            onMouseEnter={() => setHoveredId(item.id)}
-            onMouseLeave={() => setHoveredId(null)}
           >
-            <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
-              <Image src={item.image || "/placeholder.svg"} alt={item.title} fill className="object-cover" />
-              <div className="movie-card-overlay" />
-
-              <div className="movie-card-content">
-                <h3 className="text-white font-medium text-lg mb-1 line-clamp-1">{item.title}</h3>
-                <div className="flex items-center text-sm text-gray-300 mb-2">
-                  <span>{item.year}</span>
-                  <span className="mx-1">•</span>
-                  <span className="flex items-center">
-                    <Star className="h-3 w-3 mr-1 fill-yellow-500 stroke-yellow-500" />
-                    {item.rating}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {item.genres.map((genre, index) => (
-                    <span key={index} className="text-xs px-2 py-0.5 bg-gray-800 rounded-full text-gray-300">
-                      {genre}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex space-x-2">
-                  <Button size="sm" variant="default" className="btn-primary px-2 py-1 h-8" asChild>
-                    <Link href={`/watch/${item.id}`}>
-                      <Play className="h-3 w-3 mr-1" />
-                      <span>Regarder</span>
-                    </Link>
-                  </Button>
-                  <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full">
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                  <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full" asChild>
-                    <Link href={`/${item.type === "movie" ? "films" : "series"}/${item.id}`}>
-                      <Info className="h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
+            {item.type === "movie" ? (
+              <FilmCard
+                movie={{
+                  id: String(item.id),
+                  title: item.title,
+                  poster: item.image,
+                  year: item.year,
+                  isVIP: false // Ajoutez la logique VIP si besoin
+                }}
+              />
+            ) : (
+              <SeriesCard
+                series={{
+                  id: String(item.id),
+                  title: item.title,
+                  poster: item.image,
+                  year: item.year,
+                  isVIP: false // Ajoutez la logique VIP si besoin
+                }}
+              />
+            )}
           </motion.div>
         ))}
       </motion.div>

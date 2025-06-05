@@ -13,6 +13,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useWatchHistory } from '@/hooks/use-watch-history';
 
+// Ajoutez ou modifiez le type WatchHistoryItem pour inclure les propriétés nécessaires
+type WatchHistoryItem = {
+  id: string | number;
+  title?: string;
+  poster_url?: string;
+  watched_at: string | Date;
+  progress?: number;
+  content_type?: 'movie' | 'series' | 'episode';
+  // Pour une compatibilité maximale, ajoutez aussi :
+  type?: string;
+  poster?: string;
+  posterUrl?: string;
+  // Ajoutez ici d'autres propriétés si nécessaire
+};
+
 export default function MonComptePage() {
   const { userData, isVIP, isLoggedIn, isLoading, logout } = useSupabaseAuth();
   const { history, loading: historyLoading } = useWatchHistory();
@@ -150,27 +165,27 @@ export default function MonComptePage() {
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0">
                     {/* Correction : utilisez une clé générique pour l'image */}
-                    {typeof (item as any).poster_url === 'string' && (item as any).poster_url ? (
+                    {typeof item.title === 'string' && item.title && typeof item.poster_url === 'string' && item.poster_url ? (
                       <img 
-                        src={(item as any).poster_url} 
-                        alt={(item as any).title || 'Contenu'} 
-                        className="w-full h-full object-cover"
+                      src={item.poster_url} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-500">
-                        {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
+                      {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{(item as any).title || 'Contenu'}</p>
+                    <p className="font-medium truncate">{item.title || 'Contenu'}</p>
                     <p className="text-xs text-gray-400 truncate">
                       {new Intl.DateTimeFormat('fr-FR', {
                         day: 'numeric',
                         month: 'short',
                         hour: '2-digit',
                         minute: '2-digit'
-                      }).format((item as any).watched_at)}
+                      }).format(new Date(item.watched_at))}
                       {' • '}
                       {item.content_type === 'movie' ? 'Film' : item.content_type === 'series' ? 'Série' : 'Épisode'}
                       {' • '}

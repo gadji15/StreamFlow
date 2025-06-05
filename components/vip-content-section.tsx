@@ -1,6 +1,8 @@
 import { VIPContentCard } from "./vip-content-card"
 import { mockMovies, mockSeries } from "@/lib/mock-data"
 import { Crown } from "lucide-react"
+import FilmCard from "./FilmCard"
+import SeriesCard from "./SeriesCard"
 
 interface ContentItem {
   id: number
@@ -68,25 +70,38 @@ export function VIPContentSection({
         {title}
         <Crown className="ml-2 h-5 w-5 text-amber-500" />
       </h2>
-
-      {featured && remainingItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-          <div className="md:col-span-2 lg:col-span-2">
-            <VIPContentCard item={featured} featured={true} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-6">
-            {remainingItems.slice(0, 4).map((item) => (
-              <VIPContentCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {vipItems.map((item) => (
-            <VIPContentCard key={item.id} item={item} />
-          ))}
-        </div>
-      )}
+      <div
+        className="grid gap-3"
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+        }}
+      >
+        {vipItems.map((item) =>
+          item.type === "movie" ? (
+            <FilmCard
+              key={item.id}
+              movie={{
+                id: String(item.id),
+                title: item.title,
+                poster: item.poster,
+                year: item.releaseDate ? item.releaseDate.slice(0, 4) : "",
+                isVIP: item.vipOnly
+              }}
+            />
+          ) : (
+            <SeriesCard
+              key={item.id}
+              series={{
+                id: String(item.id),
+                title: item.title,
+                poster: item.poster,
+                year: item.releaseDate ? item.releaseDate.slice(0, 4) : "",
+                isVIP: item.vipOnly
+              }}
+            />
+          )
+        )}
+      </div>
     </section>
   )
 }

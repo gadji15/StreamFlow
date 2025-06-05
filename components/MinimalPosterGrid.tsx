@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Film, Tv } from "lucide-react";
+import SeriesCard from "./SeriesCard";
+import FilmCard from "./FilmCard";
 
 export type MinimalPosterItem = {
   id: string;
@@ -51,67 +53,32 @@ export default function MinimalPosterGrid({ items }: MinimalPosterGridProps) {
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       `}
     >
-      {items.map((itemData) => (
-        <motion.div
-          variants={item}
-          key={itemData.id}
-          className={`
-            bg-gray-800 overflow-hidden transition-transform hover:scale-105 group
-            flex flex-col items-center
-            rounded-md
-            sm:rounded-lg md:rounded-xl
-            h-full
-            cursor-pointer
-          `}
-        >
-          <Link
-            href={`/films/${itemData.id}`}
-            aria-label={itemData.title}
-            className="w-full h-full flex flex-col items-center"
-            tabIndex={0}
-          >
-            <div
-              className={`
-                relative aspect-[2/3]
-                w-full
-                h-full
-                flex flex-col items-center
-              `}
-            >
-              <img
-                src={itemData.poster || "/placeholder-poster.png"}
-                alt={itemData.title}
-                className={`
-                  w-full h-full object-cover
-                  rounded-md sm:rounded-lg md:rounded-xl
-                  transition-transform duration-300 ease-out
-                  group-hover:scale-105
-                  will-change-transform
-                `}
-                loading="lazy"
-                onError={e => {
-                  (e.target as HTMLImageElement).src = '/placeholder-poster.png';
-                }}
-              />
-              {/* Effet hover overlay + icône comme sur la home */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                {getTypeIcon(itemData.link)}
-              </div>
-            </div>
-            <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
-              <h3 className={`
-                truncate font-medium w-full text-center
-                text-xs
-                sm:text-sm
-                md:text-base
-              `}>{itemData.title}</h3>
-              <p className="text-[11px] text-gray-400 w-full text-center">
-                {itemData.year ?? ""}
-              </p>
-            </div>
-          </Link>
-        </motion.div>
-      ))}
+      {items.map((itemData) => {
+        const isMovie = itemData.link.includes('/films/');
+        return isMovie ? (
+          <FilmCard
+            key={itemData.id}
+            movie={{
+              id: itemData.id,
+              title: itemData.title,
+              poster: itemData.poster,
+              year: itemData.year,
+              isVIP: false
+            }}
+          />
+        ) : (
+          <SeriesCard
+            key={itemData.id}
+            series={{
+              id: itemData.id,
+              title: itemData.title,
+              poster: itemData.poster,
+              year: itemData.year,
+              isVIP: false
+            }}
+          />
+        );
+      })}
     </motion.div>
   );
 }

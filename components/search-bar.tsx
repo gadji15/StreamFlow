@@ -5,6 +5,8 @@ import { Search, Film, Tv, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
+import SeriesCard from "@/components/SeriesCard";
+import FilmCard from "@/components/FilmCard";
 
 // Type pour les résultats de recherche
 type ResultType = {
@@ -90,7 +92,7 @@ export default function SearchBar() {
         />
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto p-2">
+      <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto p-2">
         {loading ? (
           <div className="p-4 text-center text-gray-400 flex items-center justify-center gap-2">
             <Loader2 className="animate-spin h-5 w-5" />
@@ -101,34 +103,37 @@ export default function SearchBar() {
             Aucun résultat trouvé pour "{searchTerm}"
           </div>
         ) : (
-          <div className="space-y-1">
-            {results.map(result => (
-              <Link
-                key={result.id + result.type}
-                href={result.type === "film" ? `/films/${result.id}` : `/series/${result.id}`}
-                className="flex items-center p-2 rounded-md hover:bg-gray-800 cursor-pointer transition"
-              >
-                <div className="w-10 h-14 rounded overflow-hidden bg-gray-800 flex-shrink-0 flex items-center justify-center">
-                  {result.image ? (
-                    <img src={result.image} alt={result.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs text-gray-500">
-                      {result.type === "film" ? (
-                        <Film className="w-5 h-5" />
-                      ) : (
-                        <Tv className="w-5 h-5" />
-                      )}
-                    </span>
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className="text-white font-medium">{result.title}</p>
-                  <p className="text-xs text-gray-400">
-                    {result.type} • {result.year}
-                  </p>
-                </div>
-              </Link>
-            ))}
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))"
+            }}
+          >
+            {results.map(result =>
+              <div key={result.id} className="w-[110px] mx-auto">
+                {result.type === "film" ? (
+                  <FilmCard
+                    movie={{
+                      id: result.id,
+                      title: result.title,
+                      poster: result.image,
+                      year: result.year,
+                      isVIP: false,
+                    }}
+                  />
+                ) : (
+                  <SeriesCard
+                    series={{
+                      id: result.id,
+                      title: result.title,
+                      poster: result.image,
+                      year: result.year,
+                      isVIP: false,
+                    }}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
