@@ -170,13 +170,15 @@ export function ContentSection({
                 id: String(item.id),
                 title: item.title,
                 poster: (item as any).poster || (item as any).posterUrl,
-                year:
-                  (item as any).startYear !== undefined && (item as any).startYear !== null
-                    ? String((item as any).startYear) +
-                      ((item as any).endYear !== undefined && (item as any).endYear !== null
-                        ? ` - ${String((item as any).endYear)}`
-                        : '')
-                    : "",
+                year: (() => {
+                  // Robust: handle startYear/endYear, start_year/end_year, or fallback to ''
+                  const sy = (item as any).startYear ?? (item as any).start_year;
+                  const ey = (item as any).endYear ?? (item as any).end_year;
+                  if (sy && ey) return `${sy} - ${ey}`;
+                  if (sy) return String(sy);
+                  if (ey) return String(ey);
+                  return (item as any).year ?? "";
+                })(),
                 isVIP: (item as any).isVIP ?? false
               }}
             />
