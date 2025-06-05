@@ -76,7 +76,11 @@ export default function FilmDetailPage() {
             posterUrl: normalizePosterUrl(fetchedMovie.poster),
             backdropUrl: normalizeBackdropUrl(fetchedMovie.backdrop),
             trailerUrl: fetchedMovie.trailer_url || "",
-            videoUrl: fetchedMovie.video_url || "",
+            // Priorité : video_url > streamtape_url > uqload_url
+            videoUrl: fetchedMovie.video_url
+              || fetchedMovie.streamtape_url
+              || fetchedMovie.uqload_url
+              || "",
             duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
             rating: fetchedMovie.vote_average ?? null,
             tmdbId: fetchedMovie.tmdb_id || "",
