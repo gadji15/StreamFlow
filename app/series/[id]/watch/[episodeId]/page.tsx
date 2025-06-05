@@ -306,6 +306,34 @@ export default function WatchEpisodePage() {
             />
             ))}
         </div>
+        {series?.genre && (
+          <div className="mt-4">
+            <a
+              href={`/series?genre=${encodeURIComponent(series.genre)}`}
+              className={`
+                text-sm flex items-center font-medium
+                bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+                bg-clip-text text-transparent
+                underline underline-offset-4
+                transition-all duration-300
+                hover:bg-none hover:text-violet-400 hover:scale-105
+                focus:outline-none
+              `}
+              style={{
+                WebkitTextFillColor: 'transparent',
+                background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+                WebkitBackgroundClip: 'text',
+                padding: 0,
+                border: "none"
+              }}
+            >
+              <span className="underline underline-offset-4">
+                Voir tout
+              </span>
+              <svg className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </a>
+          </div>
+        )}
       </div>
     </>
   );
