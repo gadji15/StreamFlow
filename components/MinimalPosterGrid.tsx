@@ -8,7 +8,7 @@ export type MinimalPosterItem = {
   title: string;
   year?: number | string;
   poster?: string;
-  link: string;
+  // On retire link du type pour forcer la construction locale
 };
 
 type MinimalPosterGridProps = {
@@ -65,7 +65,7 @@ export default function MinimalPosterGrid({ items }: MinimalPosterGridProps) {
           `}
         >
           <Link
-            href={itemData.link}
+            href={`/films/${itemData.id}`}
             aria-label={itemData.title}
             className="w-full h-full flex flex-col items-center"
             tabIndex={0}
