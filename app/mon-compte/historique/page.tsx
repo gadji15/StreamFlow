@@ -23,6 +23,14 @@ export default function HistoriquePage() {
   const [contentMap, setContentMap] = useState<Record<string, ContentData>>({});
   const [loadingContent, setLoadingContent] = useState(false);
 
+  // Map chaque ligne à {type, id}
+  function getTypeAndId(item: WatchHistoryItem): { type: "film" | "series" | "episode", id: string } | null {
+    if (item.film_id) return { type: "film", id: item.film_id };
+    if (item.series_id) return { type: "series", id: item.series_id };
+    if (item.episode_id) return { type: "episode", id: item.episode_id };
+    return null;
+  }
+
   // Fetch all content details for items in the history
   useEffect(() => {
     if (!history || history.length === 0) {
@@ -33,9 +41,9 @@ export default function HistoriquePage() {
     async function fetchContent() {
       setLoadingContent(true);
       // Regrouper les ids par type
-      const filmIds = history.filter(h => h.content_type === "film").map(h => h.content_id);
-      const seriesIds = history.filter(h => h.content_type === "series").map(h => h.content_id);
-      const episodeIds = history.filter(h => h.content_type === "episode").map(h => h.content_id);
+      const filmIds = history.filter(h => h.film_id).map(h => h.film_id as string);
+      const seriesIds = history.filter(h => h.series_id).map(h => h.series_id as string);
+      const episodeIds = history.filter(h => h.episode_id).map(h => h.episode_id as string);
 
       // Batch fetch for each type (évite les requêtes multiples)
       const [filmsRes, seriesRes, episodesRes] = await Promise.all([
@@ -131,10 +139,13 @@ export default function HistoriquePage() {
           }}
         >
           {history.map((item) => {
-            const content = contentMap[`${item.content_type}:${item.content_id}`];
+            const typeAndId = getTypeAndId(item);
+            if (!typeAndId) return null;
+            const { type, id } = typeAndId;
+            const content = contentMap[`${type}:${id}`];
             if (!content) return null;
             return (
-              <div key={`${item.content_type}:${item.content_id}:${item.created_at}`} className="w-[140px] mx-auto">
+              <div key={`${type}:${id}:${item.watched_at}`} className="w-[140px] mx-auto">
                 <Link href={content.link}>
                   <div className="group block bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl hover:ring-2 hover:ring-purple-400/40 focus-visible:ring-4 focus-visible:ring-purple-400/60 w-full">
                     <div className="relative aspect-[2/3]">
@@ -160,7 +171,7 @@ export default function HistoriquePage() {
                       <p className="text-[11px] text-gray-400 mb-1 capitalize">{content.type}</p>
                       <p className="text-[11px] text-gray-400">
                         Vu le{" "}
-                        {format(new Date(item.created_at), "PPPp", { locale: fr })}
+                        {format(new Date(item.watched_at), "PPPp", { locale: fr })}
                       </p>
                       {item.completed && (
                         <span className="inline-block text-green-500 text-[10px] mt-1">Terminé</span>
@@ -176,6 +187,3 @@ export default function HistoriquePage() {
     </div>
   );
 }
-
-// /api/fetch-multiple endpoint expected to fetch multiple rows by ids from a table.
-// You need to implement it in pages/api/fetch-multiple.ts or adapt the fetching logic
