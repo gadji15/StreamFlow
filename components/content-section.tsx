@@ -101,12 +101,10 @@ export function ContentSection({
     if (children) {
       return (
         <div
-          className={`
-            w-full
-            [display:grid]
-            gap-3
-            [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
-          `}
+          className="w-full grid gap-3"
+          style={{
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+          }}
         >
           {children}
         </div>
@@ -148,12 +146,10 @@ export function ContentSection({
 
     return (
       <div
-        className={`
-          w-full
-          [display:grid]
-          gap-3
-          [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
-        `}
+        className="w-full grid gap-3"
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+        }}
       >
         {items.slice(0, count).map((item, idx) =>
           isMovie ? (

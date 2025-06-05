@@ -31,7 +31,7 @@ export default function SeriesCard({
         focus-visible:ring-4 focus-visible:ring-purple-400/60
         ${isVIP && !isUserVIP ? 'opacity-70 grayscale hover:grayscale-0' : ''}
         ${className}
-        w-full max-w-[140px] mx-auto
+        w-full
       `}
       tabIndex={0}
       aria-label={title}
