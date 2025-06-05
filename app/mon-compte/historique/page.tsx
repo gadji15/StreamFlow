@@ -134,7 +134,7 @@ export default function HistoriquePage() {
             const content = contentMap[`${item.content_type}:${item.content_id}`];
             if (!content) return null;
             return (
-              <div key={`${item.content_type}:${item.content_id}:${item.updated_at}`} className="w-[140px] mx-auto">
+              <div key={`${item.content_type}:${item.content_id}:${item.created_at}`} className="w-[140px] mx-auto">
                 <Link href={content.link}>
                   <div className="group block bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl hover:ring-2 hover:ring-purple-400/40 focus-visible:ring-4 focus-visible:ring-purple-400/60 w-full">
                     <div className="relative aspect-[2/3]">
@@ -160,7 +160,7 @@ export default function HistoriquePage() {
                       <p className="text-[11px] text-gray-400 mb-1 capitalize">{content.type}</p>
                       <p className="text-[11px] text-gray-400">
                         Vu le{" "}
-                        {format(new Date(item.updated_at), "PPPp", { locale: fr })}
+                        {format(new Date(item.created_at), "PPPp", { locale: fr })}
                       </p>
                       {item.completed && (
                         <span className="inline-block text-green-500 text-[10px] mt-1">Terminé</span>

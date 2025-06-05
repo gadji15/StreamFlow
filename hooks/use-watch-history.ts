@@ -9,7 +9,7 @@ export type WatchHistoryItem = {
   content_type: string;
   progress: number | null;
   completed: boolean;
-  updated_at: string;
+  created_at: string;
 };
 
 export function useWatchHistory() {
@@ -27,7 +27,7 @@ export function useWatchHistory() {
       .from('view_history')
       .select('*')
       .eq('user_id', user.id)
-      .order('updated_at', { ascending: false });
+      .order('created_at', { ascending: false });
     if (error) setError(error.message);
     setHistory(data || []);
     setLoading(false);
@@ -59,8 +59,7 @@ export function useWatchHistory() {
           content_type,
           progress,
           completed,
-          updated_at: new Date().toISOString(),
-        }],
+          created_at: new Date().toISOString()</        }],
         { onConflict: 'user_id,content_id,content_type' }
       );
     if (error) throw new Error(error.message);
