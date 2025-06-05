@@ -286,7 +286,7 @@ export default function WatchFilmPage() {
             >
               {/* Film actuel en premier */}
               {movie && (
-                <div className="relative group flex flex-col">
+                <div className="relative group flex flex-col w-[140px] mx-auto">
                   <FilmCard
                     key={movie.id}
                     movie={{
@@ -312,25 +312,27 @@ export default function WatchFilmPage() {
               )}
               {/* Autres parties */}
               {continuities.map((part) => (
-                <FilmCard
-                  key={part.id}
-                  movie={{
-                    id: String(part.id),
-                    title:
-                      part.title +
-                      (part.part_number
-                        ? ` (Partie ${part.part_number})`
-                        : ""),
-                    poster:
-                      part.poster
-                        ? /^https?:\/\//.test(part.poster)
-                          ? part.poster
-                          : getTMDBImageUrl(part.poster, "w300")
-                        : "/placeholder-poster.png",
-                    year: part.year,
-                    isVIP: part.isvip ?? false,
-                  }}
-                />
+                <div className="w-[140px] mx-auto">
+                  <FilmCard
+                    key={part.id}
+                    movie={{
+                      id: String(part.id),
+                      title:
+                        part.title +
+                        (part.part_number
+                          ? ` (Partie ${part.part_number})`
+                          : ""),
+                      poster:
+                        part.poster
+                          ? /^https?:\/\//.test(part.poster)
+                            ? part.poster
+                            : getTMDBImageUrl(part.poster, "w300")
+                          : "/placeholder-poster.png",
+                      year: part.year,
+                      isVIP: part.isvip ?? false,
+                    }}
+                  />
+                </div>
               ))}
             </div>
           </div>
