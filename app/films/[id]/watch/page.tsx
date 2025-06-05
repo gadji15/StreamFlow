@@ -74,6 +74,9 @@ export default function WatchFilmPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // SECTION AUTRES PARTIES / CONTINUITÉS
+  const [continuities, setContinuities] = useState<Movie[]>([]);
+
   // Hook pour responsive count (mêmes seuils que ContentSection)
   function useResponsiveColumns() {
     const [columns, setColumns] = useState(5);
@@ -115,6 +118,7 @@ export default function WatchFilmPage() {
           setError("Film non trouvé.");
           setMovie(null);
           setSuggestions([]);
+          setContinuities([]);
           setLoading(false);
           return;
         }
@@ -169,8 +173,23 @@ export default function WatchFilmPage() {
             : "/placeholder-poster.png",
         });
         setSuggestions(suggestionsData);
+
+        // SECTION AUTRES PARTIES / CONTINUITÉS
+        if (data.saga_id) {
+          const { data: parts, error: contErr } = await supabase
+            .from("films")
+            .select("id, title, poster, year, is_vip, part_number")
+            .eq("saga_id", data.saga_id)
+            .neq("id", data.id)
+            .order("part_number", { ascending: true });
+          setContinuities(parts || []);
+        } else {
+          setContinuities([]);
+        }
+
       } catch {
         setError("Impossible de charger le film.");
+        setContinuities([]);
       } finally {
         setLoading(false);
       }
@@ -234,6 +253,40 @@ export default function WatchFilmPage() {
         <div className="mt-6">
           <p className="text-gray-300">{movie?.description}</p>
         </div>
+
+        {/* SECTION AUTRES PARTIES / CONTINUITÉS */}
+        {continuities.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-primary mb-4">
+              Autres parties / Continuités
+            </h2>
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {continuities.map((part) => (
+                <MediaPosterCard
+                  key={part.id}
+                  href={`/films/${part.id}/watch`}
+                  poster={
+                    part.poster
+                      ? /^https?:\/\//.test(part.poster)
+                        ? part.poster
+                        : getTMDBImageUrl(part.poster, "w300")
+                      : "/placeholder-poster.png"
+                  }
+                  title={
+                    part.title +
+                    (part.part_number
+                      ? ` (Partie ${part.part_number})`
+                      : "")
+                  }
+                  year={part.year}
+                  isVIP={part.is_vip}
+                  isMovie={true}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Suggestions */}
         <div className="mt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
