@@ -10,6 +10,7 @@ import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
+import FilmCard from "@/components/FilmCard";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
