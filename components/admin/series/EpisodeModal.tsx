@@ -278,7 +278,7 @@ export default function EpisodeModal({
     if (form.thumbnail_url && !isValidImageUrl(form.thumbnail_url)) {
       err.thumbnail_url = "URL d'image invalide (jpg, png, gif, webp, bmp, svg)";
     }
-    // Vérification URL vidéo principale
+    // Vérification : au moins UNE source vidéo doit être renseignée (pas seulement video_url !)
     if (
       !form.video_unavailable &&
       !form.video_url &&
@@ -286,7 +286,7 @@ export default function EpisodeModal({
       !form.uqload_url &&
       !form.local_video_file
     ) {
-      err.video_url = "Veuillez fournir au moins une source vidéo ou cocher 'Vidéo non disponible'";
+      err.video_url = "Veuillez fournir au moins une source vidéo (video, Streamtape ou Uqload) ou cocher 'Vidéo non disponible'";
     }
     if (form.video_url && !/^https?:\/\/.+/.test(form.video_url.trim())) {
       err.video_url = "URL de la vidéo invalide";
@@ -294,15 +294,12 @@ export default function EpisodeModal({
     if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url.trim())) {
       err.streamtape_url = "Lien Streamtape invalide";
     }
-    // Correction : accepter uqload.io, uqload.net, uqload.com + .trim()
     if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.(io|net|com)\//.test(form.uqload_url.trim())) {
       err.uqload_url = "Lien Uqload invalide";
     }
-    // Vérification URL trailer
     if (form.trailer_url && !/^https?:\/\/.+/.test(form.trailer_url)) {
       err.trailer_url = "URL du trailer invalide";
     }
-    // Vérification fichier vidéo local
     if (form.local_video_file && form.local_video_file.type && !/^video\/(mp4|webm|ogg)$/i.test(form.local_video_file.type)) {
       err.local_video_file = "Format vidéo non supporté (mp4, webm, ogg)";
     }
@@ -390,7 +387,7 @@ export default function EpisodeModal({
       }
 
       // Harmonisation FilmModal: mapping propre et explicite des champs vidéo
-      let videoUrlToSave = finalVideoUrl;
+      let videoUrlToSave = finalVideoUrl || null;
       let streamtapeUrlToSave = form.streamtape_url || null;
       let uqloadUrlToSave = form.uqload_url || null;
 
@@ -401,6 +398,7 @@ export default function EpisodeModal({
         uqloadUrlToSave = null;
       }
 
+      // On transmet explicitement toutes les sources, même si video_url est vide
       const submitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
