@@ -192,13 +192,13 @@ export default function HistoriquePage() {
             // Progress pour la barre (0-100)
             const progress = Math.min(item.progress ?? 0, 100);
             return (
-              <div key={`${type}:${id}:${item.watched_at}`} className="w-full max-w-xs mx-auto">
+              <div key={`${type}:${id}:${item.watched_at}`} className="w-full max-w-[320px] mx-auto">
                 <Link href={content.link}>
-                  <div className="relative group rounded-lg overflow-hidden shadow bg-gray-900/70 hover:scale-105 transition will-change-transform">
+                  <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden shadow bg-gray-900/70 group hover:scale-105 transition will-change-transform">
                     <img
                       src={content.backdrop || "/placeholder-backdrop.jpg"}
                       alt={content.title}
-                      className="w-full h-32 object-cover object-center"
+                      className="absolute top-0 left-0 w-full h-full object-cover object-center"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
                     <div className="absolute bottom-2 left-3 right-3 z-10">
