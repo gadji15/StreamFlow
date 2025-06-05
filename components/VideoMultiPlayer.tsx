@@ -4,7 +4,7 @@ import React, { useState } from "react";
 function getUqloadEmbedUrl(url: string) {
   try {
     // Match ID dans l'URL: https://uqload.net/xyz123.html ou https://uqload.io/xyz123.html
-    const match = url.match(/uqload\.(?:net|io)\/([a-zA-Z0-9]+)/);
+    const match = url.match(/uqload\.(?:net|io)\/([a-zA-Z0-9]+)\.html/);
     if (match && match[1]) {
       return `https://uqload.${url.includes('.io') ? 'io' : 'net'}/embed-${match[1]}.html`;
     }
