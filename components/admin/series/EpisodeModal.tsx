@@ -421,10 +421,6 @@ export default function EpisodeModal({
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
       onClose();
-      
-      await onSave(submitData);
-      toast({ title: "Épisode enregistré" });
-      onClose();
     } catch (e) {
       if (
         typeof e === "object" &&
