@@ -19,8 +19,18 @@ export default function SeriesCard({
   isUserVIP?: boolean;
   className?: string;
 }) {
-  const { id, title, poster, year, isVIP } = series;
+  const { id, title, poster, year, isVIP, startYear, endYear, start_year, end_year } = series;
   const posterSrc = poster || "/placeholder-poster.png";
+
+  // Robust year display logic: prefer "year" if present, else build from start/end
+  let displayYear = "";
+  if (year) {
+    displayYear = String(year);
+  } else if (startYear || endYear) {
+    displayYear = [startYear, endYear].filter(Boolean).join(" - ");
+  } else if (start_year || end_year) {
+    displayYear = [start_year, end_year].filter(Boolean).join(" - ");
+  }
 
   return (
     <Link
@@ -56,7 +66,7 @@ export default function SeriesCard({
       </div>
       <div className="p-2 transition-colors duration-200 group-hover:bg-gray-900/70">
         <h3 className="font-semibold truncate text-xs text-center group-hover:text-purple-400 transition-colors duration-200">{title}</h3>
-        <p className="text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors duration-200 text-center">{year}</p>
+        <p className="text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors duration-200 text-center">{displayYear}</p>
       </div>
     </Link>
   );
