@@ -91,6 +91,7 @@ export default function VideoMultiPlayer({
             frameBorder={0}
             allow="autoplay; fullscreen"
             title="Lecteur Uqload"
+            /* Surtout ne PAS mettre sandbox pour Uqload, sinon l’iframe sera bloquée */
           />
         )}
 
