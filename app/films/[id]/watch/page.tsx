@@ -178,7 +178,7 @@ export default function WatchFilmPage() {
         if (data.saga_id) {
           const { data: parts, error: contErr } = await supabase
             .from("films")
-            .select("id, title, poster, year, is_vip, part_number")
+            .select("id, title, poster, year, isvip, part_number")
             .eq("saga_id", data.saga_id)
             .neq("id", data.id)
             .order("part_number", { ascending: true });
@@ -279,7 +279,7 @@ export default function WatchFilmPage() {
                       : "")
                   }
                   year={part.year}
-                  isVIP={part.is_vip}
+                  isVIP={part.isvip}
                   isMovie={true}
                 />
               ))}
