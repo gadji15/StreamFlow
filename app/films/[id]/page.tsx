@@ -80,7 +80,7 @@ export default function FilmDetailPage() {
             duration: fetchedMovie.duration ?? fetchedMovie.runtime ?? 0,
             rating: fetchedMovie.vote_average ?? null,
             tmdbId: fetchedMovie.tmdb_id || "",
-            isVIP: fetchedMovie.is_vip,
+            isvip: fetchedMovie.isvip, // mapping natif pour cohérence
           };
           setMovie(normalizedMovie);
 
@@ -257,7 +257,7 @@ export default function FilmDetailPage() {
           {/* Poster et VIP badge */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
             <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
-            {movie.isVIP && (
+            {movie.isvip && (
               <div className="mt-4 w-full flex flex-col items-center">
                 <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
                   Contenu VIP
