@@ -7,15 +7,12 @@ import AdminSidebar from '@/components/admin/admin-sidebar';
 import AdminAuthGuard from '@/components/admin/admin-auth-guard';
 import { ToastProvider } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { useAdminSessionMonitor } from "@/hooks/useAdminSessionMonitor";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  const rawPathname = usePathname();
-  const pathname = rawPathname ?? "";
-
-  // Cas spécial : pas de layout/admin sur la page d'accès refusé
-  if (pathname === '/admin/access-denied') {
-    return <>{children}</>;
-  }
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const ModalReconnect = useAdminSessionMonitor();
 
   // Détermination dynamique du titre pour le header admin
   let pageTitle = "StreamFlow Admin";
@@ -30,7 +27,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   // Hauteur du header en pixels (correspond à h-16 = 64px)
   const HEADER_HEIGHT = 64;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const content = (
     <div className="min-h-screen flex bg-gray-900">
