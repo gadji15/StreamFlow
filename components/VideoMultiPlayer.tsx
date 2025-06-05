@@ -19,30 +19,32 @@ function getUqloadEmbedUrl(url: string) {
  * @param props.uqloadUrl (string) Lien complet Uqload (ex: https://uqload.io/xyz1234567.html)
  */
 export default function VideoMultiPlayer({
+  videoUrl,
   streamtapeUrl,
   uqloadUrl,
   height = 420,
 }: {
+  videoUrl?: string;
   streamtapeUrl?: string;
   uqloadUrl?: string;
   height?: number;
 }) {
-  // Par défaut, on affiche Streamtape si dispo, sinon Uqload
+  // Inclure toutes les sources disponibles
   const available = [
+    videoUrl ? "video" : null,
     streamtapeUrl ? "streamtape" : null,
     uqloadUrl ? "uqload" : null,
-  ].filter(Boolean) as ("streamtape" | "uqload")[];
+  ].filter(Boolean) as ("video" | "streamtape" | "uqload")[];
 
-  // Correction : toujours initialiser sur la première source disponible
-  const [active, setActive] = useState<"streamtape" | "uqload">(available[0] ?? "streamtape");
+  const [active, setActive] = useState<"video" | "streamtape" | "uqload">(available[0] ?? "video");
 
-  // Si la liste des sources change (ex : navigation entre films), réinitialise le player sur la bonne source
+  // Réinitialiser le player si les sources changent
   React.useEffect(() => {
     if (available.length && !available.includes(active)) {
       setActive(available[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [streamtapeUrl, uqloadUrl]);
+  }, [videoUrl, streamtapeUrl, uqloadUrl]);
 
   if (available.length === 0) {
     return <div className="text-center text-red-500">Aucune source vidéo disponible.</div>;
@@ -53,6 +55,18 @@ export default function VideoMultiPlayer({
       {/* Boutons de switch */}
       {available.length > 1 && (
         <div className="flex justify-center gap-3 mb-3">
+          {videoUrl && (
+            <button
+              className={`px-4 py-1 rounded-full font-bold transition ${
+                active === "video"
+                  ? "bg-primary text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+              onClick={() => setActive("video")}
+            >
+              Vidéo directe
+            </button>
+          )}
           {streamtapeUrl && (
             <button
               className={`px-4 py-1 rounded-full font-bold transition ${
@@ -82,6 +96,46 @@ export default function VideoMultiPlayer({
 
       {/* Lecteur vidéo */}
       <div className="relative w-full rounded-lg overflow-hidden bg-black" style={{ paddingBottom: "56.25%" }}>
+        {/* Vidéo directe (mp4 ou autre) */}
+        {active === "video" && videoUrl && (
+          videoUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+            <video
+              src={videoUrl}
+              controls
+              className="absolute top-0 left-0 w-full h-full rounded"
+              style={{ background: "black" }}
+              poster=""
+            />
+          ) : videoUrl.includes("uqload.net") || videoUrl.includes("uqload.io") ? (
+            <iframe
+              src={getUqloadEmbedUrl(videoUrl)}
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+              frameBorder={0}
+              allow="autoplay; fullscreen"
+              title="Lecteur Uqload"
+            />
+          ) : videoUrl.includes("streamtape.com") ? (
+            <iframe
+              src={videoUrl.replace("/v/", "/e/")}
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+              frameBorder={0}
+              allow="autoplay; fullscreen"
+              title="Lecteur Streamtape"
+            />
+          ) : (
+            <iframe
+              src={videoUrl}
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+              frameBorder={0}
+              allow="autoplay; fullscreen"
+              title="Lecteur vidéo"
+            />
+          )
+        )}
+        {/* Streamtape */}
         {active === "streamtape" && streamtapeUrl && (
           <iframe
             src={streamtapeUrl.replace("/v/", "/e/")}
@@ -92,6 +146,7 @@ export default function VideoMultiPlayer({
             title="Lecteur Streamtape"
           />
         )}
+        {/* Uqload */}
         {active === "uqload" && uqloadUrl && (
           <iframe
             src={getUqloadEmbedUrl(uqloadUrl)}
@@ -100,12 +155,8 @@ export default function VideoMultiPlayer({
             frameBorder={0}
             allow="autoplay; fullscreen"
             title="Lecteur Uqload"
-            /* Surtout ne PAS mettre sandbox pour Uqload, sinon l’iframe sera bloquée */
           />
         )}
-
-        {/* Helper pour générer le lien embed Uqload */}
-        {/* Place ce helper tout en haut du fichier */}
       </div>
     </div>
   );
