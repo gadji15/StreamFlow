@@ -105,8 +105,13 @@ export default function SimilarSeriesGrid({
           serie.posterUrl ||
           "/placeholder-poster.png";
         const title = serie.title || "Sans titre";
-        const startYear = serie.start_year ?? serie.startYear ?? "";
-        const endYear = serie.end_year ?? serie.endYear ?? "";
+        const year =
+          serie.year ??
+          serie.start_year ??
+          serie.startYear ??
+          (serie.releaseDate ? String(serie.releaseDate).substring(0, 4) : "") ??
+          "";
+
         const isVIP = serie.is_vip ?? serie.isVIP ?? false;
 
         return (
@@ -115,7 +120,7 @@ export default function SimilarSeriesGrid({
             href={`/series/${serie.id}`}
             poster={poster}
             title={title}
-            year={startYear + (endYear ? ` - ${endYear}` : "")}
+            year={year}
             isVIP={isVIP}
             isMovie={false}
             animationDelay={`${idx * 0.06}s`}

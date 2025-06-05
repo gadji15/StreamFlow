@@ -190,6 +190,7 @@ export default function WatchEpisodePage() {
           videoUrl={episode?.video_url || undefined}
           streamtapeUrl={episode?.streamtape_url || undefined}
           uqloadUrl={episode?.uqload_url || undefined}
+          loading={loading}
         />
       </div>
 
@@ -279,7 +280,56 @@ export default function WatchEpisodePage() {
 
       {/* Bloc suggestions harmonisé */}
       <div className="w-full max-w-6xl mx-auto my-12">
-        <h2 className="text-xl font-bold mb-2">Séries similaires</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+          <h2 className="text-2xl font-extrabold text-primary flex items-center gap-2 tracking-wide drop-shadow mb-0">
+            <span className="inline-block">
+              <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
+            </span>
+            Séries similaires
+          </h2>
+          {series?.genre && (
+            (() => {
+              const GENRE_SLUGS: Record<string, string> = {
+                "Thriller": "thriller",
+                "Science-Fiction": "sci-fi",
+                "Comédie": "comedy",
+                "Drame": "drama",
+                "Animation": "animation",
+                "Famille": "family",
+                "Aventure": "adventure",
+                "Documentaire": "documentary",
+                // Ajoutez d'autres mappings si nécessaire
+              };
+              const genreSlug = GENRE_SLUGS[series.genre] ?? (series.genre || "").toLowerCase().replace(/\s+/g, "-");
+              return (
+                <a
+                  href={`/series?genre=${encodeURIComponent(genreSlug)}`}
+                  className={`
+                    text-sm flex items-center font-medium
+                    bg-gradient-to-r from-fuchsia-400 via-pink-400 to-violet-500
+                    bg-clip-text text-transparent
+                    underline underline-offset-4
+                    transition-all duration-300
+                    hover:bg-none hover:text-violet-400 hover:scale-105
+                    focus:outline-none
+                  `}
+                  style={{
+                    WebkitTextFillColor: 'transparent',
+                    background: 'linear-gradient(90deg, #e879f9, #ec4899, #a78bfa)',
+                    WebkitBackgroundClip: 'text',
+                    padding: 0,
+                    border: "none"
+                  }}
+                >
+                  <span className="underline underline-offset-4">
+                    Voir tout
+                  </span>
+                  <svg className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </a>
+              );
+            })()
+          )}
+        </div>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
             {similarSeries.map((serie, idx) => (
@@ -289,10 +339,6 @@ export default function WatchEpisodePage() {
               poster={serie.poster}
               title={serie.title}
               year={
-              // Utilise le typage dynamique pour éviter l'erreur si start_year/end_year n'existent pas sur Series
-              // Si tu veux les afficher, assure-toi que Series inclut bien ces propriétés (start_year?: string; end_year?: string;)
-              // Sinon, tu peux fallback sur une autre propriété ou ne rien afficher
-              // Ici, on affiche l'année seulement si elles existent
               (serie as any).start_year
                 ? (serie as any).start_year +
                 ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")

@@ -60,6 +60,13 @@ export function ContentSection({
   const [loading, setLoading] = useState(false);
   const { isVIP } = useSupabaseAuth();
 
+  // Log de diagnostic pour comprendre la structure des données reçues
+  React.useEffect(() => {
+    if (items.length) {
+      console.log('Contenu reçu par ContentSection:', items);
+    }
+  }, [items]);
+
   useEffect(() => {
     if (type === 'custom') return;
 
@@ -215,10 +222,8 @@ export function ContentSection({
               `}>{item.title}</h3>
               <p className="text-[11px] text-gray-400 w-full text-center">
                 {isMovie
-                  ? (item as Movie).year
-                  : `${(item as Series).startYear ?? ''}${
-                      (item as Series).endYear ? ` - ${(item as Series).endYear}` : ''
-                    }`}
+                  ? (item as Movie).year ?? ''
+                  : (item as Series).year ?? ''}
               </p>
             </div>
           </Link>
