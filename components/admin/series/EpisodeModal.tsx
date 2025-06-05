@@ -210,7 +210,15 @@ export default function EpisodeModal({
   }, [open, initialData?.id, seriesTitle, parentSeasonNumber]);
 
   const handleChange = (field: string, value: any) => {
-    setForm((f) => ({ ...f, [field]: value }));
+    // Si on remplit un champ vidéo, désactiver automatiquement video_unavailable
+    if (
+      ["video_url", "streamtape_url", "uqload_url"].includes(field) &&
+      value && value.trim() !== ""
+    ) {
+      setForm(f => ({ ...f, [field]: value, video_unavailable: false }));
+    } else {
+      setForm(f => ({ ...f, [field]: value }));
+    }
     setErrors((e) => {
       const { [field]: _removed, ...rest } = e;
       return rest;
@@ -219,10 +227,13 @@ export default function EpisodeModal({
     if (field === "local_video_file" && value) {
       // Si upload local, vider video_url
       setForm(f => ({ ...f, video_url: "" }));
+      // Désactiver aussi le flag video_unavailable
+      setForm(f => ({ ...f, video_unavailable: false }));
     }
     if (field === "video_url" && value) {
       // Si lien vidéo, vider upload local
       setForm(f => ({ ...f, local_video_file: null }));
+      setForm(f => ({ ...f, video_unavailable: false }));
     }
   };
 
@@ -255,13 +266,14 @@ export default function EpisodeModal({
     ) {
       err.video_url = "Veuillez fournir au moins une source vidéo ou cocher 'Vidéo non disponible'";
     }
-    if (form.video_url && !/^https?:\/\/.+/.test(form.video_url)) {
+    if (form.video_url && !/^https?:\/\/.+/.test(form.video_url.trim())) {
       err.video_url = "URL de la vidéo invalide";
     }
-    if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url)) {
+    if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url.trim())) {
       err.streamtape_url = "Lien Streamtape invalide";
     }
-    if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.io\//.test(form.uqload_url)) {
+    // Correction : accepter uqload.io, uqload.net, uqload.com + .trim()
+    if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.(io|net|com)\//.test(form.uqload_url.trim())) {
       err.uqload_url = "Lien Uqload invalide";
     }
     // Vérification URL trailer
