@@ -278,27 +278,28 @@ export default function WatchFilmPage() {
               })()}
             </h2>
             {/* Grille des parties incluant le film courant */}
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+              }}
+            >
               {/* Film actuel en premier */}
               {movie && (
                 <div className="relative group flex flex-col">
-                  <MediaPosterCard
+                  <FilmCard
                     key={movie.id}
-                    href={`/films/${movie.id}/watch`}
-                    poster={
-                      movie.posterUrl
-                        ? movie.posterUrl
-                        : "/placeholder-poster.png"
-                    }
-                    title={
-                      movie.title +
-                      (movie.part_number
-                        ? ` (Partie ${movie.part_number})`
-                        : "")
-                    }
-                    year={movie.year}
-                    isVIP={movie.isvip}
-                    isMovie={true}
+                    movie={{
+                      id: String(movie.id),
+                      title:
+                        movie.title +
+                        (movie.part_number
+                          ? ` (Partie ${movie.part_number})`
+                          : ""),
+                      poster: movie.posterUrl,
+                      year: movie.year,
+                      isVIP: movie.isvip ?? false,
+                    }}
                   />
                   {/* Badge FILM ACTUEL */}
                   <span
@@ -311,25 +312,24 @@ export default function WatchFilmPage() {
               )}
               {/* Autres parties */}
               {continuities.map((part) => (
-                <MediaPosterCard
+                <FilmCard
                   key={part.id}
-                  href={`/films/${part.id}/watch`}
-                  poster={
-                    part.poster
-                      ? /^https?:\/\//.test(part.poster)
-                        ? part.poster
-                        : getTMDBImageUrl(part.poster, "w300")
-                      : "/placeholder-poster.png"
-                  }
-                  title={
-                    part.title +
-                    (part.part_number
-                      ? ` (Partie ${part.part_number})`
-                      : "")
-                  }
-                  year={part.year}
-                  isVIP={part.isvip}
-                  isMovie={true}
+                  movie={{
+                    id: String(part.id),
+                    title:
+                      part.title +
+                      (part.part_number
+                        ? ` (Partie ${part.part_number})`
+                        : ""),
+                    poster:
+                      part.poster
+                        ? /^https?:\/\//.test(part.poster)
+                          ? part.poster
+                          : getTMDBImageUrl(part.poster, "w300")
+                        : "/placeholder-poster.png",
+                    year: part.year,
+                    isVIP: part.isvip ?? false,
+                  }}
                 />
               ))}
             </div>
