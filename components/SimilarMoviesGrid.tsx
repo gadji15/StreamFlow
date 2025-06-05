@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchTMDBSimilarMovies, getTMDBImageUrl, TMDBMovie } from "@/lib/tmdb";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import { Tv, Film } from 'lucide-react';
 
 /**
  * Affiche les films similaires disponibles dans la base interne,
@@ -145,7 +146,8 @@ export default function SimilarMoviesGrid({ tmdbId }: { tmdbId: string }) {
               </div>
             )}
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v16h16V4H4zm4 4h8v8H8V8z"></path></svg>
+              {/* Icône harmonisée avec la home */}
+              <Film className="w-7 h-7 text-white" />
             </div>
           </div>
           <div className="flex flex-col items-center w-full px-1 pb-1 pt-1">
