@@ -278,71 +278,7 @@ export default function WatchEpisodePage() {
         </div>
       )}
 
-      {/* Bloc épisodes de la saison courante */}
-      {(() => {
-        const seasonEpisodes = seasons[selectedSeasonIndex]?.episodes?.filter((ep: any) => ep.published) || [];
-        // Afficher si au moins 2 épisodes publiés (sinon pas d'intérêt)
-        if (!episode || seasonEpisodes.length < 2) return null;
-        // Ordonner et placer l'épisode courant en premier
-        const sortedEpisodes = [...seasonEpisodes].sort((a, b) => a.episode_number - b.episode_number);
-        const currentIdx = sortedEpisodes.findIndex((ep) => ep.id === episode.id);
-        let episodesDisplay = [];
-        if (currentIdx !== -1) {
-          episodesDisplay = [
-            sortedEpisodes[currentIdx],
-            ...sortedEpisodes.slice(0, currentIdx),
-            ...sortedEpisodes.slice(currentIdx + 1),
-          ];
-        } else {
-          episodesDisplay = sortedEpisodes;
-        }
-        return (
-          <div className="w-full max-w-6xl mx-auto my-12">
-            <h2 className="flex items-center gap-2 text-xl font-bold text-primary mb-4">
-              {/* Icône TV */}
-              <span className="inline-block align-middle">
-                <svg width="26" height="26" fill="none" viewBox="0 0 24 24" className="text-primary drop-shadow" style={{display: 'inline'}}><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2"/><rect x="9" y="19" width="6" height="2" rx="1" fill="currentColor" className="text-primary"/></svg>
-              </span>
-              {(() => {
-                const nb = sortedEpisodes.length;
-                if (nb === 2) return <>Duo d’épisodes</>;
-                if (nb === 3) return <>Trilogie d’épisodes</>;
-                if (nb > 3) return <>Saison — {nb} épisodes</>;
-                return <>Épisodes</>;
-              })()}
-            </h2>
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {episodesDisplay.map((ep, idx) => (
-                <div className="relative group flex flex-col" key={ep.id}>
-                  <MediaPosterCard
-                    href={`/series/${series?.id}/watch/${ep.id}`}
-                    poster={
-                      ep.poster
-                        ? /^https?:\/\//.test(ep.poster)
-                          ? ep.poster
-                          : (typeof getTMDBImageUrl !== "undefined" ? getTMDBImageUrl(ep.poster, "w300") : ep.poster)
-                        : "/placeholder-poster.png"
-                    }
-                    title={ep.title + (ep.episode_number ? ` (Ép. ${ep.episode_number})` : "")}
-                    year={ep.year}
-                    isVIP={ep.isvip}
-                    isMovie={false}
-                  />
-                  {/* Badge épisode actuel */}
-                  {ep.id === episode.id && (
-                    <span
-                      className="absolute top-2 left-2 bg-indigo-600/90 text-white font-bold text-xs px-2 py-1 rounded shadow-lg border border-indigo-700 uppercase pointer-events-none"
-                      style={{ zIndex: 2, letterSpacing: 0.5 }}
-                    >
-                      Épisode actuel
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
+      
 
       {/* Bloc suggestions harmonisé */}
       <div className="w-full max-w-6xl mx-auto my-12">
