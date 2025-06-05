@@ -109,13 +109,20 @@ export default function SimilarSeriesGrid({
         const endYear = serie.end_year ?? serie.endYear ?? "";
         const isVIP = serie.is_vip ?? serie.isVIP ?? false;
 
+        // Affichage identique à la home : année ou période
+        const subtitle = startYear
+          ? endYear
+            ? `${startYear} - ${endYear}`
+            : `${startYear}`
+          : "";
+
         return (
           <MediaPosterCard
             key={serie.id}
             href={`/series/${serie.id}`}
             poster={poster}
             title={title}
-            year={startYear + (endYear ? ` - ${endYear}` : "")}
+            subtitle={subtitle}
             isVIP={isVIP}
             isMovie={false}
             animationDelay={`${idx * 0.06}s`}

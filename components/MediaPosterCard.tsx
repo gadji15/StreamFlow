@@ -22,6 +22,7 @@ export default function MediaPosterCard({
   year?: string | number | null;
   isVIP?: boolean;
   isMovie?: boolean;
+  subtitle?: string | React.ReactNode; // <-- ajout
   className?: string;
   style?: React.CSSProperties;
   animationDelay?: string;
@@ -89,7 +90,7 @@ export default function MediaPosterCard({
           md:text-base
         `}>{title}</h3>
         <p className="text-[11px] text-gray-400 w-full text-center">
-          {year}
+          {typeof subtitle !== "undefined" ? subtitle : year}
         </p>
       </div>
       {/* Animation keyframes */}
