@@ -367,14 +367,26 @@ export default function EpisodeModal({
         finalVideoUrl = publicUrlData.publicUrl;
       }
 
+      // Harmonisation FilmModal: mapping propre et explicite des champs vidéo
+      let video_url = finalVideoUrl;
+      let streamtape_url = form.streamtape_url || null;
+      let uqload_url = form.uqload_url || null;
+
+      // Si vidéo indisponible, forcer tous les champs vidéo à null
+      if (form.video_unavailable) {
+        video_url = null;
+        streamtape_url = null;
+        uqload_url = null;
+      }
+
       const submitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
         air_date: clean(form.air_date),
         thumbnail_url: clean(thumbnail_url),
-        video_url: finalVideoUrl,
-        streamtape_url: form.streamtape_url || null,
-        uqload_url: form.uqload_url || null,
+        video_url,
+        streamtape_url,
+        uqload_url,
         trailer_url: clean(trailer_url),
         title: clean(form.title),
         description: clean(form.description),
