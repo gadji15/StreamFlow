@@ -36,6 +36,9 @@ type Movie = {
   tmdb_id?: string;
   backdropUrl?: string;
   posterUrl?: string;
+  part_number?: number; // Ajouté pour saga/parties
+  isvip?: boolean; // Ajouté pour compatibilité avec isVIP
+  saga_id?: string; // Ajouté pour compatibilité saga
 };
 
 type WatchLayoutProps = {
@@ -73,6 +76,9 @@ export default function WatchFilmPage() {
   const [suggestions, setSuggestions] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // SECTION AUTRES PARTIES / CONTINUITÉS
+  const [continuities, setContinuities] = useState<Movie[]>([]);
 
   // Hook pour responsive count (mêmes seuils que ContentSection)
   function useResponsiveColumns() {
@@ -115,6 +121,7 @@ export default function WatchFilmPage() {
           setError("Film non trouvé.");
           setMovie(null);
           setSuggestions([]);
+          setContinuities([]);
           setLoading(false);
           return;
         }
@@ -169,8 +176,23 @@ export default function WatchFilmPage() {
             : "/placeholder-poster.png",
         });
         setSuggestions(suggestionsData);
+
+        // SECTION AUTRES PARTIES / CONTINUITÉS
+        if (data.saga_id) {
+          const { data: parts, error: contErr } = await supabase
+            .from("films")
+            .select("id, title, poster, year, isvip, part_number")
+            .eq("saga_id", data.saga_id)
+            .neq("id", data.id)
+            .order("part_number", { ascending: true });
+          setContinuities(parts || []);
+        } else {
+          setContinuities([]);
+        }
+
       } catch {
         setError("Impossible de charger le film.");
+        setContinuities([]);
       } finally {
         setLoading(false);
       }
@@ -234,6 +256,86 @@ export default function WatchFilmPage() {
         <div className="mt-6">
           <p className="text-gray-300">{movie?.description}</p>
         </div>
+
+        {/* SECTION SAGA/PARTIES AVEC TITRE DYNAMIQUE ET FILM ACTUEL */}
+        {(continuities.length > 0 || (movie && movie.saga_id)) && (
+          <div className="mt-8">
+            {/* Titre dynamique saga */}
+            <h2 className="flex items-center gap-2 text-xl font-bold text-primary mb-4">
+              {/* Icône saga type */}
+              <span className="inline-block align-middle">
+                {/* Icone "saga/franchise" type */}
+                <svg width="26" height="26" fill="none" viewBox="0 0 24 24" className="text-primary drop-shadow" style={{display: 'inline'}}><path d="M5 3v18a2 2 0 002 2h10a2 2 0 002-2V3" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><rect x="7" y="5" width="10" height="3" rx="1" fill="currentColor" className="text-primary/60"/><rect x="7" y="10" width="10" height="3" rx="1" fill="currentColor" className="text-primary/80"/><rect x="7" y="15" width="10" height="3" rx="1" fill="currentColor" className="text-primary"/></svg>
+              </span>
+              {/* Titre dynamique */}
+              {(() => {
+                const nb = continuities.length + 1; // +1 pour le film actuel
+                if (nb === 2) return <>Saga en 2 parties</>;
+                if (nb === 3) return <>Trilogie</>;
+                if (nb === 4) return <>Quadrilogie</>;
+                if (nb > 4) return <>Saga ({nb} parties)</>;
+                return <>Saga</>;
+              })()}
+            </h2>
+            {/* Grille des parties incluant le film courant */}
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {/* Film actuel en premier */}
+              {movie && (
+                <div className="relative group flex flex-col">
+                  <MediaPosterCard
+                    key={movie.id}
+                    href={`/films/${movie.id}/watch`}
+                    poster={
+                      movie.posterUrl
+                        ? movie.posterUrl
+                        : "/placeholder-poster.png"
+                    }
+                    title={
+                      movie.title +
+                      (movie.part_number
+                        ? ` (Partie ${movie.part_number})`
+                        : "")
+                    }
+                    year={movie.year}
+                    isVIP={movie.isvip}
+                    isMovie={true}
+                  />
+                  {/* Badge FILM ACTUEL */}
+                  <span
+                    className="absolute top-2 left-2 bg-indigo-600/90 text-white font-bold text-xs px-2 py-1 rounded shadow-lg border border-indigo-700 uppercase pointer-events-none"
+                    style={{ zIndex: 2, letterSpacing: 0.5 }}
+                  >
+                    Film actuel
+                  </span>
+                </div>
+              )}
+              {/* Autres parties */}
+              {continuities.map((part) => (
+                <MediaPosterCard
+                  key={part.id}
+                  href={`/films/${part.id}/watch`}
+                  poster={
+                    part.poster
+                      ? /^https?:\/\//.test(part.poster)
+                        ? part.poster
+                        : getTMDBImageUrl(part.poster, "w300")
+                      : "/placeholder-poster.png"
+                  }
+                  title={
+                    part.title +
+                    (part.part_number
+                      ? ` (Partie ${part.part_number})`
+                      : "")
+                  }
+                  year={part.year}
+                  isVIP={part.isvip}
+                  isMovie={true}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Suggestions */}
         <div className="mt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
