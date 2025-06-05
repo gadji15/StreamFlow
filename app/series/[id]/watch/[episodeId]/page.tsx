@@ -184,6 +184,7 @@ export default function WatchEpisodePage() {
       {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
+          videoUrl={episode?.video_url || undefined}
           streamtapeUrl={episode?.streamtape_url || undefined}
           uqloadUrl={episode?.uqload_url || undefined}
         />
