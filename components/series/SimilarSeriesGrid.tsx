@@ -97,31 +97,18 @@ export default function SimilarSeriesGrid({
         [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
       "
     >
-      {similarLocal.map((serie, idx) => {
-        // Gestion des données pour harmoniser l'affichage
-        const poster =
-          serie.poster ||
-          serie.poster_url ||
-          serie.posterUrl ||
-          "/placeholder-poster.png";
-        const title = serie.title || "Sans titre";
-        const startYear = serie.start_year ?? serie.startYear ?? "";
-        const endYear = serie.end_year ?? serie.endYear ?? "";
-        const isVIP = serie.is_vip ?? serie.isVIP ?? false;
-
-        return (
-          <MediaPosterCard
-            key={serie.id}
-            href={`/series/${serie.id}`}
-            poster={poster}
-            title={title}
-            year={startYear + (endYear ? ` - ${endYear}` : "")}
-            isVIP={isVIP}
-            isMovie={false}
-            animationDelay={`${idx * 0.06}s`}
-          />
-        );
-      })}
+      {similarLocal.map((serie) => (
+        <SeriesCard
+          key={serie.id}
+          series={{
+            id: serie.id,
+            title: serie.title || "Sans titre",
+            poster: serie.poster || serie.poster_url || serie.posterUrl || "/placeholder-poster.png",
+            year: (serie.start_year ?? serie.startYear ?? "") + ((serie.end_year ?? serie.endYear) ? ` - ${serie.end_year ?? serie.endYear}` : ""),
+            isVIP: serie.is_vip ?? serie.isVIP
+          }}
+        />
+      ))}
     </div>
   );
 }

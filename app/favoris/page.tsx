@@ -123,11 +123,13 @@ export default function FavorisPage() {
             {filmFavorites.map((film) => (
               <FilmCard
                 key={film.id}
-                id={film.id}
-                title={film.title}
-                description={film.description}
-                imageUrl={film.poster || "/placeholder-poster.png"}
-                isFavorite={true}
+                movie={{
+                  id: film.id,
+                  title: film.title,
+                  poster: film.poster,
+                  year: film.year,
+                  isVIP: film.is_vip ?? film.isVIP
+                }}
               />
             ))}
           </div>
@@ -144,11 +146,13 @@ export default function FavorisPage() {
             {seriesFavorites.map((serie) => (
               <SeriesCard
                 key={serie.id}
-                id={serie.id}
-                title={serie.title}
-                description={serie.description}
-                imageUrl={serie.poster || "/placeholder-poster.png"}
-                isFavorite={true}
+                series={{
+                  id: serie.id,
+                  title: serie.title,
+                  poster: serie.poster,
+                  year: serie.year,
+                  isVIP: serie.is_vip ?? serie.isVIP
+                }}
               />
             ))}
           </div>
