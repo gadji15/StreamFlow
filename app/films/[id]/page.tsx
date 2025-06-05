@@ -244,7 +244,9 @@ export default function FilmDetailPage() {
     return notFound();
   }
 
-  const canWatch = !movie.isVIP || isVIP;
+  // Accès : si le film n'est PAS VIP, canWatch = true même si isVIP est indéfini ou profil absent
+  // Si le film est VIP, il faut explicitement isVIP === true (profil existant et VIP)
+  const canWatch = !movie.isvip || isVIP === true;
 
   return (
     <>
