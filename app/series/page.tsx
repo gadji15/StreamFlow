@@ -232,10 +232,34 @@ export default function SeriesPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {paginatedSeries.map((series) => (
-              <SeriesCard key={series.id} series={series} isUserVIP={!!isVIP} />
-            ))}
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
+            {paginatedSeries.map((series) => {
+              // Compose year string robustly
+              const sy = (series as any).startYear ?? (series as any).start_year;
+              const ey = (series as any).endYear ?? (series as any).end_year;
+              let year = "";
+              if (sy && ey) year = `${sy} - ${ey}`;
+              else if (sy) year = String(sy);
+              else if (ey) year = String(ey);
+              else year = (series as any).year ?? "";
+
+              return (
+                <div key={series.id} className="w-[140px] mx-auto">
+                  <SeriesCard
+                    series={{
+                      ...series,
+                      year,
+                    }}
+                    isUserVIP={!!isVIP}
+                  />
+                </div>
+              );
+            })}
           </div>
           {totalPages > 1 && (
             <div className="flex justify-center mt-8 gap-1 flex-wrap">

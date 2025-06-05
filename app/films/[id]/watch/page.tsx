@@ -10,6 +10,8 @@ import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
+import FilmCard from "@/components/FilmCard";
+import { useWatchProgress } from "@/components/ui/useWatchProgress";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -203,14 +205,23 @@ export default function WatchFilmPage() {
 
   const goBack = () => router.push(`/films/${id}`);
 
+  // Gestion du suivi de la progression
+  const { handleProgress, markAsWatched } = useWatchProgress({
+    type: "film",
+    id,
+  });
+
   return (
     <>
-      {console.log("MOVIE DEBUG", movie)}
+      {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
+          videoUrl={movie?.video_url || undefined}
           streamtapeUrl={movie?.streamtape_url || undefined}
           uqloadUrl={movie?.uqload_url || undefined}
           loading={loading}
+          onVideoProgress={handleProgress}
+          onIframeActivate={markAsWatched}
         />
       </div>
       {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
@@ -278,27 +289,28 @@ export default function WatchFilmPage() {
               })()}
             </h2>
             {/* Grille des parties incluant le film courant */}
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+              }}
+            >
               {/* Film actuel en premier */}
               {movie && (
-                <div className="relative group flex flex-col">
-                  <MediaPosterCard
+                <div className="relative group flex flex-col w-[140px] mx-auto">
+                  <FilmCard
                     key={movie.id}
-                    href={`/films/${movie.id}/watch`}
-                    poster={
-                      movie.posterUrl
-                        ? movie.posterUrl
-                        : "/placeholder-poster.png"
-                    }
-                    title={
-                      movie.title +
-                      (movie.part_number
-                        ? ` (Partie ${movie.part_number})`
-                        : "")
-                    }
-                    year={movie.year}
-                    isVIP={movie.isvip}
-                    isMovie={true}
+                    movie={{
+                      id: String(movie.id),
+                      title:
+                        movie.title +
+                        (movie.part_number
+                          ? ` (Partie ${movie.part_number})`
+                          : ""),
+                      poster: movie.posterUrl,
+                      year: movie.year,
+                      isVIP: movie.isvip ?? false,
+                    }}
                   />
                   {/* Badge FILM ACTUEL */}
                   <span
@@ -311,26 +323,27 @@ export default function WatchFilmPage() {
               )}
               {/* Autres parties */}
               {continuities.map((part) => (
-                <MediaPosterCard
-                  key={part.id}
-                  href={`/films/${part.id}/watch`}
-                  poster={
-                    part.poster
-                      ? /^https?:\/\//.test(part.poster)
-                        ? part.poster
-                        : getTMDBImageUrl(part.poster, "w300")
-                      : "/placeholder-poster.png"
-                  }
-                  title={
-                    part.title +
-                    (part.part_number
-                      ? ` (Partie ${part.part_number})`
-                      : "")
-                  }
-                  year={part.year}
-                  isVIP={part.isvip}
-                  isMovie={true}
-                />
+                <div className="w-[140px] mx-auto">
+                  <FilmCard
+                    key={part.id}
+                    movie={{
+                      id: String(part.id),
+                      title:
+                        part.title +
+                        (part.part_number
+                          ? ` (Partie ${part.part_number})`
+                          : ""),
+                      poster:
+                        part.poster
+                          ? /^https?:\/\//.test(part.poster)
+                            ? part.poster
+                            : getTMDBImageUrl(part.poster, "w300")
+                          : "/placeholder-poster.png",
+                      year: part.year,
+                      isVIP: part.isvip ?? false,
+                    }}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -390,23 +403,26 @@ export default function WatchFilmPage() {
               })()
             )}
           </div>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-            {suggestions.map((film, idx) => (
-              <MediaPosterCard
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+            }}
+          >
+            {suggestions.map((film) => (
+              <FilmCard
                 key={film.id}
-                href={`/films/${film.id}`}
-                poster={
-                  film.poster
+                movie={{
+                  id: String(film.id),
+                  title: film.title,
+                  poster: film.poster
                     ? /^https?:\/\//.test(film.poster)
                       ? film.poster
                       : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png"
-                }
-                title={film.title}
-                year={film.year}
-                isVIP={film.is_vip}
-                isMovie={true}
-                animationDelay={`${idx * 0.06}s`}
+                    : "/placeholder-poster.png",
+                  year: film.year,
+                  isVIP: film.is_vip ?? false,
+                }}
               />
             ))}
           </div>

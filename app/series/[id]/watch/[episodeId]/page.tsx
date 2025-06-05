@@ -10,6 +10,8 @@ import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
+import SeriesCard from "@/components/SeriesCard";
+import { useWatchProgress } from "@/components/ui/useWatchProgress";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -180,17 +182,23 @@ export default function WatchEpisodePage() {
     series?.poster ||
     "/placeholder-backdrop.jpg";
 
+  // Ajout du suivi de progression pour les épisodes
+  const { handleProgress, markAsWatched } = useWatchProgress({
+    type: "episode",
+    id: episodeId,
+  });
+
   return (
     <>
       {/* Player harmonisé */}
-      {/* Debug : log des données épisode */}
-      {console.log("EPISODE DEBUG", episode)}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
           videoUrl={episode?.video_url || undefined}
           streamtapeUrl={episode?.streamtape_url || undefined}
           uqloadUrl={episode?.uqload_url || undefined}
           loading={loading}
+          onVideoProgress={handleProgress}
+          onIframeActivate={markAsWatched}
         />
       </div>
 
@@ -331,24 +339,32 @@ export default function WatchEpisodePage() {
           )}
         </div>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-            {similarSeries.map((serie, idx) => (
-            <MediaPosterCard
-              key={serie.id}
-              href={`/series/${serie.id}`}
-              poster={serie.poster}
-              title={serie.title}
-              year={
-              (serie as any).start_year
-                ? (serie as any).start_year +
-                ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
-                : ""
-              }
-              isVIP={serie.is_vip}
-              isMovie={false}
-              animationDelay={`${idx * 0.06}s`}
-            />
-            ))}
+        <div
+          className="grid gap-3"
+          style={{
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+          }}
+        >
+          {similarSeries.map((serie) => {
+            const sy = (serie as any).start_year;
+            const ey = (serie as any).end_year;
+            let year = "";
+            if (sy && ey) year = `${sy} - ${ey}`;
+            else if (sy) year = String(sy);
+            else if (ey) year = String(ey);
+            return (
+              <SeriesCard
+                key={serie.id}
+                series={{
+                  id: String(serie.id),
+                  title: serie.title,
+                  poster: serie.poster,
+                  year,
+                  isVIP: serie.is_vip ?? false,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
     </>

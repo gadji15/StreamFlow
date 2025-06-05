@@ -24,12 +24,16 @@ export default function VideoMultiPlayer({
   uqloadUrl,
   height = 420,
   loading = false,
+  onVideoProgress,
+  onIframeActivate
 }: {
   videoUrl?: string;
   streamtapeUrl?: string;
   uqloadUrl?: string;
   height?: number;
   loading?: boolean;
+  onVideoProgress?: (current: number, duration: number) => void;
+  onIframeActivate?: () => void;
 }) {
   // Inclure toutes les sources disponibles
   const available = [
@@ -115,6 +119,14 @@ export default function VideoMultiPlayer({
               className="absolute top-0 left-0 w-full h-full rounded"
               style={{ background: "black" }}
               poster=""
+              onTimeUpdate={e => {
+                const el = e.currentTarget;
+                onVideoProgress && onVideoProgress(el.currentTime, el.duration);
+              }}
+              onEnded={e => {
+                const el = e.currentTarget;
+                onVideoProgress && onVideoProgress(el.duration, el.duration);
+              }}
             />
           ) : videoUrl.includes("uqload.net") || videoUrl.includes("uqload.io") ? (
             <iframe
@@ -154,6 +166,7 @@ export default function VideoMultiPlayer({
             frameBorder={0}
             allow="autoplay; fullscreen"
             title="Lecteur Streamtape"
+            onLoad={() => { onIframeActivate && onIframeActivate(); }}
           />
         )}
         {/* Uqload */}
@@ -165,6 +178,7 @@ export default function VideoMultiPlayer({
             frameBorder={0}
             allow="autoplay; fullscreen"
             title="Lecteur Uqload"
+            onLoad={() => { onIframeActivate && onIframeActivate(); }}
           />
         )}
       </div>
