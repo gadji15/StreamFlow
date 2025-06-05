@@ -153,35 +153,37 @@ export function ContentSection({
       >
         {items.slice(0, count).map((item, idx) =>
           isMovie ? (
-            <FilmCard
-              key={item.id}
-              movie={{
-                id: String(item.id),
-                title: item.title,
-                poster: (item as any).poster || (item as any).posterUrl,
-                year: (item as any).year,
-                isVIP: (item as any).isVIP ?? false
-              }}
-            />
+            <div key={item.id} className="w-[140px] mx-auto">
+              <FilmCard
+                movie={{
+                  id: String(item.id),
+                  title: item.title,
+                  poster: (item as any).poster || (item as any).posterUrl,
+                  year: (item as any).year,
+                  isVIP: (item as any).isVIP ?? false
+                }}
+              />
+            </div>
           ) : (
-            <SeriesCard
-              key={item.id}
-              series={{
-                id: String(item.id),
-                title: item.title,
-                poster: (item as any).poster || (item as any).posterUrl,
-                year: (() => {
-                  // Robust: handle startYear/endYear, start_year/end_year, or fallback to ''
-                  const sy = (item as any).startYear ?? (item as any).start_year;
-                  const ey = (item as any).endYear ?? (item as any).end_year;
-                  if (sy && ey) return `${sy} - ${ey}`;
-                  if (sy) return String(sy);
-                  if (ey) return String(ey);
-                  return (item as any).year ?? "";
-                })(),
-                isVIP: (item as any).isVIP ?? false
-              }}
-            />
+            <div key={item.id} className="w-[140px] mx-auto">
+              <SeriesCard
+                series={{
+                  id: String(item.id),
+                  title: item.title,
+                  poster: (item as any).poster || (item as any).posterUrl,
+                  year: (() => {
+                    // Robust: handle startYear/endYear, start_year/end_year, or fallback to ''
+                    const sy = (item as any).startYear ?? (item as any).start_year;
+                    const ey = (item as any).endYear ?? (item as any).end_year;
+                    if (sy && ey) return `${sy} - ${ey}`;
+                    if (sy) return String(sy);
+                    if (ey) return String(ey);
+                    return (item as any).year ?? "";
+                  })(),
+                  isVIP: (item as any).isVIP ?? false
+                }}
+              />
+            </div>
           )
         )}
       </div>
