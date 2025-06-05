@@ -140,13 +140,23 @@ export default function WatchLayout({
               const isStreamtape = videoUrl.includes("streamtape.com");
               const isUqload = videoUrl.includes("uqload.");
               const isFile = /\.(mp4|webm|ogg)$/i.test(videoUrl);
+
+              // Correction: transformer l'URL streamtape /v/ en /e/ pour embed
+              let embedUrl = videoUrl;
+              if (isStreamtape && embedUrl.includes("/v/")) {
+                embedUrl = embedUrl.replace("/v/", "/e/");
+              }
+
               if (isStreamtape) {
                 return (
                   <iframe
-                    src={videoUrl}
+                    src={embedUrl}
                     allowFullScreen
                     className="w-full h-full aspect-video rounded-xl border-0"
                     title="Streamtape Player"
+                    frameBorder="0"
+                    scrolling="no"
+                    allow="autoplay"
                   />
                 );
               }
@@ -157,6 +167,9 @@ export default function WatchLayout({
                     allowFullScreen
                     className="w-full h-full aspect-video rounded-xl border-0"
                     title="Uqload Player"
+                    frameBorder="0"
+                    scrolling="no"
+                    allow="autoplay"
                   />
                 );
               }
@@ -178,6 +191,9 @@ export default function WatchLayout({
                   allowFullScreen
                   className="w-full h-full aspect-video rounded-xl border-0"
                   title="Lecteur vidéo"
+                  frameBorder="0"
+                  scrolling="no"
+                  allow="autoplay"
                 />
               );
             })()
