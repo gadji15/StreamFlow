@@ -236,33 +236,22 @@ export default function WatchFilmPage() {
         <div className="mt-8">
           <h2 className="text-xl font-bold text-white mb-2">Films similaires</h2>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-            {suggestions.map((film) => (
-              <a
+            {suggestions.map((film, idx) => (
+              <MediaPosterCard
                 key={film.id}
                 href={`/films/${film.id}`}
-                className="block bg-gray-800/60 rounded-lg overflow-hidden hover:shadow-lg transition"
-              >
-                <img
-                  src={
-                    film.poster
-                      ? /^https?:\/\//.test(film.poster)
-                        ? film.poster
-                        : getTMDBImageUrl(film.poster, "w300")
-                      : "/placeholder-poster.png"
-                  }
-                  alt={film.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-2">
-                  <div className="font-semibold text-white">{film.title}</div>
-                  {film.genre && (
-                    <div className="text-xs text-primary">{film.genre}</div>
-                  )}
-                  {film.year && (
-                    <div className="text-xs text-gray-400">{film.year}</div>
-                  )}
-                </div>
-              </a>
+                poster={
+                  film.poster
+                    ? /^https?:\/\//.test(film.poster)
+                      ? film.poster
+                      : getTMDBImageUrl(film.poster, "w300")
+                    : "/placeholder-poster.png"
+                }
+                title={film.title}
+                isVIP={film.is_vip}
+                isMovie={true}
+                animationDelay={`${idx * 0.06}s`}
+              />
             ))}
           </div>
           {movie?.genre && (
