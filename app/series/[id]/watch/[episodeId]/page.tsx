@@ -280,34 +280,14 @@ export default function WatchEpisodePage() {
 
       {/* Bloc suggestions harmonisé */}
       <div className="w-full max-w-6xl mx-auto my-12">
-        <h2 className="text-2xl font-extrabold text-primary mb-4 flex items-center gap-2 tracking-wide drop-shadow">
-          <span className="inline-block">
-            <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
-          </span>
-          Séries similaires
-        </h2>
-        <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-            {similarSeries.map((serie, idx) => (
-            <MediaPosterCard
-              key={serie.id}
-              href={`/series/${serie.id}`}
-              poster={serie.poster}
-              title={serie.title}
-              year={
-              (serie as any).start_year
-                ? (serie as any).start_year +
-                ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
-                : ""
-              }
-              isVIP={serie.is_vip}
-              isMovie={false}
-              animationDelay={`${idx * 0.06}s`}
-            />
-            ))}
-        </div>
-        {series?.genre && (
-          <div className="mt-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+          <h2 className="text-2xl font-extrabold text-primary flex items-center gap-2 tracking-wide drop-shadow mb-0">
+            <span className="inline-block">
+              <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
+            </span>
+            Séries similaires
+          </h2>
+          {series?.genre && (
             <a
               href={`/series?genre=${encodeURIComponent(series.genre)}`}
               className={`
@@ -332,8 +312,28 @@ export default function WatchEpisodePage() {
               </span>
               <svg className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </a>
-          </div>
-        )}
+          )}
+        </div>
+        <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+            {similarSeries.map((serie, idx) => (
+            <MediaPosterCard
+              key={serie.id}
+              href={`/series/${serie.id}`}
+              poster={serie.poster}
+              title={serie.title}
+              year={
+              (serie as any).start_year
+                ? (serie as any).start_year +
+                ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
+                : ""
+              }
+              isVIP={serie.is_vip}
+              isMovie={false}
+              animationDelay={`${idx * 0.06}s`}
+            />
+            ))}
+        </div>
       </div>
     </>
   );

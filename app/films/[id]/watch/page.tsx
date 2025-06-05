@@ -236,34 +236,14 @@ export default function WatchFilmPage() {
         </div>
         {/* Suggestions */}
         <div className="mt-8">
-          <h2 className="text-2xl font-extrabold text-primary mb-4 flex items-center gap-2 tracking-wide drop-shadow">
-            <span className="inline-block">
-              <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
-            </span>
-            Films similaires
-          </h2>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-            {suggestions.map((film, idx) => (
-              <MediaPosterCard
-                key={film.id}
-                href={`/films/${film.id}`}
-                poster={
-                  film.poster
-                    ? /^https?:\/\//.test(film.poster)
-                      ? film.poster
-                      : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png"
-                }
-                title={film.title}
-                year={film.year}
-                isVIP={film.is_vip}
-                isMovie={true}
-                animationDelay={`${idx * 0.06}s`}
-              />
-            ))}
-          </div>
-          {movie?.genre && (
-            <div className="mt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-4">
+            <h2 className="text-2xl font-extrabold text-primary flex items-center gap-2 tracking-wide drop-shadow mb-0">
+              <span className="inline-block">
+                <svg width="24" height="24" fill="none" className="align-middle text-primary"><circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="2" /></svg>
+              </span>
+              Films similaires
+            </h2>
+            {movie?.genre && (
               <a
                 href={`/films?genre=${encodeURIComponent(movie.genre)}`}
                 className={`
@@ -288,8 +268,28 @@ export default function WatchFilmPage() {
                 </span>
                 <svg className="h-4 w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </a>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+            {suggestions.map((film, idx) => (
+              <MediaPosterCard
+                key={film.id}
+                href={`/films/${film.id}`}
+                poster={
+                  film.poster
+                    ? /^https?:\/\//.test(film.poster)
+                      ? film.poster
+                      : getTMDBImageUrl(film.poster, "w300")
+                    : "/placeholder-poster.png"
+                }
+                title={film.title}
+                year={film.year}
+                isVIP={film.is_vip}
+                isMovie={true}
+                animationDelay={`${idx * 0.06}s`}
+              />
+            ))}
+          </div>
         </div>
       </>
   );
