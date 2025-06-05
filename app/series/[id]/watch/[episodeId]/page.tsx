@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
+import MediaPosterCard from "@/components/MediaPosterCard";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -281,21 +282,27 @@ export default function WatchEpisodePage() {
         <h2 className="text-xl font-bold mb-2">Séries similaires</h2>
         <p className="text-gray-400 mb-6">Découvrez d'autres séries du même univers ou genre !</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-          {similarSeries.map((serie) => (
-            <a
+            {similarSeries.map((serie, idx) => (
+            <MediaPosterCard
               key={serie.id}
               href={`/series/${serie.id}`}
-              className="block group"
-            >
-              <img
-                src={serie.poster || "/placeholder-poster.png"}
-                alt={serie.title}
-                className="w-full h-56 object-cover rounded-lg group-hover:scale-105 transition"
-              />
-              <h3 className="mt-2 text-gray-200 font-semibold text-sm">{serie.title}</h3>
-              <div className="text-xs text-gray-400">{serie.genre}</div>
-            </a>
-          ))}
+              poster={serie.poster}
+              title={serie.title}
+              year={
+              // Utilise le typage dynamique pour éviter l'erreur si start_year/end_year n'existent pas sur Series
+              // Si tu veux les afficher, assure-toi que Series inclut bien ces propriétés (start_year?: string; end_year?: string;)
+              // Sinon, tu peux fallback sur une autre propriété ou ne rien afficher
+              // Ici, on affiche l'année seulement si elles existent
+              (serie as any).start_year
+                ? (serie as any).start_year +
+                ((serie as any).end_year ? ` - ${(serie as any).end_year}` : "")
+                : ""
+              }
+              isVIP={serie.is_vip}
+              isMovie={false}
+              animationDelay={`${idx * 0.06}s`}
+            />
+            ))}
         </div>
       </div>
     </>

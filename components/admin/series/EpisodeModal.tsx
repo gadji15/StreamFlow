@@ -210,31 +210,53 @@ export default function EpisodeModal({
   }, [open, initialData?.id, seriesTitle, parentSeasonNumber]);
 
   const handleChange = (field: string, value: any) => {
-    // Si on remplit un champ vidéo, désactiver automatiquement video_unavailable
-    if (
-      ["video_url", "streamtape_url", "uqload_url"].includes(field) &&
-      value && value.trim() !== ""
-    ) {
-      setForm(f => ({ ...f, [field]: value, video_unavailable: false }));
-    } else {
-      setForm(f => ({ ...f, [field]: value }));
-    }
-    setErrors((e) => {
+    setForm(prevForm => {
+      let updatedForm = { ...prevForm, [field]: value };
+
+      // Gestion atomique des états vidéo
+      if (["video_url", "streamtape_url", "uqload_url"].includes(field)) {
+        // Si on saisit une source vidéo, désactiver video_unavailable
+        if (value && value.trim() !== "") {
+          updatedForm.video_unavailable = false;
+        }
+        // Si on remplit video_url, vider local_video_file
+        if (field === "video_url" && value) {
+          updatedForm.local_video_file = null;
+        }
+        // Si on remplit local_video_file, vider video_url
+        if (field === "local_video_file" && value) {
+          updatedForm.video_url = "";
+        }
+      }
+
+      // Si on upload un fichier vidéo, désactiver video_unavailable et vider video_url
+      if (field === "local_video_file") {
+        if (value) {
+          updatedForm.video_url = "";
+          updatedForm.video_unavailable = false;
+        }
+      }
+
+      // Si on coche/décoche vidéo indisponible
+      if (field === "video_unavailable") {
+        if (value) {
+          updatedForm.video_url = "";
+          updatedForm.streamtape_url = "";
+          updatedForm.uqload_url = "";
+          updatedForm.local_video_file = null;
+        }
+      }
+
+      return updatedForm;
+    });
+
+    setErrors(e => {
       const { [field]: _removed, ...rest } = e;
       return rest;
     });
-    if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url") setTmdbError(null);
-    if (field === "local_video_file" && value) {
-      // Si upload local, vider video_url
-      setForm(f => ({ ...f, video_url: "" }));
-      // Désactiver aussi le flag video_unavailable
-      setForm(f => ({ ...f, video_unavailable: false }));
-    }
-    if (field === "video_url" && value) {
-      // Si lien vidéo, vider upload local
-      setForm(f => ({ ...f, local_video_file: null }));
-      setForm(f => ({ ...f, video_unavailable: false }));
-    }
+
+    if (field === "thumbnail_url" || field === "video_url" || field === "trailer_url")
+      setTmdbError(null);
   };
 
   const validate = () => {
@@ -256,7 +278,7 @@ export default function EpisodeModal({
     if (form.thumbnail_url && !isValidImageUrl(form.thumbnail_url)) {
       err.thumbnail_url = "URL d'image invalide (jpg, png, gif, webp, bmp, svg)";
     }
-    // Vérification URL vidéo principale
+    // Vérification : au moins UNE source vidéo doit être renseignée (pas seulement video_url !)
     if (
       !form.video_unavailable &&
       !form.video_url &&
@@ -264,7 +286,7 @@ export default function EpisodeModal({
       !form.uqload_url &&
       !form.local_video_file
     ) {
-      err.video_url = "Veuillez fournir au moins une source vidéo ou cocher 'Vidéo non disponible'";
+      err.video_url = "Veuillez fournir au moins une source vidéo (video, Streamtape ou Uqload) ou cocher 'Vidéo non disponible'";
     }
     if (form.video_url && !/^https?:\/\/.+/.test(form.video_url.trim())) {
       err.video_url = "URL de la vidéo invalide";
@@ -272,15 +294,12 @@ export default function EpisodeModal({
     if (form.streamtape_url && !/^https?:\/\/(www\.)?streamtape\.com\//.test(form.streamtape_url.trim())) {
       err.streamtape_url = "Lien Streamtape invalide";
     }
-    // Correction : accepter uqload.io, uqload.net, uqload.com + .trim()
     if (form.uqload_url && !/^https?:\/\/(www\.)?uqload\.(io|net|com)\//.test(form.uqload_url.trim())) {
       err.uqload_url = "Lien Uqload invalide";
     }
-    // Vérification URL trailer
     if (form.trailer_url && !/^https?:\/\/.+/.test(form.trailer_url)) {
       err.trailer_url = "URL du trailer invalide";
     }
-    // Vérification fichier vidéo local
     if (form.local_video_file && form.local_video_file.type && !/^video\/(mp4|webm|ogg)$/i.test(form.local_video_file.type)) {
       err.local_video_file = "Format vidéo non supporté (mp4, webm, ogg)";
     }
@@ -368,7 +387,7 @@ export default function EpisodeModal({
       }
 
       // Harmonisation FilmModal: mapping propre et explicite des champs vidéo
-      let videoUrlToSave = finalVideoUrl;
+      let videoUrlToSave = finalVideoUrl || null;
       let streamtapeUrlToSave = form.streamtape_url || null;
       let uqloadUrlToSave = form.uqload_url || null;
 
@@ -379,6 +398,10 @@ export default function EpisodeModal({
         uqloadUrlToSave = null;
       }
 
+      // Log du state brut du formulaire juste avant le mapping
+      console.log("DEBUG FORM AVANT SUBMIT", form);
+
+      // On transmet explicitement toutes les sources, même si video_url est vide
       const submitData = {
         episode_number: clean(form.episode_number) !== null ? Number(form.episode_number) : null,
         tmdb_id: clean(form.tmdb_id) !== null ? Number(form.tmdb_id) : null,
@@ -398,10 +421,6 @@ export default function EpisodeModal({
         // autres champs persistants de la table (si besoin : ajouter ici)
       };
       console.log("DEBUG SUBMIT EPISODE", submitData);
-      await onSave(submitData);
-      toast({ title: "Épisode enregistré" });
-      onClose();
-      
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
       onClose();
