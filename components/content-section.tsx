@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Film, Tv } from 'lucide-react';
+import { ChevronRight, Film, Tv, PlayCircle } from 'lucide-react';
 import { getPopularMovies, getMoviesByGenre, Movie } from '@/lib/supabaseFilms';
 import { getPopularSeries, getSeriesByGenre, Series } from '@/lib/supabaseSeries';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useWatchHistory } from '@/hooks/use-watch-history';
 
 function useResponsiveCount() {
   const [count, setCount] = useState(7);
@@ -188,8 +189,128 @@ export function ContentSection({
     );
   };
 
+  const { user } = useSupabaseAuth();
+  const { history, loading: historyLoading } = useWatchHistory();
+  const [resumeItems, setResumeItems] = useState<any[]>([]);
+  const [loadingResume, setLoadingResume] = useState(false);
+
+  // Récupère les contenus à reprendre (en cours, non completed, max 12)
+  useEffect(() => {
+    async function fetchResumeContent() {
+      if (!user || !history || history.length === 0) {
+        setResumeItems([]);
+        return;
+      }
+      setLoadingResume(true);
+      const itemsInProgress = history.filter(h => !h.completed && ((h.progress ?? 0) > 0));
+      const filmIds = itemsInProgress.filter(h => h.film_id).map(h => h.film_id as string);
+      const episodeIds = itemsInProgress.filter(h => h.episode_id).map(h => h.episode_id as string);
+
+      // Batch fetch films/episodes (backdrop, title etc.)
+      const [filmsRes, episodesRes] = await Promise.all([
+        filmIds.length
+          ? fetch(`/api/fetch-multiple?table=films&ids=${filmIds.join(",")}`).then(r => r.json())
+          : [],
+        episodeIds.length
+          ? fetch(`/api/fetch-multiple?table=episodes&ids=${episodeIds.join(",")}`).then(r => r.json())
+          : [],
+      ]);
+
+      // Map pour accès rapide par id
+      const filmsMap = {};
+      if (Array.isArray(filmsRes)) for (const f of filmsRes) filmsMap[f.id] = f;
+      const episodesMap = {};
+      if (Array.isArray(episodesRes)) for (const e of episodesRes) episodesMap[e.id] = e;
+
+      // Compose list: {id, type, title, backdrop, progress, link}
+      const results = [];
+      for (const h of itemsInProgress.slice(0, 12)) {
+        if (h.film_id && filmsMap[h.film_id]) {
+          const film = filmsMap[h.film_id];
+          results.push({
+            id: h.film_id,
+            type: "film",
+            title: film.title,
+            backdrop: film.backdrop || film.backdrop_url || film.poster,
+            progress: h.progress,
+            link: `/films/${film.id}`,
+          });
+        } else if (h.episode_id && episodesMap[h.episode_id]) {
+          const ep = episodesMap[h.episode_id];
+          results.push({
+            id: h.episode_id,
+            type: "episode",
+            title: ep.title ?? `Épisode ${ep.episode_number}`,
+            backdrop: ep.backdrop || ep.thumbnail_url || ep.poster,
+            progress: h.progress,
+            link: `/series/${ep.series_id}/watch/${ep.id}`,
+          });
+        }
+      }
+      setResumeItems(results);
+      setLoadingResume(false);
+    }
+    fetchResumeContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, history]);
+
   return (
     <section className={`mb-8 ${className}`}>
+      {/* Section Reprendre ma lecture */}
+      {user && (loadingResume || resumeItems.length > 0) && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-bold flex items-center gap-2">Reprendre ma lecture</h3>
+            <Link
+              href="/mon-compte/historique"
+              className="text-xs font-medium text-violet-400 hover:underline hover:text-violet-300 transition"
+            >
+              Voir tout
+            </Link>
+          </div>
+          <div className="flex space-x-3 overflow-x-auto pb-2">
+            {loadingResume
+              ? [...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-44 h-24 rounded-lg bg-gray-800 animate-pulse flex-shrink-0"
+                  />
+                ))
+              : resumeItems.map(item => (
+                  <Link
+                    key={item.type + ":" + item.id}
+                    href={item.link}
+                    className="relative w-44 h-24 rounded-lg overflow-hidden flex-shrink-0 group transition-all hover:scale-105 focus-visible:ring-2 ring-violet-400"
+                  >
+                    <img
+                      src={item.backdrop || "/placeholder-backdrop.jpg"}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover object-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2 z-10">
+                      <span className="block text-white text-xs font-semibold truncate drop-shadow-sm">{item.title}</span>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-2 bg-gray-700/60">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-violet-500 rounded-full"
+                        style={{ width: `${Math.min(item.progress ?? 0, 100)}%` }}
+                      />
+                    </div>
+                    <div className="absolute top-2 left-2">
+                      {item.type === "film" ? (
+                        <Film className="h-4 w-4 text-white" />
+                      ) : (
+                        <PlayCircle className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                  </Link>
+                ))}
+          </div>
+        </div>
+      )}
+
+      {/* Section principale */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-xl font-bold">{title}</h2>
