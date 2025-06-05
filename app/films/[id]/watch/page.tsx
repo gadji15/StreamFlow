@@ -191,7 +191,7 @@ export default function WatchFilmPage() {
       <WatchLayout
         title={movie?.title || "Lecture film"}
         seoTitle={movie?.title ? `${movie.title} - Streaming` : undefined}
-        videoUrl={movie?.video_url || ""}
+        videoUrl={movie?.video_url || movie?.streamtape_url || movie?.uqload_url || ""}
         posterUrl={movie?.posterUrl}
         backdropUrl={movie?.backdropUrl}
         loading={loading}
