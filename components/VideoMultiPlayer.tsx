@@ -33,7 +33,16 @@ export default function VideoMultiPlayer({
     uqloadUrl ? "uqload" : null,
   ].filter(Boolean) as ("streamtape" | "uqload")[];
 
-  const [active, setActive] = useState<"streamtape" | "uqload">(available[0] || "streamtape");
+  // Correction : toujours initialiser sur la première source disponible
+  const [active, setActive] = useState<"streamtape" | "uqload">(available[0] ?? "streamtape");
+
+  // Si la liste des sources change (ex : navigation entre films), réinitialise le player sur la bonne source
+  React.useEffect(() => {
+    if (available.length && !available.includes(active)) {
+      setActive(available[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamtapeUrl, uqloadUrl]);
 
   if (available.length === 0) {
     return <div className="text-center text-red-500">Aucune source vidéo disponible.</div>;
