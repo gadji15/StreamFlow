@@ -36,7 +36,7 @@ export default function FilmCard({ movie, isUserVIP, animationDelay }: FilmCardP
         aspectRatio: "2/3"
       }}
     >
-      <div className="relative aspect-[2/3] flex flex-col justify-end">
+      <div className="relative aspect-[2/3]">
         <img
           src={posterSrc}
           alt={`Affiche de ${title}`}
@@ -52,11 +52,10 @@ export default function FilmCard({ movie, isUserVIP, animationDelay }: FilmCardP
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
           <Film className="h-8 w-8 text-white drop-shadow-lg" />
         </div>
-        {/* Badge Titre + Année */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/80 px-2 py-1 flex items-center justify-between z-20">
-          <span className="font-semibold text-xs truncate text-white flex-1">{title}</span>
-          <span className="ml-2 text-[11px] text-white/80 whitespace-nowrap">{year ?? ""}</span>
-        </div>
+      </div>
+      <div className="bg-[#242634] rounded-b-lg px-2 py-2 flex flex-col items-center text-center">
+        <span className="font-semibold text-sm truncate w-full" title={title}>{title}</span>
+        <span className="text-xs text-gray-300 mt-0.5">{year ?? ""}</span>
       </div>
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/80 px-2 py-1 flex items-center justify-between z-10">
         <span className="font-semibold text-xs truncate text-white flex-1">{title}</span>
