@@ -78,7 +78,11 @@ export async function getPopularSeries(limit = 6): Promise<Series[]> {
     console.error('Erreur getPopularSeries:', error);
     return [];
   }
-  return data || [];
+  // Ajoute le champ year à partir de releaseDate
+  return (data || []).map((serie) => ({
+    ...serie,
+    year: serie.releaseDate ? parseInt(serie.releaseDate.substring(0, 4)) : undefined,
+  }));
 }
 
 /**
@@ -96,7 +100,10 @@ export async function getSeriesByHomepageCategory(category: string, limit = 6): 
     console.error('Erreur getSeriesByHomepageCategory:', error);
     return [];
   }
-  return data || [];
+  return (data || []).map((serie) => ({
+    ...serie,
+    year: serie.releaseDate ? parseInt(serie.releaseDate.substring(0, 4)) : undefined,
+  }));
 }
 
 /**
@@ -113,5 +120,8 @@ export async function getSeriesByGenre(genreId: string, limit = 6, sortBy: "crea
     console.error('Erreur getSeriesByGenre:', error);
     return [];
   }
-  return data || [];
+  return (data || []).map((serie) => ({
+    ...serie,
+    year: serie.releaseDate ? parseInt(serie.releaseDate.substring(0, 4)) : undefined,
+  }));
 }
