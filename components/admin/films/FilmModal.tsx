@@ -1,4 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
+
+// --- HOOK DE BROUILLON AUTOMATIQUE ---
+function useDraftForm(key: string, initial: any) {
+  const [draft, setDraft] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initial;
+  });
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(draft));
+  }, [draft, key]);
+  const clearDraft = () => localStorage.removeItem(key);
+  return [draft, setDraft, clearDraft] as const;
+}
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
@@ -33,42 +49,46 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
     return cats.includes('featured') || !!init.featured;
   }
-  const [form, setForm] = useState({
-    title: initialData.title || "",
-    original_title: initialData.original_title || "",
-    director: initialData.director || "",
-    year: initialData.year || "",
-    duration: initialData.duration || "",
-    genres: Array.isArray(initialData.genres)
-      ? initialData.genres
-      : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g: string) => g.trim())
-        : []),
-    genresInput: "",
-    vote_average: initialData.vote_average || "",
-    vote_count: initialData.vote_count || "",
-    published: !!initialData.published,
-    isvip: !!initialData.isvip,
-    featured: computeFeaturedFromCategories(initialData), // Synchronisation
-    poster: initialData.poster || "",
-    backdrop: initialData.backdrop || "",
-    tmdb_id: initialData.tmdb_id || "",
-    imdb_id: initialData.imdb_id || "",
-    description: initialData.description || "",
-    trailer_url: initialData.trailer_url || "",
-    video_url: initialData.video_url || "",
-    language: initialData.language || "",
-    homepage_categories: Array.isArray(initialData.homepage_categories)
-      ? initialData.homepage_categories
-      : [],
-    popularity: initialData.popularity || "",
-    cast: Array.isArray(initialData.cast)
-      ? initialData.cast
-      : (typeof initialData.cast === "string"
-        ? JSON.parse(initialData.cast)
-        : []),
-    no_video: !!initialData.no_video, // flag pour absence de vidéo
-  });
+  // Utilisation du hook de brouillon
+  const [form, setForm, clearDraft] = useDraftForm(
+    initialData?.id ? `draft-film-${initialData.id}` : "draft-film-new",
+    {
+      title: initialData.title || "",
+      original_title: initialData.original_title || "",
+      director: initialData.director || "",
+      year: initialData.year || "",
+      duration: initialData.duration || "",
+      genres: Array.isArray(initialData.genres)
+        ? initialData.genres
+        : (typeof initialData.genre === "string"
+          ? initialData.genre.split(",").map((g: string) => g.trim())
+          : []),
+      genresInput: "",
+      vote_average: initialData.vote_average || "",
+      vote_count: initialData.vote_count || "",
+      published: !!initialData.published,
+      isvip: !!initialData.isvip,
+      featured: computeFeaturedFromCategories(initialData),
+      poster: initialData.poster || "",
+      backdrop: initialData.backdrop || "",
+      tmdb_id: initialData.tmdb_id || "",
+      imdb_id: initialData.imdb_id || "",
+      description: initialData.description || "",
+      trailer_url: initialData.trailer_url || "",
+      video_url: initialData.video_url || "",
+      language: initialData.language || "",
+      homepage_categories: Array.isArray(initialData.homepage_categories)
+        ? initialData.homepage_categories
+        : [],
+      popularity: initialData.popularity || "",
+      cast: Array.isArray(initialData.cast)
+        ? initialData.cast
+        : (typeof initialData.cast === "string"
+          ? JSON.parse(initialData.cast)
+          : []),
+      no_video: !!initialData.no_video,
+    }
+  );
 
   // CAST UI STATE
   const [castList, setCastList] = useState(form.cast);
@@ -94,46 +114,43 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       firstInput.current.focus();
     }
     setErrors({});
-    setForm((prev) => {
-      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
-      return {
-        ...prev,
-        title: initialData.title || "",
-        original_title: initialData.original_title || "",
-        director: initialData.director || "",
-        year: initialData.year || "",
-        duration: initialData.duration || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g: string) => g.trim())
-            : []),
-        genresInput: "",
-        vote_average: initialData.vote_average || "",
-        vote_count: initialData.vote_count || "",
-        published: !!initialData.published,
-        isvip: !!initialData.isvip,
-        featured: !!initialData.featured, // NOUVEAU CHAMP
-        poster: initialData.poster || "",
-        backdrop: initialData.backdrop || "",
-        tmdb_id,
-        imdb_id: initialData.imdb_id || "",
-        description: initialData.description || "",
-        trailer_url: initialData.trailer_url || "",
-        video_url: initialData.video_url || "",
-        language: initialData.language || "",
-        homepage_categories: Array.isArray(initialData.homepage_categories)
-          ? initialData.homepage_categories
-          : [],
-        popularity: initialData.popularity || "",
-        cast: Array.isArray(initialData.cast)
-          ? initialData.cast
-          : (typeof initialData.cast === "string"
-            ? JSON.parse(initialData.cast)
-            : []),
-        no_video: !!initialData.no_video,
-      };
-    });
+    setForm((prev: any) => ({
+      ...prev,
+      title: initialData.title || "",
+      original_title: initialData.original_title || "",
+      director: initialData.director || "",
+      year: initialData.year || "",
+      duration: initialData.duration || "",
+      genres: Array.isArray(initialData.genres)
+        ? initialData.genres
+        : (typeof initialData.genre === "string"
+          ? initialData.genre.split(",").map((g: string) => g.trim())
+          : []),
+      genresInput: "",
+      vote_average: initialData.vote_average || "",
+      vote_count: initialData.vote_count || "",
+      published: !!initialData.published,
+      isvip: !!initialData.isvip,
+      featured: !!initialData.featured,
+      poster: initialData.poster || "",
+      backdrop: initialData.backdrop || "",
+      tmdb_id: prev.tmdb_id || initialData.tmdb_id || "",
+      imdb_id: initialData.imdb_id || "",
+      description: initialData.description || "",
+      trailer_url: initialData.trailer_url || "",
+      video_url: initialData.video_url || "",
+      language: initialData.language || "",
+      homepage_categories: Array.isArray(initialData.homepage_categories)
+        ? initialData.homepage_categories
+        : [],
+      popularity: initialData.popularity || "",
+      cast: Array.isArray(initialData.cast)
+        ? initialData.cast
+        : (typeof initialData.cast === "string"
+          ? JSON.parse(initialData.cast)
+          : []),
+      no_video: !!initialData.no_video,
+    }));
     setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
     setTmdbSearch(initialData.title || "");
     setLocalVideo(null);
@@ -567,6 +584,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
 
       await onSave(payload);
       toast({ title: "Film enregistré" });
+      clearDraft(); // Nettoie le brouillon après succès
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
@@ -1272,7 +1290,10 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={() => {
+              clearDraft(); // Nettoie le brouillon si Annuler
+              onClose();
+            }}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
           >
