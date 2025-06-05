@@ -78,10 +78,10 @@ export async function getPopularSeries(limit = 6): Promise<Series[]> {
     console.error('Erreur getPopularSeries:', error);
     return [];
   }
-  // Ajoute le champ year à partir de releaseDate
+  // Ajoute le champ year à partir de start_year (champ réel en base)
   return (data || []).map((serie) => ({
     ...serie,
-    year: serie.releaseDate ? parseInt(serie.releaseDate.substring(0, 4)) : undefined,
+    year: typeof serie.start_year === "number" ? serie.start_year : undefined,
   }));
 }
 
