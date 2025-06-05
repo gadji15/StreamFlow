@@ -41,13 +41,13 @@ export default function SeriesCard({
         focus-visible:ring-4 focus-visible:ring-purple-400/60
         ${isVIP && !isUserVIP ? 'opacity-70 grayscale hover:grayscale-0' : ''}
         ${className}
-        w-full
+        w-[110px] sm:w-[140px] max-w-full
       `}
       tabIndex={0}
       aria-label={title}
       style={{ willChange: 'transform, box-shadow' }}
     >
-      <div className="relative aspect-[2/3]">
+      <div className="relative aspect-[2/3] w-full">
         <img
           src={posterSrc}
           alt={`Affiche de ${title}`}
