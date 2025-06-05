@@ -181,10 +181,10 @@ export default function WatchEpisodePage() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
-          streamtapeUrl={(episode as any)?.streamtape_url || undefined}
-          uqloadUrl={(episode as any)?.uqload_url || undefined}
+          streamtapeUrl={episode?.streamtape_url || undefined}
+          uqloadUrl={episode?.uqload_url || undefined}
         />
       </div>
       <WatchLayout
@@ -204,7 +204,7 @@ export default function WatchEpisodePage() {
             ? `${series.title} - S${episode.season}E${episode.episode_number} - ${episode.title}`
             : undefined
         }
-        videoUrl={episode?.video_url || ""}
+        videoUrl={""} {/* on ne passe plus rien ici, player géré au-dessus */}
         posterUrl={episode?.thumbnail_url}
         backdropUrl={backdropUrl}
         loading={loading}
