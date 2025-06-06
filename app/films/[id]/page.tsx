@@ -36,7 +36,7 @@ function normalizeBackdropUrl(raw: any) {
 }
 
 import Link from "next/link";
-import { Film } from "lucide-react";
+import { Film, Play, Info, Heart, Share } from "lucide-react";
 import SimilarFilmsGrid from "@/components/films/SimilarFilmsGrid";
 /* Suppression du composant local SimilarLocalMovies :
    On utilisera désormais le composant réutilisable à la place. */
