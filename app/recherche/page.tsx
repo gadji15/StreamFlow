@@ -92,7 +92,9 @@ function RechercheInner() {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-4">Résultats de recherche {q && <span className="text-primary">pour "{q}"</span>}</h1>
+      <h1 className="text-lg sm:text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
+        Résultats de recherche {q && <span className="text-primary">pour "{q}"</span>}
+      </h1>
 
       {/* Tabs filtres */}
       <div className="flex justify-center mb-6 gap-1 sm:gap-2">
