@@ -338,21 +338,61 @@ export default function FilmDetailPage() {
         <div className="mt-8 sm:mt-12">
           <Tabs defaultValue="overview">
             <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide text-xs sm:text-base">
-              <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center">
-                <BookText className={`w-5 h-5 mb-0.5 sm:hidden ${"text-primary"}`} />
-                <span className="hidden sm:inline">Synopsis</span>
+              <TabsTrigger
+                value="overview"
+                className={({ selected }) =>
+                  `flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center rounded-md transition
+                  ${selected ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'}`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <BookText className={`w-5 h-5 mb-0.5 sm:hidden transition ${selected ? "text-white" : "text-gray-500"}`} />
+                    <span className="hidden sm:inline">Synopsis</span>
+                  </>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center">
-                <Users className={`w-5 h-5 mb-0.5 sm:hidden ${"text-primary"}`} />
-                <span className="hidden sm:inline">Casting</span>
+              <TabsTrigger
+                value="casting"
+                className={({ selected }) =>
+                  `flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center rounded-md transition
+                  ${selected ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'}`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <Users className={`w-5 h-5 mb-0.5 sm:hidden transition ${selected ? "text-white" : "text-gray-500"}`} />
+                    <span className="hidden sm:inline">Casting</span>
+                  </>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center">
-                <CopyPlus className={`w-5 h-5 mb-0.5 sm:hidden ${"text-primary"}`} />
-                <span className="hidden sm:inline">Films similaires</span>
+              <TabsTrigger
+                value="related"
+                className={({ selected }) =>
+                  `flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center rounded-md transition
+                  ${selected ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'}`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <CopyPlus className={`w-5 h-5 mb-0.5 sm:hidden transition ${selected ? "text-white" : "text-gray-500"}`} />
+                    <span className="hidden sm:inline">Films similaires</span>
+                  </>
+                )}
               </TabsTrigger>
-              <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center">
-                <MessageSquare className={`w-5 h-5 mb-0.5 sm:hidden ${"text-primary"}`} />
-                <span className="hidden sm:inline">Commentaires</span>
+              <TabsTrigger
+                value="comments"
+                className={({ selected }) =>
+                  `flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center rounded-md transition
+                  ${selected ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'}`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <MessageSquare className={`w-5 h-5 mb-0.5 sm:hidden transition ${selected ? "text-white" : "text-gray-500"}`} />
+                    <span className="hidden sm:inline">Commentaires</span>
+                  </>
+                )}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="pt-5 sm:pt-6">
