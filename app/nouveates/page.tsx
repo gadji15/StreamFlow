@@ -200,10 +200,10 @@ export default function NouveautePage() {
 
   return (
     <main className="container mx-auto px-4 py-10">
-      <h1 className="text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
-        <Sparkles className="text-yellow-400 w-8 h-8" /> Nouveautés
+      <h1 className="text-lg sm:text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
+        <Sparkles className="text-yellow-400 w-6 h-6 sm:w-8 sm:h-8" /> Nouveautés
       </h1>
-      <p className="text-center text-gray-400 mb-8 max-w-2xl mx-auto">
+      <p className="text-xs sm:text-base text-center text-gray-400 mb-8 max-w-2xl mx-auto">
         Découvrez les derniers films et séries ajoutés à notre catalogue. Profitez de nouveautés exclusives et des incontournables fraîchement arrivés !
       </p>
 
