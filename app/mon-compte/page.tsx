@@ -13,20 +13,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useWatchHistory } from '@/hooks/use-watch-history';
 
-// Ajoutez ou modifiez le type WatchHistoryItem pour inclure les propriétés nécessaires
-type WatchHistoryItem = {
-  id: string | number;
-  title?: string;
-  poster_url?: string;
-  watched_at: string | Date;
-  progress?: number;
-  content_type?: 'movie' | 'series' | 'episode';
-  // Pour une compatibilité maximale, ajoutez aussi :
-  type?: string;
-  poster?: string;
-  posterUrl?: string;
-  // Ajoutez ici d'autres propriétés si nécessaire
-};
+// Utilise le type WatchHistoryItem du hook pour rester aligné avec la source
+import type { WatchHistoryItem } from '@/hooks/use-watch-history';
 
 export default function MonComptePage() {
   const { userData, isVIP, isLoggedIn, isLoading, logout } = useSupabaseAuth();
