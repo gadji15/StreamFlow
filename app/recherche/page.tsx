@@ -20,6 +20,7 @@ export default function RecherchePage() {
   const q = searchParams?.get("q")?.trim() || "";
   const [results, setResults] = useState<ResultType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tout' | 'film' | 'série'>('tout');
 
   useEffect(() => {
     let canceled = false;
@@ -67,9 +68,53 @@ export default function RecherchePage() {
     return () => { canceled = true; };
   }, [q]);
 
+  // Filtrage selon le tab
+  const filteredResults =
+    activeTab === 'tout'
+      ? results
+      : results.filter(r => r.type === activeTab);
+
   return (
     <div className="container mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-4">Résultats de recherche {q && <span className="text-primary">pour "{q}"</span>}</h1>
+
+      {/* Tabs filtres */}
+      <div className="flex justify-center mb-6 gap-2">
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'tout'
+              ? 'bg-gray-900 border-primary text-primary shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
+          }`}
+          onClick={() => setActiveTab('tout')}
+          aria-selected={activeTab === 'tout'}
+        >
+          Tout
+        </button>
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'film'
+              ? 'bg-gray-900 border-blue-400 text-blue-400 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-blue-400'
+          }`}
+          onClick={() => setActiveTab('film')}
+          aria-selected={activeTab === 'film'}
+        >
+          Films
+        </button>
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'série'
+              ? 'bg-gray-900 border-purple-400 text-purple-400 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-purple-400'
+          }`}
+          onClick={() => setActiveTab('série')}
+          aria-selected={activeTab === 'série'}
+        >
+          Séries
+        </button>
+      </div>
+
       {loading ? (
         <div className="flex items-center gap-2 text-gray-400">
           <Loader2 className="animate-spin h-5 w-5" />
@@ -77,7 +122,7 @@ export default function RecherchePage() {
         </div>
       ) : !q ? (
         <div className="text-gray-400 text-center">Saisissez un terme de recherche ci-dessus.</div>
-      ) : results.length === 0 ? (
+      ) : filteredResults.length === 0 ? (
         <div className="text-gray-400 text-center">Aucun résultat trouvé pour "{q}".</div>
       ) : (
         <div
@@ -86,7 +131,7 @@ export default function RecherchePage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
           }}
         >
-          {results.map((result) => (
+          {filteredResults.map((result) => (
             <div key={result.type + "_" + result.id} className="w-[140px] mx-auto">
               {result.type === "film" ? (
                 <FilmCard movie={{
