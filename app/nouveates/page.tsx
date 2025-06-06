@@ -301,19 +301,7 @@ export default function NouveautePage() {
               <option value="false">Contenus gratuits</option>
               <option value="true">Contenus VIP</option>
             </select>
-            {(selectedGenre || searchTerm || showVIP) && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSelectedGenre('');
-                  setSearchTerm('');
-                  setShowVIP('');
-                }}
-                className="text-sm"
-              >
-                Réinitialiser
-              </Button>
-            )}
+            {/* Suppression du bouton Réinitialiser pour harmoniser avec les autres pages */}
           </div>
         </form>
         {searching && (
