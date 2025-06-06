@@ -192,6 +192,7 @@ export default function WatchEpisodePage() {
   // Récupérer la progression sauvegardée pour cet épisode
   const { history } = useWatchHistory();
   let resumeSeconds: number | undefined = undefined;
+  let showResumeHint = false;
   if (history && episode) {
     const hist = history.find(
       (h) => h.episode_id === episodeId && typeof h.progress === "number" && h.progress > 0
@@ -203,11 +204,15 @@ export default function WatchEpisodePage() {
       // Éviter la reprise à la toute fin
       if (resumeSeconds > totalSeconds - 3) resumeSeconds = totalSeconds - 3;
       if (resumeSeconds < 0) resumeSeconds = 0;
+      // Afficher la notif si progress > 0 et < 98%
+      if (hist.progress > 0 && hist.progress < 98) showResumeHint = true;
     }
   }
 
   return (
     <>
+      {/* Notification de reprise */}
+      {showResumeHint && resumeSeconds && <ResumeHintToast seconds={resumeSeconds} />}
       {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
