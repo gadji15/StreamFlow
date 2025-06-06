@@ -170,15 +170,15 @@ export default function Header() {
                 Suggestions
               </Link>
               <Link
-                href="/nouveates"
+                href="/nouveautes"
                 className={`group flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-base transition-all duration-200
                   ${
-                    pathname === '/nouveates'
+                    pathname === '/nouveautes'
                       ? 'bg-gradient-to-r from-yellow-500 to-orange-400 text-white shadow-lg'
                       : 'text-gray-300 hover:bg-gradient-to-r hover:from-yellow-500 hover:to-orange-400 hover:text-white hover:shadow'
                   }`}
               >
-                <Bell className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/nouveates' ? 'text-white drop-shadow' : 'text-yellow-300 group-hover:text-white'}`} />
+                <Bell className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === '/nouveautes' ? 'text-white drop-shadow' : 'text-yellow-300 group-hover:text-white'}`} />
                 Nouveautés
               </Link>
               {isVIP && (
@@ -367,12 +367,12 @@ export default function Header() {
                   </div>
                 </Link>
                 <Link
-                  href="/nouveates"
+                  href="/nouveautes"
                   className="block py-2 hover:text-white"
                   onClick={() => setNavOpen(false)}
                 >
                   <div className="flex items-center">
-                    <Bell className={`mr-2 h-5 w-5 ${pathname === '/nouveates' ? 'text-white' : 'text-yellow-300'}`} />
+                    <Bell className={`mr-2 h-5 w-5 ${pathname === '/nouveautes' ? 'text-white' : 'text-yellow-300'}`} />
                     Nouveautés
                   </div>
                 </Link>
