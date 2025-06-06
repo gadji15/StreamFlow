@@ -298,7 +298,19 @@ export default function FilmDetailPage() {
               className="text-base sm:text-lg"
             />
 
-            {/* Action principale sticky sur mobile */}
+            {/* Actions en haut avant la description - icônes seules sur mobile */}
+            <div className="flex sm:hidden mb-2">
+              <ActionButtons
+                canWatch={canWatch}
+                videoUrl={movie.videoUrl}
+                trailerUrl={movie.trailerUrl}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggleFavorite}
+                onShare={handleShare}
+                onPlay={handlePlay}
+                iconsOnly
+              />
+            </div>
             <div className="hidden sm:block">
               <ActionButtons
                 canWatch={canWatch}
