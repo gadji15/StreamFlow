@@ -104,9 +104,13 @@ export default function SeriesDetailPage() {
       setEpisodes(fetchedEpisodes || []);
 
       if (fetchedSeasons && fetchedSeasons.length > 0) {
-        setSelectedSeasonId((prev) =>
-          prev && fetchedSeasons.find((s) => s.id === prev)
-            ? prev
+        // Cherche la première saison qui a au moins un épisode
+        const seasonWithEpisodes = fetchedSeasons.find(season =>
+          (fetchedEpisodes || []).some(ep => ep.season_id === season.id)
+        );
+        setSelectedSeasonId(
+          seasonWithEpisodes
+            ? seasonWithEpisodes.id
             : fetchedSeasons[fetchedSeasons.length - 1].id
         );
       } else {
