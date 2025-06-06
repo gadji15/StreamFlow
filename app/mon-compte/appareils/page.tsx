@@ -110,7 +110,9 @@ export default function AppareilsPage() {
                     <div className="flex items-center gap-1">
                       <span className="font-semibold text-sm sm:text-base truncate">{device.device_name}</span>
                       {device.active ? (
-                        <CheckCircle className="w-4 h-4 text-green-500 ml-1" title="Actif" />
+                        <span aria-label="Actif">
+                          <CheckCircle className="w-4 h-4 text-green-500 ml-1" />
+                        </span>
                       ) : (
                         <span className="ml-1 px-2 py-0.5 bg-gray-700 text-gray-400 rounded-full text-xs">Inactif</span>
                       )}
