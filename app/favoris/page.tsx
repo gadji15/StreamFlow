@@ -8,7 +8,7 @@ import SeriesCard from "@/components/SeriesCard";
 import LoadingScreen from "@/components/loading-screen";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Heart } from "lucide-react";
+import { Film, Tv, Heart, Sparkles } from "lucide-react";
 
 type ItemType = "film" | "serie";
 type FavItem = { type: ItemType; data: any };
@@ -132,14 +132,14 @@ export default function FavorisPage() {
         <button
           className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
             activeTab === 'tout'
-              ? 'bg-gray-900 border-pink-500 text-pink-500 shadow'
-              : 'bg-gray-800 border-transparent text-gray-400 hover:text-pink-500'
+              ? 'bg-gray-900 border-yellow-400 text-yellow-400 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-yellow-400'
           }`}
           onClick={() => setActiveTab('tout')}
           aria-selected={activeTab === 'tout'}
         >
-          <Heart className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
-            activeTab === 'tout' ? 'text-pink-500' : 'text-gray-400'
+          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
           }`} />
           Tout
         </button>
