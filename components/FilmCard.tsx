@@ -8,6 +8,7 @@ export default function FilmCard({
   movie,
   isUserVIP = false,
   className = "",
+  posterProps,
 }: {
   movie: {
     id: string;
@@ -18,6 +19,7 @@ export default function FilmCard({
   };
   isUserVIP?: boolean;
   className?: string;
+  posterProps?: React.ImgHTMLAttributes<HTMLImageElement>;
 }) {
   const { id, title, poster, year, isVIP } = movie;
   const posterSrc = poster || "/placeholder-poster.png";
@@ -44,6 +46,7 @@ export default function FilmCard({
           className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-90 group-hover:scale-105"
           loading="lazy"
           style={{ willChange: 'transform, filter' }}
+          {...posterProps}
         />
         {isVIP && (
           <div className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-yellow-600 text-black px-1.5 py-0.5 rounded-full text-[10px] font-bold shadow animate-pulse">
