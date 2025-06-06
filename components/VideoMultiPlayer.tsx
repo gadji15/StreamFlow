@@ -25,7 +25,8 @@ export default function VideoMultiPlayer({
   height = 420,
   loading = false,
   onVideoProgress,
-  onIframeActivate
+  onIframeActivate,
+  resumeSeconds,
 }: {
   videoUrl?: string;
   streamtapeUrl?: string;
@@ -34,6 +35,8 @@ export default function VideoMultiPlayer({
   loading?: boolean;
   onVideoProgress?: (current: number, duration: number) => void;
   onIframeActivate?: () => void;
+  // Nouvelle prop : position de reprise (en secondes)
+  resumeSeconds?: number;
 }) {
   // Inclure toutes les sources disponibles
   const available = [
@@ -113,12 +116,13 @@ export default function VideoMultiPlayer({
         {/* Vidéo directe (mp4 ou autre) */}
         {active === "video" && videoUrl && (
           videoUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-            <video
+            <VideoWithResume
               src={videoUrl}
               controls
               className="absolute top-0 left-0 w-full h-full rounded"
               style={{ background: "black" }}
               poster=""
+              resumeSeconds={resumeSeconds}
               onTimeUpdate={e => {
                 const el = e.currentTarget;
                 onVideoProgress && onVideoProgress(el.currentTime, el.duration);
@@ -184,4 +188,39 @@ export default function VideoMultiPlayer({
       </div>
     </div>
   );
+}
+
+// Sous-composant pour gérer la reprise automatique sur fichiers vidéo directs
+function VideoWithResume(props: React.VideoHTMLAttributes<HTMLVideoElement> & { resumeSeconds?: number }) {
+  const ref = React.useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    let seeked = false;
+
+    function trySeek() {
+      if (
+        video &&
+        props.resumeSeconds &&
+        !seeked &&
+        video.readyState >= 1 // HAVE_METADATA
+      ) {
+        // Si on reprend presque à la fin, revenir un peu en arrière
+        const safeSeek = Math.min(props.resumeSeconds, Math.max(0, video.duration - 3));
+        video.currentTime = safeSeek;
+        seeked = true;
+      }
+    }
+
+    video.addEventListener("loadedmetadata", trySeek);
+    video.addEventListener("play", trySeek);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", trySeek);
+      video.removeEventListener("play", trySeek);
+    };
+  }, [props.resumeSeconds]);
+
+  return <video ref={ref} {...props} />;
 }
