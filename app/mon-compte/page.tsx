@@ -145,14 +145,14 @@ export default function MonComptePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header dynamique StreamFlow */}
       <AccountHeader userName={userData?.displayName} isVIP={isVIP ?? undefined} />
 
       {/* Profil utilisateur */}
-      <Card>
+      <Card className="bg-gradient-to-b from-gray-900/60 to-gray-800/40 shadow-xl ring-1 ring-gray-700/10 transition-shadow">
         <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <Avatar className="h-20 w-20 shadow-lg ring-2 ring-primary/30">
               <AvatarImage
                 src={userData?.photoURL || ''}
@@ -173,18 +173,19 @@ export default function MonComptePage() {
             </Avatar>
             
             <div className="text-center sm:text-left">
-              <CardTitle className="text-2xl flex items-center gap-1">
+              <CardTitle className="text-lg sm:text-3xl font-extrabold flex items-center gap-2">
                 {userData?.displayName || 'Utilisateur'}
                 {isVIP && <AnimatedVIPBadge />}
               </CardTitle>
-              <CardDescription>{userData?.email}</CardDescription>
+              <CardDescription className="text-base text-gray-400">{userData?.email}</CardDescription>
               
-              <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
+              <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   asChild
                   aria-label="Modifier le profil"
+                  className="transition-all"
                 >
                   <Link href="/mon-compte/edit">
                     <Edit className="w-4 h-4 mr-1" />
@@ -195,6 +196,7 @@ export default function MonComptePage() {
                   variant="ghost"
                   size="sm"
                   aria-label="Se déconnecter"
+                  className="hover:bg-red-900/30 hover:text-red-400 transition-all"
                   onClick={() => {
                     if (window.confirm("Voulez-vous vraiment vous déconnecter ?")) {
                       logout();
@@ -212,9 +214,9 @@ export default function MonComptePage() {
       </Card>
       
       {/* Statut VIP */}
-      <Card className={isVIP ? "border-amber-500/30 bg-gradient-to-b from-amber-950/10 to-transparent" : ""}>
+      <Card className={isVIP ? "border-amber-500/30 bg-gradient-to-b from-amber-950/10 to-transparent shadow-lg ring-1 ring-amber-300/10" : "shadow-lg ring-1 ring-gray-700/10"}>
         <CardHeader>
-          <CardTitle className="flex items-center text-lg">
+          <CardTitle className="flex items-center text-lg sm:text-2xl font-bold">
             <Sparkles className={`w-5 h-5 mr-2 ${isVIP ? 'text-amber-400' : 'text-gray-400'}`} />
             Statut VIP
           </CardTitle>
@@ -235,11 +237,14 @@ export default function MonComptePage() {
         </CardContent>
         <CardFooter>
           {isVIP ? (
-            <Button variant="outline" asChild>
-              <Link href="/mon-compte/abonnement">Gérer mon abonnement</Link>
+            <Button variant="outline" asChild className="flex items-center gap-2 transition-all">
+              <Link href="/mon-compte/abonnement">
+                <Settings className="w-4 h-4" />
+                Gérer mon abonnement
+              </Link>
             </Button>
           ) : (
-            <Button className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700" asChild>
+            <Button className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 flex items-center gap-2 transition-all" asChild>
               <Link href="/vip">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Devenir VIP
@@ -250,9 +255,9 @@ export default function MonComptePage() {
       </Card>
       
       {/* Historique récent */}
-      <Card>
+      <Card className="shadow-lg ring-1 ring-gray-700/10">
         <CardHeader>
-          <CardTitle className="flex items-center text-lg">
+          <CardTitle className="flex items-center text-lg sm:text-2xl font-bold">
             <Clock className="w-5 h-5 mr-2 animate-pulse text-primary" />
             Historique récent
           </CardTitle>
@@ -284,52 +289,55 @@ export default function MonComptePage() {
           <Button
             variant="outline"
             asChild
-            className="w-full sm:w-auto animate-bounce"
+            className="w-full sm:w-auto animate-bounce focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Voir tout l'historique"
           >
-            <Link href="/mon-compte/historique">Voir tout l&apos;historique</Link>
+            <Link href="/mon-compte/historique">
+              <Activity className="w-4 h-4 mr-1" />
+              Voir tout l&apos;historique
+            </Link>
           </Button>
         </CardFooter>
       </Card>
       
       {/* Navigation rapide */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="hover:bg-gray-800/50 transition-colors">
-          <Link href="/mon-compte/favoris" className="block p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Heart className="h-5 w-5 text-primary" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-primary/30 transition-all group focus-within:ring-2 focus-within:ring-primary/60">
+          <Link href="/mon-compte/favoris" className="block p-5 focus:outline-none">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary/10 p-3 rounded-full group-hover:scale-110 group-hover:bg-primary/20 transition-all">
+                <Heart className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-medium">Mes favoris</h3>
+                <h3 className="font-semibold text-base sm:text-lg">Mes favoris</h3>
                 <p className="text-sm text-gray-400">Films et séries sauvegardés</p>
               </div>
             </div>
           </Link>
         </Card>
         
-        <Card className="hover:bg-gray-800/50 transition-colors">
-          <Link href="/mon-compte/appareils" className="block p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-500/10 p-2 rounded-full">
-                <Dices className="h-5 w-5 text-blue-500" />
+        <Card className="hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-blue-400/30 transition-all group focus-within:ring-2 focus-within:ring-blue-400/60">
+          <Link href="/mon-compte/appareils" className="block p-5 focus:outline-none">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-500/10 p-3 rounded-full group-hover:scale-110 group-hover:bg-blue-500/20 transition-all">
+                <Dices className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <h3 className="font-medium">Appareils connectés</h3>
+                <h3 className="font-semibold text-base sm:text-lg">Appareils connectés</h3>
                 <p className="text-sm text-gray-400">Gérer vos connexions</p>
               </div>
             </div>
           </Link>
         </Card>
         
-        <Card className="hover:bg-gray-800/50 transition-colors">
-          <Link href="/mon-compte/mot-de-passe" className="block p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-yellow-500/10 p-2 rounded-full">
-                <Shield className="h-5 w-5 text-yellow-500" />
+        <Card className="hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-yellow-400/30 transition-all group focus-within:ring-2 focus-within:ring-yellow-400/60">
+          <Link href="/mon-compte/mot-de-passe" className="block p-5 focus:outline-none">
+            <div className="flex items-center gap-4">
+              <div className="bg-yellow-500/10 p-3 rounded-full group-hover:scale-110 group-hover:bg-yellow-500/20 transition-all">
+                <Shield className="h-6 w-6 text-yellow-500" />
               </div>
               <div>
-                <h3 className="font-medium">Sécurité</h3>
+                <h3 className="font-semibold text-base sm:text-lg">Sécurité</h3>
                 <p className="text-sm text-gray-400">Mot de passe et authentification</p>
               </div>
             </div>
