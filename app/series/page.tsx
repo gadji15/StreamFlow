@@ -144,8 +144,8 @@ export default function SeriesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <Tv className="w-7 h-7 text-purple-400" /> Catalogue des Séries
+      <h1 className="text-lg sm:text-3xl font-bold mb-6 flex items-center gap-2">
+        <Tv className="w-5 h-5 sm:w-7 sm:h-7 text-primary" /> Catalogue des Séries
       </h1>
 
       <div className="bg-gray-800 rounded-lg p-4 mb-6 shadow">
