@@ -12,6 +12,8 @@ const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), 
 import MediaPosterCard from "@/components/MediaPosterCard";
 import FilmCard from "@/components/FilmCard";
 import { useWatchProgress } from "@/components/ui/useWatchProgress";
+import { useWatchHistory } from "@/hooks/use-watch-history";
+import ResumeHintToast from "@/components/ui/ResumeHintToast";
 
 function normalizeBackdropUrl(raw: string | undefined) {
   if (typeof raw === "string" && raw.trim().length > 0) {
@@ -211,8 +213,28 @@ export default function WatchFilmPage() {
     id,
   });
 
+  // Reprise automatique : calculer resumeSeconds depuis l'historique
+  const { history } = useWatchHistory();
+  let resumeSeconds: number | undefined = undefined;
+  let showResumeHint = false;
+  if (history && movie) {
+    const hist = history.find(
+      (h) => h.film_id === id && typeof h.progress === "number" && h.progress > 0
+    );
+    if (hist && movie.duration) {
+      const totalSeconds = movie.duration * 60;
+      resumeSeconds = Math.floor(((hist.progress ?? 0) / 100) * totalSeconds);
+      if (resumeSeconds > totalSeconds - 3) resumeSeconds = totalSeconds - 3;
+      if (resumeSeconds < 0) resumeSeconds = 0;
+      // Afficher la notif si progress > 0 et < 98%
+      if (hist.progress !== null && hist.progress > 0 && hist.progress < 98) showResumeHint = true;
+    }
+  }
+
   return (
     <>
+      {/* Notification de reprise */}
+      {showResumeHint && resumeSeconds && <ResumeHintToast seconds={resumeSeconds} />}
       {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
@@ -222,6 +244,7 @@ export default function WatchFilmPage() {
           loading={loading}
           onVideoProgress={handleProgress}
           onIframeActivate={markAsWatched}
+          resumeSeconds={resumeSeconds}
         />
       </div>
       {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}

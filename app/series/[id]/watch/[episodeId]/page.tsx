@@ -12,7 +12,9 @@ const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), 
 import MediaPosterCard from "@/components/MediaPosterCard";
 import SeriesCard from "@/components/SeriesCard";
 import { useWatchProgress } from "@/components/ui/useWatchProgress";
+import { useWatchHistory } from "@/hooks/use-watch-history";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
+import ResumeHintToast from "@/components/ui/ResumeHintToast";
 
 export default function WatchEpisodePage() {
   const params = useParams();
@@ -188,8 +190,30 @@ export default function WatchEpisodePage() {
     id: episodeId,
   });
 
+  // Récupérer la progression sauvegardée pour cet épisode
+  const { history } = useWatchHistory();
+  let resumeSeconds: number | undefined = undefined;
+  let showResumeHint = false;
+  if (history && episode) {
+    const hist = history.find(
+      (h) => h.episode_id === episodeId && typeof h.progress === "number" && h.progress > 0
+    );
+    if (hist && episode.duration) {
+      // episode.duration est en minutes, il faut convertir en secondes
+      const totalSeconds = episode.duration * 60;
+      resumeSeconds = Math.floor(((hist.progress ?? 0) / 100) * totalSeconds);
+      // Éviter la reprise à la toute fin
+      if (resumeSeconds > totalSeconds - 3) resumeSeconds = totalSeconds - 3;
+      if (resumeSeconds < 0) resumeSeconds = 0;
+      // Afficher la notif si progress > 0 et < 98%
+      if (hist.progress !== null && hist.progress > 0 && hist.progress < 98) showResumeHint = true;
+    }
+  }
+
   return (
     <>
+      {/* Notification de reprise */}
+      {showResumeHint && resumeSeconds && <ResumeHintToast seconds={resumeSeconds} />}
       {/* Player harmonisé */}
       <div className="w-full max-w-3xl mx-auto my-8">
         <VideoMultiPlayer
@@ -199,6 +223,7 @@ export default function WatchEpisodePage() {
           loading={loading}
           onVideoProgress={handleProgress}
           onIframeActivate={markAsWatched}
+          resumeSeconds={resumeSeconds}
         />
       </div>
 
