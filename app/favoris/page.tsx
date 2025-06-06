@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Film, Tv, Heart, Sparkles } from "lucide-react";
 
-type ItemType = "film" | "serie";
+type ItemType = "film" | "serie" | "episode";
 type FavItem = { type: ItemType; data: any };
 
 export default function FavorisPage() {
@@ -19,7 +19,8 @@ export default function FavorisPage() {
   const [filmFavorites, setFilmFavorites] = useState<any[]>([]);
   const [seriesFavorites, setSeriesFavorites] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"tout" | "films" | "series">("tout");
+  const [activeTab, setActiveTab] = useState<"tout" | "films" | "series" | "episodes">("tout");
+  const [episodeFavorites, setEpisodeFavorites] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,26 +31,30 @@ export default function FavorisPage() {
     setLoading(true);
     setError(null);
 
-    // Fetch favorites for films and series
+    // Fetch favorites for films, series, and episodes (nouvelle logique universelle)
     const fetchFavorites = async () => {
       try {
         const { data: favorites, error: favError } = await supabase
           .from("favorites")
-          .select("film_id, series_id, created_at")
+          .select("content_id, type, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
         if (favError) throw favError;
 
         const filmIds = favorites
-          .filter((f: any) => f.film_id)
-          .map((f: any) => f.film_id);
+          .filter((f: any) => f.type === "film")
+          .map((f: any) => f.content_id);
         const seriesIds = favorites
-          .filter((f: any) => f.series_id)
-          .map((f: any) => f.series_id);
+          .filter((f: any) => f.type === "serie")
+          .map((f: any) => f.content_id);
+        const episodeIds = favorites
+          .filter((f: any) => f.type === "episode")
+          .map((f: any) => f.content_id);
 
         let films: any[] = [];
         let series: any[] = [];
+        let episodes: any[] = [];
 
         if (filmIds.length > 0) {
           const { data: filmData, error: filmError } = await supabase
@@ -73,8 +78,20 @@ export default function FavorisPage() {
             .filter(Boolean);
         }
 
+        if (episodeIds.length > 0) {
+          const { data: episodeData, error: episodeError } = await supabase
+            .from("episodes")
+            .select("*, season:season_id(season_number), series:series_id(title, poster)")
+            .in("id", episodeIds);
+          if (episodeError) throw episodeError;
+          episodes = episodeIds
+            .map((id: string) => episodeData.find((e: any) => e.id === id))
+            .filter(Boolean);
+        }
+
         setFilmFavorites(films);
         setSeriesFavorites(series);
+        setEpisodeFavorites(episodes);
       } catch (e: any) {
         setError(e.message ?? "Erreur lors du chargement des favoris");
       } finally {
@@ -88,6 +105,7 @@ export default function FavorisPage() {
   const allFavs: FavItem[] = [
     ...filmFavorites.map((f) => ({ type: "film" as const, data: f })),
     ...seriesFavorites.map((s) => ({ type: "serie" as const, data: s })),
+    ...episodeFavorites.map((e) => ({ type: "episode" as const, data: e })),
   ].sort(
     (a, b) =>
       new Date(b.data.created_at ?? 0).getTime() -
@@ -171,6 +189,20 @@ export default function FavorisPage() {
           }`} />
           Séries
         </button>
+        <button
+          className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+            activeTab === 'episodes'
+              ? 'bg-gray-900 border-blue-400 text-blue-400 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-blue-400'
+          }`}
+          onClick={() => setActiveTab('episodes')}
+          aria-selected={activeTab === 'episodes'}
+        >
+          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'episodes' ? 'text-blue-400' : 'text-gray-400'
+          }`} />
+          Épisodes
+        </button>
       </div>
 
       {/* Content */}
@@ -200,7 +232,7 @@ export default function FavorisPage() {
                         isVIP: item.data.is_vip ?? item.data.isVIP
                       }}
                     />
-                  ) : (
+                  ) : item.type === "serie" ? (
                     <SeriesCard
                       key={item.data.id}
                       series={{
@@ -211,6 +243,37 @@ export default function FavorisPage() {
                         isVIP: item.data.is_vip ?? item.data.isVIP
                       }}
                     />
+                  ) : (
+                    <div
+                      key={item.data.id}
+                      className="bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                    >
+                      <div className="flex flex-col items-center gap-2 w-full">
+                        <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
+                        <img
+                          src={item.data.thumbnail_url || "/placeholder-poster.png"}
+                          alt={item.data.title || "Épisode"}
+                          className="w-28 h-16 object-cover rounded-lg mb-2"
+                        />
+                        <div className="text-center">
+                          <div className="font-semibold text-sm text-white truncate">
+                            {item.data.title}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            S{item.data.season?.season_number ?? "?"} • Ep {item.data.episode_number ?? "?"}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {item.data.series?.title ?? ""}
+                          </div>
+                        </div>
+                      </div>
+                      <a
+                        href={`/series/${item.data.series_id}/watch/${item.data.id}`}
+                        className="mt-2 text-xs bg-blue-600/80 hover:bg-blue-700 transition-colors text-white font-bold px-3 py-1 rounded shadow"
+                      >
+                        Regarder l’épisode
+                      </a>
+                    </div>
                   )
                 )}
               </div>
@@ -274,6 +337,57 @@ export default function FavorisPage() {
                       isVIP: serie.is_vip ?? serie.isVIP
                     }}
                   />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'episodes' && (
+          <>
+            <h2 className="text-base sm:text-2xl font-semibold mb-6 text-center">Épisodes favoris</h2>
+            {episodeFavorites.length === 0 ? (
+              <div className="text-gray-400 text-lg py-12 text-center">
+                Aucun épisode favori pour l’instant.
+              </div>
+            ) : (
+              <div
+                className="grid gap-3"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                }}
+              >
+                {episodeFavorites.map((ep) => (
+                  <div
+                    key={ep.id}
+                    className="bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                  >
+                    <div className="flex flex-col items-center gap-2 w-full">
+                      <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
+                      <img
+                        src={ep.thumbnail_url || "/placeholder-poster.png"}
+                        alt={ep.title || "Épisode"}
+                        className="w-28 h-16 object-cover rounded-lg mb-2"
+                      />
+                      <div className="text-center">
+                        <div className="font-semibold text-sm text-white truncate">
+                          {ep.title}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          S{ep.season?.season_number ?? "?"} • Ep {ep.episode_number ?? "?"}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {ep.series?.title ?? ""}
+                        </div>
+                      </div>
+                    </div>
+                    <a
+                      href={`/series/${ep.series_id}/watch/${ep.id}`}
+                      className="mt-2 text-xs bg-blue-600/80 hover:bg-blue-700 transition-colors text-white font-bold px-3 py-1 rounded shadow"
+                    >
+                      Regarder l’épisode
+                    </a>
+                  </div>
                 ))}
               </div>
             )}
