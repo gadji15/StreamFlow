@@ -262,7 +262,9 @@ export default function FilmDetailPage() {
         <div className="flex flex-col md:flex-row gap-6 sm:gap-10">
           {/* Poster et VIP badge (mobile : centré, desktop : à gauche) */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-4 sm:gap-6 relative">
-            <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
+            <div className="w-32 sm:w-44 md:w-full ml-2 sm:ml-0">
+              <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
+            </div>
             {movie.isvip && (
               <div className="mt-4 w-full flex flex-col items-center">
                 <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-3 py-0.5 sm:px-4 sm:py-1 text-base sm:text-lg">
