@@ -145,9 +145,7 @@ export default function SearchBar() {
               variant="ghost"
               className="w-full justify-center text-purple-400 hover:text-purple-300 hover:bg-gray-800"
               onClick={() => {
-                // Navigation vers la page films (ou une page /recherche si elle existe)
-                router.push(`/films?q=${encodeURIComponent(searchTerm)}`);
-                // Ferme la modal (en la forçant via un event custom)
+                router.push(`/recherche?q=${encodeURIComponent(searchTerm)}`);
                 setTimeout(() => {
                   const evt = new CustomEvent("closeSearchModal");
                   window.dispatchEvent(evt);
