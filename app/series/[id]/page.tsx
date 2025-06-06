@@ -357,11 +357,16 @@ export default function SeriesDetailPage() {
               <Button
                 variant={isFavorite ? "default" : "outline"}
                 size="lg"
-                className="w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
                 onClick={toggleFavorite}
                 aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
-                <Sparkles className="h-5 w-5" />
+                <Heart
+                  className={`h-5 w-5 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
                 {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               </Button>
               <Button
