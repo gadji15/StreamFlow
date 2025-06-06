@@ -8,7 +8,7 @@ import SeriesCard from "@/components/SeriesCard";
 import LoadingScreen from "@/components/loading-screen";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Heart, Sparkles } from "lucide-react";
+import { Film, Tv, Heart, Sparkles, Clapperboard } from "lucide-react";
 
 type ItemType = "film" | "serie" | "episode";
 type FavItem = { type: ItemType; data: any };
@@ -198,7 +198,7 @@ export default function FavorisPage() {
           onClick={() => setActiveTab('episodes')}
           aria-selected={activeTab === 'episodes'}
         >
-          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+          <Clapperboard className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
             activeTab === 'episodes' ? 'text-blue-400' : 'text-gray-400'
           }`} />
           Épisodes
