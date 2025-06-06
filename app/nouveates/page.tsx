@@ -386,12 +386,13 @@ export default function NouveautePage() {
                   }}
                 >
                   {filteredMovies.slice(0, 20).map((movie) => (
-                    <NouveauteCard
-                      key={movie.id}
-                      item={movie}
-                      type="film"
-                      isUserVIP={!!isVIP}
-                    />
+                    <div key={movie.id} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={movie}
+                        type="film"
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
                   ))}
                 </div>
               </>
@@ -426,12 +427,13 @@ export default function NouveautePage() {
                   }}
                 >
                   {filteredSeries.slice(0, 20).map((serie) => (
-                    <NouveauteCard
-                      key={serie.id}
-                      item={serie}
-                      type="serie"
-                      isUserVIP={!!isVIP}
-                    />
+                    <div key={serie.id} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={serie}
+                        type="serie"
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
                   ))}
                 </div>
               </>
