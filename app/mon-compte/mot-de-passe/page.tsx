@@ -148,11 +148,20 @@ export default function MotDePassePage() {
           <Button
             type="submit"
             className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded transition text-base sm:text-lg flex items-center justify-center gap-2"
-            loading={loading ? "true" : undefined}
             disabled={loading}
           >
             <Shield className="w-5 h-5 mr-1" />
-            {loading ? "Mise à jour..." : "Changer le mot de passe"}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 mr-2 text-gray-900" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Mise à jour...
+              </>
+            ) : (
+              "Changer le mot de passe"
+            )}
           </Button>
         </form>
       </div>
