@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import FilmCard from "@/components/FilmCard";
 import SeriesCard from "@/components/SeriesCard";
-import { Loader2, Film, Tv } from "lucide-react";
+import { Loader2, Film, Tv, Sparkles } from "lucide-react";
 
 type ResultType = {
   id: string;
@@ -81,7 +81,7 @@ export default function RecherchePage() {
       {/* Tabs filtres */}
       <div className="flex justify-center mb-6 gap-2">
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'tout'
               ? 'bg-gray-900 border-primary text-primary shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
@@ -89,10 +89,13 @@ export default function RecherchePage() {
           onClick={() => setActiveTab('tout')}
           aria-selected={activeTab === 'tout'}
         >
+          <Sparkles className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
+          }`} />
           Tout
         </button>
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'film'
               ? 'bg-gray-900 border-blue-400 text-blue-400 shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-blue-400'
@@ -100,10 +103,13 @@ export default function RecherchePage() {
           onClick={() => setActiveTab('film')}
           aria-selected={activeTab === 'film'}
         >
+          <Film className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'film' ? 'text-primary' : 'text-gray-400'
+          }`} />
           Films
         </button>
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'série'
               ? 'bg-gray-900 border-purple-400 text-purple-400 shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-purple-400'
@@ -111,6 +117,9 @@ export default function RecherchePage() {
           onClick={() => setActiveTab('série')}
           aria-selected={activeTab === 'série'}
         >
+          <Tv className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'série' ? 'text-purple-400' : 'text-gray-400'
+          }`} />
           Séries
         </button>
       </div>
