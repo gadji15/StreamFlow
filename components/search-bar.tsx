@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Film, Tv, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 import SeriesCard from "@/components/SeriesCard";
@@ -22,6 +23,7 @@ export default function SearchBar() {
   const [results, setResults] = useState<ResultType[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   // Recherche Supabase (debounced)
   useEffect(() => {
@@ -142,6 +144,15 @@ export default function SearchBar() {
             <Button
               variant="ghost"
               className="w-full justify-center text-purple-400 hover:text-purple-300 hover:bg-gray-800"
+              onClick={() => {
+                // Navigation vers la page films (ou une page /recherche si elle existe)
+                router.push(`/films?q=${encodeURIComponent(searchTerm)}`);
+                // Ferme la modal (en la forçant via un event custom)
+                setTimeout(() => {
+                  const evt = new CustomEvent("closeSearchModal");
+                  window.dispatchEvent(evt);
+                }, 100);
+              }}
             >
               Voir tous les résultats pour "{searchTerm}"
             </Button>
