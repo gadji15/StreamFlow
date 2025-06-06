@@ -215,7 +215,7 @@ export default function WatchEpisodePage() {
   return (
     <>
       {/* Bouton retour visible */}
-      <div className="fixed left-3 top-16 sm:left-8 sm:top-[4.5rem] lg:top-20 z-50">
+      <div className="w-full max-w-3xl mx-auto pt-4 pb-2">
         <button
           onClick={goBackToSeries}
           className="flex items-center gap-2 px-3 py-2 bg-gray-800/80 rounded-xl text-white shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
