@@ -68,6 +68,60 @@ export default function MonComptePage() {
   // Derniers éléments regardés
   const lastWatched = historyLoading ? [] : history.slice(0, 3);
 
+  // Générer une couleur à partir d'un nom (simple hash)
+  function stringToColor(str: string = "") {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  }
+
+  // Refactor affichage d'un item d'historique
+  function HistoryItem({ item }: { item: WatchHistoryItem }) {
+    const progress = Math.round(item.progress ?? 0);
+    const status = progress >= 98 ? "Terminé" : "En cours";
+    const statusColor = progress >= 98 ? "bg-green-600/30 text-green-500" : "bg-blue-600/30 text-blue-400";
+    const posterSrc = item.poster_url || item.poster || item.posterUrl || "";
+    return (
+      <div key={item.id} className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+          {posterSrc ? (
+            <img 
+              src={posterSrc}
+              alt={item.title || "Affiche"}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={e => { (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png"; }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
+              {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{item.title || 'Contenu'}
+            <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-bold ${statusColor}`}>
+              {status}
+            </span>
+          </p>
+          <p className="text-xs text-gray-400 truncate">
+            {new Intl.DateTimeFormat('fr-FR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            }).format(new Date(item.watched_at))}
+            {' • '}
+            {item.content_type === 'movie' ? 'Film' : item.content_type === 'series' ? 'Série' : 'Épisode'}
+            {' • '}
+            {progress}% terminé
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Profil utilisateur */}
@@ -75,9 +129,21 @@ export default function MonComptePage() {
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={userData?.photoURL || ''} alt={userData?.displayName || 'Utilisateur'} />
-              <AvatarFallback className="text-2xl">
-                {userData?.displayName?.charAt(0) || 'U'}
+              <AvatarImage
+                src={userData?.photoURL || ''}
+                alt={userData?.displayName || 'Utilisateur'}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = "/placeholder-avatar.png"; }}
+              />
+              <AvatarFallback
+                className="text-2xl"
+                style={{
+                  background: stringToColor(userData?.displayName),
+                  color: "#fff"
+                }}
+              >
+                {userData?.displayName
+                  ? userData.displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+                  : 'U'}
               </AvatarFallback>
             </Avatar>
             
@@ -100,7 +166,16 @@ export default function MonComptePage() {
                     Modifier le profil
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Se déconnecter"
+                  onClick={() => {
+                    if (window.confirm("Voulez-vous vraiment vous déconnecter ?")) {
+                      logout();
+                    }
+                  }}
+                >
                   <LogOut className="w-4 h-4 mr-1" />
                   Se déconnecter
                 </Button>
@@ -158,41 +233,21 @@ export default function MonComptePage() {
         </CardHeader>
         <CardContent>
           {historyLoading ? (
-            <p className="text-sm text-gray-400">Chargement de l&apos;historique...</p>
+            <div className="space-y-2 animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-800 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-700 rounded w-1/2" />
+                    <div className="h-3 bg-gray-700 rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : lastWatched.length > 0 ? (
             <div className="space-y-3">
               {lastWatched.map(item => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0">
-                    {/* Correction : utilisez une clé générique pour l'image */}
-                    {typeof item.title === 'string' && item.title && typeof item.poster_url === 'string' && item.poster_url ? (
-                      <img 
-                      src={item.poster_url} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.title || 'Contenu'}</p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {new Intl.DateTimeFormat('fr-FR', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }).format(new Date(item.watched_at))}
-                      {' • '}
-                      {item.content_type === 'movie' ? 'Film' : item.content_type === 'series' ? 'Série' : 'Épisode'}
-                      {' • '}
-                      {Math.round(item.progress ?? 0)}% terminé
-                    </p>
-                  </div>
-                </div>
+                <HistoryItem key={item.id} item={item} />
               ))}
             </div>
           ) : (
@@ -200,7 +255,12 @@ export default function MonComptePage() {
           )}
         </CardContent>
         <CardFooter>
-          <Button variant="outline" asChild>
+          <Button
+            variant="outline"
+            asChild
+            className="w-full sm:w-auto"
+            aria-label="Voir tout l'historique"
+          >
             <Link href="/mon-compte/historique">Voir tout l&apos;historique</Link>
           </Button>
         </CardFooter>
