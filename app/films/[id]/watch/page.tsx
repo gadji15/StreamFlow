@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
 import FilmCard from "@/components/FilmCard";
@@ -79,6 +80,7 @@ export default function WatchFilmPage() {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [suggestions, setSuggestions] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPlayerError, setShowPlayerError] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // SECTION AUTRES PARTIES / CONTINUITÉS
@@ -233,63 +235,104 @@ export default function WatchFilmPage() {
 
   return (
     <>
+      {/* Bouton retour visible */}
+      <div className="fixed top-2 left-2 z-40">
+        <button
+          onClick={goBack}
+          className="flex items-center gap-2 px-3 py-2 bg-gray-800/80 rounded-xl text-white shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          aria-label="Retour au film"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="hidden xs:inline">Retour</span>
+        </button>
+      </div>
+
       {/* Notification de reprise */}
       {showResumeHint && resumeSeconds && <ResumeHintToast seconds={resumeSeconds} />}
-      {/* Player harmonisé */}
-      <div className="w-full max-w-3xl mx-auto my-8">
-        <VideoMultiPlayer
-          videoUrl={movie?.video_url || undefined}
-          streamtapeUrl={movie?.streamtape_url || undefined}
-          uqloadUrl={movie?.uqload_url || undefined}
-          loading={loading}
-          onVideoProgress={handleProgress}
-          onIframeActivate={markAsWatched}
-          resumeSeconds={resumeSeconds}
-        />
-      </div>
-      {/* Tu peux ajouter ici d'autres infos ou suggestions, mais plus de WatchLayout ni de player concurrent */}
-            {movie && (
-              <>
-                <div className="flex flex-wrap items-center gap-3 mb-1">
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
-                    {movie.title}
-                  </h1>
-                  {movie.year && (
-                    <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
-                      {movie.year}
-                    </span>
-                  )}
-                  {movie.genre && (
-                    <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
-                      {movie.genre}
-                    </span>
-                  )}
-                  {movie.is_vip && (
-                    <Badge
-                      variant="secondary"
-                      className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
-                    >
-                      VIP
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
-                  {movie.duration && (
-                    <span>
-                      <b>Durée :</b> {movie.duration} min
-                    </span>
-                  )}
-                  {movie.rating && (
-                    <span>
-                      <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-        <div className="mt-6">
-          <p className="text-gray-300">{movie?.description}</p>
+
+      {/* Skeleton loader pendant le chargement */}
+      {loading && (
+        <div className="w-full max-w-3xl mx-auto my-8 animate-pulse">
+          <div className="aspect-video rounded-xl bg-gray-800/50 mb-6" />
+          <div className="h-6 w-3/4 bg-gray-700 rounded mb-2" />
+          <div className="h-4 w-2/3 bg-gray-700 rounded mb-2" />
+          <div className="h-4 w-1/2 bg-gray-700 rounded mb-2" />
         </div>
+      )}
+
+      {/* Player harmonisé */}
+      {!loading && (
+      <div className="w-full max-w-3xl mx-auto my-8" role="region" aria-label="Lecteur vidéo principal">
+        {/* Message d’erreur si vidéo absente */}
+        {(!movie?.video_url && !movie?.streamtape_url && !movie?.uqload_url) && (
+          <div className="p-6 bg-red-900/60 border border-red-700 rounded-xl text-center text-lg text-white font-bold">
+            Impossible de charger cette vidéo pour le moment.
+          </div>
+        )}
+        {(movie?.video_url || movie?.streamtape_url || movie?.uqload_url) && (
+          <VideoMultiPlayer
+            videoUrl={movie?.video_url || undefined}
+            streamtapeUrl={movie?.streamtape_url || undefined}
+            uqloadUrl={movie?.uqload_url || undefined}
+            loading={loading}
+            onVideoProgress={handleProgress}
+            onIframeActivate={markAsWatched}
+            resumeSeconds={resumeSeconds}
+            onError={() => setShowPlayerError(true)}
+          />
+        )}
+        {/* Message d’erreur si le player lève une erreur runtime */}
+        {showPlayerError && (
+          <div className="p-4 mt-4 bg-red-900/60 border border-red-700 rounded-xl text-center text-base text-white font-bold">
+            Erreur lors du chargement du lecteur vidéo. Essayez un autre navigateur ou contactez le support.
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Infos film et suggestions */}
+      {movie && (
+        <>
+          <div className="flex flex-wrap items-center gap-3 mb-1 mt-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mr-3">
+              {movie.title}
+            </h1>
+            {movie.year && (
+              <span className="text-base px-3 py-1 rounded-xl bg-gray-800/70 text-gray-200 font-medium">
+                {movie.year}
+              </span>
+            )}
+            {movie.genre && (
+              <span className="text-base px-3 py-1 rounded-xl bg-primary/20 text-primary font-medium">
+                {movie.genre}
+              </span>
+            )}
+            {movie.is_vip && (
+              <Badge
+                variant="secondary"
+                className="text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg ml-1"
+              >
+                VIP
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2">
+            {movie.duration && (
+              <span>
+                <b>Durée :</b> {movie.duration} min
+              </span>
+            )}
+            {movie.rating && (
+              <span>
+                <b>Note :</b> <span className="text-yellow-400">★ {movie.rating.toFixed(1)}</span>
+              </span>
+            )}
+          </div>
+        </>
+      )}
+      <div className="mt-6">
+        <p className="text-gray-300">{movie?.description}</p>
+      </div>
 
         {/* SECTION SAGA/PARTIES AVEC TITRE DYNAMIQUE ET FILM ACTUEL */}
         {(continuities.length > 0 || (movie && movie.saga_id)) && (
@@ -334,6 +377,9 @@ export default function WatchFilmPage() {
                       year: movie.year,
                       isVIP: movie.isvip ?? false,
                     }}
+                    tabIndex={0}
+                    aria-label={movie.title}
+                    posterProps={{ loading: "lazy" }}
                   />
                   {/* Badge FILM ACTUEL */}
                   <span
@@ -365,6 +411,9 @@ export default function WatchFilmPage() {
                       year: part.year,
                       isVIP: part.isvip ?? false,
                     }}
+                    tabIndex={0}
+                    aria-label={part.title}
+                    posterProps={{ loading: "lazy" }}
                   />
                 </div>
               ))}
@@ -433,20 +482,24 @@ export default function WatchFilmPage() {
             }}
           >
             {suggestions.map((film) => (
-              <FilmCard
-                key={film.id}
-                movie={{
-                  id: String(film.id),
-                  title: film.title,
-                  poster: film.poster
-                    ? /^https?:\/\//.test(film.poster)
-                      ? film.poster
-                      : getTMDBImageUrl(film.poster, "w300")
-                    : "/placeholder-poster.png",
-                  year: film.year,
-                  isVIP: film.is_vip ?? false,
-                }}
-              />
+              <Link key={film.id} href={`/films/${film.id}`}>
+                <FilmCard
+                  movie={{
+                    id: String(film.id),
+                    title: film.title,
+                    poster: film.poster
+                      ? /^https?:\/\//.test(film.poster)
+                        ? film.poster
+                        : getTMDBImageUrl(film.poster, "w300")
+                      : "/placeholder-poster.png",
+                    year: film.year,
+                    isVIP: film.is_vip ?? false,
+                  }}
+                  tabIndex={0}
+                  aria-label={film.title}
+                  posterProps={{ loading: "lazy" }}
+                />
+              </Link>
             ))}
           </div>
         </div>
