@@ -18,7 +18,7 @@ import CastingGrid from "@/components/CastingGrid";
 import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
-import { BookText, Users, CopyPlus, MessageSquare, Layers, Play, Sparkles, Share2 } from "lucide-react";
+import { BookText, Users, CopyPlus, MessageSquare, Layers, Play, Heart, Share2 } from "lucide-react";
 import { useMobile } from "@/hooks/use-mobile";
 
 export default function SeriesDetailPage() {
@@ -311,30 +311,35 @@ export default function SeriesDetailPage() {
               <div className="flex gap-2 w-full">
                 <Button
                   size="icon"
-                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-primary active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={handleWatchFirst}
                   disabled={!canWatch || seasonEpisodes.length === 0}
                   aria-label="Regarder la série"
                 >
-                  <Play className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <Play className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-primary transition-colors" />
                 </Button>
                 <Button
                   variant={isFavorite ? "default" : "outline"}
                   size="icon"
-                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-purple-400 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
                   onClick={toggleFavorite}
                   aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                 >
-                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <Heart
+                    className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors
+                      ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                      group-hover:text-red-500`}
+                    fill={isFavorite ? "currentColor" : "none"}
+                  />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-blue-400 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
                   onClick={handleShare}
                   aria-label="Partager"
                 >
-                  <Share2 className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
                 </Button>
               </div>
             </div>
