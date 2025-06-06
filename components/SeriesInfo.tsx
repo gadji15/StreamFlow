@@ -20,6 +20,7 @@ type SeriesInfoProps = {
   // Customisation avancée
   genreBadgeClassName?: string;
   ratingColorClassName?: string;
+  className?: string;
 };
 
 export default function SeriesInfo({
@@ -35,7 +36,8 @@ export default function SeriesInfo({
   showGenres = true,
   showRating = true,
   genreBadgeClassName = "px-3 py-1 bg-gray-700 text-xs rounded-full",
-  ratingColorClassName = "font-bold text-yellow-400 drop-shadow",
+  ratingColorClassName = "",
+  className,
 }: SeriesInfoProps) {
   // Nettoie et normalise le tableau des genres
   let genreList: string[] = [];
@@ -48,7 +50,7 @@ export default function SeriesInfo({
   }
 
   return (
-    <section aria-label="Informations principales sur la série" className="mb-3">
+    <section aria-label="Informations principales sur la série" className={`mb-3 ${className ?? ""}`}>
       {showTitle && (
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white drop-shadow" tabIndex={0}>
           {title}
