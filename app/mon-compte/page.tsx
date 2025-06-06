@@ -303,7 +303,7 @@ export default function MonComptePage() {
       {/* Navigation rapide */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card className="hover:shadow-2xl hover:scale-[1.03] hover:ring-2 hover:ring-primary/30 transition-all group focus-within:ring-2 focus-within:ring-primary/60">
-          <Link href="/mon-compte/favoris" className="block p-4 sm:p-5 focus:outline-none">
+          <Link href="/favoris" className="block p-4 sm:p-5 focus:outline-none">
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="bg-primary/10 p-2 sm:p-3 rounded-full group-hover:scale-110 group-hover:bg-primary/20 transition-all">
                 <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
