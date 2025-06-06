@@ -169,6 +169,16 @@ export default function FilmsPage() {
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                aria-label="Effacer la recherche"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 transition"
+              >
+                &#10006;
+              </button>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <label htmlFor="genre-select" className="sr-only">
@@ -199,15 +209,7 @@ export default function FilmsPage() {
               <option value="false">Contenus gratuits</option>
               <option value="true">Contenus VIP</option>
             </select>
-            {(selectedGenre || searchTerm || showVIP) && (
-              <Button
-                variant="ghost"
-                onClick={resetFilters}
-                className="text-sm"
-              >
-                Réinitialiser
-              </Button>
-            )}
+            {/* Suppression du bouton Réinitialiser pour harmonisation UX */}
           </div>
         </form>
         {searching && (
