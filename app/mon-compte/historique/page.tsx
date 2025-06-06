@@ -145,7 +145,7 @@ export default function HistoriquePage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-6">Votre historique de visionnage</h1>
+      <h1 className="text-lg sm:text-2xl font-bold mb-6">Votre historique de visionnage</h1>
       {/* Toggle de filtre */}
       <div className="flex gap-2 mb-6">
         {FILTERS.map(f => (
