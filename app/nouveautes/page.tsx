@@ -22,7 +22,7 @@ export default function NouveautePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
-  const [activeTab, setActiveTab] = useState<'films' | 'series'>('films');
+  const [activeTab, setActiveTab] = useState<'tout' | 'films' | 'series'>('tout');
   const { isVIP } = useSupabaseAuth();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -200,17 +200,31 @@ export default function NouveautePage() {
 
   return (
     <main className="container mx-auto px-4 py-10">
-      <h1 className="text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
-        <Sparkles className="text-yellow-400 w-8 h-8" /> Nouveautés
+      <h1 className="text-lg sm:text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
+        <Sparkles className="text-yellow-400 w-6 h-6 sm:w-8 sm:h-8" /> Nouveautés
       </h1>
-      <p className="text-center text-gray-400 mb-8 max-w-2xl mx-auto">
+      <p className="text-xs sm:text-base text-center text-gray-400 mb-8 max-w-2xl mx-auto">
         Découvrez les derniers films et séries ajoutés à notre catalogue. Profitez de nouveautés exclusives et des incontournables fraîchement arrivés !
       </p>
 
       {/* Onglets */}
-      <div className="flex justify-center mb-6 gap-2">
+      <div className="flex justify-center mb-6 gap-1 sm:gap-2">
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+            activeTab === 'tout'
+              ? 'bg-gray-900 border-primary text-primary shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
+          }`}
+          onClick={() => setActiveTab('tout')}
+          aria-selected={activeTab === 'tout'}
+        >
+          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
+          }`} />
+          Tout
+        </button>
+        <button
+          className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
             activeTab === 'films'
               ? 'bg-gray-900 border-primary text-primary shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
@@ -218,10 +232,13 @@ export default function NouveautePage() {
           onClick={() => setActiveTab('films')}
           aria-selected={activeTab === 'films'}
         >
-          <Film className="inline-block mr-2 h-5 w-5" /> Films
+          <Film className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'films' ? 'text-primary' : 'text-gray-400'
+          }`} />
+          Films
         </button>
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
             activeTab === 'series'
               ? 'bg-gray-900 border-purple-400 text-purple-400 shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-purple-400'
@@ -229,7 +246,10 @@ export default function NouveautePage() {
           onClick={() => setActiveTab('series')}
           aria-selected={activeTab === 'series'}
         >
-          <Tv className="inline-block mr-2 h-5 w-5" /> Séries
+          <Tv className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'series' ? 'text-purple-400' : 'text-gray-400'
+          }`} />
+          Séries
         </button>
       </div>
 
@@ -301,19 +321,7 @@ export default function NouveautePage() {
               <option value="false">Contenus gratuits</option>
               <option value="true">Contenus VIP</option>
             </select>
-            {(selectedGenre || searchTerm || showVIP) && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSelectedGenre('');
-                  setSearchTerm('');
-                  setShowVIP('');
-                }}
-                className="text-sm"
-              >
-                Réinitialiser
-              </Button>
-            )}
+            {/* Suppression du bouton Réinitialiser pour harmoniser avec les autres pages */}
           </div>
         </form>
         {searching && (
@@ -386,19 +394,20 @@ export default function NouveautePage() {
                   }}
                 >
                   {filteredMovies.slice(0, 20).map((movie) => (
-                    <NouveauteCard
-                      key={movie.id}
-                      item={movie}
-                      type="film"
-                      isUserVIP={!!isVIP}
-                    />
+                    <div key={movie.id} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={movie}
+                        type="film"
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
                   ))}
                 </div>
               </>
             )}
           </>
         )
-      ) : (
+      ) : activeTab === 'series' ? (
         (filteredSeries.length === 0 && !searching) ? (
           <div className="text-center py-16">
             <Tv className="h-10 w-10 mx-auto mb-4 text-gray-500" />
@@ -426,18 +435,66 @@ export default function NouveautePage() {
                   }}
                 >
                   {filteredSeries.slice(0, 20).map((serie) => (
-                    <NouveauteCard
-                      key={serie.id}
-                      item={serie}
-                      type="serie"
-                      isUserVIP={!!isVIP}
-                    />
+                    <div key={serie.id} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={serie}
+                        type="serie"
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
                   ))}
                 </div>
               </>
             )}
           </>
         )
+      ) : (
+        // Tab "Tout" : concatène les deux listes, triées par date (création récente en premier)
+        (() => {
+          const all = [
+            ...filteredMovies.map(m => ({...m, _type: "film"})),
+            ...filteredSeries.map(s => ({...s, _type: "serie"}))
+          ].sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          );
+          return all.length === 0 && !searching ? (
+            <div className="text-center py-16">
+              <Sparkles className="h-10 w-10 mx-auto mb-4 text-gray-500" />
+              <h2 className="text-xl font-semibold mb-2">Aucun contenu trouvé</h2>
+              <p className="text-gray-400 mb-6">
+                {searchTerm
+                  ? `Aucun résultat pour "${searchTerm}".`
+                  : `Revenez bientôt pour découvrir les nouveaux contenus ajoutés !`}
+              </p>
+            </div>
+          ) : (
+            <>
+              {searching && (
+                <div className="text-center text-gray-400 mb-6">Recherche...</div>
+              )}
+              {all.length > 0 && (
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  }}
+                >
+                  {all.slice(0, 20).map((item: any) => (
+                    <div key={item.id + "_" + item._type} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={item}
+                        type={item._type}
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()
       )}
     </main>
   );

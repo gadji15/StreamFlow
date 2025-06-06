@@ -36,7 +36,7 @@ function normalizeBackdropUrl(raw: any) {
 }
 
 import Link from "next/link";
-import { Film } from "lucide-react";
+import { Film, Play, Info, Heart, Share } from "lucide-react";
 import SimilarFilmsGrid from "@/components/films/SimilarFilmsGrid";
 /* Suppression du composant local SimilarLocalMovies :
    On utilisera désormais le composant réutilisable à la place. */
@@ -258,18 +258,20 @@ export default function FilmDetailPage() {
         <FilmBackdrop src={movie.backdropUrl} alt={`Backdrop de ${movie.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
-          {/* Poster et VIP badge */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
+      <div className="container mx-auto px-2 sm:px-4 pt-24 sm:pt-32 pb-6 sm:pb-8 relative z-10">
+        <div className="flex flex-col md:flex-row gap-6 sm:gap-10">
+          {/* Poster et VIP badge (mobile : centré, desktop : à gauche) */}
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-4 sm:gap-6 relative">
+            <div className="w-32 sm:w-44 md:w-full ml-2 sm:ml-0 mt-8 sm:mt-0">
+              <FilmPosterCard src={movie.posterUrl} alt={`Affiche de ${movie.title}`} />
+            </div>
             {movie.isvip && (
               <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-3 py-0.5 sm:px-4 sm:py-1 text-base sm:text-lg">
                   Contenu VIP
                 </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
+                <div className="p-2 sm:p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+                  <p className="text-amber-400 font-medium mb-1 text-xs sm:text-base">
                     {isVIP
                       ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
                       : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
@@ -277,7 +279,7 @@ export default function FilmDetailPage() {
                   {!isVIP && (
                     <Button
                       size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      className="mt-2 sm:mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-xs sm:text-base"
                     >
                       Devenir VIP
                     </Button>
@@ -287,28 +289,117 @@ export default function FilmDetailPage() {
             )}
           </div>
 
-          <div className="flex-1 flex flex-col gap-5">
+          {/* Infos principales */}
+          <div className="flex-1 flex flex-col gap-4 sm:gap-5">
             <FilmInfo
               title={movie.title}
               year={movie.year}
               duration={movie.duration}
               genres={movie.genre}
               rating={movie.rating}
+              className="text-base sm:text-lg"
             />
 
-            <ActionButtons
-              canWatch={canWatch}
-              videoUrl={movie.videoUrl}
-              trailerUrl={movie.trailerUrl}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
-              onShare={handleShare}
-              onPlay={handlePlay}
-            />
-
-            <p className="text-gray-300 text-base mt-2 mb-3">{movie.description}</p>
+            {/* Actions en haut avant la description - icônes seules sur mobile */}
+            {/* Actions icônes only sur mobile */}
+            <div className="flex sm:hidden mb-2 gap-2">
+              <Button
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={handlePlay}
+                disabled={!canWatch || !movie.videoUrl}
+                aria-label="Regarder"
+              >
+                <Play className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-primary transition-colors" />
+              </Button>
+              {movie.trailerUrl && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  onClick={() => window.open(movie.trailerUrl, "_blank")}
+                  aria-label="Bande-annonce"
+                >
+                  <Info className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                </Button>
+              )}
+              <Button
+                variant={isFavorite ? "secondary" : "outline"}
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+                onClick={toggleFavorite}
+                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                <Heart
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
+              </Button>
+            </div>
+            {/* Actions complètes sur desktop */}
+            <div className="hidden sm:flex gap-3 mb-2">
+              <Button
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={handlePlay}
+                disabled={!canWatch || !movie.videoUrl}
+                aria-label="Regarder"
+              >
+                <Play className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
+                Regarder
+              </Button>
+              {movie.trailerUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  onClick={() => window.open(movie.trailerUrl, "_blank")}
+                  aria-label="Bande-annonce"
+                >
+                  <Info className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                  Bande-annonce
+                </Button>
+              )}
+              <Button
+                variant={isFavorite ? "secondary" : "outline"}
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+                onClick={toggleFavorite}
+                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                <Heart
+                  className={`h-5 w-5 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                Partager
+              </Button>
+            </div>
+            <p className="text-gray-300 text-sm sm:text-base mt-2 mb-2 sm:mb-3">{movie.description}</p>
             {movie.director && (
-              <p className="mb-3">
+              <p className="mb-2 sm:mb-3 text-xs sm:text-base">
                 <span className="font-medium">Réalisateur :</span>{" "}
                 <span className="text-gray-300">{movie.director}</span>
               </p>
@@ -316,74 +407,83 @@ export default function FilmDetailPage() {
           </div>
         </div>
 
+        {/* Suppression du bloc sticky action bar mobile */}
+
         {/* Onglets premium */}
-        <div className="mt-12">
+        <div className="mt-8 sm:mt-12">
           <Tabs defaultValue="overview">
-            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-  <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <BookText className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Synopsis</span>
-  </TabsTrigger>
-  <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <Users className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Casting</span>
-  </TabsTrigger>
-  <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <CopyPlus className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Films similaires</span>
-  </TabsTrigger>
-  <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-    <MessageSquare className="w-5 h-5 inline sm:hidden" />
-    <span className="hidden sm:inline">Commentaires</span>
-  </TabsTrigger>
-</TabsList>
-            {/* 
-              Pour que la classe scrollbar-none fonctionne partout, ajoutez ceci dans votre CSS global :
-              .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
-              .scrollbar-none::-webkit-scrollbar { display: none; }
-            */}
-            <TabsContent value="overview" className="pt-6">
-  <div className="mb-4">
-    <h2 className="text-base font-semibold mb-2">Synopsis</h2>
-    <p className="text-gray-300 whitespace-pre-line">{movie.description}</p>
-  </div>
-  {movie.trailerUrl && (
-    <div>
-      <h2 className="text-base font-semibold mb-2">Bande-annonce</h2>
-      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-        <iframe
-          src={
-            movie.trailerUrl.includes("youtube.com/watch")
-              ? movie.trailerUrl.replace("watch?v=", "embed/")
-              : movie.trailerUrl
-          }
-          title={`Bande-annonce de ${movie.title}`}
-          allowFullScreen
-          className="w-full h-full"
-        ></iframe>
-      </div>
-    </div>
-  )}
-</TabsContent>
+            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide text-xs sm:text-base">
+              <TabsTrigger
+                value="overview"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <BookText className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Synopsis</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="casting"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <Users className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Casting</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="related"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <CopyPlus className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Films similaires</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="comments"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <MessageSquare className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Commentaires</span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="pt-5 sm:pt-6">
+              <div className="mb-2 sm:mb-4">
+                <h2 className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Synopsis</h2>
+                <p className="text-gray-300 whitespace-pre-line text-xs sm:text-base">{movie.description}</p>
+              </div>
+              {movie.trailerUrl && (
+                <div>
+                  <h2 className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Bande-annonce</h2>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <iframe
+                      src={
+                        movie.trailerUrl.includes("youtube.com/watch")
+                          ? movie.trailerUrl.replace("watch?v=", "embed/")
+                          : movie.trailerUrl
+                      }
+                      title={`Bande-annonce de ${movie.title}`}
+                      allowFullScreen
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
-            <TabsContent value="casting" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Casting</h2>
-  {movie.tmdbId ? (
-    <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
-  ) : (
-    <div className="text-gray-400">Aucun casting disponible.</div>
-  )}
-</TabsContent>
+            <TabsContent value="casting" className="pt-5 sm:pt-6">
+              <h2 className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Casting</h2>
+              {movie.tmdbId ? (
+                <CastingGrid tmdbId={movie.tmdbId} type="movie" fallbackCast={movie.cast} />
+              ) : (
+                <div className="text-gray-400 text-xs sm:text-base">Aucun casting disponible.</div>
+              )}
+            </TabsContent>
 
-            <TabsContent value="related" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Films similaires</h2>
-  <SimilarFilmsGrid currentMovieId={id} tmdbId={movie.tmdbId} />
-</TabsContent>
+            <TabsContent value="related" className="pt-5 sm:pt-6">
+              <h2 className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Films similaires</h2>
+              <SimilarFilmsGrid currentMovieId={id} tmdbId={movie.tmdbId} />
+            </TabsContent>
 
-            <TabsContent value="comments" className="pt-6">
-  <h2 className="text-base font-semibold mb-2">Commentaires</h2>
-  <CommentsSection contentId={id} contentType="movie" />
-</TabsContent>
+            <TabsContent value="comments" className="pt-5 sm:pt-6">
+              <h2 className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">Commentaires</h2>
+              <CommentsSection contentId={id} contentType="movie" />
+            </TabsContent>
           </Tabs>
         </div>
       </div>

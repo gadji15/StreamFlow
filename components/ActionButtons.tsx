@@ -3,8 +3,19 @@ import { Play, Info, Heart, Share } from "lucide-react";
 import { Button } from "./ui/button";
 
 /**
- * Ensemble de boutons d'action stylés avec animations.
+ * Ensemble de boutons d'action stylés avec animations, adaptatif mobile/desktop.
  */
+interface ActionButtonsProps {
+  canWatch: boolean;
+  videoUrl?: string;
+  trailerUrl?: string;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onShare: () => void;
+  onPlay: () => void;
+  fullWidth?: boolean;
+}
+
 export default function ActionButtons({
   canWatch,
   videoUrl,
@@ -13,65 +24,57 @@ export default function ActionButtons({
   onToggleFavorite,
   onShare,
   onPlay,
-}: {
-  canWatch: boolean;
-  videoUrl?: string;
-  trailerUrl?: string;
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
-  onShare: () => void;
-  onPlay: () => void;
-}) {
+  fullWidth = false,
+  iconsOnly = false, // nouvelle prop pour mobile
+}: ActionButtonsProps & { iconsOnly?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-4">
-      <Button
-        size="lg"
-        disabled={!canWatch || !videoUrl}
-        className={
-          "transition-all duration-200 shadow-lg hover:scale-105 hover:bg-primary-700 " +
-          (!canWatch || !videoUrl ? "opacity-50 cursor-not-allowed" : "")
-        }
-        onClick={onPlay}
-      >
-        <Play className="mr-2 h-5 w-5" /> Regarder
-      </Button>
-
+    <div className={`flex flex-wrap gap-2 ${fullWidth ? "flex-col w-full" : ""}`}>
+      {canWatch && videoUrl && (
+        <Button
+          size={iconsOnly ? "icon" : "lg"}
+          className={`font-bold ${fullWidth ? "w-full" : ""} ${iconsOnly ? "p-2 sm:p-4" : ""}`}
+          onClick={onPlay}
+          aria-label="Regarder"
+        >
+          <Play className={`${iconsOnly ? "h-5 w-5 sm:h-6 sm:w-6" : "mr-2 h-5 w-5"}`} />
+          {!iconsOnly && "Regarder"}
+        </Button>
+      )}
       {trailerUrl && (
         <Button
           variant="outline"
-          size="lg"
-          className="transition-all duration-200 hover:border-primary-500"
-          onClick={() => {
-            if (trailerUrl.startsWith("http")) {
-              window.open(trailerUrl, "_blank", "noopener,noreferrer");
-            }
-          }}
+          size={iconsOnly ? "icon" : "default"}
+          className={`${fullWidth ? "w-full" : ""} ${iconsOnly ? "p-2 sm:p-4" : ""}`}
+          onClick={() => window.open(trailerUrl, "_blank")}
+          aria-label="Bande-annonce"
         >
-          <Info className="mr-2 h-5 w-5" /> Bande-annonce
+          <Info className={`${iconsOnly ? "h-5 w-5 sm:h-6 sm:w-6" : "mr-2 h-5 w-5"}`} />
+          {!iconsOnly && "Bande-annonce"}
         </Button>
       )}
-
       <Button
-        variant="ghost"
-        size="lg"
-        className="transition-all duration-200 hover:bg-red-900/30"
+        variant={isFavorite ? "secondary" : "outline"}
+        size={iconsOnly ? "icon" : "default"}
+        className={`${fullWidth ? "w-full" : ""} ${iconsOnly ? "p-2 sm:p-4" : ""}`}
         onClick={onToggleFavorite}
+        aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
       >
         <Heart
-          className={`mr-2 h-5 w-5 ${
-            isFavorite ? "fill-current text-red-500" : ""
-          }`}
+          className={`${
+            iconsOnly ? "h-5 w-5 sm:h-6 sm:w-6" : "mr-2 h-5 w-5"
+          } ${isFavorite ? "fill-current text-red-500" : ""}`}
         />
-        {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+        {!iconsOnly && (isFavorite ? "Retirer des favoris" : "Ajouter aux favoris")}
       </Button>
-
       <Button
         variant="ghost"
-        size="lg"
-        className="transition-all duration-200 hover:bg-blue-900/30"
+        size={iconsOnly ? "icon" : "default"}
+        className={`${fullWidth ? "w-full" : ""} ${iconsOnly ? "p-2 sm:p-4" : ""}`}
         onClick={onShare}
+        aria-label="Partager"
       >
-        <Share className="mr-2 h-5 w-5" /> Partager
+        <Share className={`${iconsOnly ? "h-5 w-5 sm:h-6 sm:w-6" : "mr-2 h-5 w-5"}`} />
+        {!iconsOnly && "Partager"}
       </Button>
     </div>
   );

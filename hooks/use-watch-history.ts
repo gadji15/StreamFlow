@@ -127,11 +127,29 @@ export function useWatchHistory() {
     fetchHistory();
   };
 
+  // Supprime une entrée d'historique par id
+  const deleteHistoryItem = async (id: string) => {
+    if (!user || !id) return;
+    try {
+      const { error } = await supabase
+        .from('view_history')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('id', id);
+      if (error) throw new Error(error.message);
+      fetchHistory();
+    } catch (err) {
+      console.error("[useWatchHistory] deleteHistoryItem error", err);
+      setError((err as Error).message || "Erreur lors de la suppression");
+    }
+  };
+
   return {
     history,
     loading,
     error,
     refresh: fetchHistory,
     upsertHistory,
+    deleteHistoryItem,
   };
 }

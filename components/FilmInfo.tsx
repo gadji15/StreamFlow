@@ -4,21 +4,25 @@ import { Calendar, Clock, Star } from "lucide-react";
 /**
  * Affiche les infos principales du film : titre, année, durée, genres, note.
  */
+export interface FilmInfoProps {
+  title: string;
+  year?: number | string;
+  duration?: number;
+  genres?: string;
+  rating?: number | null;
+  className?: string;
+}
+
 export default function FilmInfo({
   title,
   year,
   duration,
   genres,
   rating,
-}: {
-  title: string;
-  year?: number | string;
-  duration?: number;
-  genres?: string;
-  rating?: number | null;
-}) {
+  className,
+}: FilmInfoProps) {
   return (
-    <>
+    <div className={className ?? ""}>
       <h1 className="text-3xl md:text-4xl font-bold mb-2">{title}</h1>
       <div className="flex flex-wrap items-center space-x-4 text-white drop-shadow mb-3">
         {year && (
@@ -31,7 +35,7 @@ export default function FilmInfo({
             <Clock className="mr-1 h-4 w-4" /> {Math.floor(duration / 60)}h {duration % 60}min
           </span>
         )}
-        {rating && (
+        {rating != null && (
           <span className="flex items-center font-bold text-yellow-400 drop-shadow">
             <Star className="mr-1 h-4 w-4 text-yellow-400" /> {rating.toFixed(1)}/10
           </span>
@@ -49,6 +53,6 @@ export default function FilmInfo({
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

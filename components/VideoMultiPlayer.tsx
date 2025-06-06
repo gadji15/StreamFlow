@@ -27,6 +27,7 @@ export default function VideoMultiPlayer({
   onVideoProgress,
   onIframeActivate,
   resumeSeconds,
+  onError,
 }: {
   videoUrl?: string;
   streamtapeUrl?: string;
@@ -35,8 +36,8 @@ export default function VideoMultiPlayer({
   loading?: boolean;
   onVideoProgress?: (current: number, duration: number) => void;
   onIframeActivate?: () => void;
-  // Nouvelle prop : position de reprise (en secondes)
   resumeSeconds?: number;
+  onError?: () => void;
 }) {
   // Inclure toutes les sources disponibles
   const available = [
@@ -131,6 +132,7 @@ export default function VideoMultiPlayer({
                 const el = e.currentTarget;
                 onVideoProgress && onVideoProgress(el.duration, el.duration);
               }}
+              onError={onError}
             />
           ) : videoUrl.includes("uqload.net") || videoUrl.includes("uqload.io") ? (
             <iframe
@@ -140,6 +142,7 @@ export default function VideoMultiPlayer({
               frameBorder={0}
               allow="autoplay; fullscreen"
               title="Lecteur Uqload"
+              onError={onError}
             />
           ) : videoUrl.includes("streamtape.com") ? (
             <iframe
@@ -149,6 +152,7 @@ export default function VideoMultiPlayer({
               frameBorder={0}
               allow="autoplay; fullscreen"
               title="Lecteur Streamtape"
+              onError={onError}
             />
           ) : (
             <iframe
@@ -158,6 +162,7 @@ export default function VideoMultiPlayer({
               frameBorder={0}
               allow="autoplay; fullscreen"
               title="Lecteur vidéo"
+              onError={onError}
             />
           )
         )}
@@ -171,6 +176,7 @@ export default function VideoMultiPlayer({
             allow="autoplay; fullscreen"
             title="Lecteur Streamtape"
             onLoad={() => { onIframeActivate && onIframeActivate(); }}
+            onError={onError}
           />
         )}
         {/* Uqload */}
@@ -183,6 +189,7 @@ export default function VideoMultiPlayer({
             allow="autoplay; fullscreen"
             title="Lecteur Uqload"
             onLoad={() => { onIframeActivate && onIframeActivate(); }}
+            onError={onError}
           />
         )}
       </div>
