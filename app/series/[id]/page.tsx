@@ -18,7 +18,7 @@ import CastingGrid from "@/components/CastingGrid";
 import SimilarSeriesGrid from "@/components/series/SimilarSeriesGrid";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import { cn } from "@/lib/utils";
-import { BookText, Users, CopyPlus, MessageSquare, Layers, Play, Sparkles, Share2 } from "lucide-react";
+import { BookText, Users, CopyPlus, MessageSquare, Layers, Play, Heart, Share2 } from "lucide-react";
 import { useMobile } from "@/hooks/use-mobile";
 
 export default function SeriesDetailPage() {
@@ -104,9 +104,13 @@ export default function SeriesDetailPage() {
       setEpisodes(fetchedEpisodes || []);
 
       if (fetchedSeasons && fetchedSeasons.length > 0) {
-        setSelectedSeasonId((prev) =>
-          prev && fetchedSeasons.find((s) => s.id === prev)
-            ? prev
+        // Cherche la première saison qui a au moins un épisode
+        const seasonWithEpisodes = fetchedSeasons.find(season =>
+          (fetchedEpisodes || []).some(ep => ep.season_id === season.id)
+        );
+        setSelectedSeasonId(
+          seasonWithEpisodes
+            ? seasonWithEpisodes.id
             : fetchedSeasons[fetchedSeasons.length - 1].id
         );
       } else {
@@ -259,18 +263,20 @@ export default function SeriesDetailPage() {
         <SeriesBackdrop src={series.backdropUrl} alt={`Backdrop de ${series.title}`} />
       )}
 
-      <div className="container mx-auto px-4 pt-32 pb-8 relative z-10">
-        <div className="flex flex-col md:flex-row gap-10">
+      <div className="container mx-auto px-2 sm:px-4 pt-24 sm:pt-32 pb-6 sm:pb-8 relative z-10">
+        <div className="flex flex-col md:flex-row gap-6 sm:gap-10">
           {/* Poster et badge VIP */}
-          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+          <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-4 sm:gap-6 relative">
+            <div className="w-32 sm:w-44 md:w-full ml-2 sm:ml-0">
+              <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+            </div>
             {series.is_vip && (
               <div className="mt-4 w-full flex flex-col items-center">
-                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
+                <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-3 py-0.5 sm:px-4 sm:py-1 text-base sm:text-lg">
                   Contenu VIP
                 </Badge>
-                <div className="p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
-                  <p className="text-amber-400 font-medium mb-1">
+                <div className="p-2 sm:p-3 bg-gradient-to-r from-amber-900/30 to-yellow-900/30 border border-amber-800/50 rounded-lg w-full text-center">
+                  <p className="text-amber-400 font-medium mb-1 text-xs sm:text-base">
                     {isVIP
                       ? "Vous avez accès à ce contenu exclusif grâce à votre abonnement VIP."
                       : "Ce contenu est réservé aux abonnés VIP. Découvrez tous les avantages de l'abonnement VIP."}
@@ -278,7 +284,7 @@ export default function SeriesDetailPage() {
                   {!isVIP && (
                     <Button
                       size="sm"
-                      className="mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700"
+                      className="mt-2 sm:mt-3 w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-xs sm:text-base"
                       onClick={() => router.push("/vip")}
                     >
                       Devenir VIP
@@ -289,7 +295,7 @@ export default function SeriesDetailPage() {
             )}
           </div>
 
-          <div className="flex-1 flex flex-col gap-5">
+          <div className="flex-1 flex flex-col gap-4 sm:gap-5">
             <SeriesInfo
               title={series.title}
               startYear={series.start_year}
@@ -297,69 +303,126 @@ export default function SeriesDetailPage() {
               seasons={seasons.length}
               genres={series.genre}
               rating={series.vote_average}
+              className="text-base sm:text-lg"
             />
 
-            {/* Actions harmonisées film/serie */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-2">
+            {/* Actions harmonisées film/serie - icônes-only sur mobile, complet sur desktop */}
+            <div className="flex sm:hidden mb-2">
+              <div className="flex gap-2 w-full">
+                <Button
+                  size="icon"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                  onClick={handleWatchFirst}
+                  disabled={!canWatch || seasonEpisodes.length === 0}
+                  aria-label="Regarder la série"
+                >
+                  <Play className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-primary transition-colors" />
+                </Button>
+                <Button
+                  variant={isFavorite ? "default" : "outline"}
+                  size="icon"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+                  onClick={toggleFavorite}
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                >
+                  <Heart
+                    className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors
+                      ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                      group-hover:text-red-500`}
+                    fill={isFavorite ? "currentColor" : "none"}
+                  />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  onClick={handleShare}
+                  aria-label="Partager"
+                >
+                  <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                </Button>
+              </div>
+            </div>
+            <div className="hidden sm:flex flex-row gap-3 mb-2">
               <Button
                 size="lg"
-                className="w-full sm:w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={handleWatchFirst}
                 disabled={!canWatch || seasonEpisodes.length === 0}
                 aria-label="Regarder la série"
               >
-                <Play className="h-5 w-5" />
+                <Play className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
                 Regarder
               </Button>
               <Button
                 variant={isFavorite ? "default" : "outline"}
                 size="lg"
-                className="w-full sm:w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
                 onClick={toggleFavorite}
                 aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               >
-                <Sparkles className="h-5 w-5" />
+                <Heart
+                  className={`h-5 w-5 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
                 {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
               </Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
                 onClick={handleShare}
                 aria-label="Partager"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
                 Partager
               </Button>
             </div>
 
-            <p className="text-gray-300 text-base mt-2 mb-3">{series.description}</p>
+            <p className="text-gray-300 text-sm sm:text-base mt-2 mb-2 sm:mb-3">{series.description}</p>
           </div>
         </div>
 
         {/* Onglets premium harmonisés */}
-        <div className="mt-12">
+        <div className="mt-8 sm:mt-12">
           <Tabs defaultValue="seasons">
-            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide">
-              <TabsTrigger value="seasons" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                <Layers className="w-5 h-5 inline sm:hidden" />
-                <span className="hidden sm:inline">Saisons</span>
+            <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide text-xs sm:text-base">
+              <TabsTrigger
+                value="seasons"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <Layers className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Saisons</span>
               </TabsTrigger>
-              <TabsTrigger value="trailer" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                <BookText className="w-5 h-5 inline sm:hidden" />
-                <span className="hidden sm:inline">Bande-annonce</span>
+              <TabsTrigger
+                value="trailer"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <BookText className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Bande-annonce</span>
               </TabsTrigger>
-              <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                <Users className="w-5 h-5 inline sm:hidden" />
-                <span className="hidden sm:inline">Casting</span>
+              <TabsTrigger
+                value="casting"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <Users className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Casting</span>
               </TabsTrigger>
-              <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                <CopyPlus className="w-5 h-5 inline sm:hidden" />
-                <span className="hidden sm:inline">Séries similaires</span>
+              <TabsTrigger
+                value="related"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <CopyPlus className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Séries similaires</span>
               </TabsTrigger>
-              <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] text-xs py-0.5 flex flex-col items-center">
-                <MessageSquare className="w-5 h-5 inline sm:hidden" />
-                <span className="hidden sm:inline">Commentaires</span>
+              <TabsTrigger
+                value="comments"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <MessageSquare className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Commentaires</span>
               </TabsTrigger>
             </TabsList>
 

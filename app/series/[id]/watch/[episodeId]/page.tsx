@@ -8,6 +8,7 @@ import SeasonModalUser from "@/components/series/SeasonModalUser";
 import { Badge } from "@/components/ui/badge";
 import WatchLayout from "@/components/watch/WatchLayout";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), { ssr: false });
 import MediaPosterCard from "@/components/MediaPosterCard";
 import SeriesCard from "@/components/SeriesCard";
@@ -32,6 +33,7 @@ export default function WatchEpisodePage() {
   const [similarSeries, setSimilarSeries] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPlayerError, setShowPlayerError] = useState(false);
 
   // Hook pour responsive columns (mêmes seuils que ContentSection)
   function useResponsiveColumns() {
@@ -212,20 +214,60 @@ export default function WatchEpisodePage() {
 
   return (
     <>
+      {/* Bouton retour visible */}
+      <div className="w-full max-w-3xl mx-auto pt-4 pb-2">
+        <button
+          onClick={goBackToSeries}
+          className="flex items-center gap-2 px-3 py-2 bg-gray-800/80 rounded-xl text-white shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          aria-label="Retour à la fiche série"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          <span className="hidden xs:inline">Retour</span>
+        </button>
+      </div>
+
       {/* Notification de reprise */}
       {showResumeHint && resumeSeconds && <ResumeHintToast seconds={resumeSeconds} />}
+
+      {/* Skeleton loader pendant le chargement */}
+      {loading && (
+        <div className="w-full max-w-3xl mx-auto my-8 animate-pulse">
+          <div className="aspect-video rounded-xl bg-gray-800/50 mb-6" />
+          <div className="h-6 w-3/4 bg-gray-700 rounded mb-2" />
+          <div className="h-4 w-2/3 bg-gray-700 rounded mb-2" />
+          <div className="h-4 w-1/2 bg-gray-700 rounded mb-2" />
+        </div>
+      )}
+
       {/* Player harmonisé */}
-      <div className="w-full max-w-3xl mx-auto my-8">
-        <VideoMultiPlayer
-          videoUrl={episode?.video_url || undefined}
-          streamtapeUrl={episode?.streamtape_url || undefined}
-          uqloadUrl={episode?.uqload_url || undefined}
-          loading={loading}
-          onVideoProgress={handleProgress}
-          onIframeActivate={markAsWatched}
-          resumeSeconds={resumeSeconds}
-        />
+      {!loading && (
+      <div className="w-full max-w-3xl mx-auto my-8" role="region" aria-label="Lecteur vidéo principal">
+        {/* Message d’erreur si vidéo absente */}
+        {(!episode?.video_url && !episode?.streamtape_url && !episode?.uqload_url) && (
+          <div className="p-6 bg-red-900/60 border border-red-700 rounded-xl text-center text-lg text-white font-bold">
+            Impossible de charger cette vidéo pour le moment.
+          </div>
+        )}
+        {(episode?.video_url || episode?.streamtape_url || episode?.uqload_url) && (
+          <VideoMultiPlayer
+            videoUrl={episode?.video_url || undefined}
+            streamtapeUrl={episode?.streamtape_url || undefined}
+            uqloadUrl={episode?.uqload_url || undefined}
+            loading={loading}
+            onVideoProgress={handleProgress}
+            onIframeActivate={markAsWatched}
+            resumeSeconds={resumeSeconds}
+            onError={() => setShowPlayerError(true)}
+          />
+        )}
+        {/* Message d’erreur si le player lève une erreur runtime */}
+        {showPlayerError && (
+          <div className="p-4 mt-4 bg-red-900/60 border border-red-700 rounded-xl text-center text-base text-white font-bold">
+            Erreur lors du chargement du lecteur vidéo. Essayez un autre navigateur ou contactez le support.
+          </div>
+        )}
       </div>
+      )}
 
       {/* Bloc titre/métadonnées harmonisé */}
       {episode && series && (
@@ -378,16 +420,18 @@ export default function WatchEpisodePage() {
             else if (sy) year = String(sy);
             else if (ey) year = String(ey);
             return (
-              <SeriesCard
-                key={serie.id}
-                series={{
-                  id: String(serie.id),
-                  title: serie.title,
-                  poster: serie.poster,
-                  year,
-                  isVIP: serie.is_vip ?? false,
-                }}
-              />
+              <Link key={serie.id} href={`/series/${serie.id}`}>
+                <SeriesCard
+                  series={{
+                    id: String(serie.id),
+                    title: serie.title,
+                    poster: serie.poster,
+                    year,
+                    isVIP: serie.is_vip ?? false,
+                  }}
+                  posterProps={{ loading: "lazy" }}
+                />
+              </Link>
             );
           })}
         </div>
