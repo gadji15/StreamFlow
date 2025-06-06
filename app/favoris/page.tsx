@@ -8,7 +8,7 @@ import SeriesCard from "@/components/SeriesCard";
 import LoadingScreen from "@/components/loading-screen";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Film, Tv, Sparkles } from "lucide-react";
+import { Film, Tv, Heart } from "lucide-react";
 
 type ItemType = "film" | "serie";
 type FavItem = { type: ItemType; data: any };
@@ -121,7 +121,7 @@ export default function FavorisPage() {
   return (
     <div className="container mx-auto px-4 py-10">
       <h1 className="text-lg sm:text-4xl font-bold text-center mb-4 flex items-center justify-center gap-2">
-        <Sparkles className="text-yellow-400 w-6 h-6 sm:w-8 sm:h-8" /> Vos favoris
+        <Heart className="text-pink-500 w-6 h-6 sm:w-8 sm:h-8" /> Vos favoris
       </h1>
       <p className="text-xs sm:text-base text-center text-gray-400 mb-8 max-w-2xl mx-auto">
         Retrouver ici tous vos films et séries favoris sauvegardés sur StreamFlow.
@@ -132,14 +132,14 @@ export default function FavorisPage() {
         <button
           className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
             activeTab === 'tout'
-              ? 'bg-gray-900 border-primary text-primary shadow'
-              : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
+              ? 'bg-gray-900 border-pink-500 text-pink-500 shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-pink-500'
           }`}
           onClick={() => setActiveTab('tout')}
           aria-selected={activeTab === 'tout'}
         >
-          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
-            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
+          <Heart className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+            activeTab === 'tout' ? 'text-pink-500' : 'text-gray-400'
           }`} />
           Tout
         </button>
