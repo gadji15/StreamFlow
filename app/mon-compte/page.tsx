@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useWatchHistory } from '@/hooks/use-watch-history';
+import { toast as showToast } from "@/components/ui/use-toast";
+import { useRef } from "react";
 
 // Utilise le type WatchHistoryItem du hook pour rester aligné avec la source
 import type { WatchHistoryItem } from '@/hooks/use-watch-history';
@@ -64,20 +66,49 @@ export default function MonComptePage() {
     return "#" + "00000".substring(0, 6 - c.length) + c;
   }
 
-  // Refactor affichage d'un item d'historique
+  // Badge VIP animé
+  function AnimatedVIPBadge() {
+    return (
+      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-400/20 text-amber-400 animate-pulse shadow animate-glow relative">
+        <Sparkles className="w-3 h-3 mr-1 animate-spin-slow" />
+        VIP
+        <span className="absolute inset-0 rounded-full border-2 border-amber-400/50 animate-ping pointer-events-none" />
+      </span>
+    );
+  }
+
+  // Header dynamique StreamFlow
+  function AccountHeader({ userName, isVIP }: { userName?: string, isVIP?: boolean }) {
+    return (
+      <div className="relative overflow-hidden rounded-lg mb-8">
+        <div className="absolute inset-0 z-0 animate-gradient-x bg-gradient-to-r from-fuchsia-600 via-indigo-800 to-violet-900 opacity-70" />
+        <div className="relative z-10 flex flex-col items-center justify-center py-10 text-center">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-lg mb-2">
+            {isVIP ? "👑 Bienvenue VIP" : "Bienvenue"}
+            {userName ? `, ${userName.split(' ')[0]}` : ""}
+          </h1>
+          <p className="text-base sm:text-lg text-gray-200 font-medium">
+            Gérez votre profil, abonnement et retrouvez tout votre univers StreamFlow.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Refactor affichage d'un item d'historique (badge progression animée)
   function HistoryItem({ item }: { item: WatchHistoryItem }) {
     const progress = Math.round(item.progress ?? 0);
     const status = progress >= 98 ? "Terminé" : "En cours";
     const statusColor = progress >= 98 ? "bg-green-600/30 text-green-500" : "bg-blue-600/30 text-blue-400";
     const posterSrc = item.poster_url || item.poster || item.posterUrl || "";
     return (
-      <div key={item.id} className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+      <div key={item.id} className="flex items-center gap-3 group">
+        <div className="w-12 h-12 bg-gray-800 rounded overflow-hidden flex-shrink-0 flex items-center justify-center relative">
           {posterSrc ? (
             <img 
               src={posterSrc}
               alt={item.title || "Affiche"}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
               onError={e => { (e.currentTarget as HTMLImageElement).src = "/placeholder-poster.png"; }}
             />
@@ -86,12 +117,14 @@ export default function MonComptePage() {
               {item.content_type === 'movie' ? <Film className="w-6 h-6" /> : <Tv className="w-6 h-6" />}
             </div>
           )}
+          {/* Cercle de progression dynamique */}
+          <span className={`absolute -bottom-1 -right-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow ${statusColor} animate-bounce`}>
+            {status}
+          </span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{item.title || 'Contenu'}
-            <span className={`ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-bold ${statusColor}`}>
-              {status}
-            </span>
+          <p className="font-medium truncate">
+            {item.title || 'Contenu'}
           </p>
           <p className="text-xs text-gray-400 truncate">
             {new Intl.DateTimeFormat('fr-FR', {
@@ -112,11 +145,14 @@ export default function MonComptePage() {
 
   return (
     <div className="space-y-6">
+      {/* Header dynamique StreamFlow */}
+      <AccountHeader userName={userData?.displayName} isVIP={isVIP} />
+
       {/* Profil utilisateur */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <Avatar className="h-20 w-20">
+            <Avatar className="h-20 w-20 shadow-lg ring-2 ring-primary/30">
               <AvatarImage
                 src={userData?.photoURL || ''}
                 alt={userData?.displayName || 'Utilisateur'}
@@ -136,19 +172,19 @@ export default function MonComptePage() {
             </Avatar>
             
             <div className="text-center sm:text-left">
-              <CardTitle className="text-2xl">
+              <CardTitle className="text-2xl flex items-center gap-1">
                 {userData?.displayName || 'Utilisateur'}
-                {isVIP && (
-                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-400/20 text-amber-400">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    VIP
-                  </span>
-                )}
+                {isVIP && <AnimatedVIPBadge />}
               </CardTitle>
               <CardDescription>{userData?.email}</CardDescription>
               
               <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
-                <Button variant="outline" size="sm" asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  aria-label="Modifier le profil"
+                >
                   <Link href="/mon-compte/edit">
                     <Edit className="w-4 h-4 mr-1" />
                     Modifier le profil
@@ -161,6 +197,7 @@ export default function MonComptePage() {
                   onClick={() => {
                     if (window.confirm("Voulez-vous vraiment vous déconnecter ?")) {
                       logout();
+                      showToast({ title: "Déconnexion réussie", description: "Vous avez été déconnecté.", variant: "default" });
                     }
                   }}
                 >
@@ -215,7 +252,7 @@ export default function MonComptePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-lg">
-            <Clock className="w-5 h-5 mr-2" />
+            <Clock className="w-5 h-5 mr-2 animate-pulse text-primary" />
             Historique récent
           </CardTitle>
         </CardHeader>
@@ -246,7 +283,7 @@ export default function MonComptePage() {
           <Button
             variant="outline"
             asChild
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto animate-bounce"
             aria-label="Voir tout l'historique"
           >
             <Link href="/mon-compte/historique">Voir tout l&apos;historique</Link>
