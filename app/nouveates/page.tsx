@@ -22,7 +22,7 @@ export default function NouveautePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [filteredSeries, setFilteredSeries] = useState<Series[]>([]);
-  const [activeTab, setActiveTab] = useState<'films' | 'series'>('films');
+  const [activeTab, setActiveTab] = useState<'tout' | 'films' | 'series'>('tout');
   const { isVIP } = useSupabaseAuth();
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -211,6 +211,17 @@ export default function NouveautePage() {
       <div className="flex justify-center mb-6 gap-2">
         <button
           className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+            activeTab === 'tout'
+              ? 'bg-gray-900 border-primary text-primary shadow'
+              : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
+          }`}
+          onClick={() => setActiveTab('tout')}
+          aria-selected={activeTab === 'tout'}
+        >
+          Tout
+        </button>
+        <button
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
             activeTab === 'films'
               ? 'bg-gray-900 border-primary text-primary shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
@@ -387,7 +398,7 @@ export default function NouveautePage() {
             )}
           </>
         )
-      ) : (
+      ) : activeTab === 'series' ? (
         (filteredSeries.length === 0 && !searching) ? (
           <div className="text-center py-16">
             <Tv className="h-10 w-10 mx-auto mb-4 text-gray-500" />
@@ -428,6 +439,53 @@ export default function NouveautePage() {
             )}
           </>
         )
+      ) : (
+        // Tab "Tout" : concatène les deux listes, triées par date (création récente en premier)
+        (() => {
+          const all = [
+            ...filteredMovies.map(m => ({...m, _type: "film"})),
+            ...filteredSeries.map(s => ({...s, _type: "serie"}))
+          ].sort(
+            (a, b) =>
+              new Date(b.created_at || '').getTime() -
+              new Date(a.created_at || '').getTime()
+          );
+          return all.length === 0 && !searching ? (
+            <div className="text-center py-16">
+              <Sparkles className="h-10 w-10 mx-auto mb-4 text-gray-500" />
+              <h2 className="text-xl font-semibold mb-2">Aucun contenu trouvé</h2>
+              <p className="text-gray-400 mb-6">
+                {searchTerm
+                  ? `Aucun résultat pour "${searchTerm}".`
+                  : `Revenez bientôt pour découvrir les nouveaux contenus ajoutés !`}
+              </p>
+            </div>
+          ) : (
+            <>
+              {searching && (
+                <div className="text-center text-gray-400 mb-6">Recherche...</div>
+              )}
+              {all.length > 0 && (
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  }}
+                >
+                  {all.slice(0, 20).map((item: any) => (
+                    <div key={item.id + "_" + item._type} className="w-[140px] mx-auto">
+                      <NouveauteCard
+                        item={item}
+                        type={item._type}
+                        isUserVIP={!!isVIP}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()
       )}
     </main>
   );
