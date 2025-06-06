@@ -15,7 +15,23 @@ type ResultType = {
   image?: string;
 };
 
+import { Suspense } from "react";
+
 export default function RecherchePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center gap-2 text-gray-400 justify-center py-10">
+        <Loader2 className="animate-spin h-5 w-5" />
+        Chargement de la recherche...
+      </div>
+    }>
+      <RechercheInner />
+    </Suspense>
+  );
+}
+
+// Separate the logic into an inner component to use hooks safely inside Suspense
+function RechercheInner() {
   const searchParams = useSearchParams();
   const q = searchParams?.get("q")?.trim() || "";
   const [results, setResults] = useState<ResultType[]>([]);
