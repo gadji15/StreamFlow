@@ -236,7 +236,7 @@ export default function WatchFilmPage() {
   return (
     <>
       {/* Bouton retour visible */}
-      <div className="fixed top-2 left-2 z-40">
+      <div className="fixed left-3 top-16 sm:top-6 sm:left-8 z-50">
         <button
           onClick={goBack}
           className="flex items-center gap-2 px-3 py-2 bg-gray-800/80 rounded-xl text-white shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
