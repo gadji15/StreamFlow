@@ -338,21 +338,33 @@ export default function FilmDetailPage() {
         <div className="mt-8 sm:mt-12">
           <Tabs defaultValue="overview">
             <TabsList className="w-full min-w-0 flex-nowrap gap-1 overflow-x-auto whitespace-nowrap border-b border-gray-700 scrollbar-hide text-xs sm:text-base">
-              <TabsTrigger value="overview" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent">
-                <BookText className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary text-gray-400 transition-colors" />
-                <span className="hidden sm:inline">Synopsis</span>
+              <TabsTrigger
+                value="overview"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <BookText className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Synopsis</span>
               </TabsTrigger>
-              <TabsTrigger value="casting" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent">
-                <Users className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary text-gray-400 transition-colors" />
-                <span className="hidden sm:inline">Casting</span>
+              <TabsTrigger
+                value="casting"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <Users className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Casting</span>
               </TabsTrigger>
-              <TabsTrigger value="related" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent">
-                <CopyPlus className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary text-gray-400 transition-colors" />
-                <span className="hidden sm:inline">Films similaires</span>
+              <TabsTrigger
+                value="related"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <CopyPlus className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Films similaires</span>
               </TabsTrigger>
-              <TabsTrigger value="comments" className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent">
-                <MessageSquare className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary text-gray-400 transition-colors" />
-                <span className="hidden sm:inline">Commentaires</span>
+              <TabsTrigger
+                value="comments"
+                className="flex-shrink-0 min-w-[44px] py-0.5 flex flex-col items-center group data-[state=active]:bg-transparent transition-colors hover:bg-gray-800/50"
+              >
+                <MessageSquare className="w-5 h-5 mb-0.5 sm:hidden group-data-[state=active]:text-primary hover:text-primary text-gray-400 transition-colors" />
+                <span className="hidden sm:inline group-data-[state=active]:text-primary hover:text-primary transition-colors">Commentaires</span>
               </TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="pt-5 sm:pt-6">
