@@ -210,7 +210,7 @@ export default function NouveautePage() {
       {/* Onglets */}
       <div className="flex justify-center mb-6 gap-2">
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'tout'
               ? 'bg-gray-900 border-primary text-primary shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
@@ -218,10 +218,13 @@ export default function NouveautePage() {
           onClick={() => setActiveTab('tout')}
           aria-selected={activeTab === 'tout'}
         >
+          <Sparkles className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
+          }`} />
           Tout
         </button>
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'films'
               ? 'bg-gray-900 border-primary text-primary shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-primary'
@@ -229,10 +232,13 @@ export default function NouveautePage() {
           onClick={() => setActiveTab('films')}
           aria-selected={activeTab === 'films'}
         >
-          <Film className="inline-block mr-2 h-5 w-5" /> Films
+          <Film className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'films' ? 'text-primary' : 'text-gray-400'
+          }`} />
+          Films
         </button>
         <button
-          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all ${
+          className={`px-6 py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-2 ${
             activeTab === 'series'
               ? 'bg-gray-900 border-purple-400 text-purple-400 shadow'
               : 'bg-gray-800 border-transparent text-gray-400 hover:text-purple-400'
@@ -240,7 +246,10 @@ export default function NouveautePage() {
           onClick={() => setActiveTab('series')}
           aria-selected={activeTab === 'series'}
         >
-          <Tv className="inline-block mr-2 h-5 w-5" /> Séries
+          <Tv className={`inline-block h-5 w-5 transition-colors duration-200 ${
+            activeTab === 'series' ? 'text-purple-400' : 'text-gray-400'
+          }`} />
+          Séries
         </button>
       </div>
 
