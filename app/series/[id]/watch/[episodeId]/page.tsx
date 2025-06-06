@@ -12,6 +12,7 @@ const VideoMultiPlayer = dynamic(() => import("@/components/VideoMultiPlayer"), 
 import MediaPosterCard from "@/components/MediaPosterCard";
 import SeriesCard from "@/components/SeriesCard";
 import { useWatchProgress } from "@/components/ui/useWatchProgress";
+import { useWatchHistory } from "@/hooks/use-watch-history";
 import type { Episode as EpisodeType, Season, Series } from "@/types/series";
 
 export default function WatchEpisodePage() {
@@ -188,6 +189,23 @@ export default function WatchEpisodePage() {
     id: episodeId,
   });
 
+  // Récupérer la progression sauvegardée pour cet épisode
+  const { history } = useWatchHistory();
+  let resumeSeconds: number | undefined = undefined;
+  if (history && episode) {
+    const hist = history.find(
+      (h) => h.episode_id === episodeId && typeof h.progress === "number" && h.progress > 0
+    );
+    if (hist && episode.duration) {
+      // episode.duration est en minutes, il faut convertir en secondes
+      const totalSeconds = episode.duration * 60;
+      resumeSeconds = Math.floor((hist.progress / 100) * totalSeconds);
+      // Éviter la reprise à la toute fin
+      if (resumeSeconds > totalSeconds - 3) resumeSeconds = totalSeconds - 3;
+      if (resumeSeconds < 0) resumeSeconds = 0;
+    }
+  }
+
   return (
     <>
       {/* Player harmonisé */}
@@ -199,6 +217,7 @@ export default function WatchEpisodePage() {
           loading={loading}
           onVideoProgress={handleProgress}
           onIframeActivate={markAsWatched}
+          resumeSeconds={resumeSeconds}
         />
       </div>
 
