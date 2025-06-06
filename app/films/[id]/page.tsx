@@ -332,21 +332,7 @@ export default function FilmDetailPage() {
           </div>
         </div>
 
-        {/* Action principale sticky en bas sur mobile */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-2 pt-3 pb-4 sm:hidden flex">
-          <div className="w-full max-w-lg mx-auto">
-            <ActionButtons
-              canWatch={canWatch}
-              videoUrl={movie.videoUrl}
-              trailerUrl={movie.trailerUrl}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
-              onShare={handleShare}
-              onPlay={handlePlay}
-              fullWidth
-            />
-          </div>
-        </div>
+        {/* Suppression du bloc sticky action bar mobile */}
 
         {/* Onglets premium */}
         <div className="mt-8 sm:mt-12">
