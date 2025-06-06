@@ -263,7 +263,9 @@ export default function SeriesDetailPage() {
         <div className="flex flex-col md:flex-row gap-10">
           {/* Poster et badge VIP */}
           <div className="w-full md:w-1/3 lg:w-1/4 flex flex-col items-center md:items-start gap-6 relative">
-            <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+            <div className="w-32 sm:w-44 md:w-full ml-2 sm:ml-0">
+              <SeriesPosterCard src={series.posterUrl} alt={`Affiche de ${series.title}`} />
+            </div>
             {series.is_vip && (
               <div className="mt-4 w-full flex flex-col items-center">
                 <Badge variant="secondary" className="mb-2 text-amber-400 bg-amber-900/60 border-amber-800/80 px-4 py-1 text-lg">
