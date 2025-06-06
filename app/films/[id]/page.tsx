@@ -301,28 +301,101 @@ export default function FilmDetailPage() {
             />
 
             {/* Actions en haut avant la description - icônes seules sur mobile */}
-            <div className="flex sm:hidden mb-2">
-              <ActionButtons
-                canWatch={canWatch}
-                videoUrl={movie.videoUrl}
-                trailerUrl={movie.trailerUrl}
-                isFavorite={isFavorite}
-                onToggleFavorite={toggleFavorite}
-                onShare={handleShare}
-                onPlay={handlePlay}
-                iconsOnly
-              />
+            {/* Actions icônes only sur mobile */}
+            <div className="flex sm:hidden mb-2 gap-2">
+              <Button
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={handlePlay}
+                disabled={!canWatch || !movie.videoUrl}
+                aria-label="Regarder"
+              >
+                <Play className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-primary transition-colors" />
+              </Button>
+              {movie.trailerUrl && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  onClick={() => window.open(movie.trailerUrl, "_blank")}
+                  aria-label="Bande-annonce"
+                >
+                  <Info className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                </Button>
+              )}
+              <Button
+                variant={isFavorite ? "secondary" : "outline"}
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+                onClick={toggleFavorite}
+                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                <Heart
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 sm:p-4 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400 transition-colors" />
+              </Button>
             </div>
-            <div className="hidden sm:block">
-              <ActionButtons
-                canWatch={canWatch}
-                videoUrl={movie.videoUrl}
-                trailerUrl={movie.trailerUrl}
-                isFavorite={isFavorite}
-                onToggleFavorite={toggleFavorite}
-                onShare={handleShare}
-                onPlay={handlePlay}
-              />
+            {/* Actions complètes sur desktop */}
+            <div className="hidden sm:flex gap-3 mb-2">
+              <Button
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
+                onClick={handlePlay}
+                disabled={!canWatch || !movie.videoUrl}
+                aria-label="Regarder"
+              >
+                <Play className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
+                Regarder
+              </Button>
+              {movie.trailerUrl && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  onClick={() => window.open(movie.trailerUrl, "_blank")}
+                  aria-label="Bande-annonce"
+                >
+                  <Info className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                  Bande-annonce
+                </Button>
+              )}
+              <Button
+                variant={isFavorite ? "secondary" : "outline"}
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+                onClick={toggleFavorite}
+                aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              >
+                <Heart
+                  className={`h-5 w-5 transition-colors
+                    ${isFavorite ? "fill-current text-red-500" : "text-gray-300"}
+                    group-hover:text-red-500`}
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+                {isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
+                onClick={handleShare}
+                aria-label="Partager"
+              >
+                <Share className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
+                Partager
+              </Button>
             </div>
             <p className="text-gray-300 text-sm sm:text-base mt-2 mb-2 sm:mb-3">{movie.description}</p>
             {movie.director && (
