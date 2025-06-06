@@ -311,7 +311,7 @@ export default function SeriesDetailPage() {
               <div className="flex gap-2 w-full">
                 <Button
                   size="icon"
-                  className="p-2 sm:p-4 transition-colors hover:bg-primary/20 active:bg-primary/40 focus-visible:ring-2 focus-visible:ring-primary"
+                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-primary active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={handleWatchFirst}
                   disabled={!canWatch || seasonEpisodes.length === 0}
                   aria-label="Regarder la série"
@@ -321,7 +321,7 @@ export default function SeriesDetailPage() {
                 <Button
                   variant={isFavorite ? "default" : "outline"}
                   size="icon"
-                  className="p-2 sm:p-4 transition-colors hover:bg-purple-400/20 active:bg-purple-400/40 focus-visible:ring-2 focus-visible:ring-purple-400"
+                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-purple-400 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400"
                   onClick={toggleFavorite}
                   aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                 >
@@ -330,7 +330,7 @@ export default function SeriesDetailPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="p-2 sm:p-4 transition-colors hover:bg-blue-400/20 active:bg-blue-400/40 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  className="p-2 sm:p-4 transition-all duration-150 hover:bg-gray-700 hover:text-blue-400 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
                   onClick={handleShare}
                   aria-label="Partager"
                 >
