@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, Tv, Film as FilmIcon, PlayCircle } from "lucide-react";
+import { Loader2, Tv, Film as FilmIcon, PlayCircle, Trash2 } from "lucide-react";
 
 type ContentData = {
   id: string;
@@ -24,11 +24,12 @@ const FILTERS = [
 
 export default function HistoriquePage() {
   const { user } = useSupabaseAuth();
-  const { history, loading: historyLoading, error: historyError, refresh } = useWatchHistory();
+  const { history, loading: historyLoading, error: historyError, refresh, deleteHistoryItem } = useWatchHistory();
 
   const [contentMap, setContentMap] = useState<Record<string, ContentData>>({});
   const [loadingContent, setLoadingContent] = useState(false);
   const [filter, setFilter] = useState<"all" | "film" | "episode">("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Map chaque ligne à {type, id}
   function getTypeAndId(item: WatchHistoryItem): { type: "film" | "series" | "episode", id: string } | null {
@@ -192,7 +193,27 @@ export default function HistoriquePage() {
             // Progress pour la barre (0-100)
             const progress = Math.min(item.progress ?? 0, 100);
             return (
-              <div key={`${type}:${id}:${item.watched_at}`} className="w-full max-w-[320px] mx-auto">
+              <div key={`${type}:${id}:${item.watched_at}`} className="w-full max-w-[320px] mx-auto relative group">
+                {/* Bouton supprimer */}
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 z-20 p-1 rounded-full bg-black/70 hover:bg-red-700/90 text-gray-300 hover:text-white transition opacity-70 hover:opacity-100 focus:outline-none"
+                  title="Retirer de l'historique"
+                  aria-label="Retirer de l'historique"
+                  disabled={deletingId === item.id}
+                  onClick={async (e) => {
+                    e.preventDefault(); // Évite le clic sur la carte/lien
+                    setDeletingId(item.id);
+                    await deleteHistoryItem(item.id);
+                    setDeletingId(null);
+                  }}
+                >
+                  {deletingId === item.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
                 <Link href={content.link}>
                   <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden shadow bg-gray-900/70 group hover:scale-105 transition will-change-transform">
                     <img
