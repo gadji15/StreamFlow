@@ -346,12 +346,12 @@ export default function SeriesDetailPage() {
             <div className="hidden sm:flex flex-row gap-3 mb-2">
               <Button
                 size="lg"
-                className="w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary"
                 onClick={handleWatchFirst}
                 disabled={!canWatch || seasonEpisodes.length === 0}
                 aria-label="Regarder la série"
               >
-                <Play className="h-5 w-5" />
+                <Play className="h-5 w-5 text-gray-300 group-hover:text-primary transition-colors" />
                 Regarder
               </Button>
               <Button
@@ -372,11 +372,11 @@ export default function SeriesDetailPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-auto gap-2"
+                className="w-auto gap-2 group transition-all duration-150 hover:bg-gray-700 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400"
                 onClick={handleShare}
                 aria-label="Partager"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-5 w-5 text-gray-300 group-hover:text-blue-400 transition-colors" />
                 Partager
               </Button>
             </div>
