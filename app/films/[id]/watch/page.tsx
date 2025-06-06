@@ -377,8 +377,6 @@ export default function WatchFilmPage() {
                       year: movie.year,
                       isVIP: movie.isvip ?? false,
                     }}
-                    tabIndex={0}
-                    aria-label={movie.title}
                     posterProps={{ loading: "lazy" }}
                   />
                   {/* Badge FILM ACTUEL */}
@@ -411,8 +409,6 @@ export default function WatchFilmPage() {
                       year: part.year,
                       isVIP: part.isvip ?? false,
                     }}
-                    tabIndex={0}
-                    aria-label={part.title}
                     posterProps={{ loading: "lazy" }}
                   />
                 </div>
@@ -495,8 +491,6 @@ export default function WatchFilmPage() {
                     year: film.year,
                     isVIP: film.is_vip ?? false,
                   }}
-                  tabIndex={0}
-                  aria-label={film.title}
                   posterProps={{ loading: "lazy" }}
                 />
               </Link>
