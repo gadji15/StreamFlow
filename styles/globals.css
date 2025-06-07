@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animation pour bouton de suppression favori */
+@keyframes favorite-pulse {
+  0%, 100% {
+    background-color: rgba(31, 41, 55, 0.8); /* gray-800/80 */
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.7); /* red-500/70 */
+  }
+}
+.animate-favorite-pulse {
+  animation: favorite-pulse 1.3s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+
 :root {
   --foreground: 0, 0, 0;
   --background: 24, 24, 28; /* même valeur que --muted pour gris uniforme */
