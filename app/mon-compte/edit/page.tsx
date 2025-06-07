@@ -79,12 +79,15 @@ export default function EditProfilePage() {
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile || !userData?.id) return null;
 
-    // Ajoute le log explicite de l'auth.uid() côté front
+    // Log l'ID utilisateur
     const { data: authData, error: authError } = await supabase.auth.getUser();
     console.log("DEBUG UPLOAD AVATAR - userData.id:", userData.id, "supabase.auth.uid():", authData?.user?.id);
 
+    // Log la session complète (pour JWT/access_token et claims)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log("DEBUG SESSION", sessionData?.session);
+
     const fileExt = avatarFile.name.split('.').pop();
-    // Corrigé : NE PAS inclure 'avatars/' dans filePath
     const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
     // Optionnel : ranger dans un sous-dossier
     // const filePath = `profile/${userData.id}_${Date.now()}.${fileExt}`;
