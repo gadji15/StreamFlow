@@ -269,25 +269,23 @@ export default function FavorisPage() {
               </div>
             ) : (
               <div
-                className="grid gap-3"
+                className="grid gap-4"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
                 }}
               >
                 {episodeFavorites.map((ep) => (
                   <div
                     key={ep.id}
-                    className="w-[140px] mx-auto bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                    className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
                   >
                     <div className="flex flex-col items-center gap-2 w-full">
                       <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
-                      <div className="relative aspect-[2/3] w-full">
-                        <img
-                          src={ep.thumbnail_url || "/placeholder-poster.png"}
-                          alt={ep.title || "Épisode"}
-                          className="w-full h-full object-cover rounded-lg mb-2"
-                        />
-                      </div>
+                      <img
+                        src={ep.thumbnail_url || "/placeholder-poster.png"}
+                        alt={ep.title || "Épisode"}
+                        className="w-28 h-16 object-cover rounded-lg mb-2"
+                      />
                       <div className="text-center">
                         <div className="font-semibold text-sm text-white truncate">
                           {ep.title}
