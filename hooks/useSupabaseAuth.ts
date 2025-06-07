@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react'
 import { useCurrentUser } from './useCurrentUser'
 import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
 import { signOut } from '../lib/supabaseAuth'
+import { supabase } from '../lib/supabaseClient' // si besoin d'importer supabase client
 
-// Correction : export nommé
 export function useSupabaseAuth() {
   // ...ton code...
-} from '../lib/supabaseClient'
+}
 
 /**
- * Hook d’auth avancé avec Supabase : expose isLoggedIn, userData, isVIP, isAdmin, logout, etc.
+ * Hook d’auth avancé avec Supabase : expose isLoggedIn, userData, isVIP, isAdmin, logout, etc.
  */
 export function useSupabaseAuth() {
   const { user, loading } = useCurrentUser()
