@@ -98,10 +98,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
   };
+  type FilmFormState = typeof initialState;
   const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
 
   // CAST UI STATE
-  const [castList, setCastList] = useState(form.cast);
+  const [castList, setCastList] = useState<{ name: string; role?: string; photo?: string }[]>(form.cast);
   const [castName, setCastName] = useState("");
   const [castRole, setCastRole] = useState("");
   const [castPhoto, setCastPhoto] = useState("");
@@ -113,7 +114,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
 
   // TMDB/TOAST/FOCUS
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [k: string]: string }>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
@@ -124,7 +125,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
       firstInput.current.focus();
     }
     setErrors({});
-    setForm((prev) => {
+    setForm((prev: FilmFormState) => {
       let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
       return {
         ...prev,
@@ -176,9 +177,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   // Gestion spéciale pour la case "featured" liée à homepage_categories
   const handleChange = (field: string, value: any) => {
     if (field === "featured") {
-      setForm((f) => {
-        const categories = Array.isArray(f.homepage_categories) ? [...f.homepage_categories] : [];
-        let newCats;
+      setForm((f: FilmFormState) => {
+        const categories: string[] = Array.isArray(f.homepage_categories) ? [...f.homepage_categories] : [];
+        let newCats: string[];
         if (value) {
           if (!categories.includes("featured")) newCats = [...categories, "featured"];
           else newCats = categories;
@@ -187,7 +188,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
         }
         return { ...f, featured: value, homepage_categories: newCats };
       });
-      setErrors((e) => {
+      setErrors((e: Record<string, string>) => {
         const { featured, ...rest } = e;
         return rest;
       });
@@ -198,15 +199,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
       ["video_url", "streamtape_url", "uqload_url"].includes(field) &&
       value && value.trim() !== ""
     ) {
-      setForm((f) => ({
+      setForm((f: FilmFormState) => ({
         ...f,
         [field]: value,
         no_video: false
       }));
     } else {
-      setForm((f) => ({ ...f, [field]: value }));
+      setForm((f: FilmFormState) => ({ ...f, [field]: value }));
     }
-    setErrors((e) => {
+    setErrors((e: Record<string, string>) => {
       const { [field]: _, ...rest } = e;
       return rest;
     });
@@ -275,7 +276,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   // --- CAST ---
   const handleAddCast = () => {
     if (!castName.trim()) return;
-    setCastList((prev: typeof castList) => [
+    setCastList((prev: { name: string; role?: string; photo?: string }[]) => [
       ...prev,
       { name: castName, role: castRole, photo: castPhoto },
     ]);
@@ -284,7 +285,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     setCastPhoto("");
   };
   const handleDeleteCast = (idx: number) => {
-    setCastList(castList.filter((_: any, i: number) => i !== idx));
+    setCastList(castList.filter((_: { name: string; role?: string; photo?: string }, i: number) => i !== idx));
   };
 
   const handleCastPhotoUpload = async (file: File) => {
@@ -423,7 +424,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
         console.log('Aucune collection TMDB détectée pour ce film.');
       }
 
-      setForm((f) => ({
+      setForm((f: FilmFormState) => ({
         ...f,
         title: detail.title || movie.title || f.title,
         original_title: detail.original_title || f.original_title,
@@ -498,7 +499,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
           photo: actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "",
         }));
       }
-      setForm((f) => ({
+      setForm((f: FilmFormState) => ({
         ...f,
         title: data.title || f.title,
         original_title: data.original_title || f.original_title,
@@ -895,7 +896,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
               overflowY: "auto",
             }}
           >
-            {castList.map((actor: { name: string; role?: string; photo?: string }, idx: number) => (
+            {castList.map((actor, idx: number) => (
               <div key={idx} className="flex flex-col items-center w-16 relative group">
                 <img
                   src={actor.photo || "/no-image.png"}
@@ -1094,7 +1095,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
                     onClick={() =>
                       handleChange(
                         "genres",
-                        form.genres.filter((x: string, i: number) => i !== idx)
+                        (form.genres as string[]).filter((x: string, i: number) => i !== idx)
                       )
                     }
                   >
