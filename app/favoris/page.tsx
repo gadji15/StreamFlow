@@ -215,9 +215,9 @@ export default function FavorisPage() {
               </div>
             ) : (
               <div
-                className="grid gap-3"
+                className="grid gap-4"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
                 }}
               >
                 {allFavs.map((item) =>
@@ -246,7 +246,7 @@ export default function FavorisPage() {
                   ) : (
                     <div
                       key={item.data.id}
-                      className="bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                      className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
                     >
                       <div className="flex flex-col items-center gap-2 w-full">
                         <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
@@ -352,15 +352,15 @@ export default function FavorisPage() {
               </div>
             ) : (
               <div
-                className="grid gap-3"
+                className="grid gap-4"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
                 }}
               >
                 {episodeFavorites.map((ep) => (
                   <div
                     key={ep.id}
-                    className="bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                    className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
                   >
                     <div className="flex flex-col items-center gap-2 w-full">
                       <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
