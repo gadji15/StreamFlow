@@ -65,8 +65,8 @@ export default function FilmModal({
   onSave,
   initialData = {},
   existingFilms = [],
-  tmdbSearch,
-  adminId = "default-admin" // ← valeur par défaut, optionnelle
+  // tmdbSearch, // supprimé pour éviter conflit de nom
+  adminId = "default-admin"
 }: FilmModalProps & { adminId?: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
