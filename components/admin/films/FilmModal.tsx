@@ -129,6 +129,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     return cats.includes('featured') || !!init.featured;
   }
 
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+
   // --- ACTUALISATION DU FORMULAIRE ---
   // Pour éviter l'écrasement du draft restauré par la réinitialisation automatique à l'ouverture :
   const isRestoringDraftRef = useRef(false);
