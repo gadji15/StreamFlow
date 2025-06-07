@@ -207,20 +207,21 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
                 }}
               >
                 {filmFavorites.map((film) => (
-                  <FilmCard
-                    key={film.id}
-                    movie={{
-                      id: film.id,
-                      title: film.title,
-                      poster: film.poster,
-                      year: film.year,
-                      isVIP: film.is_vip ?? film.isVIP
-                    }}
-                  />
+                  <div key={film.id} className="w-[140px] mx-auto">
+                    <FilmCard
+                      movie={{
+                        id: film.id,
+                        title: film.title,
+                        poster: film.poster,
+                        year: film.year,
+                        isVIP: film.is_vip ?? film.isVIP
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -238,20 +239,21 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
                 }}
               >
                 {seriesFavorites.map((serie) => (
-                  <SeriesCard
-                    key={serie.id}
-                    series={{
-                      id: serie.id,
-                      title: serie.title,
-                      poster: serie.poster,
-                      year: serie.year,
-                      isVIP: serie.is_vip ?? serie.isVIP
-                    }}
-                  />
+                  <div key={serie.id} className="w-[140px] mx-auto">
+                    <SeriesCard
+                      series={{
+                        id: serie.id,
+                        title: serie.title,
+                        poster: serie.poster,
+                        year: serie.year,
+                        isVIP: serie.is_vip ?? serie.isVIP
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
             )}
@@ -267,23 +269,25 @@ export default function FavorisPage() {
               </div>
             ) : (
               <div
-                className="grid gap-4"
+                className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
                 }}
               >
                 {episodeFavorites.map((ep) => (
                   <div
                     key={ep.id}
-                    className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                    className="w-[140px] mx-auto bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
                   >
                     <div className="flex flex-col items-center gap-2 w-full">
                       <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
-                      <img
-                        src={ep.thumbnail_url || "/placeholder-poster.png"}
-                        alt={ep.title || "Épisode"}
-                        className="w-28 h-16 object-cover rounded-lg mb-2"
-                      />
+                      <div className="relative aspect-[2/3] w-full">
+                        <img
+                          src={ep.thumbnail_url || "/placeholder-poster.png"}
+                          alt={ep.title || "Épisode"}
+                          className="w-full h-full object-cover rounded-lg mb-2"
+                        />
+                      </div>
                       <div className="text-center">
                         <div className="font-semibold text-sm text-white truncate">
                           {ep.title}
