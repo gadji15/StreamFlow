@@ -62,6 +62,26 @@ type FilmFormType = {
 export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId }: FilmModalProps & { adminId: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
+  // Chargement des sagas au montage et/ou à l'ouverture du modal
+  useEffect(() => {
+    if (!open) return;
+    let isMounted = true;
+    async function fetchSagas() {
+      try {
+        const { data, error } = await supabase
+          .from("sagas")
+          .select("id, name")
+          .order("name", { ascending: true });
+        if (!error && data && isMounted) {
+          setSagas(data);
+        }
+      } catch (e) {
+        // Optionnel : afficher un toast d’erreur
+      }
+    }
+    fetchSagas();
+    return () => { isMounted = false; };
+  }, [open, adminId]);
   // FORMULAIRE
   const [form, setForm] = useState<FilmFormType>({
     title: initialData.title || "",
@@ -688,14 +708,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     };
   }
 
-  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
-  // (déjà fait plus haut, ne pas redéclarer plus bas)
-  const { hasDraft, getDraft, clearDraft } = useFormDraft(
-    "film-form-draft",
-    adminId,
-    form,
-    initialData?.id
-  );
 
   // Bannière de restauration du draft
   const [showDraftRestore, setShowDraftRestore] = useState(false);
