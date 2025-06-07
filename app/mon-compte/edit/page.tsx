@@ -109,16 +109,21 @@ export default function EditProfilePage() {
     }
 
     // Met à jour l'avatar dans la table utilisateur (ici 'profiles', adapte si besoin)
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl.publicUrl })
-      .eq('id', userData.id);
-    if (updateError) {
-      throw updateError;
+    // Seulement si l'utilisateur est admin ou VIP
+    if (userData?.isAdmin === true || userData?.isVIP === true) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl.publicUrl })
+        .eq('id', userData.id);
+      if (updateError) {
+        throw updateError;
+      }
+      // Optionnel : reload UI
+      // window.location.reload();
+    } else {
+      alert("Seuls les administrateurs ou VIP peuvent modifier leur avatar.");
+      return null;
     }
-
-    // Si tu veux un rafraîchissement immédiat dans l'UI, tu peux recharger la page (à remplacer par une meilleure logique plus tard)
-    // window.location.reload();
 
     return publicUrl.publicUrl;
   };
