@@ -78,6 +78,11 @@ export default function EditProfilePage() {
   // Upload sur Supabase Storage (adapté à ton backend)
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile || !userData?.id) return null;
+
+    // Ajoute le log explicite de l'auth.uid() côté front
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    console.log("DEBUG UPLOAD AVATAR - userData.id:", userData.id, "supabase.auth.uid():", authData?.user?.id);
+
     const fileExt = avatarFile.name.split('.').pop();
     const filePath = `avatars/${userData.id}_${Date.now()}.${fileExt}`;
     const { data, error } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
