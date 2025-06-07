@@ -137,81 +137,67 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     // Log d'entrée dans le useEffect ouverture/reset
     console.log("[FilmModal] useEffect ouverture modal", { open, initialData });
 
-    // Si on vient de restaurer un draft, on saute la réinitialisation du formulaire
-    if (isRestoringDraftRef && isRestoringDraftRef.current) {
-      console.log("[FilmModal] Skip reset, draft vient d'être restauré");
-      isRestoringDraftRef.current = false;
-      return;
-    }
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
     setErrors({});
 
-    // --- Diagnostic restauration du draft à l'ouverture du modal ---
+    // Nouvelle logique : on ne restaure JAMAIS automatiquement le draft
     if (open && hasDraft && hasDraft()) {
-      const draft = getDraft && getDraft();
-      console.log("[FilmModal] Draft trouvé à l'ouverture", draft);
-      if (draft && typeof draft === "object") {
-        setForm(draft);
-        if (Array.isArray(draft.cast)) setCastList(draft.cast);
-        setTmdbSearch(draft.title || "");
-        setLocalVideo(null);
-        setLocalVideoUrl("");
-        return;
-      }
+      setShowDraftRestore(true); // Affiche la bannière de restauration
+      // NE PAS faire de setForm ici !
     } else {
-      console.log("[FilmModal] Aucun draft trouvé à l'ouverture.");
-    }
+      setShowDraftRestore(false);
 
-    // Reset classique sinon
-    setForm((prev) => {
-      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
-      return {
-        ...prev,
-        title: initialData.title || "",
-        original_title: initialData.original_title || "",
-        director: initialData.director || "",
-        year: initialData.year || "",
-        duration: initialData.duration || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g: string) => g.trim())
-            : []),
-        genresInput: "",
-        vote_average: initialData.vote_average || "",
-        vote_count: initialData.vote_count || "",
-        published: !!initialData.published,
-        isvip: !!initialData.isvip,
-        featured: !!initialData.featured,
-        poster: initialData.poster || "",
-        backdrop: initialData.backdrop || "",
-        tmdb_id,
-        imdb_id: initialData.imdb_id || "",
-        description: initialData.description || "",
-        trailer_url: initialData.trailer_url || "",
-        language: initialData.language || "",
-        homepage_categories: Array.isArray(initialData.homepage_categories)
-          ? initialData.homepage_categories
-          : [],
-        popularity: initialData.popularity || "",
-        cast: Array.isArray(initialData.cast)
-          ? initialData.cast
-          : (typeof initialData.cast === "string"
-            ? JSON.parse(initialData.cast)
-            : []),
-        no_video: !!initialData.no_video,
-        saga_id: initialData.saga_id || "",
-        part_number: initialData.part_number || "",
-      };
-    });
-    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
-    setTmdbSearch(initialData.title || "");
-    setLocalVideo(null);
-    setLocalVideoUrl("");
+      // Reset classique du formulaire et des états secondaires
+      setForm((prev) => {
+        let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+        return {
+          ...prev,
+          title: initialData.title || "",
+          original_title: initialData.original_title || "",
+          director: initialData.director || "",
+          year: initialData.year || "",
+          duration: initialData.duration || "",
+          genres: Array.isArray(initialData.genres)
+            ? initialData.genres
+            : (typeof initialData.genre === "string"
+              ? initialData.genre.split(",").map((g: string) => g.trim())
+              : []),
+          genresInput: "",
+          vote_average: initialData.vote_average || "",
+          vote_count: initialData.vote_count || "",
+          published: !!initialData.published,
+          isvip: !!initialData.isvip,
+          featured: !!initialData.featured,
+          poster: initialData.poster || "",
+          backdrop: initialData.backdrop || "",
+          tmdb_id,
+          imdb_id: initialData.imdb_id || "",
+          description: initialData.description || "",
+          trailer_url: initialData.trailer_url || "",
+          language: initialData.language || "",
+          homepage_categories: Array.isArray(initialData.homepage_categories)
+            ? initialData.homepage_categories
+            : [],
+          popularity: initialData.popularity || "",
+          cast: Array.isArray(initialData.cast)
+            ? initialData.cast
+            : (typeof initialData.cast === "string"
+              ? JSON.parse(initialData.cast)
+              : []),
+          no_video: !!initialData.no_video,
+          saga_id: initialData.saga_id || "",
+          part_number: initialData.part_number || "",
+        };
+      });
+      setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+      setTmdbSearch(initialData.title || "");
+      setLocalVideo(null);
+      setLocalVideoUrl("");
+    }
     // eslint-disable-next-line
-  }, [open, initialData && initialData.id]);
+  }, [open, initialData && initialData.id, hasDraft]);
 
   // --- HANDLERS ---
   // Gestion spéciale pour la case "featured" liée à homepage_categories
@@ -717,7 +703,6 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     const draft = getDraft && getDraft();
     console.log("[FilmModal] Bouton RESTAURER, draft récupéré :", draft);
     if (draft && typeof draft === "object") {
-      if (isRestoringDraftRef) isRestoringDraftRef.current = true;
       setForm(draft);
       if (Array.isArray(draft.cast)) setCastList(draft.cast);
       setTmdbSearch(draft.title || "");
@@ -732,6 +717,52 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   const handleIgnoreDraft = () => {
     clearDraft();
     setShowDraftRestore(false);
+    // On réinitialise le formulaire et les états secondaires à initialData
+    setForm((prev) => {
+      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+      return {
+        ...prev,
+        title: initialData.title || "",
+        original_title: initialData.original_title || "",
+        director: initialData.director || "",
+        year: initialData.year || "",
+        duration: initialData.duration || "",
+        genres: Array.isArray(initialData.genres)
+          ? initialData.genres
+          : (typeof initialData.genre === "string"
+            ? initialData.genre.split(",").map((g: string) => g.trim())
+            : []),
+        genresInput: "",
+        vote_average: initialData.vote_average || "",
+        vote_count: initialData.vote_count || "",
+        published: !!initialData.published,
+        isvip: !!initialData.isvip,
+        featured: !!initialData.featured,
+        poster: initialData.poster || "",
+        backdrop: initialData.backdrop || "",
+        tmdb_id,
+        imdb_id: initialData.imdb_id || "",
+        description: initialData.description || "",
+        trailer_url: initialData.trailer_url || "",
+        language: initialData.language || "",
+        homepage_categories: Array.isArray(initialData.homepage_categories)
+          ? initialData.homepage_categories
+          : [],
+        popularity: initialData.popularity || "",
+        cast: Array.isArray(initialData.cast)
+          ? initialData.cast
+          : (typeof initialData.cast === "string"
+            ? JSON.parse(initialData.cast)
+            : []),
+        no_video: !!initialData.no_video,
+        saga_id: initialData.saga_id || "",
+        part_number: initialData.part_number || "",
+      };
+    });
+    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+    setTmdbSearch(initialData.title || "");
+    setLocalVideo(null);
+    setLocalVideoUrl("");
   };
 
   // Empêche la sauvegarde du draft juste après restauration pour éviter l'écrasement
