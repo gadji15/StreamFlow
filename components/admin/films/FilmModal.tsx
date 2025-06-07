@@ -59,7 +59,15 @@ type FilmFormType = {
   part_number: string;
 };
 
-export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId }: FilmModalProps & { adminId: string }) {
+export default function FilmModal({
+  open,
+  onClose,
+  onSave,
+  initialData = {},
+  existingFilms = [],
+  tmdbSearch,
+  adminId = "default-admin" // ← valeur par défaut, optionnelle
+}: FilmModalProps & { adminId?: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
   // Chargement des sagas au montage et/ou à l'ouverture du modal
