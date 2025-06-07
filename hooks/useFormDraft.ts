@@ -13,8 +13,15 @@ export function useFormDraft<T>(
     ? `${keyBase}-${adminId}-${itemId}`
     : `${keyBase}-${adminId}`;
 
-  // Sauvegarde automatique du draft à chaque modification
+  // Sauvegarde automatique du draft à chaque modification,
+  // sauf lors de la restauration (contrôlée par un flag optionnel)
   useEffect(() => {
+    // On sauvegarde uniquement si on n'est pas en train de restaurer
+    // (le parent doit passer un flag 'skipSave' ou équivalent si besoin)
+    if ((window as any).__skipNextDraftSave) {
+      (window as any).__skipNextDraftSave = false;
+      return;
+    }
     localStorage.setItem(key, JSON.stringify(formState));
   }, [key, formState]);
 

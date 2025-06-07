@@ -665,6 +665,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   }
 
   // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const [isRestoringDraft, setIsRestoringDraft] = useState(false);
   const { hasDraft, getDraft, clearDraft } = useFormDraft(
     "film-form-draft",
     adminId,
@@ -684,13 +685,25 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   }, [open]);
   const handleRestoreDraft = () => {
     const draft = getDraft();
-    if (draft) setForm(draft);
+    if (draft && typeof draft === "object") {
+      setIsRestoringDraft(true);
+      setForm(draft);
+    }
     setShowDraftRestore(false);
   };
   const handleIgnoreDraft = () => {
     clearDraft();
     setShowDraftRestore(false);
   };
+
+  // Empêche la sauvegarde du draft juste après restauration pour éviter l'écrasement
+  useEffect(() => {
+    if (isRestoringDraft) {
+      // Petite temporisation pour laisser le state se mettre à jour
+      const timeout = setTimeout(() => setIsRestoringDraft(false), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isRestoringDraft, form]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
