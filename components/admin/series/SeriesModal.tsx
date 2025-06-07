@@ -89,12 +89,20 @@ export default function SeriesModal({
     // eslint-disable-next-line
   }, [open]);
 
+  // Flag pour bloquer le reset auto juste après restauration
+  const isRestoringRef = useRef(false);
+
   const handleRestoreDraft = () => {
     const draft = getDraft && getDraft();
+    console.log("[SeriesModal] RESTAURER – draft récupéré :", draft);
     if (draft && typeof draft === "object") {
+      isRestoringRef.current = true;
       setForm(draft);
       if (Array.isArray(draft.cast)) setCast(draft.cast);
       setTmdbSearchValue(draft.title || "");
+      console.log("[SeriesModal] Draft appliqué aux états !");
+    } else {
+      console.log("[SeriesModal] Aucun draft ou draft invalide !");
     }
     setShowDraftRestore(false);
   };
@@ -130,14 +138,7 @@ export default function SeriesModal({
     setTmdbSearchValue(initialData.title || "");
   };
 
-  // Définition du type Actor pour le cast importé depuis TMDB
-  type Actor = {
-    id: number | string;
-    name: string;
-    profile_path?: string;
-    character?: string;
-    [key: string]: any;
-  };
+
   // Nouvel état pour le cast importé depuis TMDB
   const [cast, setCast] = useState<Actor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -170,6 +171,11 @@ export default function SeriesModal({
       firstInput.current.focus();
     }
     setErrors({});
+    // Bloque le reset si restauration en cours
+    if (isRestoringRef.current) {
+      isRestoringRef.current = false;
+      return;
+    }
     // Si la bannière de draft est affichée, ne pas écraser le draft restaurable
     if (showDraftRestore) return;
     setForm((prev) => {
