@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 // Ajout de la déclaration de la propriété globale TMDB_GENRES_MAP
 declare global {
@@ -37,7 +38,18 @@ export default function SeriesModal({
   initialData = {},
   existingSeries = [],
   tmdbSearch,
-}: SeriesModalProps) {
+  adminId = "default-admin" // à adapter selon votre logique d’auth
+}: SeriesModalProps & { adminId?: string }) {
+
+  // Définition du type Actor pour le cast importé depuis TMDB
+  type Actor = {
+    id: number | string;
+    name: string;
+    profile_path?: string;
+    character?: string;
+    [key: string]: any;
+  };
+
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -56,16 +68,77 @@ export default function SeriesModal({
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
+    cast: Array.isArray(initialData.cast) ? initialData.cast : [], // Ajout du champ cast
   });
 
-  // Définition du type Actor pour le cast importé depuis TMDB
-  type Actor = {
-    id: number | string;
-    name: string;
-    profile_path?: string;
-    character?: string;
-    [key: string]: any;
+  // --- DRAFT LOGIC ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "series-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+
+  // Flag pour bloquer le reset auto juste après restauration
+  const isRestoringRef = useRef(false);
+
+  const handleRestoreDraft = () => {
+    const draft = getDraft && getDraft();
+    console.log("[SeriesModal] RESTAURER – draft récupéré :", draft);
+    if (draft && typeof draft === "object") {
+      isRestoringRef.current = true;
+      setForm(draft);
+      if (Array.isArray(draft.cast)) setCast(draft.cast);
+      setTmdbSearchValue(draft.title || "");
+      console.log("[SeriesModal] Draft appliqué aux états !");
+    } else {
+      console.log("[SeriesModal] Aucun draft ou draft invalide !");
+    }
+    setShowDraftRestore(false);
   };
+
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+    // Reset le formulaire à initialData
+    setForm((prev) => {
+      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+      return {
+        ...prev,
+        title: initialData.title || "",
+        creator: initialData.creator || "",
+        start_year: initialData.start_year || "",
+        end_year: initialData.end_year || "",
+        genres: Array.isArray(initialData.genres)
+          ? initialData.genres
+          : (typeof initialData.genre === "string"
+            ? initialData.genre.split(",").map((g: string) => g.trim())
+            : []),
+        genresInput: "",
+        vote_average: initialData.vote_average || "",
+        published: !!initialData.published,
+        isvip: !!initialData.isvip,
+        poster: initialData.poster || "",
+        backdrop: initialData.backdrop || "",
+        tmdb_id,
+        description: initialData.description || "",
+      };
+    });
+    setCast([]);
+    setTmdbSearchValue(initialData.title || "");
+  };
+
+
   // Nouvel état pour le cast importé depuis TMDB
   const [cast, setCast] = useState<Actor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,6 +171,13 @@ export default function SeriesModal({
       firstInput.current.focus();
     }
     setErrors({});
+    // Bloque le reset si restauration en cours
+    if (isRestoringRef.current) {
+      isRestoringRef.current = false;
+      return;
+    }
+    // Si la bannière de draft est affichée, ne pas écraser le draft restaurable
+    if (showDraftRestore) return;
     setForm((prev) => {
       let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
       return {
@@ -127,7 +207,7 @@ export default function SeriesModal({
       fetchCast(initialData.tmdb_id);
     }
     // eslint-disable-next-line
-  }, [open, initialData && initialData.id]);
+  }, [open, initialData && initialData.id, showDraftRestore]);
 
   const handleChange = (field: string, value: any) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -475,6 +555,32 @@ export default function SeriesModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Bannière de restauration du brouillon */}
+        {showDraftRestore && (
+          <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
+            <span className="text-yellow-100 text-xs font-medium mb-2">
+              Un brouillon non sauvegardé a été détecté pour ce formulaire.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="text-xs px-2 py-1"
+                onClick={handleRestoreDraft}
+              >
+                Restaurer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1"
+                onClick={handleIgnoreDraft}
+              >
+                Ignorer
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header sticky */}
         <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
           <h2 className="text-base font-bold tracking-tight text-white/90">
