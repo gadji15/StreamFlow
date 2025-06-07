@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from 'react'
 import { useCurrentUser } from './useCurrentUser'
 import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
