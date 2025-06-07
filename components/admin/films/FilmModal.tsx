@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 // Pour upload local (images, vidéos)
 import { supabase } from "@/lib/supabaseClient";
@@ -26,7 +27,7 @@ export type FilmModalProps = {
   // autres props éventuelles
 };
 
-export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {
+export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId }: FilmModalProps & { adminId: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
@@ -87,12 +88,20 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
       : (typeof initialData.cast === "string"
         ? JSON.parse(initialData.cast)
         : []),
-    no_video: !!initialData.no_video, // flag pour absence de vidéo
+    no_video: !!initialData.no_video,
 
-    // Ajout saga/partie :
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
   });
+
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    setForm,
+    initialData?.id // pour différencier édition/ajout
+  );
 
   // CAST UI STATE
   const [castList, setCastList] = useState(form.cast);
@@ -647,6 +656,14 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     };
   }
 
+  const { clearDraft } = useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    setForm,
+    initialData?.id
+  );
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
@@ -666,6 +683,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
 
       await onSave(payload);
       toast({ title: "Film enregistré" });
+      clearDraft(); // Nettoyage du brouillon après succès
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
