@@ -67,7 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, login }}>
-      {children}
+      {/* Bloque le rendu des enfants tant que loading est true */}
+      {loading ? null : children}
     </AuthContext.Provider>
   );
 }
