@@ -124,6 +124,34 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
   });
+
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+
+  // Bannière de restauration du draft
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+  const handleRestoreDraft = () => {
+    const draft = getDraft();
+    if (draft) setForm(draft);
+    setShowDraftRestore(false);
+  };
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+  };
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
@@ -733,7 +761,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
         {/* Bannière de restauration du brouillon */}
         {showDraftRestore && (
           <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
-            <span className="text-yellow-100 text-xs font-medium mb-2">Un brouillon non sauvegardé a été détecté pour ce formulaire.</span>
+            <span className="text-yellow-100 text-xs font-medium mb-2">
+              Un brouillon non sauvegardé a été détecté pour ce formulaire.
+            </span>
             <div className="flex gap-2">
               <Button
                 type="button"
