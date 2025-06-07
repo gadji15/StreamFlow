@@ -773,14 +773,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     setLocalVideoUrl("");
   };
 
-  // Empêche la sauvegarde du draft juste après restauration pour éviter l'écrasement
-  useEffect(() => {
-    if (isRestoringDraft) {
-      // Petite temporisation pour laisser le state se mettre à jour
-      const timeout = setTimeout(() => setIsRestoringDraft(false), 300);
-      return () => clearTimeout(timeout);
-    }
-  }, [isRestoringDraft, form]);
+  // Plus besoin de ce useEffect pour la restauration du draft :
+// Il n'y a plus de variable isRestoringDraft ni de restauration auto.
+// Cette logique peut être supprimée.
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
