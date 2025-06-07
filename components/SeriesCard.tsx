@@ -1,5 +1,3 @@
-
-
 import Link from "next/link";
 import { Tv } from "lucide-react";
 
