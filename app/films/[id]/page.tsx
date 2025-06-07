@@ -131,7 +131,8 @@ export default function FilmDetailPage() {
         .from("favorites")
         .select("id")
         .eq("user_id", user.id)
-        .eq("film_id", movieId)
+        .eq("content_id", movieId)
+        .eq("type", "film")
         .maybeSingle();
       setIsFavorite(!!data && !error);
     }
@@ -153,7 +154,8 @@ export default function FilmDetailPage() {
         .from("favorites")
         .delete()
         .eq("user_id", user.id)
-        .eq("film_id", id);
+        .eq("content_id", id)
+        .eq("type", "film");
 
       if (!error) {
         setIsFavorite(false);
@@ -182,7 +184,8 @@ export default function FilmDetailPage() {
       const { error } = await supabase.from("favorites").insert([
         {
           user_id: user.id,
-          film_id: id,
+          content_id: id,
+          type: "film",
           created_at: new Date().toISOString(),
         },
       ]);
