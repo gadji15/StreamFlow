@@ -1,3 +1,5 @@
+
+
 import Link from "next/link";
 import { Tv } from "lucide-react";
 
@@ -25,8 +27,22 @@ export default function SeriesCard({
   className?: string;
   posterProps?: React.ImgHTMLAttributes<HTMLImageElement>;
 }) {
-  const { id, title, poster, year, isVIP } = series;
+  const { id, title, poster, year, isVIP, startYear, endYear, start_year, end_year } = series;
   const posterSrc = poster || "/placeholder-poster.png";
+
+  // Determine displayYear based on available fields
+  let displayYear: string | number | undefined = year;
+  if (!displayYear && (startYear || endYear || start_year || end_year)) {
+    const start = startYear || start_year;
+    const end = endYear || end_year;
+    if (start && end && start !== end) {
+      displayYear = `${start}–${end}`;
+    } else if (start) {
+      displayYear = start;
+    } else if (end) {
+      displayYear = end;
+    }
+  }
 
   return (
     <Link
@@ -57,10 +73,13 @@ export default function SeriesCard({
             VIP
           </div>
         )}
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+          <Tv className="h-7 w-7 text-white drop-shadow-lg animate-fade-in-up" />
+        </div>
       </div>
       <div className="p-2 transition-colors duration-200 group-hover:bg-gray-900/70">
-        <h3 className="font-semibold truncate text-xs text-center group-hover:text-primary transition-colors duration-200">{title}</h3>
-        <p className="text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors duration-200 text-center">{year}</p>
+        <h3 className="font-semibold truncate text-xs text-center group-hover:text-purple-400 transition-colors duration-200">{title}</h3>
+        <p className="text-[11px] text-gray-400 group-hover:text-gray-200 transition-colors duration-200 text-center">{displayYear}</p>
       </div>
     </Link>
   );
