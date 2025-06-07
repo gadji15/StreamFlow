@@ -689,7 +689,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   }
 
   // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
-  const [isRestoringDraft, setIsRestoringDraft] = useState(false);
+  // (déjà fait plus haut, ne pas redéclarer plus bas)
   const { hasDraft, getDraft, clearDraft } = useFormDraft(
     "film-form-draft",
     adminId,
