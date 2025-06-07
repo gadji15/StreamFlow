@@ -88,8 +88,6 @@ export default function EditProfilePage() {
     console.log("DEBUG SESSION", sessionData?.session);
 
     const fileExt = avatarFile.name.split('.').pop();
-
-    // Correction : upload sur le NOUVEAU bucket avatars2 à la racine (propre)
     const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
 
     // Log détaillé avant upload
@@ -100,11 +98,31 @@ export default function EditProfilePage() {
       filePath
     });
 
-    // Utilise le NOUVEAU bucket avatars2 SANS upsert (corrigé)
+    // Upload dans avatars2 (sans upsert)
     const { data, error } = await supabase.storage.from('avatars2').upload(filePath, avatarFile);
     if (error) throw error;
-    const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    return publicUrl?.publicUrl || null;
+
+    // Récupère l'URL publique de l'avatar
+    const { data: publicUrl } = supabase.storage.from('avatars2').getPublicUrl(filePath);
+    if (!publicUrl?.publicUrl) {
+      throw new Error("Erreur lors de la récupération de l'URL publique de l'avatar");
+    }
+
+    // Met à jour l'avatar dans la table utilisateur (ici 'profiles', adapte si besoin)
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl.publicUrl })
+      .eq('id', userData.id);
+    if (updateError) {
+      throw updateError;
+    }
+
+    // Rafraîchit les infos utilisateur locales (si tu as un fetchUser ou équivalent)
+    if (typeof fetchUserData === 'function') {
+      await fetchUserData(); // adapte selon ton hook ou ta logique
+    }
+
+    return publicUrl.publicUrl;
   };
 
   // Soumission du formulaire
