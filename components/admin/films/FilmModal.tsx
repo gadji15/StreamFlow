@@ -62,28 +62,7 @@ type FilmFormType = {
 export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId }: FilmModalProps & { adminId: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
-  useEffect(() => {
-    // Charger la liste des sagas au montage du modal
-    async function fetchSagas() {
-      try {
-        const { data, error } = await supabase
-          .from("sagas")
-          .select("id, name")
-          .order("name", { ascending: true });
-        if (!error && Array.isArray(data)) setSagas(data);
-        else setSagas([]);
-      } catch {
-        setSagas([]);
-      }
-    }
-    if (open) fetchSagas();
-  }, [open]);
-
-  // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
-  function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
-    const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
-    return cats.includes('featured') || !!init.featured;
-  }
+  // FORMULAIRE
   const [form, setForm] = useState<FilmFormType>({
     title: initialData.title || "",
     original_title: initialData.original_title || "",
@@ -124,37 +103,31 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
   });
-
-  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
-  const { hasDraft, getDraft, clearDraft } = useFormDraft(
-    "film-form-draft",
-    adminId,
-    form,
-    initialData?.id
-  );
-
-  // Bannière de restauration du draft
-  const [showDraftRestore, setShowDraftRestore] = useState(false);
-  useEffect(() => {
-    if (open && hasDraft()) {
-      setShowDraftRestore(true);
-    } else {
-      setShowDraftRestore(false);
-    }
-    // eslint-disable-next-line
-  }, [open]);
-  const handleRestoreDraft = () => {
-    const draft = getDraft();
-    if (draft) setForm(draft);
-    setShowDraftRestore(false);
-  };
-  const handleIgnoreDraft = () => {
-    clearDraft();
-    setShowDraftRestore(false);
-  };
+  // Champs pour suggestions TMDB/autocomplete
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
+  // Toast notifications
   const { toast } = useToast();
+  // Focus input
   const firstInput = useRef<HTMLInputElement>(null);
+
+  // ETATS POUR FORMULAIRE
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  // Cast
+  const [castName, setCastName] = useState<string>("");
+  const [castRole, setCastRole] = useState<string>("");
+  const [castPhoto, setCastPhoto] = useState<string>("");
+  const [castList, setCastList] = useState<any[]>([]);
+  const [castUploading, setCastUploading] = useState(false);
+  // Vidéo locale
+  const [localVideo, setLocalVideo] = useState<File | null>(null);
+  const [localVideoUrl, setLocalVideoUrl] = useState<string>("");
+
+  // --- UTILS
+  function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
+    const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
+    return cats.includes('featured') || !!init.featured;
+  }
 
   // --- ACTUALISATION DU FORMULAIRE ---
   useEffect(() => {
@@ -691,13 +664,33 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     };
   }
 
-  const { clearDraft } = useFormDraft(
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
     "film-form-draft",
     adminId,
     form,
-    setForm,
     initialData?.id
   );
+
+  // Bannière de restauration du draft
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+  const handleRestoreDraft = () => {
+    const draft = getDraft();
+    if (draft) setForm(draft);
+    setShowDraftRestore(false);
+  };
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
