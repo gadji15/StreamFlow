@@ -130,7 +130,15 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   }
 
   // --- ACTUALISATION DU FORMULAIRE ---
+  // Pour éviter l'écrasement du draft restauré par la réinitialisation automatique à l'ouverture :
+  const isRestoringDraftRef = useRef(false);
+
   useEffect(() => {
+    // Si on vient de restaurer un draft, on saute la réinitialisation du formulaire
+    if (isRestoringDraftRef.current) {
+      isRestoringDraftRef.current = false;
+      return;
+    }
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
@@ -686,7 +694,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   const handleRestoreDraft = () => {
     const draft = getDraft();
     if (draft && typeof draft === "object") {
-      setIsRestoringDraft(true);
+      isRestoringDraftRef.current = true;
       setForm(draft);
     }
     setShowDraftRestore(false);
