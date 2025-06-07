@@ -84,7 +84,11 @@ export default function EditProfilePage() {
     console.log("DEBUG UPLOAD AVATAR - userData.id:", userData.id, "supabase.auth.uid():", authData?.user?.id);
 
     const fileExt = avatarFile.name.split('.').pop();
-    const filePath = `avatars/${userData.id}_${Date.now()}.${fileExt}`;
+    // Corrigé : NE PAS inclure 'avatars/' dans filePath
+    const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
+    // Optionnel : ranger dans un sous-dossier
+    // const filePath = `profile/${userData.id}_${Date.now()}.${fileExt}`;
+
     const { data, error } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
     if (error) throw error;
     const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
