@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 
 /**
  * Hook pour gérer la persistance d'un formulaire en tant que brouillon par utilisateur/admin.
- * Sauvegarde automatique UNIQUEMENT après modification effective du formulaire (touched).
+ * Sauvegarde automatique UNIQUEMENT après modification effective du formulaire (dirty check).
  * Empêche l'écrasement du brouillon existant par un formulaire vide à l'ouverture du modal.
  */
 export function useFormDraft<T>(
@@ -15,31 +15,31 @@ export function useFormDraft<T>(
     ? `${keyBase}-${adminId}-${itemId}`
     : `${keyBase}-${adminId}`;
 
-  // Nouvelle logique : ne sauvegarder qu'après la première modification (touched)
-  const isFirstRender = useRef(true);
+  // Dirty check : ne sauvegarder le draft qu'après modification utilisateur réelle
   const isTouched = useRef(false);
   const lastSnapshot = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Ne rien faire au tout premier render
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      lastSnapshot.current = JSON.stringify(formState);
+    const nextSnapshot = JSON.stringify(formState);
+
+    // Si c'est la première exécution, on ne fait rien (pas de sauvegarde)
+    if (lastSnapshot.current === null) {
+      lastSnapshot.current = nextSnapshot;
       return;
     }
 
-    // Si le formulaire a changé par rapport au snapshot précédent : on le considère comme "touched"
-    const nextSnapshot = JSON.stringify(formState);
+    // Si le formulaire a changé par rapport au snapshot précédent, on passe isTouched à true
     if (lastSnapshot.current !== nextSnapshot) {
-      isTouched.current = true;
-    }
-    lastSnapshot.current = nextSnapshot;
-
-    // On ne sauvegarde que si l'utilisateur a vraiment modifié le formulaire
-    if (isTouched.current) {
-      localStorage.setItem(key, nextSnapshot);
+      if (isTouched.current) {
+        // Déjà touché => on sauvegarde
+        localStorage.setItem(key, nextSnapshot);
+      } else {
+        // Première vraie modif utilisateur => on ne sauvegarde pas encore (attend la prochaine modif)
+        isTouched.current = true;
+      }
+      lastSnapshot.current = nextSnapshot;
     }
   }, [key, formState]);
 
