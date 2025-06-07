@@ -60,7 +60,7 @@ function RemoveFavoriteButton({
           type="button"
           aria-label="Retirer des favoris"
           title="Retirer des favoris"
-          className="bg-gray-800/80 hover:bg-red-700/90 text-gray-300 hover:text-white rounded-full p-1 shadow transition group animate-favorite-pulse"
+          className="bg-gray-800/80 text-gray-300 hover:text-white rounded-full p-1 shadow transition group animate-favorite-pulse"
           style={{
             animationDuration: "1.3s"
           }}
