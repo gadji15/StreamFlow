@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useFormAutosave } from "@/hooks/useFormAutosave";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
@@ -26,7 +27,7 @@ export type FilmModalProps = {
   // autres props éventuelles
 };
 
-export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {
+export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId = "default" }: FilmModalProps & { adminId?: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
@@ -51,7 +52,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
     return cats.includes('featured') || !!init.featured;
   }
-  const [form, setForm] = useState({
+  const isEdit = !!initialData?.id;
+  const storageKey = isEdit
+    ? `autosave-film-edit-${initialData.id}-${adminId}`
+    : `autosave-film-add-${adminId}`;
+  const initialState = {
     title: initialData.title || "",
     original_title: initialData.original_title || "",
     director: initialData.director || "",
@@ -92,7 +97,8 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     // Ajout saga/partie :
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
-  });
+  };
+  const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
 
   // CAST UI STATE
   const [castList, setCastList] = useState(form.cast);
@@ -666,6 +672,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
 
       await onSave(payload);
       toast({ title: "Film enregistré" });
+      clearAutosave();
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
@@ -1455,7 +1462,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={() => { clearAutosave(); onClose(); }}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
           >

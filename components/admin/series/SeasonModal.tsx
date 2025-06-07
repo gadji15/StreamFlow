@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useFormAutosave } from "@/hooks/useFormAutosave";
 
 // Validation simple d'URL d'image
 function isValidImageUrl(url: string): boolean {
@@ -33,23 +34,15 @@ export default function SeasonModal({
   seriesId,
 }: SeasonModalProps) {
   // Formulaire principal
-  const [form, setForm] = useState({
-    id: initialData.id,
-    title: initialData.title || "",
-    season_number:
-      initialData.season_number !== undefined && initialData.season_number !== null
-        ? String(initialData.season_number)
-        : "",
-    air_date: initialData.air_date || "",
-    episode_count:
-      initialData.episode_count !== undefined && initialData.episode_count !== null
-        ? String(initialData.episode_count)
-        : "",
-    poster: initialData.poster || "",
-    tmdb_id: initialData.tmdb_id || "",
-    description: initialData.description || "",
-    tmdb_series_id: initialData.tmdb_series_id || "", // Ne pas préremplir ici, on le fait dans useEffect
-  });
+  const isEdit = !!initialData?.id;
+  const storageKey = isEdit
+    ? `autosave-season-edit-${initialData.id}`
+    : `autosave-season-add`;
+  const initialState = {
+    // ...votre état initial
+    ...initialData
+  };
+  const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
 
   // Synchronise tmdb_series_id à chaque ouverture du modal pour une création
   useEffect(() => {
@@ -324,6 +317,7 @@ export default function SeasonModal({
       const { tmdb_series_id, id, ...submitData } = fullData;
       await onSave(submitData);
       toast({ title: "Saison enregistrée" });
+      clearAutosave();
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
@@ -740,10 +734,9 @@ export default function SeasonModal({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={() => { clearAutosave(); onClose(); }}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
-            disabled={loading}
           >
             Annuler
           </Button>

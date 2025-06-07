@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useFormAutosave } from "@/hooks/useFormAutosave";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
@@ -78,7 +79,11 @@ export default function EpisodeModal({
     sort_order?: string | number | null;
   };
 
-  const [form, setForm] = useState<FormState>({
+  const isEdit = !!initialData?.id;
+  const storageKey = isEdit
+    ? `autosave-episode-edit-${initialData.id}`
+    : `autosave-episode-add`;
+  const initialState: FormState = {
     id: initialData.id,
     title: initialData.title || "",
     episode_number:
@@ -100,7 +105,8 @@ export default function EpisodeModal({
     local_video_file: null,
     parentSeasonNumber: validParentSeasonNumber, // Ajout dans le form state pour cohérence
     sort_order: initialData.sort_order ?? null,
-  });
+  };
+  const [form, setForm, clearAutosave] = useFormAutosave<FormState>(storageKey, initialState);
 
   // Pour la recherche TMDB série (autocomplete)
   const [serieSearch, setSerieSearch] = useState("");
@@ -423,6 +429,7 @@ export default function EpisodeModal({
       console.log("DEBUG SUBMIT EPISODE", submitData);
       await onSave(submitData);
       toast({ title: "Épisode enregistré" });
+      clearAutosave();
       onClose();
     } catch (e) {
       if (
@@ -1179,7 +1186,7 @@ export default function EpisodeModal({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={() => { clearAutosave(); onClose(); }}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
             disabled={loading}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useFormAutosave } from "@/hooks/useFormAutosave";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
@@ -38,7 +39,11 @@ export default function SeriesModal({
   existingSeries = [],
   tmdbSearch,
 }: SeriesModalProps) {
-  const [form, setForm] = useState({
+  const isEdit = !!initialData?.id;
+  const storageKey = isEdit
+    ? `autosave-series-edit-${initialData.id}`
+    : `autosave-series-add`;
+  const initialState = {
     title: initialData.title || "",
     creator: initialData.creator || "",
     start_year: initialData.start_year || "",
@@ -56,7 +61,8 @@ export default function SeriesModal({
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
-  });
+  };
+  const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
 
   // Définition du type Actor pour le cast importé depuis TMDB
   type Actor = {
@@ -259,6 +265,7 @@ export default function SeriesModal({
 
       await onSave(payload);
       toast({ title: "Série enregistrée" });
+      clearAutosave();
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
@@ -946,7 +953,7 @@ export default function SeriesModal({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={() => { clearAutosave(); onClose(); }}
             aria-label="Annuler"
             className="text-xs py-1 px-2"
           >
