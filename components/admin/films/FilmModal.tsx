@@ -102,7 +102,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
 
   // CAST UI STATE
-  const [castList, setCastList] = useState<{ name: string; role?: string; photo?: string }[]>(form.cast);
+  const [castList, setCastList] = useState<{ name: string; role?: string; photo?: string }[]>(Array.isArray(form.cast) ? form.cast : []);
   const [castName, setCastName] = useState("");
   const [castRole, setCastRole] = useState("");
   const [castPhoto, setCastPhoto] = useState("");
