@@ -134,8 +134,12 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   const isRestoringDraftRef = useRef(false);
 
   useEffect(() => {
+    // Log d'entrée dans le useEffect ouverture/reset
+    console.log("[FilmModal] useEffect ouverture modal", { open, initialData });
+
     // Si on vient de restaurer un draft, on saute la réinitialisation du formulaire
     if (isRestoringDraftRef && isRestoringDraftRef.current) {
+      console.log("[FilmModal] Skip reset, draft vient d'être restauré");
       isRestoringDraftRef.current = false;
       return;
     }
@@ -143,9 +147,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
       firstInput.current.focus();
     }
     setErrors({});
-    // --- Correction : restauration complète du draft s'il existe ---
+
+    // --- Diagnostic restauration du draft à l'ouverture du modal ---
     if (open && hasDraft && hasDraft()) {
       const draft = getDraft && getDraft();
+      console.log("[FilmModal] Draft trouvé à l'ouverture", draft);
       if (draft && typeof draft === "object") {
         setForm(draft);
         if (Array.isArray(draft.cast)) setCastList(draft.cast);
@@ -154,7 +160,11 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
         setLocalVideoUrl("");
         return;
       }
+    } else {
+      console.log("[FilmModal] Aucun draft trouvé à l'ouverture.");
     }
+
+    // Reset classique sinon
     setForm((prev) => {
       let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
       return {
@@ -705,6 +715,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
   }, [open]);
   const handleRestoreDraft = () => {
     const draft = getDraft && getDraft();
+    console.log("[FilmModal] Bouton RESTAURER, draft récupéré :", draft);
     if (draft && typeof draft === "object") {
       if (isRestoringDraftRef) isRestoringDraftRef.current = true;
       setForm(draft);
@@ -712,6 +723,9 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
       setTmdbSearch(draft.title || "");
       setLocalVideo(null);
       setLocalVideoUrl("");
+      console.log("[FilmModal] Draft restauré appliqué aux états !");
+    } else {
+      console.log("[FilmModal] Draft absent ou invalide, rien à restaurer.");
     }
     setShowDraftRestore(false);
   };
