@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 // Validation simple d'URL d'image
 function isValidImageUrl(url: string): boolean {
@@ -31,7 +32,8 @@ export default function SeasonModal({
   seriesTitle = "",
   tmdbSeriesId = "",
   seriesId,
-}: SeasonModalProps) {
+  adminId = "default-admin" // à adapter selon votre logique d’auth
+}: SeasonModalProps & { adminId?: string }) {
   // Formulaire principal
   const [form, setForm] = useState({
     id: initialData.id,
@@ -50,6 +52,69 @@ export default function SeasonModal({
     description: initialData.description || "",
     tmdb_series_id: initialData.tmdb_series_id || "", // Ne pas préremplir ici, on le fait dans useEffect
   });
+
+  // --- DRAFT LOGIC ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "season-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+  const isRestoringRef = useRef(false);
+
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+
+  const handleRestoreDraft = () => {
+    const draft = getDraft && getDraft();
+    console.log("[SeasonModal] RESTAURER – draft récupéré :", draft);
+    if (draft && typeof draft === "object") {
+      isRestoringRef.current = true;
+      setForm(draft);
+      setTmdbSearch(
+        (seriesTitle ? seriesTitle + " " : "") +
+        (draft.season_number ? `Saison ${draft.season_number}` : "")
+      );
+      console.log("[SeasonModal] Draft appliqué aux états !");
+    } else {
+      console.log("[SeasonModal] Aucun draft ou draft invalide !");
+    }
+    setShowDraftRestore(false);
+  };
+
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+    // Reset le formulaire à initialData
+    setForm({
+      id: initialData.id,
+      title: initialData.title || "",
+      season_number:
+        initialData.season_number !== undefined && initialData.season_number !== null
+          ? String(initialData.season_number)
+          : "",
+      air_date: initialData.air_date || "",
+      episode_count:
+        initialData.episode_count !== undefined && initialData.episode_count !== null
+          ? String(initialData.episode_count)
+          : "",
+      poster: initialData.poster || "",
+      tmdb_id: initialData.tmdb_id || "",
+      description: initialData.description || "",
+      tmdb_series_id: initialData.tmdb_series_id || "",
+    });
+    setTmdbSearch(
+      (seriesTitle ? seriesTitle + " " : "") +
+      (initialData.season_number ? `Saison ${initialData.season_number}` : "")
+    );
+  };
 
   // Synchronise tmdb_series_id à chaque ouverture du modal pour une création
   useEffect(() => {
@@ -126,6 +191,13 @@ export default function SeasonModal({
     // Réinitialisation à l'ouverture/fermeture
     if (open && (!wasOpen.current || initialData?.id !== form?.id)) {
       setErrors({});
+      // Bloque le reset si restauration en cours
+      if (isRestoringRef.current) {
+        isRestoringRef.current = false;
+        return;
+      }
+      // Si la bannière de draft est affichée, ne pas écraser le draft restaurable
+      if (showDraftRestore) return;
       setForm({
         id: initialData.id,
         title: initialData.title || "",
@@ -208,7 +280,7 @@ export default function SeasonModal({
         }
     wasOpen.current = open;
   // eslint-disable-next-line
-  }, [open, initialData?.id]);
+  }, [open, initialData?.id, showDraftRestore]);
 
   // Changement champ unique (un seul input pour numéro de saison)
   const handleChange = (field: string, value: string) => {
@@ -442,6 +514,32 @@ export default function SeasonModal({
         }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Bannière de restauration du brouillon */}
+        {showDraftRestore && (
+          <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
+            <span className="text-yellow-100 text-xs font-medium mb-2">
+              Un brouillon non sauvegardé a été détecté pour ce formulaire.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="text-xs px-2 py-1"
+                onClick={handleRestoreDraft}
+              >
+                Restaurer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1"
+                onClick={handleIgnoreDraft}
+              >
+                Ignorer
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
           <h2 className="text-base font-bold tracking-tight text-white/90" id="season-modal-title">

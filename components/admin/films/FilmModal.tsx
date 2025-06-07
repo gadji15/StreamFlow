@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { normalizeGenres } from "../genres-normalizer";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 // Pour upload local (images, vidéos)
 import { supabase } from "@/lib/supabaseClient";
@@ -23,35 +24,75 @@ export type FilmModalProps = {
   onSave: (payload: any) => Promise<void>;
   initialData?: any;
   initialTmdbId?: number;
+  existingFilms?: any[]; // Ajouté pour corriger l'erreur de propriété manquante
   // autres props éventuelles
 };
 
-export default function FilmModal({ open, onClose, onSave, initialData = {} }: FilmModalProps) {
+// Type TypeScript complet pour le formulaire film
+type FilmFormType = {
+  title: string;
+  original_title: string;
+  director: string;
+  year: string;
+  duration: string;
+  genres: string[];
+  genresInput: string;
+  vote_average: string;
+  vote_count: string;
+  published: boolean;
+  isvip: boolean;
+  featured: boolean;
+  poster: string;
+  backdrop: string;
+  tmdb_id: string;
+  imdb_id: string;
+  description: string;
+  trailer_url: string;
+  video_url: string;
+  streamtape_url: string;
+  uqload_url: string;
+  language: string;
+  homepage_categories: string[];
+  popularity: string;
+  cast: any[]; // À typer plus précisément si besoin
+  no_video: boolean;
+  saga_id: string;
+  part_number: string;
+};
+
+export default function FilmModal({
+  open,
+  onClose,
+  onSave,
+  initialData = {},
+  existingFilms = [],
+  // tmdbSearch, // supprimé pour éviter conflit de nom
+  adminId = "default-admin"
+}: FilmModalProps & { adminId?: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
+  // Chargement des sagas au montage et/ou à l'ouverture du modal
   useEffect(() => {
-    // Charger la liste des sagas au montage du modal
+    if (!open) return;
+    let isMounted = true;
     async function fetchSagas() {
       try {
         const { data, error } = await supabase
           .from("sagas")
           .select("id, name")
           .order("name", { ascending: true });
-        if (!error && Array.isArray(data)) setSagas(data);
-        else setSagas([]);
-      } catch {
-        setSagas([]);
+        if (!error && data && isMounted) {
+          setSagas(data);
+        }
+      } catch (e) {
+        // Optionnel : afficher un toast d’erreur
       }
     }
-    if (open) fetchSagas();
-  }, [open]);
-
-  // STRUCTURE ÉTENDUE POUR TOUS LES CHAMPS SUPABASE
-  function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
-    const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
-    return cats.includes('featured') || !!init.featured;
-  }
-  const [form, setForm] = useState({
+    fetchSagas();
+    return () => { isMounted = false; };
+  }, [open, adminId]);
+  // FORMULAIRE
+  const [form, setForm] = useState<FilmFormType>({
     title: initialData.title || "",
     original_title: initialData.original_title || "",
     director: initialData.director || "",
@@ -88,83 +129,112 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         ? JSON.parse(initialData.cast)
         : []),
     no_video: !!initialData.no_video, // flag pour absence de vidéo
-
-    // Ajout saga/partie :
     saga_id: initialData.saga_id || "",
     part_number: initialData.part_number || "",
   });
-
-  // CAST UI STATE
-  const [castList, setCastList] = useState(form.cast);
-  const [castName, setCastName] = useState("");
-  const [castRole, setCastRole] = useState("");
-  const [castPhoto, setCastPhoto] = useState("");
-  const [castUploading, setCastUploading] = useState(false);
-
-  // VIDEO UPLOAD
-  const [localVideo, setLocalVideo] = useState<File | null>(null);
-  const [localVideoUrl, setLocalVideoUrl] = useState("");
-
-  // TMDB/TOAST/FOCUS
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [k: string]: string }>({});
+  // Champs pour suggestions TMDB/autocomplete
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
+  // Toast notifications
   const { toast } = useToast();
+  // Focus input
   const firstInput = useRef<HTMLInputElement>(null);
 
+  // ETATS POUR FORMULAIRE
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  // Cast
+  const [castName, setCastName] = useState<string>("");
+  const [castRole, setCastRole] = useState<string>("");
+  const [castPhoto, setCastPhoto] = useState<string>("");
+  const [castList, setCastList] = useState<any[]>([]);
+  const [castUploading, setCastUploading] = useState(false);
+  // Vidéo locale
+  const [localVideo, setLocalVideo] = useState<File | null>(null);
+  const [localVideoUrl, setLocalVideoUrl] = useState<string>("");
+
+  // --- UTILS
+  function computeFeaturedFromCategories(init: { homepage_categories?: any[]; featured?: boolean } = {}) {
+    const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
+    return cats.includes('featured') || !!init.featured;
+  }
+
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+
   // --- ACTUALISATION DU FORMULAIRE ---
+  // Pour éviter l'écrasement du draft restauré par la réinitialisation automatique à l'ouverture :
+  const isRestoringDraftRef = useRef(false);
+
   useEffect(() => {
+    // Log d'entrée dans le useEffect ouverture/reset
+    console.log("[FilmModal] useEffect ouverture modal", { open, initialData });
+
     if (open && firstInput.current) {
       firstInput.current.focus();
     }
     setErrors({});
-    setForm((prev) => {
-      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
-      return {
-        ...prev,
-        title: initialData.title || "",
-        original_title: initialData.original_title || "",
-        director: initialData.director || "",
-        year: initialData.year || "",
-        duration: initialData.duration || "",
-        genres: Array.isArray(initialData.genres)
-          ? initialData.genres
-          : (typeof initialData.genre === "string"
-            ? initialData.genre.split(",").map((g: string) => g.trim())
-            : []),
-        genresInput: "",
-        vote_average: initialData.vote_average || "",
-        vote_count: initialData.vote_count || "",
-        published: !!initialData.published,
-        isvip: !!initialData.isvip,
-        featured: !!initialData.featured, // NOUVEAU CHAMP
-        poster: initialData.poster || "",
-        backdrop: initialData.backdrop || "",
-        tmdb_id,
-        imdb_id: initialData.imdb_id || "",
-        description: initialData.description || "",
-        trailer_url: initialData.trailer_url || "",
-        language: initialData.language || "",
-        homepage_categories: Array.isArray(initialData.homepage_categories)
-          ? initialData.homepage_categories
-          : [],
-        popularity: initialData.popularity || "",
-        cast: Array.isArray(initialData.cast)
-          ? initialData.cast
-          : (typeof initialData.cast === "string"
-            ? JSON.parse(initialData.cast)
-            : []),
-        no_video: !!initialData.no_video,
-        saga_id: initialData.saga_id || "",
-        part_number: initialData.part_number || "",
-      };
-    });
-    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
-    setTmdbSearch(initialData.title || "");
-    setLocalVideo(null);
-    setLocalVideoUrl("");
+
+    // Nouvelle logique : on ne restaure JAMAIS automatiquement le draft
+    if (open && hasDraft && hasDraft()) {
+      setShowDraftRestore(true); // Affiche la bannière de restauration
+      // NE PAS faire de setForm ici !
+    } else {
+      setShowDraftRestore(false);
+
+      // Reset classique du formulaire et des états secondaires
+      setForm((prev) => {
+        let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+        return {
+          ...prev,
+          title: initialData.title || "",
+          original_title: initialData.original_title || "",
+          director: initialData.director || "",
+          year: initialData.year || "",
+          duration: initialData.duration || "",
+          genres: Array.isArray(initialData.genres)
+            ? initialData.genres
+            : (typeof initialData.genre === "string"
+              ? initialData.genre.split(",").map((g: string) => g.trim())
+              : []),
+          genresInput: "",
+          vote_average: initialData.vote_average || "",
+          vote_count: initialData.vote_count || "",
+          published: !!initialData.published,
+          isvip: !!initialData.isvip,
+          featured: !!initialData.featured,
+          poster: initialData.poster || "",
+          backdrop: initialData.backdrop || "",
+          tmdb_id,
+          imdb_id: initialData.imdb_id || "",
+          description: initialData.description || "",
+          trailer_url: initialData.trailer_url || "",
+          language: initialData.language || "",
+          homepage_categories: Array.isArray(initialData.homepage_categories)
+            ? initialData.homepage_categories
+            : [],
+          popularity: initialData.popularity || "",
+          cast: Array.isArray(initialData.cast)
+            ? initialData.cast
+            : (typeof initialData.cast === "string"
+              ? JSON.parse(initialData.cast)
+              : []),
+          no_video: !!initialData.no_video,
+          saga_id: initialData.saga_id || "",
+          part_number: initialData.part_number || "",
+        };
+      });
+      setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+      setTmdbSearch(initialData.title || "");
+      setLocalVideo(null);
+      setLocalVideoUrl("");
+    }
     // eslint-disable-next-line
-  }, [open, initialData && initialData.id]);
+  }, [open, initialData && initialData.id, hasDraft]);
 
   // --- HANDLERS ---
   // Gestion spéciale pour la case "featured" liée à homepage_categories
@@ -647,6 +717,87 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
     };
   }
 
+
+  // Bannière de restauration du draft
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+  const handleRestoreDraft = () => {
+    const draft = getDraft && getDraft();
+    console.log("[FilmModal] Bouton RESTAURER, draft récupéré :", draft);
+    if (draft && typeof draft === "object") {
+      setForm(draft);
+      if (Array.isArray(draft.cast)) setCastList(draft.cast);
+      setTmdbSearch(draft.title || "");
+      setLocalVideo(null);
+      setLocalVideoUrl("");
+      console.log("[FilmModal] Draft restauré appliqué aux états !");
+    } else {
+      console.log("[FilmModal] Draft absent ou invalide, rien à restaurer.");
+    }
+    setShowDraftRestore(false);
+  };
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+    // On réinitialise le formulaire et les états secondaires à initialData
+    setForm((prev) => {
+      let tmdb_id = prev.tmdb_id || initialData.tmdb_id || "";
+      return {
+        ...prev,
+        title: initialData.title || "",
+        original_title: initialData.original_title || "",
+        director: initialData.director || "",
+        year: initialData.year || "",
+        duration: initialData.duration || "",
+        genres: Array.isArray(initialData.genres)
+          ? initialData.genres
+          : (typeof initialData.genre === "string"
+            ? initialData.genre.split(",").map((g: string) => g.trim())
+            : []),
+        genresInput: "",
+        vote_average: initialData.vote_average || "",
+        vote_count: initialData.vote_count || "",
+        published: !!initialData.published,
+        isvip: !!initialData.isvip,
+        featured: !!initialData.featured,
+        poster: initialData.poster || "",
+        backdrop: initialData.backdrop || "",
+        tmdb_id,
+        imdb_id: initialData.imdb_id || "",
+        description: initialData.description || "",
+        trailer_url: initialData.trailer_url || "",
+        language: initialData.language || "",
+        homepage_categories: Array.isArray(initialData.homepage_categories)
+          ? initialData.homepage_categories
+          : [],
+        popularity: initialData.popularity || "",
+        cast: Array.isArray(initialData.cast)
+          ? initialData.cast
+          : (typeof initialData.cast === "string"
+            ? JSON.parse(initialData.cast)
+            : []),
+        no_video: !!initialData.no_video,
+        saga_id: initialData.saga_id || "",
+        part_number: initialData.part_number || "",
+      };
+    });
+    setCastList(initialData.cast ? (Array.isArray(initialData.cast) ? initialData.cast : JSON.parse(initialData.cast)) : []);
+    setTmdbSearch(initialData.title || "");
+    setLocalVideo(null);
+    setLocalVideoUrl("");
+  };
+
+  // Plus besoin de ce useEffect pour la restauration du draft :
+// Il n'y a plus de variable isRestoringDraft ni de restauration auto.
+// Cette logique peut être supprimée.
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
@@ -666,6 +817,7 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
 
       await onSave(payload);
       toast({ title: "Film enregistré" });
+      clearDraft(); // Nettoyage du brouillon après succès
       onClose();
     } catch (e) {
       toast({ title: "Erreur", description: String(e), variant: "destructive" });
@@ -705,6 +857,32 @@ export default function FilmModal({ open, onClose, onSave, initialData = {} }: F
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Bannière de restauration du brouillon */}
+        {showDraftRestore && (
+          <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
+            <span className="text-yellow-100 text-xs font-medium mb-2">
+              Un brouillon non sauvegardé a été détecté pour ce formulaire.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="text-xs px-2 py-1"
+                onClick={handleRestoreDraft}
+              >
+                Restaurer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1"
+                onClick={handleIgnoreDraft}
+              >
+                Ignorer
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header sticky */}
         <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
           <h2 className="text-base font-bold tracking-tight text-white/90">

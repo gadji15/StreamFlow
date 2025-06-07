@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 // Validation simple d'URL d'image
 function isValidImageUrl(url: string): boolean {
@@ -48,7 +49,8 @@ export default function EpisodeModal({
   tmdbSeriesId = "",
   parentSeasonNumber = "",
   seasonId,
-}: EpisodeModalProps) {
+  adminId = "default-admin" // à adapter à votre logique d'auth
+}: EpisodeModalProps & { adminId?: string }) {
   // Protection : si initialData est null ou undefined, on force un objet vide
   initialData = initialData || {};
   // Vérification stricte de parentSeasonNumber
@@ -98,9 +100,79 @@ export default function EpisodeModal({
     video_unavailable: !!initialData.video_unavailable,
     tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
     local_video_file: null,
-    parentSeasonNumber: validParentSeasonNumber, // Ajout dans le form state pour cohérence
+    parentSeasonNumber: validParentSeasonNumber,
     sort_order: initialData.sort_order ?? null,
   });
+
+  // --- DRAFT LOGIC ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "episode-form-draft",
+    adminId,
+    form,
+    initialData?.id
+  );
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+  const isRestoringRef = useRef(false);
+
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+
+  const handleRestoreDraft = () => {
+    const draft = getDraft && getDraft();
+    console.log("[EpisodeModal] RESTAURER – draft récupéré :", draft);
+    if (draft && typeof draft === "object") {
+      isRestoringRef.current = true;
+      setForm(draft);
+      setTmdbSearch(
+        (seriesTitle ? seriesTitle + " " : "") +
+        (draft.parentSeasonNumber ? `Saison ${draft.parentSeasonNumber} ` : "") +
+        (draft.episode_number ? `Épisode ${draft.episode_number}` : "")
+      );
+      console.log("[EpisodeModal] Draft appliqué aux états !");
+    } else {
+      console.log("[EpisodeModal] Aucun draft ou draft invalide !");
+    }
+    setShowDraftRestore(false);
+  };
+
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+    setForm({
+      id: initialData.id,
+      title: initialData.title || "",
+      episode_number:
+        initialData.episode_number !== undefined && initialData.episode_number !== null
+          ? String(initialData.episode_number)
+          : "",
+      air_date: initialData.air_date || "",
+      thumbnail_url: initialData.thumbnail_url || "",
+      video_url: initialData.video_url || "",
+      streamtape_url: initialData.streamtape_url || "",
+      uqload_url: initialData.uqload_url || "",
+      trailer_url: initialData.trailer_url || "",
+      tmdb_id: initialData.tmdb_id || "",
+      description: initialData.description || "",
+      published: !!initialData.published,
+      isvip: !!initialData.isvip,
+      video_unavailable: !!initialData.video_unavailable,
+      tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
+      local_video_file: null,
+      parentSeasonNumber: validParentSeasonNumber,
+      sort_order: initialData.sort_order ?? null,
+    });
+    setTmdbSearch(
+      (seriesTitle ? seriesTitle + " " : "") +
+      (validParentSeasonNumber ? `Saison ${validParentSeasonNumber} ` : "") +
+      (initialData.episode_number ? `Épisode ${initialData.episode_number}` : "")
+    );
+  };
 
   // Pour la recherche TMDB série (autocomplete)
   const [serieSearch, setSerieSearch] = useState("");
@@ -145,6 +217,13 @@ export default function EpisodeModal({
     if (open && (!wasOpen.current || initialData?.id !== form?.id)) {
       setErrors({});
       setTmdbError(null);
+      // Bloque le reset si restauration en cours
+      if (isRestoringRef.current) {
+        isRestoringRef.current = false;
+        return;
+      }
+      // Si la bannière de draft est affichée, ne pas écraser le draft restaurable
+      if (showDraftRestore) return;
       setForm({
         id: initialData.id,
         title: initialData.title || "",
@@ -166,6 +245,7 @@ export default function EpisodeModal({
         tmdb_series_id: tmdbSeriesId || initialData.tmdb_series_id || "",
         local_video_file: null,
         parentSeasonNumber: validParentSeasonNumber,
+        sort_order: initialData.sort_order ?? null,
       });
       setTmdbSearch(
         (seriesTitle ? seriesTitle + " " : "") +
@@ -207,7 +287,7 @@ export default function EpisodeModal({
     }
     wasOpen.current = open;
     // eslint-disable-next-line
-  }, [open, initialData?.id, seriesTitle, parentSeasonNumber]);
+  }, [open, initialData?.id, seriesTitle, parentSeasonNumber, showDraftRestore]);
 
   const handleChange = (field: string, value: any) => {
     setForm(prevForm => {
@@ -556,6 +636,32 @@ export default function EpisodeModal({
         }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Bannière de restauration du brouillon */}
+        {showDraftRestore && (
+          <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
+            <span className="text-yellow-100 text-xs font-medium mb-2">
+              Un brouillon non sauvegardé a été détecté pour ce formulaire.
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="text-xs px-2 py-1"
+                onClick={handleRestoreDraft}
+              >
+                Restaurer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1"
+                onClick={handleIgnoreDraft}
+              >
+                Ignorer
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
           <h2 className="text-base font-bold tracking-tight text-white/90" id="episode-modal-title">
