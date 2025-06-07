@@ -14,6 +14,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GlobalErrorLogger from "@/components/GlobalErrorLogger";
 import LayoutVisibility from "@/components/LayoutVisibility";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
+import Sidebar from "@/components/Sidebar";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -97,6 +99,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#00000000" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#00000000" media="(prefers-color-scheme: light)" />
+        {/* Script AdSense global */}
+        <Script
+          id="adsense-script"
+          strategy="afterInteractive"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXX"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={`${inter.className} min-h-screen flex flex-col bg-[#18181c] text-foreground`}>
         <AuthProvider>
@@ -107,16 +117,22 @@ export default function RootLayout({
               <LayoutVisibility>
                 <Header />
               </LayoutVisibility>
-              {/* Utilisation d'un flex-col h-screen pour forcer le footer en bas */}
-              <div className="flex flex-col min-h-screen w-full">
-                <main
-                  className="w-full max-w-[1440px] mx-auto px-2 sm:px-4 md:px-8 py-4 sm:py-8 flex-1"
-                >
-                  {children}
-                  <SpeedInsights />
-                </main>
+              {/* Layout principal avec sidebar publicitaire */}
+              <div className="flex flex-row min-h-screen w-full max-w-[1440px] mx-auto">
+                <div className="flex flex-col flex-1">
+                  <main
+                    className="w-full px-2 sm:px-4 md:px-8 py-4 sm:py-8 flex-1"
+                  >
+                    {children}
+                    <SpeedInsights />
+                  </main>
+                  <LayoutVisibility>
+                    <Footer />
+                  </LayoutVisibility>
+                </div>
+                {/* Sidebar publicitaire à droite, masquée en mode admin grâce à LayoutVisibility */}
                 <LayoutVisibility>
-                  <Footer />
+                  <Sidebar />
                 </LayoutVisibility>
               </div>
             </ThemeProvider>
