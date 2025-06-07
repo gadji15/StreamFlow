@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 /**
- * Hook universel pour gérer le statut favori (ajout, suppression, état) pour tout type de contenu.
+ * Hook universel pour gérer l'état favori (ajout, suppression, état) pour tout type de contenu.
+ * N'utilise que user_id, content_id et type.
  */
 export function useFavorite(
   contentId: string,
@@ -13,7 +14,7 @@ export function useFavorite(
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Vérifie si le contenu est déjà favori
+  // Vérifie si le contenu est déjà favori (universel)
   const checkFavorite = useCallback(async () => {
     if (!user || !contentId) {
       setIsFavorite(false);
@@ -66,7 +67,7 @@ export function useFavorite(
     return !error;
   };
 
-  // Toggle
+  // Toggle universel
   const toggleFavorite = async () => {
     if (isFavorite) {
       return await removeFavorite();
