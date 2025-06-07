@@ -8,11 +8,11 @@ import { useEffect, useCallback } from "react";
  * @param setFormState Setter pour réinitialiser l'état du formulaire
  * @param [itemId] Optionnel : identifiant du film (pour distinguer édition/ajout)
  */
-export function useFormDraft&lt;T&gt;(
+export function useFormDraft<T>(
   keyBase: string,
   adminId: string,
   formState: T,
-  setFormState: (val: T) =&gt; void,
+  setFormState: (val: T) => void,
   itemId?: string | number
 ) {
   // Génère une clé locale unique par admin et éventuellement par item
@@ -21,7 +21,7 @@ export function useFormDraft&lt;T&gt;(
     : `${keyBase}-${adminId}`;
 
   // À l'ouverture, propose de restaurer un brouillon s'il existe
-  useEffect(() =&gt; {
+  useEffect(() => {
     const saved = localStorage.getItem(key);
     if (saved) {
       if (
@@ -38,12 +38,12 @@ export function useFormDraft&lt;T&gt;(
   }, [key]);
 
   // Sauvegarde automatique du draft à chaque modification
-  useEffect(() =&gt; {
+  useEffect(() => {
     localStorage.setItem(key, JSON.stringify(formState));
   }, [key, formState]);
 
   // Supprime le draft (à appeler lors de la sauvegarde effective)
-  const clearDraft = useCallback(() =&gt; {
+  const clearDraft = useCallback(() => {
     localStorage.removeItem(key);
   }, [key]);
 
