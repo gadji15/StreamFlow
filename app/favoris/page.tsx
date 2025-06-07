@@ -19,7 +19,7 @@ export default function FavorisPage() {
   const [filmFavorites, setFilmFavorites] = useState<any[]>([]);
   const [seriesFavorites, setSeriesFavorites] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"tout" | "films" | "series" | "episodes">("tout");
+  const [activeTab, setActiveTab] = useState<"films" | "series" | "episodes">("films");
   const [episodeFavorites, setEpisodeFavorites] = useState<any[]>([]);
   const router = useRouter();
 
