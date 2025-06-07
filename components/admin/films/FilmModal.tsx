@@ -27,6 +27,38 @@ export type FilmModalProps = {
   // autres props éventuelles
 };
 
+// Type TypeScript complet pour le formulaire film
+type FilmFormType = {
+  title: string;
+  original_title: string;
+  director: string;
+  year: string;
+  duration: string;
+  genres: string[];
+  genresInput: string;
+  vote_average: string;
+  vote_count: string;
+  published: boolean;
+  isvip: boolean;
+  featured: boolean;
+  poster: string;
+  backdrop: string;
+  tmdb_id: string;
+  imdb_id: string;
+  description: string;
+  trailer_url: string;
+  video_url: string;
+  streamtape_url: string;
+  uqload_url: string;
+  language: string;
+  homepage_categories: string[];
+  popularity: string;
+  cast: any[]; // À typer plus précisément si besoin
+  no_video: boolean;
+  saga_id: string;
+  part_number: string;
+};
+
 export default function FilmModal({ open, onClose, onSave, initialData = {}, adminId }: FilmModalProps & { adminId: string }) {
   // --- SAGAS ---
   const [sagas, setSagas] = useState<{ id: string; name: string }[]>([]);
@@ -52,68 +84,46 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     const cats = Array.isArray(init.homepage_categories) ? init.homepage_categories : [];
     return cats.includes('featured') || !!init.featured;
   }
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FilmFormType>({
     title: initialData.title || "",
     original_title: initialData.original_title || "",
     director: initialData.director || "",
     year: initialData.year || "",
     duration: initialData.duration || "",
-    // ...
+    genres: Array.isArray(initialData.genres)
+      ? initialData.genres
+      : (typeof initialData.genre === "string"
+        ? initialData.genre.split(",").map((g: string) => g.trim())
+        : []),
+    genresInput: "",
+    vote_average: initialData.vote_average || "",
+    vote_count: initialData.vote_count || "",
+    published: !!initialData.published,
+    isvip: !!initialData.isvip,
+    featured: computeFeaturedFromCategories(initialData), // Synchronisation
+    poster: initialData.poster || "",
+    backdrop: initialData.backdrop || "",
+    tmdb_id: initialData.tmdb_id || "",
+    imdb_id: initialData.imdb_id || "",
+    description: initialData.description || "",
+    trailer_url: initialData.trailer_url || "",
+    video_url: initialData.video_url || "",
+    streamtape_url: initialData.streamtape_url || "",
+    uqload_url: initialData.uqload_url || "",
+    language: initialData.language || "",
+    homepage_categories: Array.isArray(initialData.homepage_categories)
+      ? initialData.homepage_categories
+      : [],
+    popularity: initialData.popularity || "",
+    cast: Array.isArray(initialData.cast)
+      ? initialData.cast
+      : (typeof initialData.cast === "string"
+        ? JSON.parse(initialData.cast)
+        : []),
+    no_video: !!initialData.no_video, // flag pour absence de vidéo
+    saga_id: initialData.saga_id || "",
+    part_number: initialData.part_number || "",
   });
-
-  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
-  const { hasDraft, getDraft, clearDraft } = useFormDraft(
-    "film-form-draft",
-    adminId,
-    form,
-    initialData?.id // pour différencier édition/ajout
-  );
-
-  // Bannière de restauration du draft
-  const [showDraftRestore, setShowDraftRestore] = useState(false);
-
-  useEffect(() => {
-    if (open && hasDraft()) {
-      setShowDraftRestore(true);
-    } else {
-      setShowDraftRestore(false);
-    }
-    // eslint-disable-next-line
-  }, [open]);
-
-  const handleRestoreDraft = () => {
-    const draft = getDraft();
-    if (draft) setForm(draft);
-    setShowDraftRestore(false);
-  };
-  const handleIgnoreDraft = () => {
-    clearDraft();
-    setShowDraftRestore(false);
-  };
-
-  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
-  useFormDraft(
-    "film-form-draft",
-    adminId,
-    form,
-    setForm,
-    initialData?.id // pour différencier édition/ajout
-  );
-
-  // CAST UI STATE
-  const [castList, setCastList] = useState(form.cast);
-  const [castName, setCastName] = useState("");
-  const [castRole, setCastRole] = useState("");
-  const [castPhoto, setCastPhoto] = useState("");
-  const [castUploading, setCastUploading] = useState(false);
-
-  // VIDEO UPLOAD
-  const [localVideo, setLocalVideo] = useState<File | null>(null);
-  const [localVideoUrl, setLocalVideoUrl] = useState("");
-
-  // TMDB/TOAST/FOCUS
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [k: string]: string }>({});
   const [tmdbSearch, setTmdbSearch] = useState(initialData.title || "");
   const { toast } = useToast();
   const firstInput = useRef<HTMLInputElement>(null);
