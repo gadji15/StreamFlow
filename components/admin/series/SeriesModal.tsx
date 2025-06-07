@@ -41,6 +41,15 @@ export default function SeriesModal({
   adminId = "default-admin" // à adapter selon votre logique d’auth
 }: SeriesModalProps & { adminId?: string }) {
 
+  // Définition du type Actor pour le cast importé depuis TMDB
+  type Actor = {
+    id: number | string;
+    name: string;
+    profile_path?: string;
+    character?: string;
+    [key: string]: any;
+  };
+
   const [form, setForm] = useState({
     title: initialData.title || "",
     creator: initialData.creator || "",
@@ -59,6 +68,7 @@ export default function SeriesModal({
     backdrop: initialData.backdrop || "",
     tmdb_id: initialData.tmdb_id || "",
     description: initialData.description || "",
+    cast: Array.isArray(initialData.cast) ? initialData.cast : [], // Ajout du champ cast
   });
 
   // --- DRAFT LOGIC ---
