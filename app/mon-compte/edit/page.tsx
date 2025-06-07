@@ -88,9 +88,12 @@ export default function EditProfilePage() {
     console.log("DEBUG SESSION", sessionData?.session);
 
     const fileExt = avatarFile.name.split('.').pop();
-    const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
-    // Optionnel : ranger dans un sous-dossier
-    // const filePath = `profile/${userData.id}_${Date.now()}.${fileExt}`;
+
+    // TEMPORAIRE pour test : upload dans le même dossier que l'upload manuel réussi
+    // Pour tester l'upload dans "episodes/" :
+    const filePath = `episodes/${userData.id}_${Date.now()}.${fileExt}`;
+    // Pour tester à la racine, commente la ligne ci-dessus et décommente celle-ci :
+    // const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
 
     // Log détaillé avant upload
     console.log("UPLOAD DEBUG", {
