@@ -1,20 +1,25 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent } from 'react';
+import { useEffect, useState, ChangeEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-// import { supabase } from '@/lib/supabaseClient'; // décommentez si vous avez un client supabase
+import { supabase } from '@/lib/supabaseClient';
+
+interface UserProfilePayload {
+  displayName: string;
+  photoURL: string;
+  // email?: string; // Ajoute ce champ si tu veux supporter la modification d'e-mail
+}
 
 export default function EditProfilePage() {
-  // Vérification : updateProfile est bien récupéré du hook
   const { userData, isLoggedIn, isLoading, updateProfile } = useSupabaseAuth();
-  // TODO: Ajoutez updateProfile et updateEmail dans le hook useSupabaseAuth si nécessaire
   const router = useRouter();
 
+  // States principaux
   const [displayName, setDisplayName] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [email, setEmail] = useState('');
@@ -25,6 +30,10 @@ export default function EditProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
+  // Pour l'accessibilité (focus au chargement)
+  const displayNameInputRef = useRef<HTMLInputElement>(null);
+
+  // Chargement initial
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
       router.replace('/login?redirect=/mon-compte/edit');
@@ -38,30 +47,88 @@ export default function EditProfilePage() {
         photoURL: userData.photoURL || '',
         email: userData.email || '',
       });
+      setTimeout(() => displayNameInputRef.current?.focus(), 50);
     }
   }, [isLoading, isLoggedIn, userData, router]);
 
-  const handleAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  // Nettoyage de l'URL blob de l'avatarPreview pour éviter fuite mémoire
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
+
+  // Gestion upload avatar
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Vérif type et taille (max 2Mo)
+    if (!/^image\/(jpe?g|png|webp|bmp|gif|svg)$/i.test(file.type) || file.size > 2 * 1024 * 1024) {
+      setError('Seules les images (max 2Mo) sont autorisées.');
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      return;
+    }
+    setError(null);
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
-    // Optionnel : upload immédiat ici, ou lors du submit
   };
 
+  // Upload sur Supabase Storage (adapté à ton backend)
   const uploadAvatar = async (): Promise<string | null> => {
-    if (!avatarFile) return null;
-    // Exemple d'upload Supabase Storage (adaptez selon votre backend)
-    // const fileExt = avatarFile.name.split('.').pop();
-    // const filePath = `avatars/${userData.id}_${Date.now()}.${fileExt}`;
-    // const { data, error } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
-    // if (error) throw error;
-    // const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
-    // return publicUrl?.publicUrl || null;
-    // Pour la démo, on retourne null (pas d'upload effectif)
-    return null;
+    if (!avatarFile || !userData?.id) return null;
+
+    // Log l'ID utilisateur
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    console.log("DEBUG UPLOAD AVATAR - userData.id:", userData.id, "supabase.auth.uid():", authData?.user?.id);
+
+    // Log la session complète (pour JWT/access_token et claims)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log("DEBUG SESSION", sessionData?.session);
+
+    const fileExt = avatarFile.name.split('.').pop();
+    const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
+
+    // Log détaillé avant upload
+    console.log("UPLOAD DEBUG", {
+      name: avatarFile.name,
+      type: avatarFile.type,
+      size: avatarFile.size,
+      filePath
+    });
+
+    // Upload dans avatars2 (sans upsert)
+    const { data, error } = await supabase.storage.from('avatars2').upload(filePath, avatarFile);
+    if (error) throw error;
+
+    // Récupère l'URL publique de l'avatar
+    const { data: publicUrl } = supabase.storage.from('avatars2').getPublicUrl(filePath);
+    if (!publicUrl?.publicUrl) {
+      throw new Error("Erreur lors de la récupération de l'URL publique de l'avatar");
+    }
+
+    // Met à jour l'avatar dans la table utilisateur (ici 'profiles', adapte si besoin)
+    // Seulement si l'utilisateur est admin ou VIP
+    if (userData?.isAdmin === true || userData?.isVIP === true) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl.publicUrl })
+        .eq('id', userData.id);
+      if (updateError) {
+        throw updateError;
+      }
+      // Optionnel : reload UI
+      // window.location.reload();
+    } else {
+      alert("Seuls les administrateurs ou VIP peuvent modifier leur avatar.");
+      return null;
+    }
+
+    return publicUrl.publicUrl;
   };
 
+  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -70,15 +137,12 @@ export default function EditProfilePage() {
     try {
       let uploadedUrl = photoURL;
       if (avatarFile) {
-        const url = await uploadAvatar();
-        if (url) uploadedUrl = url;
+        uploadedUrl = await uploadAvatar() || photoURL;
         setPhotoURL(uploadedUrl);
       }
-      // Appel effectif à updateProfile pour mettre à jour la base ET le contexte utilisateur
-      await updateProfile({ displayName, photoURL: uploadedUrl });
-      // if (email !== initial.email && updateEmail) {
-      //   await updateEmail(email);
-      // }
+      // Appel effectif à updateProfile
+      const payload: UserProfilePayload = { displayName, photoURL: uploadedUrl };
+      await updateProfile(payload);
       setSuccess(true);
       setTimeout(() => {
         router.replace('/mon-compte');
@@ -89,12 +153,23 @@ export default function EditProfilePage() {
     setLoading(false);
   };
 
+  // Réinitialisation
   const handleReset = () => {
     setDisplayName(initial.displayName);
     setPhotoURL(initial.photoURL);
     setEmail(initial.email);
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setError(null);
     setSuccess(false);
+    setTimeout(() => displayNameInputRef.current?.focus(), 50);
+  };
+
+  // Suppression avatar (retour à l'avatar par défaut)
+  const handleRemoveAvatar = () => {
+    setPhotoURL('');
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   if (isLoading || !userData) {
@@ -112,7 +187,7 @@ export default function EditProfilePage() {
           <CardTitle>Modifier mon profil</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             <div className="flex flex-col items-center gap-2">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={avatarPreview || photoURL} alt={displayName || 'Utilisateur'} />
@@ -120,14 +195,28 @@ export default function EditProfilePage() {
                   {displayName?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <Input
-                type="file"
-                accept="image/*"
-                className="mt-2"
-                onChange={handleAvatarChange}
-                disabled={loading}
-                aria-label="Uploader une photo"
-              />
+              <div className="flex gap-2 items-center mt-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  disabled={loading}
+                  aria-label="Uploader une photo"
+                  className="!w-44"
+                />
+                {(photoURL || avatarPreview) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleRemoveAvatar}
+                    disabled={loading}
+                    aria-label="Supprimer la photo de profil"
+                    className="text-xs"
+                  >
+                    Supprimer
+                  </Button>
+                )}
+              </div>
               <Input
                 type="url"
                 placeholder="URL de la photo de profil"
@@ -151,6 +240,8 @@ export default function EditProfilePage() {
                 required
                 disabled={loading}
                 aria-label="Nom affiché"
+                ref={displayNameInputRef}
+                autoFocus
               />
             </div>
             <div>
@@ -159,11 +250,11 @@ export default function EditProfilePage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                disabled={loading}
+                // onChange={e => setEmail(e.target.value)}
+                disabled={true} // Désactivé tant que la logique updateEmail n'est pas finalisée
                 aria-label="Adresse e-mail"
               />
+              <div className="text-xs text-gray-400 mt-1">Modification d’email bientôt disponible.</div>
             </div>
             <div className="flex gap-2">
               <Button type="submit" disabled={loading}>
@@ -176,12 +267,14 @@ export default function EditProfilePage() {
                 Réinitialiser
               </Button>
             </div>
-            {success && (
-              <div className="text-green-500 text-sm mt-2">Profil mis à jour avec succès !</div>
-            )}
-            {error && (
-              <div className="text-red-500 text-sm mt-2">{error}</div>
-            )}
+            <div aria-live="polite">
+              {success && (
+                <div className="text-green-500 text-sm mt-2">Profil mis à jour avec succès !</div>
+              )}
+              {error && (
+                <div className="text-red-500 text-sm mt-2">{error}</div>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
