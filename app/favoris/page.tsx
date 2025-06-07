@@ -147,20 +147,7 @@ export default function FavorisPage() {
 
       {/* Tabs */}
       <div className="flex justify-center mb-6 gap-1 sm:gap-2">
-        <button
-          className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
-            activeTab === 'tout'
-              ? 'bg-gray-900 border-yellow-400 text-yellow-400 shadow'
-              : 'bg-gray-800 border-transparent text-gray-400 hover:text-yellow-400'
-          }`}
-          onClick={() => setActiveTab('tout')}
-          aria-selected={activeTab === 'tout'}
-        >
-          <Sparkles className={`inline-block h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
-            activeTab === 'tout' ? 'text-yellow-400' : 'text-gray-400'
-          }`} />
-          Tout
-        </button>
+        
         <button
           className={`px-3 py-1.5 sm:px-6 sm:py-2 rounded-t-lg font-semibold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
             activeTab === 'films'
@@ -207,79 +194,7 @@ export default function FavorisPage() {
 
       {/* Content */}
       <div className="mt-8">
-        {activeTab === 'tout' && (
-          <>
-            {allFavs.length === 0 ? (
-              <div className="text-gray-400 text-lg py-12 text-center">
-                Aucun favori pour l’instant.
-              </div>
-            ) : (
-              <div
-                className="grid gap-4"
-                style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))"
-                }}
-              >
-                {allFavs.map((item) =>
-                  item.type === "film" ? (
-                    <FilmCard
-                      key={item.data.id}
-                      movie={{
-                        id: item.data.id,
-                        title: item.data.title,
-                        poster: item.data.poster,
-                        year: item.data.year,
-                        isVIP: item.data.is_vip ?? item.data.isVIP
-                      }}
-                    />
-                  ) : item.type === "serie" ? (
-                    <SeriesCard
-                      key={item.data.id}
-                      series={{
-                        id: item.data.id,
-                        title: item.data.title,
-                        poster: item.data.poster,
-                        year: item.data.year,
-                        isVIP: item.data.is_vip ?? item.data.isVIP
-                      }}
-                    />
-                  ) : (
-                    <div
-                      key={item.data.id}
-                      className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
-                    >
-                      <div className="flex flex-col items-center gap-2 w-full">
-                        <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
-                        <img
-                          src={item.data.thumbnail_url || "/placeholder-poster.png"}
-                          alt={item.data.title || "Épisode"}
-                          className="w-28 h-16 object-cover rounded-lg mb-2"
-                        />
-                        <div className="text-center">
-                          <div className="font-semibold text-sm text-white truncate">
-                            {item.data.title}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            S{item.data.season?.season_number ?? "?"} • Ep {item.data.episode_number ?? "?"}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {item.data.series?.title ?? ""}
-                          </div>
-                        </div>
-                      </div>
-                      <a
-                        href={`/series/${item.data.series_id}/watch/${item.data.id}`}
-                        className="mt-2 text-xs bg-blue-600/80 hover:bg-blue-700 transition-colors text-white font-bold px-3 py-1 rounded shadow"
-                      >
-                        Regarder l’épisode
-                      </a>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </>
-        )}
+        
 
         {activeTab === 'films' && (
           <>
