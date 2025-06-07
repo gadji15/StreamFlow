@@ -100,8 +100,8 @@ export default function EditProfilePage() {
       filePath
     });
 
-    // Utilise le NOUVEAU bucket avatars2
-    const { data, error } = await supabase.storage.from('avatars2').upload(filePath, avatarFile, { upsert: true });
+    // Utilise le NOUVEAU bucket avatars2 SANS upsert (corrigé)
+    const { data, error } = await supabase.storage.from('avatars2').upload(filePath, avatarFile);
     if (error) throw error;
     const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
     return publicUrl?.publicUrl || null;
