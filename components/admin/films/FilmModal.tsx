@@ -58,41 +58,38 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
     director: initialData.director || "",
     year: initialData.year || "",
     duration: initialData.duration || "",
-    genres: Array.isArray(initialData.genres)
-      ? initialData.genres
-      : (typeof initialData.genre === "string"
-        ? initialData.genre.split(",").map((g: string) => g.trim())
-        : []),
-    genresInput: "",
-    vote_average: initialData.vote_average || "",
-    vote_count: initialData.vote_count || "",
-    published: !!initialData.published,
-    isvip: !!initialData.isvip,
-    featured: computeFeaturedFromCategories(initialData), // Synchronisation
-    poster: initialData.poster || "",
-    backdrop: initialData.backdrop || "",
-    tmdb_id: initialData.tmdb_id || "",
-    imdb_id: initialData.imdb_id || "",
-    description: initialData.description || "",
-    trailer_url: initialData.trailer_url || "",
-    video_url: initialData.video_url || "",
-    streamtape_url: initialData.streamtape_url || "",
-    uqload_url: initialData.uqload_url || "",
-    language: initialData.language || "",
-    homepage_categories: Array.isArray(initialData.homepage_categories)
-      ? initialData.homepage_categories
-      : [],
-    popularity: initialData.popularity || "",
-    cast: Array.isArray(initialData.cast)
-      ? initialData.cast
-      : (typeof initialData.cast === "string"
-        ? JSON.parse(initialData.cast)
-        : []),
-    no_video: !!initialData.no_video,
-
-    saga_id: initialData.saga_id || "",
-    part_number: initialData.part_number || "",
+    // ...
   });
+
+  // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
+  const { hasDraft, getDraft, clearDraft } = useFormDraft(
+    "film-form-draft",
+    adminId,
+    form,
+    initialData?.id // pour différencier édition/ajout
+  );
+
+  // Bannière de restauration du draft
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
+
+  useEffect(() => {
+    if (open && hasDraft()) {
+      setShowDraftRestore(true);
+    } else {
+      setShowDraftRestore(false);
+    }
+    // eslint-disable-next-line
+  }, [open]);
+
+  const handleRestoreDraft = () => {
+    const draft = getDraft();
+    if (draft) setForm(draft);
+    setShowDraftRestore(false);
+  };
+  const handleIgnoreDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+  };
 
   // --- SYNCHRONISATION DU BROUILLON FORMULAIRE PAR ADMIN ---
   useFormDraft(
@@ -723,6 +720,30 @@ export default function FilmModal({ open, onClose, onSave, initialData = {}, adm
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Bannière de restauration du brouillon */}
+        {showDraftRestore && (
+          <div className="p-3 bg-yellow-600/20 border border-yellow-700 rounded-xl mx-3 mt-3 mb-2 flex flex-col items-center">
+            <span className="text-yellow-100 text-xs font-medium mb-2">Un brouillon non sauvegardé a été détecté pour ce formulaire.</span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="text-xs px-2 py-1"
+                onClick={handleRestoreDraft}
+              >
+                Restaurer
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs px-2 py-1"
+                onClick={handleIgnoreDraft}
+              >
+                Ignorer
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Header sticky */}
         <div className="sticky top-0 z-30 bg-transparent pt-2 pb-1 px-3 rounded-t-2xl flex items-center justify-between">
           <h2 className="text-base font-bold tracking-tight text-white/90">
