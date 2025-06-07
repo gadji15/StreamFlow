@@ -13,6 +13,85 @@ import { Film, Tv, Heart, Sparkles, Clapperboard } from "lucide-react";
 type ItemType = "film" | "serie" | "episode";
 type FavItem = { type: ItemType; data: any };
 
+import { X, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+function RemoveFavoriteButton({
+  contentId,
+  type,
+  onRemoved,
+}: {
+  contentId: string;
+  type: "film" | "serie" | "episode";
+  onRemoved: () => void;
+}) {
+  const { toast } = useToast();
+  const [confirming, setConfirming] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleRemove = async () => {
+    setLoading(true);
+    const { error } = await supabase
+      .from("favorites")
+      .delete()
+      .eq("content_id", contentId)
+      .eq("type", type);
+    setLoading(false);
+    setConfirming(false);
+    if (!error) {
+      toast({
+        title: "Favori retiré",
+        description: "Cet élément a été retiré de vos favoris.",
+      });
+      onRemoved();
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Impossible de retirer ce favori.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="absolute top-2 right-2 z-10">
+      {!confirming ? (
+        <button
+          type="button"
+          aria-label="Retirer des favoris"
+          className="bg-gray-800/80 hover:bg-red-700/90 text-gray-300 hover:text-white rounded-full p-1 shadow transition group"
+          onClick={() => setConfirming(true)}
+          tabIndex={0}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      ) : (
+        <div className="flex items-center gap-1 bg-gray-900/90 border border-gray-700 rounded px-2 py-1 shadow">
+          <span className="text-xs text-red-400">Confirmer&nbsp;?</span>
+          <button
+            type="button"
+            className="text-xs text-white bg-red-600 hover:bg-red-700 rounded px-1 py-0.5"
+            disabled={loading}
+            onClick={handleRemove}
+          >
+            Oui
+          </button>
+          <button
+            type="button"
+            className="text-xs text-gray-300 hover:text-gray-500"
+            disabled={loading}
+            onClick={() => setConfirming(false)}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FavorisPage() {
   const { user } = useCurrentUser();
   const [loading, setLoading] = useState(true);
@@ -211,7 +290,7 @@ export default function FavorisPage() {
                 }}
               >
                 {filmFavorites.map((film) => (
-                  <div key={film.id} className="w-[140px] mx-auto">
+                  <div key={film.id} className="w-[140px] mx-auto relative group">
                     <FilmCard
                       movie={{
                         id: film.id,
@@ -220,6 +299,12 @@ export default function FavorisPage() {
                         year: film.year,
                         isVIP: film.is_vip ?? film.isVIP
                       }}
+                    />
+                    {/* Remove favorite button */}
+                    <RemoveFavoriteButton
+                      contentId={film.id}
+                      type="film"
+                      onRemoved={() => setFilmFavorites(favs => favs.filter(f => f.id !== film.id))}
                     />
                   </div>
                 ))}
@@ -243,7 +328,7 @@ export default function FavorisPage() {
                 }}
               >
                 {seriesFavorites.map((serie) => (
-                  <div key={serie.id} className="w-[140px] mx-auto">
+                  <div key={serie.id} className="w-[140px] mx-auto relative group">
                     <SeriesCard
                       series={{
                         id: serie.id,
@@ -252,6 +337,12 @@ export default function FavorisPage() {
                         year: serie.year,
                         isVIP: serie.is_vip ?? serie.isVIP
                       }}
+                    />
+                    {/* Remove favorite button */}
+                    <RemoveFavoriteButton
+                      contentId={serie.id}
+                      type="serie"
+                      onRemoved={() => setSeriesFavorites(favs => favs.filter(s => s.id !== serie.id))}
                     />
                   </div>
                 ))}
@@ -277,7 +368,7 @@ export default function FavorisPage() {
                 {episodeFavorites.map((ep) => (
                   <div
                     key={ep.id}
-                    className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition"
+                    className="w-[160px] bg-gray-900/70 rounded-xl p-3 flex flex-col items-center justify-between shadow transition relative group"
                   >
                     <div className="flex flex-col items-center gap-2 w-full">
                       <span className="text-xs text-blue-400 font-semibold mb-1">Épisode favori</span>
@@ -304,6 +395,12 @@ export default function FavorisPage() {
                     >
                       Regarder l’épisode
                     </a>
+                    {/* Remove favorite button */}
+                    <RemoveFavoriteButton
+                      contentId={ep.id}
+                      type="episode"
+                      onRemoved={() => setEpisodeFavorites(favs => favs.filter(e => e.id !== ep.id))}
+                    />
                   </div>
                 ))}
               </div>
