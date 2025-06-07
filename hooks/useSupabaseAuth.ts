@@ -5,9 +5,6 @@ import { getProfile, getUserRoles } from '../lib/supabaseProfiles'
 import { signOut } from '../lib/supabaseAuth'
 import { supabase } from '../lib/supabaseClient' // si besoin d'importer supabase client
 
-export function useSupabaseAuth() {
-  // ...ton code...
-}
 
 /**
  * Hook d’auth avancé avec Supabase : expose isLoggedIn, userData, isVIP, isAdmin, logout, etc.

@@ -1,3 +1,4 @@
+"use client";
 import AdSenseSlot from "@/components/AdSenseSlot";
 import { useHideAds } from "@/hooks/useHideAds";
 
