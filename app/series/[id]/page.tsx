@@ -129,13 +129,14 @@ export default function SeriesDetailPage() {
         setIsVIP(false);
       }
 
-      // Check favorite
+      // Check favorite (universel)
       if (userId) {
         const { data } = await supabase
           .from("favorites")
           .select("id")
           .eq("user_id", userId)
-          .eq("series_id", seriesId)
+          .eq("content_id", seriesId)
+          .eq("type", "serie")
           .maybeSingle();
         setIsFavorite(!!data);
       }
@@ -207,7 +208,8 @@ export default function SeriesDetailPage() {
         .from("favorites")
         .delete()
         .eq("user_id", user.id)
-        .eq("series_id", id);
+        .eq("content_id", id)
+        .eq("type", "serie");
       setIsFavorite(false);
       toast({
         title: "Retiré des favoris",
@@ -215,7 +217,7 @@ export default function SeriesDetailPage() {
       });
     } else {
       await supabase.from("favorites").insert([
-        { user_id: user.id, series_id: id, created_at: new Date().toISOString() },
+        { user_id: user.id, content_id: id, type: "serie", created_at: new Date().toISOString() },
       ]);
       setIsFavorite(true);
       toast({

@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Heart, Share2 } from "lucide-react";
+import FavoriteButton from "@/components/FavoriteButton";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import SeasonModalUser from "@/components/series/SeasonModalUser";
 import { Badge } from "@/components/ui/badge";
@@ -192,10 +195,24 @@ export default function WatchEpisodePage() {
     id: episodeId,
   });
 
+  // Toast pour le partage
+  const { toast } = useToast();
+
   // Récupérer la progression sauvegardée pour cet épisode
   const { history } = useWatchHistory();
   let resumeSeconds: number | undefined = undefined;
   let showResumeHint = false;
+
+  // Fonction de partage
+  const handleShare = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Lien copié",
+        description: "Le lien de l'épisode a été copié dans le presse-papiers.",
+      });
+    }
+  };
   if (history && episode) {
     const hist = history.find(
       (h) => h.episode_id === episodeId && typeof h.progress === "number" && h.progress > 0
@@ -296,19 +313,34 @@ export default function WatchEpisodePage() {
               VIP
             </Badge>
           )}
+
+          {/* BOUTONS FAVORI ET PARTAGE */}
+          <div className="flex items-center gap-2 ml-auto">
+            <FavoriteButton contentId={episode.id} type="episode" />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Partager l'épisode"
+              onClick={handleShare}
+              className="group transition-all"
+            >
+              <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-300 group-hover:text-blue-400" />
+              <span className="sr-only">Partager l'épisode</span>
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Bloc durée et navigation épisode */}
-      <div className="flex flex-wrap items-center gap-4 text-gray-300 text-sm mb-2 w-full max-w-3xl mx-auto">
+      <div className="flex flex-wrap items-center gap-4 text-gray-300 text-xs sm:text-sm mb-2 w-full max-w-3xl mx-auto">
         {episode?.duration && (
           <span>
             <b>Durée :</b> {episode.duration} min
           </span>
         )}
-        <nav className="flex gap-2 ml-auto" aria-label="Navigation épisodes">
+        <nav className="flex gap-1 sm:gap-2 ml-auto" aria-label="Navigation épisodes">
           <button
-            className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+            className="rounded-lg px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-base font-semibold shadow-sm hover:scale-[1.04] hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700 focus-visible:ring-2 focus-visible:ring-primary"
             onClick={() => setIsSeasonModalOpen(true)}
             aria-label="Sélectionner saison/épisode"
           >
@@ -316,22 +348,22 @@ export default function WatchEpisodePage() {
           </button>
           {previousEpisode && (
             <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+              className="rounded-lg px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-base font-semibold shadow-sm hover:scale-[1.04] hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700 flex items-center focus-visible:ring-2 focus-visible:ring-primary"
               onClick={goToPreviousEpisode}
               aria-label="Épisode précédent"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+              <span className="hidden xs:inline">Précédent</span>
             </button>
           )}
           {nextEpisode && (
             <button
-              className="rounded-full px-4 py-2 text-base shadow hover:scale-105 hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700"
+              className="rounded-lg px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-base font-semibold shadow-sm hover:scale-[1.04] hover:bg-gray-900/90 transition-all bg-gray-800 text-white border border-gray-700 flex items-center focus-visible:ring-2 focus-visible:ring-primary"
               onClick={goToNextEpisode}
               aria-label="Épisode suivant"
             >
-              Suivant
-              <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+              <span className="hidden xs:inline">Suivant</span>
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 ml-1 rotate-180" />
             </button>
           )}
         </nav>
