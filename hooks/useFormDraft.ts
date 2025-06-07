@@ -1,7 +1,9 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 /**
  * Hook pour gérer la persistance d'un formulaire en tant que brouillon par utilisateur/admin.
+ * Sauvegarde automatique UNIQUEMENT après modification effective du formulaire (touched).
+ * Empêche l'écrasement du brouillon existant par un formulaire vide à l'ouverture du modal.
  */
 export function useFormDraft<T>(
   keyBase: string,
@@ -13,16 +15,32 @@ export function useFormDraft<T>(
     ? `${keyBase}-${adminId}-${itemId}`
     : `${keyBase}-${adminId}`;
 
-  // Sauvegarde automatique du draft à chaque modification,
-  // sauf lors de la restauration (contrôlée par un flag optionnel)
+  // Nouvelle logique : ne sauvegarder qu'après la première modification (touched)
+  const isFirstRender = useRef(true);
+  const isTouched = useRef(false);
+  const lastSnapshot = useRef<string | null>(null);
+
   useEffect(() => {
-    // On sauvegarde uniquement si on n'est pas en train de restaurer
-    // (le parent doit passer un flag 'skipSave' ou équivalent si besoin)
-    if ((window as any).__skipNextDraftSave) {
-      (window as any).__skipNextDraftSave = false;
+    if (typeof window === "undefined") return;
+
+    // Ne rien faire au tout premier render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      lastSnapshot.current = JSON.stringify(formState);
       return;
     }
-    localStorage.setItem(key, JSON.stringify(formState));
+
+    // Si le formulaire a changé par rapport au snapshot précédent : on le considère comme "touched"
+    const nextSnapshot = JSON.stringify(formState);
+    if (lastSnapshot.current !== nextSnapshot) {
+      isTouched.current = true;
+    }
+    lastSnapshot.current = nextSnapshot;
+
+    // On ne sauvegarde que si l'utilisateur a vraiment modifié le formulaire
+    if (isTouched.current) {
+      localStorage.setItem(key, nextSnapshot);
+    }
   }, [key, formState]);
 
   // Récupérer le draft brut
@@ -36,9 +54,11 @@ export function useFormDraft<T>(
     return !!localStorage.getItem(key);
   }, [key]);
 
-  // Supprimer le draft
+  // Supprimer le draft (et reset isTouched)
   const clearDraft = useCallback(() => {
     localStorage.removeItem(key);
+    isTouched.current = false;
+    lastSnapshot.current = null;
   }, [key]);
 
   return { hasDraft, getDraft, clearDraft };
