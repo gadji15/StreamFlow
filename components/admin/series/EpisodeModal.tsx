@@ -1,7 +1,14 @@
 import React, { useEffect } from "react";
 import { useFormAutosave } from "@/hooks/useFormAutosave";
 
-type Episode = { title: string; number: string; description: string };
+// Type de base pour un épisode
+type Episode = {
+  title: string;
+  number: string;
+  description: string;
+};
+
+// Props de la modal
 type EpisodeModalProps = {
   open: boolean;
   onClose: () => void;
@@ -9,13 +16,20 @@ type EpisodeModalProps = {
   adminId: string;
 };
 
+/**
+ * Modal d'ajout/édition d'épisode avec autosauvegarde robuste.
+ */
 export default function EpisodeModal({ open, onClose, episode, adminId }: EpisodeModalProps) {
   const isEdit = !!episode?.id;
   const storageKey = isEdit
     ? `autosave-episode-edit-${episode.id}-${adminId}`
     : `autosave-episode-add-${adminId}`;
-  const initialState: Episode = isEdit
-    ? { title: episode.title, number: episode.number, description: episode.description }
+  const initialState: Episode = isEdit && episode
+    ? {
+        title: episode.title,
+        number: episode.number,
+        description: episode.description,
+      }
     : { title: "", number: "", description: "" };
 
   const [form, setForm, clearAutosave] = useFormAutosave(storageKey, initialState);
@@ -37,7 +51,7 @@ export default function EpisodeModal({ open, onClose, episode, adminId }: Episod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ... logique ajout/édition ...
+    // TODO : logique d’ajout/édition réelle
     clearAutosave();
     onClose();
   };
@@ -51,7 +65,13 @@ export default function EpisodeModal({ open, onClose, episode, adminId }: Episod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 relative min-w-[350px]">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded shadow space-y-4 relative min-w-[350px]"
+      >
+        <h2 className="text-xl font-semibold mb-2">
+          {isEdit ? "Éditer un épisode" : "Ajouter un épisode"}
+        </h2>
         <input
           name="title"
           value={form.title}
@@ -74,9 +94,18 @@ export default function EpisodeModal({ open, onClose, episode, adminId }: Episod
           placeholder="Description"
           className="w-full p-2 rounded border"
         />
-        <div className="flex gap-3 justify-end">
-          <button type="button" onClick={handleClose} className="px-3 py-1 rounded bg-gray-400">Annuler</button>
-          <button type="submit" className="px-4 py-1 rounded bg-green-600 text-white">
+        <div className="flex gap-3 justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-3 py-1 rounded bg-gray-400"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-1 rounded bg-green-600 text-white"
+          >
             {isEdit ? "Enregistrer" : "Ajouter"}
           </button>
         </div>

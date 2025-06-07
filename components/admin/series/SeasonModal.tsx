@@ -1,7 +1,13 @@
 import React, { useEffect } from "react";
 import { useFormAutosave } from "@/hooks/useFormAutosave";
 
-type Season = { number: string; description: string };
+// Type de base pour une saison
+type Season = {
+  number: string;
+  description: string;
+};
+
+// Props de la modal
 type SeasonModalProps = {
   open: boolean;
   onClose: () => void;
@@ -9,12 +15,15 @@ type SeasonModalProps = {
   adminId: string;
 };
 
+/**
+ * Modal d'ajout/édition de saison avec autosauvegarde robuste.
+ */
 export default function SeasonModal({ open, onClose, season, adminId }: SeasonModalProps) {
   const isEdit = !!season?.id;
   const storageKey = isEdit
     ? `autosave-season-edit-${season.id}-${adminId}`
     : `autosave-season-add-${adminId}`;
-  const initialState: Season = isEdit
+  const initialState: Season = isEdit && season
     ? { number: season.number, description: season.description }
     : { number: "", description: "" };
 
@@ -36,7 +45,7 @@ export default function SeasonModal({ open, onClose, season, adminId }: SeasonMo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ... logique ajout/édition ...
+    // TODO : logique d’ajout/édition réelle
     clearAutosave();
     onClose();
   };
@@ -50,7 +59,13 @@ export default function SeasonModal({ open, onClose, season, adminId }: SeasonMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 relative min-w-[350px]">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded shadow space-y-4 relative min-w-[350px]"
+      >
+        <h2 className="text-xl font-semibold mb-2">
+          {isEdit ? "Éditer une saison" : "Ajouter une saison"}
+        </h2>
         <input
           name="number"
           value={form.number}
@@ -66,9 +81,18 @@ export default function SeasonModal({ open, onClose, season, adminId }: SeasonMo
           placeholder="Description"
           className="w-full p-2 rounded border"
         />
-        <div className="flex gap-3 justify-end">
-          <button type="button" onClick={handleClose} className="px-3 py-1 rounded bg-gray-400">Annuler</button>
-          <button type="submit" className="px-4 py-1 rounded bg-green-600 text-white">
+        <div className="flex gap-3 justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-3 py-1 rounded bg-gray-400"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-1 rounded bg-green-600 text-white"
+          >
             {isEdit ? "Enregistrer" : "Ajouter"}
           </button>
         </div>
