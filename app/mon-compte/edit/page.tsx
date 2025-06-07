@@ -89,11 +89,8 @@ export default function EditProfilePage() {
 
     const fileExt = avatarFile.name.split('.').pop();
 
-    // TEMPORAIRE pour test : upload dans le même dossier que l'upload manuel réussi
-    // Pour tester l'upload dans "episodes/" :
-    const filePath = `episodes/${userData.id}_${Date.now()}.${fileExt}`;
-    // Pour tester à la racine, commente la ligne ci-dessus et décommente celle-ci :
-    // const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
+    // Correction : upload sur le NOUVEAU bucket avatars2 à la racine (propre)
+    const filePath = `${userData.id}_${Date.now()}.${fileExt}`;
 
     // Log détaillé avant upload
     console.log("UPLOAD DEBUG", {
@@ -103,7 +100,8 @@ export default function EditProfilePage() {
       filePath
     });
 
-    const { data, error } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
+    // Utilise le NOUVEAU bucket avatars2
+    const { data, error } = await supabase.storage.from('avatars2').upload(filePath, avatarFile, { upsert: true });
     if (error) throw error;
     const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(filePath);
     return publicUrl?.publicUrl || null;
