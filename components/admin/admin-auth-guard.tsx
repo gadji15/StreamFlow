@@ -31,19 +31,24 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
   }, [isAdmin, isLoading, user, router]);
 
   // Afficher un écran de chargement tant que l'état d'auth n'est pas déterminé
+  // Bloquer strictement le rendu des enfants tant que le profil/roles ne sont pas prêts
   if (isLoading || (user && userData === null)) {
+    // Utilise le composant global pour l'UX
     return (
       <div style={{ minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span>Chargement...</span>
       </div>
+      // Ou mieux :
+      // <LoadingScreen message="Vérification des droits admin..." />
     );
   }
 
-  // Si admin, afficher la zone admin
-  if (isAdmin) {
-    return <>{children}</>;
+  // Si pas admin ou pas connecté, on ne rend JAMAIS les enfants
+  if (!user || !isAdmin) {
+    // Ne rien rendre, la redirection se fait dans l'effet
+    return null;
   }
 
-  // Par sécurité, n'affiche rien si on redirige (les redirects s'activent via useEffect)
-  return null;
+  // Seulement si tout est ok on rend les enfants
+  return <>{children}</>;
 }
