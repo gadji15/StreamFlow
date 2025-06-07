@@ -117,10 +117,8 @@ export default function EditProfilePage() {
       throw updateError;
     }
 
-    // Rafraîchit les infos utilisateur locales (si tu as un fetchUser ou équivalent)
-    if (typeof fetchUserData === 'function') {
-      await fetchUserData(); // adapte selon ton hook ou ta logique
-    }
+    // Si tu veux un rafraîchissement immédiat dans l'UI, tu peux recharger la page (à remplacer par une meilleure logique plus tard)
+    // window.location.reload();
 
     return publicUrl.publicUrl;
   };
