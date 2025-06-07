@@ -217,7 +217,7 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
                 }}
               >
                 {allFavs.map((item) =>
@@ -292,7 +292,7 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
                 }}
               >
                 {filmFavorites.map((film) => (
@@ -323,7 +323,7 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
                 }}
               >
                 {seriesFavorites.map((serie) => (
@@ -354,7 +354,7 @@ export default function FavorisPage() {
               <div
                 className="grid gap-3"
                 style={{
-                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))"
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 180px))"
                 }}
               >
                 {episodeFavorites.map((ep) => (
