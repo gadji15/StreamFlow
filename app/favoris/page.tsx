@@ -15,8 +15,6 @@ type FavItem = { type: ItemType; data: any };
 
 import { X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 function RemoveFavoriteButton({
   contentId,
