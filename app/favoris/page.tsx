@@ -59,11 +59,12 @@ function RemoveFavoriteButton({
         <button
           type="button"
           aria-label="Retirer des favoris"
-          className="bg-gray-800/80 hover:bg-red-700/90 text-gray-300 hover:text-white rounded-full p-1 shadow transition group"
+          title="Retirer des favoris"
+          className="bg-red-600/90 border border-red-500 text-white hover:bg-red-700 hover:scale-110 rounded-full p-2 shadow-lg ring-2 ring-white/20 focus:outline-none focus:ring-4 focus:ring-red-300 transition-all duration-150 group"
           onClick={() => setConfirming(true)}
           tabIndex={0}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-5 h-5" />
         </button>
       ) : (
         <div className="flex items-center gap-1 bg-gray-900/90 border border-gray-700 rounded px-2 py-1 shadow">
